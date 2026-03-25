@@ -43,83 +43,74 @@ export default function App() {
       try {
         setIsLoading(true);
         
-        // 1. Fetch Categories FASTER by limiting fields to just ID and Slug
+        // 1. Fetch Categories for our Sports lookup
         const catRes = await fetch('https://fsan.com/wp-json/wp/v2/categories?per_page=100&_fields=id,slug');
         if (!catRes.ok) throw new Error("CORS or Network Error");
         const categories = await catRes.json();
         
         const categoryMap = {};
-        const videoCategoryIds = [];
-        
-        categories.forEach(c => {
-          categoryMap[c.id] = c.slug;
-          // Capture the exact ID for any category slug that has 'video' in it
-          if (c.slug.includes('video')) {
-            videoCategoryIds.push(c.id);
-          }
-        });
+        categories.forEach(c => categoryMap[c.id] = c.slug);
 
-        const videoIdsParam = videoCategoryIds.join(',');
-
-        // 2. Fetch Videos and Articles in PARALLEL to slash load times
-        // We limit per_page to exactly what we need so the WordPress server doesn't choke on _embed
-        const [videosRes, articlesRes] = await Promise.all([
-          fetch(`https://fsan.com/wp-json/wp/v2/posts?categories=${videoIdsParam}&_embed&per_page=10`),
-          fetch(`https://fsan.com/wp-json/wp/v2/posts?categories_exclude=${videoIdsParam}&_embed&per_page=15`)
+        // 2. Fetch Articles and YouTube CPT in PARALLEL
+        // Removing "categories_exclude" fixes the massive 6-second database slowdown!
+        const [articlesRes, videosRes] = await Promise.all([
+          fetch('https://fsan.com/wp-json/wp/v2/posts?_embed&per_page=15').catch(e => e),
+          fetch('https://fsan.com/wp-json/wp/v2/youtube?_embed&per_page=10').catch(e => e) // Hit the CPT!
         ]);
 
-        const rawVideos = await videosRes.json();
-        const rawArticles = await articlesRes.json();
-        const posts = [...rawVideos, ...rawArticles];
+        const rawArticles = articlesRes.ok ? await articlesRes.json() : [];
+        const rawVideos = videosRes.ok ? await videosRes.json() : [];
 
-        // 3. Format and Sort the Data based on your exact category slugs
-        const formattedData = posts.map(post => {
-          const slugs = post.categories.map(id => categoryMap[id] || '');
+        // Helper function to process both types consistently
+        const formatPost = (post, defaultType) => {
+          const slugs = (post.categories || []).map(id => categoryMap[id] || '');
           
           let sport = 'Football'; // Default
           if (slugs.some(s => s.includes('basketball'))) sport = 'Basketball';
           if (slugs.some(s => s.includes('baseball'))) sport = 'Baseball';
 
-          let type = 'article';
-          if (slugs.some(s => s.includes('video'))) type = 'video';
-          if (slugs.some(s => s.includes('podcast'))) type = 'podcast';
-
           const imageUrl = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || null;
           const author = post._embedded?.author?.[0]?.name || 'FSAN Staff';
           const date = new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
-          const rawTimestamp = new Date(post.date).getTime(); // For accurate sorting
+          const rawTimestamp = new Date(post.date).getTime();
 
-          // SMART YOUTUBE EXTRACTOR: Finds the YouTube ID from the YT2Posts plugin output
+          // SMART YOUTUBE EXTRACTOR
           let youtubeId = null;
-          let cleanContent = post.content.rendered;
+          let cleanContent = post.content?.rendered || '';
           const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
-          const match = post.content.rendered.match(ytRegex);
+          const match = cleanContent.match(ytRegex);
           
           if (match && match[1]) {
             youtubeId = match[1];
-            // Remove the raw iframe from the text description so it doesn't show up twice
             cleanContent = cleanContent.replace(/<iframe.*?<\/iframe>/i, '');
           }
 
           return {
             id: post.id,
-            title: post.title.rendered,
+            title: post.title?.rendered || 'Untitled',
             content: cleanContent,
-            excerpt: post.excerpt.rendered,
+            excerpt: post.excerpt?.rendered || '',
             date,
             rawTimestamp,
             sport,
-            type,
+            type: defaultType,
             imageUrl,
             author,
-            youtubeId, // Extracted ID
+            youtubeId,
             link: post.link
           };
-        });
+        };
 
+        // 3. Format, Merge, and Sort
+        const formattedArticles = rawArticles.map(post => formatPost(post, 'article'));
+        // Depending on your plugin, the CPT might be exposed differently. We map it as 'video'
+        const formattedVideos = rawVideos.map(post => formatPost(post, 'video'));
+
+        const allPosts = [...formattedArticles, ...formattedVideos];
+        
         // Sort everything by date so the 'All' views mix correctly
-        formattedData.sort((a, b) => b.rawTimestamp - a.rawTimestamp);
-        setWpPosts(formattedData);
+        allPosts.sort((a, b) => b.rawTimestamp - a.rawTimestamp);
+        setWpPosts(allPosts);
 
       } catch (error) {
         console.warn("Using Mock Data. WordPress API blocked by CORS or unavailable: ", error);
