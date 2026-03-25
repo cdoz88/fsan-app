@@ -43,54 +43,84 @@ export default function App() {
       try {
         setIsLoading(true);
         
-        // 1. Fetch Categories to build our lookup map
-        const catRes = await fetch('https://fsan.com/wp-json/wp/v2/categories?per_page=100');
+        // 1. Fetch Categories FASTER by limiting fields to just ID and Slug
+        const catRes = await fetch('https://fsan.com/wp-json/wp/v2/categories?per_page=100&_fields=id,slug');
         if (!catRes.ok) throw new Error("CORS or Network Error");
         const categories = await catRes.json();
+        
         const categoryMap = {};
-        categories.forEach(c => categoryMap[c.id] = c.slug);
+        const videoCategoryIds = [];
+        
+        categories.forEach(c => {
+          categoryMap[c.id] = c.slug;
+          // Capture the exact ID for any category slug that has 'video' in it
+          if (c.slug.includes('video')) {
+            videoCategoryIds.push(c.id);
+          }
+        });
 
-        // 2. Fetch Latest Posts with embedded media/authors
-        const postRes = await fetch('https://fsan.com/wp-json/wp/v2/posts?_embed&per_page=30');
-        const posts = await postRes.json();
+        const videoIdsParam = videoCategoryIds.join(',');
+
+        // 2. Fetch Videos and Articles in PARALLEL to slash load times
+        // We limit per_page to exactly what we need so the WordPress server doesn't choke on _embed
+        const [videosRes, articlesRes] = await Promise.all([
+          fetch(`https://fsan.com/wp-json/wp/v2/posts?categories=${videoIdsParam}&_embed&per_page=10`),
+          fetch(`https://fsan.com/wp-json/wp/v2/posts?categories_exclude=${videoIdsParam}&_embed&per_page=15`)
+        ]);
+
+        const rawVideos = await videosRes.json();
+        const rawArticles = await articlesRes.json();
+        const posts = [...rawVideos, ...rawArticles];
 
         // 3. Format and Sort the Data based on your exact category slugs
         const formattedData = posts.map(post => {
-          // Get the array of text slugs for this post
           const slugs = post.categories.map(id => categoryMap[id] || '');
           
-          // Determine Sport
-          let sport = 'Football'; // Default to football because 'article' and 'podcast' don't have sport prefixes
+          let sport = 'Football'; // Default
           if (slugs.some(s => s.includes('basketball'))) sport = 'Basketball';
           if (slugs.some(s => s.includes('baseball'))) sport = 'Baseball';
 
-          // Determine Type
           let type = 'article';
           if (slugs.some(s => s.includes('video'))) type = 'video';
           if (slugs.some(s => s.includes('podcast'))) type = 'podcast';
 
-          // Extract embedded data safely
           const imageUrl = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || null;
           const author = post._embedded?.author?.[0]?.name || 'FSAN Staff';
-
-          // Format Date (e.g. MARCH 23, 2026)
           const date = new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
+          const rawTimestamp = new Date(post.date).getTime(); // For accurate sorting
+
+          // SMART YOUTUBE EXTRACTOR: Finds the YouTube ID from the YT2Posts plugin output
+          let youtubeId = null;
+          let cleanContent = post.content.rendered;
+          const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+          const match = post.content.rendered.match(ytRegex);
+          
+          if (match && match[1]) {
+            youtubeId = match[1];
+            // Remove the raw iframe from the text description so it doesn't show up twice
+            cleanContent = cleanContent.replace(/<iframe.*?<\/iframe>/i, '');
+          }
 
           return {
             id: post.id,
             title: post.title.rendered,
-            content: post.content.rendered,
+            content: cleanContent,
             excerpt: post.excerpt.rendered,
             date,
+            rawTimestamp,
             sport,
             type,
             imageUrl,
             author,
+            youtubeId, // Extracted ID
             link: post.link
           };
         });
 
+        // Sort everything by date so the 'All' views mix correctly
+        formattedData.sort((a, b) => b.rawTimestamp - a.rawTimestamp);
         setWpPosts(formattedData);
+
       } catch (error) {
         console.warn("Using Mock Data. WordPress API blocked by CORS or unavailable: ", error);
         generateMockData(); // Fallback if API fails
@@ -417,9 +447,24 @@ export default function App() {
               <div className="flex flex-col lg:flex-row h-full max-h-[85vh]">
                 <div className="lg:w-3/4 flex flex-col bg-black">
                   <div className="w-full aspect-video bg-gradient-to-br from-gray-900 to-black flex items-center justify-center relative border-b border-gray-800 overflow-hidden">
-                     {selectedItem.imageUrl && <img src={selectedItem.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm" alt="" />}
-                     <PlayCircle size={64} className="text-white/80 z-10 hover:scale-110 transition-transform cursor-pointer" />
-                     <div className="absolute bottom-4 left-4 bg-red-600 text-white text-[10px] font-bold px-2 py-1 uppercase rounded z-10">YouTube API Demo Placeholder</div>
+                     
+                     {/* YOUTUBE IFRAME GENERATOR */}
+                     {selectedItem.youtubeId ? (
+                       <iframe 
+                         src={`https://www.youtube.com/embed/${selectedItem.youtubeId}?autoplay=1`} 
+                         className="absolute inset-0 w-full h-full"
+                         frameBorder="0" 
+                         allow="autoplay; encrypted-media; picture-in-picture" 
+                         allowFullScreen
+                       ></iframe>
+                     ) : (
+                       <>
+                         {selectedItem.imageUrl && <img src={selectedItem.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm" alt="" />}
+                         <PlayCircle size={64} className="text-white/80 z-10 hover:scale-110 transition-transform cursor-pointer" />
+                         <div className="absolute bottom-4 left-4 bg-red-600 text-white text-[10px] font-bold px-2 py-1 uppercase rounded z-10">Video Link Unavailable</div>
+                       </>
+                     )}
+
                   </div>
                   <div className="p-6 bg-[#121212] flex-1 overflow-y-auto">
                     <div className="flex gap-2 items-center mb-2">
