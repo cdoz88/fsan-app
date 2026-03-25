@@ -20,9 +20,10 @@ export default function App() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // 3. Category State
+  // 3. Category & Cache State (THE SPEED FIX)
   const [categoryMap, setCategoryMap] = useState({});
   const [isCategoriesReady, setIsCategoriesReady] = useState(false);
+  const [postsCache, setPostsCache] = useState({}); // Memory bank for instant loads
 
   // --- FETCH CATEGORIES ONCE ON MOUNT ---
   useEffect(() => {
@@ -48,6 +49,13 @@ export default function App() {
   useEffect(() => {
     if (!isCategoriesReady) return;
 
+    // THE SPEED FIX: If we already downloaded this sport's first page, load it instantly from memory!
+    if (currentPage === 1 && postsCache[activeSport]) {
+      setWpPosts(postsCache[activeSport]);
+      setIsLoading(false);
+      return; 
+    }
+
     const fetchWordPressData = async () => {
       try {
         if (currentPage === 1) setIsLoading(true);
@@ -61,7 +69,6 @@ export default function App() {
           } else if (activeSport === 'Baseball') {
             targetIds = Object.keys(categoryMap).filter(id => categoryMap[id].includes('baseball'));
           } else if (activeSport === 'Football') {
-            // Football is basically anything that isn't basketball or baseball
             targetIds = Object.keys(categoryMap).filter(id => 
               !categoryMap[id].includes('basketball') && 
               !categoryMap[id].includes('baseball') &&
@@ -126,20 +133,25 @@ export default function App() {
         const newPosts = [...formattedArticles, ...formattedVideos];
 
         if (currentPage === 1) {
-          // New tab clicked, completely replace old posts
+          // New tab clicked, completely replace old posts and save to cache
           newPosts.sort((a, b) => b.rawTimestamp - a.rawTimestamp);
           setWpPosts(newPosts);
+          setPostsCache(prev => ({ ...prev, [activeSport]: newPosts }));
         } else {
           // Load More clicked, combine old and new posts
           setWpPosts(prev => {
             const combined = [...prev, ...newPosts];
             // Remove potential duplicates when paginating
             const uniqueIds = new Set();
-            return combined.filter(p => {
+            const filteredCombined = combined.filter(p => {
               if (uniqueIds.has(p.id)) return false;
               uniqueIds.add(p.id);
               return true;
             }).sort((a, b) => b.rawTimestamp - a.rawTimestamp);
+            
+            // Save the newly combined longer list into the cache so they don't lose their place!
+            setPostsCache(cache => ({ ...cache, [activeSport]: filteredCombined }));
+            return filteredCombined;
           });
         }
 
@@ -156,13 +168,16 @@ export default function App() {
   }, [activeSport, currentPage, isCategoriesReady]);
 
   // --- HANDLERS ---
-  
-  // This custom handler wipes the old data and triggers a clean loading spinner when changing tabs!
   const handleSportChange = (sport) => {
     if (sport !== activeSport) {
       setActiveSport(sport);
       setCurrentPage(1);
-      setWpPosts([]); // Clear posts instantly so it shows loading state instead of old posts
+      
+      // If we don't have it saved in memory yet, clear the screen to show the spinner.
+      // If we do have it saved, it will just seamlessly pop onto the screen instantly!
+      if (!postsCache[sport]) {
+        setWpPosts([]); 
+      }
     }
   };
 
@@ -191,18 +206,16 @@ export default function App() {
     setWpPosts(mock);
   };
 
-  // Ensure local filtering is still applied to maintain grid integrity
   const filteredPosts = wpPosts.filter(post => activeSport === 'All' || post.sport === activeSport);
   const videos = filteredPosts.filter(p => p.type === 'video');
   const articles = filteredPosts.filter(p => p.type === 'article' || p.type === 'podcast');
 
   return (
     <div className="min-h-screen bg-[#121212] text-gray-200 font-sans">
-      {/* We pass handleSportChange down instead of standard setActiveSport */}
       <Header activeSport={activeSport} setActiveSport={handleSportChange} setCurrentView={setCurrentView} />
       <ToolsBar activeSport={activeSport} />
 
-      {isLoading && currentView === 'home' && (
+      {isLoading && currentView === 'home' && wpPosts.length === 0 && (
         <div className="max-w-[1600px] mx-auto p-12 flex flex-col items-center justify-center text-gray-500 min-h-[50vh]">
           <Loader2 size={48} className="animate-spin text-red-600 mb-4" />
           <p className="font-bold uppercase tracking-widest text-sm">Fetching {activeSport === 'All' ? 'Live Data' : `${activeSport} Data`}...</p>

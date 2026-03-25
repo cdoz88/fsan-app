@@ -1,7 +1,7 @@
 import React from 'react';
 import { PlayCircle } from 'lucide-react';
 import { themes } from '../utils/theme';
-import Sidebar from '../components/Sidebar'; // <-- Import our new component!
+import Sidebar from '../components/Sidebar';
 
 export default function Home({ videos, articles, activeSport, setActiveSport, setCurrentView, setSelectedItem }) {
   const theme = themes[activeSport];
@@ -16,7 +16,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, se
         </div>
       
         <div className="flex flex-col gap-4">
-          {videos.slice(0, 5).map((video) => (
+          {videos.slice(0, 8).map((video) => (
             <div key={video.id} onClick={() => setSelectedItem(video)} className="group cursor-pointer relative rounded overflow-hidden bg-[#1e1e1e] border border-gray-800 shadow-lg hover:border-gray-500 transition-all">
               <div className="h-40 bg-gradient-to-tr from-[#1c233a] to-[#111] relative flex items-center justify-center overflow-hidden">
                  {video.imageUrl && <img src={video.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity" />}
