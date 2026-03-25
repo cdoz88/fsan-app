@@ -16,6 +16,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, se
         </div>
       
         <div className="flex flex-col gap-4">
+          {/* Slice precisely 8 videos for the left column */}
           {videos.slice(0, 8).map((video) => (
             <div key={video.id} onClick={() => setSelectedItem(video)} className="group cursor-pointer relative rounded overflow-hidden bg-[#1e1e1e] border border-gray-800 shadow-lg hover:border-gray-500 transition-all">
               <div className="h-40 bg-gradient-to-tr from-[#1c233a] to-[#111] relative flex items-center justify-center overflow-hidden">
@@ -102,6 +103,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, se
               More Articles
             </div>
 
+            {/* Slice out the remaining 10 articles fetched to build the list view */}
             {articles.slice(5, 15).map((article) => (
               <div key={article.id} onClick={() => setSelectedItem(article)} className="group cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded p-3 flex gap-4 hover:border-gray-600 transition-all shadow-sm relative overflow-hidden">
                 <div className="w-32 h-24 bg-gray-800 rounded shrink-0 relative overflow-hidden border border-gray-800">

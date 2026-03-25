@@ -20,10 +20,10 @@ export default function App() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // 3. Category & Cache State (THE SPEED FIX)
+  // 3. Category & Cache State
   const [categoryMap, setCategoryMap] = useState({});
   const [isCategoriesReady, setIsCategoriesReady] = useState(false);
-  const [postsCache, setPostsCache] = useState({}); // Memory bank for instant loads
+  const [postsCache, setPostsCache] = useState({}); 
 
   // --- FETCH CATEGORIES ONCE ON MOUNT ---
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function App() {
         setIsCategoriesReady(true);
       } catch (e) {
         console.warn("Failed to fetch categories");
-        setIsCategoriesReady(true); // Let it proceed to fallback
+        setIsCategoriesReady(true); 
       }
     };
     fetchCategories();
@@ -49,7 +49,6 @@ export default function App() {
   useEffect(() => {
     if (!isCategoriesReady) return;
 
-    // THE SPEED FIX: If we already downloaded this sport's first page, load it instantly from memory!
     if (currentPage === 1 && postsCache[activeSport]) {
       setWpPosts(postsCache[activeSport]);
       setIsLoading(false);
@@ -60,7 +59,6 @@ export default function App() {
       try {
         if (currentPage === 1) setIsLoading(true);
 
-        // Dynamically target specific WordPress Category IDs based on the active tab!
         let catQuery = '';
         if (activeSport !== 'All' && Object.keys(categoryMap).length > 0) {
           let targetIds = [];
@@ -81,10 +79,10 @@ export default function App() {
           }
         }
 
-        // Fetch exactly 15 posts specifically for the requested category IDs (Optimized for speed & layout!)
+        // OPTIMIZED FETCH: 15 Articles, 12 Videos
         const [articlesRes, videosRes] = await Promise.all([
           fetch(`https://fsan.com/wp-json/wp/v2/posts?_embed&per_page=15&page=${currentPage}${catQuery}`).catch(e => null),
-          fetch(`https://fsan.com/wp-json/wp/v2/yt2posts_youtube?_embed&per_page=15&page=${currentPage}${catQuery}`).catch(e => null)
+          fetch(`https://fsan.com/wp-json/wp/v2/yt2posts_youtube?_embed&per_page=12&page=${currentPage}${catQuery}`).catch(e => null)
         ]);
 
         if (!articlesRes && !videosRes) throw new Error("Network connection dropped.");
@@ -99,9 +97,11 @@ export default function App() {
           if (slugs.some(s => s.includes('baseball'))) sport = 'Baseball';
 
           const imageUrl = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || null;
-          const author = post._embedded?.author?.[0]?.name || 'FSAN Staff';
           const date = new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
           const rawTimestamp = new Date(post.date).getTime();
+          
+          // Completely strip author data for videos
+          const author = defaultType === 'video' ? null : (post._embedded?.author?.[0]?.name || 'FSAN Staff');
 
           let youtubeId = null;
           let cleanContent = post.content?.rendered || '';
@@ -133,15 +133,12 @@ export default function App() {
         const newPosts = [...formattedArticles, ...formattedVideos];
 
         if (currentPage === 1) {
-          // New tab clicked, completely replace old posts and save to cache
           newPosts.sort((a, b) => b.rawTimestamp - a.rawTimestamp);
           setWpPosts(newPosts);
           setPostsCache(prev => ({ ...prev, [activeSport]: newPosts }));
         } else {
-          // Load More clicked, combine old and new posts
           setWpPosts(prev => {
             const combined = [...prev, ...newPosts];
-            // Remove potential duplicates when paginating
             const uniqueIds = new Set();
             const filteredCombined = combined.filter(p => {
               if (uniqueIds.has(p.id)) return false;
@@ -149,7 +146,6 @@ export default function App() {
               return true;
             }).sort((a, b) => b.rawTimestamp - a.rawTimestamp);
             
-            // Save the newly combined longer list into the cache so they don't lose their place!
             setPostsCache(cache => ({ ...cache, [activeSport]: filteredCombined }));
             return filteredCombined;
           });
@@ -173,8 +169,6 @@ export default function App() {
       setActiveSport(sport);
       setCurrentPage(1);
       
-      // If we don't have it saved in memory yet, clear the screen to show the spinner.
-      // If we do have it saved, it will just seamlessly pop onto the screen instantly!
       if (!postsCache[sport]) {
         setWpPosts([]); 
       }
@@ -200,7 +194,7 @@ export default function App() {
         sport: 'Football',
         type: i % 3 === 0 ? 'video' : 'article',
         imageUrl: null,
-        author: 'System'
+        author: i % 3 === 0 ? null : 'System'
       });
     }
     setWpPosts(mock);
