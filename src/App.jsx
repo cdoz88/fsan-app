@@ -25,13 +25,20 @@ export default function App() {
         const categoryMap = {};
         categories.forEach(c => categoryMap[c.id] = c.slug);
 
+        // We use .catch(e => null) so a failure doesn't crash the whole Promise
         const [articlesRes, videosRes] = await Promise.all([
-          fetch('https://fsan.com/wp-json/wp/v2/posts?_embed&per_page=30').catch(e => e),
-          fetch('https://fsan.com/wp-json/wp/v2/yt2posts_youtube?_embed&per_page=30').catch(e => e)
+          fetch('https://fsan.com/wp-json/wp/v2/posts?_embed&per_page=30').catch(e => null),
+          fetch('https://fsan.com/wp-json/wp/v2/yt2posts_youtube?_embed&per_page=30').catch(e => null)
         ]);
 
-        const rawArticles = articlesRes.ok ? await articlesRes.json() : [];
-        const rawVideos = videosRes.ok ? await videosRes.json() : [];
+        // NEW SAFETY NET: If BOTH return null, the user's internet dropped completely!
+        if (!articlesRes && !videosRes) {
+          throw new Error("Network connection dropped entirely.");
+        }
+
+        // Only parse the JSON if the response exists and was successful
+        const rawArticles = articlesRes?.ok ? await articlesRes.json() : [];
+        const rawVideos = videosRes?.ok ? await videosRes.json() : [];
 
         const formatPost = (post, defaultType) => {
           const slugs = (post.categories || []).map(id => categoryMap[id] || '');
@@ -91,14 +98,14 @@ export default function App() {
     for(let i=0; i<30; i++) {
       mock.push({
         id: `mock-${i}`,
-        title: `MOCKUP: Data Load Failed`,
-        content: '<p>Fallback content.</p>',
-        excerpt: '<p>Fallback summary.</p>',
+        title: `MOCKUP: Check Your Internet Connection`,
+        content: '<p>It looks like your network dropped while loading FSAN.</p>',
+        excerpt: '<p>Please refresh the page to try again.</p>',
         date: `MARCH 25, 2026`,
         sport: 'Football',
         type: i % 3 === 0 ? 'video' : 'article',
         imageUrl: null,
-        author: 'Staff'
+        author: 'System'
       });
     }
     setWpPosts(mock);
