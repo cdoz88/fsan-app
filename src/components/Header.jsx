@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Menu, X } from 'lucide-react';
-import { Facebook, XIcon, Youtube, Instagram } from './Icons';
+import { Facebook, XIcon, Youtube, Instagram, TikTok, LinkedIn, SelloutCrowds } from './Icons';
 import { themes } from '../utils/theme';
 
 const sportsConfig = [
@@ -15,12 +15,44 @@ export default function Header({ activeSport, setActiveSport, setCurrentView }) 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const theme = themes[activeSport];
 
-  // Placeholder social links. You can drop your real URLs in here!
+  // Dynamic social links dictionary
   const socialLinks = {
-    All: { facebook: '#', x: '#', youtube: '#', instagram: '#' },
-    Football: { facebook: '#', x: '#', youtube: '#', instagram: '#' },
-    Basketball: { facebook: '#', x: '#', youtube: '#', instagram: '#' },
-    Baseball: { facebook: '#', x: '#', youtube: '#', instagram: '#' },
+    All: {
+      facebook: 'https://www.facebook.com/fantasyfootballadvicenetwork',
+      x: 'https://x.com/fsadvicenet',
+      youtube: 'https://www.youtube.com/@FFAdviceNet',
+      tiktok: 'https://www.tiktok.com/@fsadvicenetwork',
+      linkedin: 'https://www.linkedin.com/company/fantasy-sports-advice',
+      sellout: 'https://www.selloutcrowds.com/crowd/fsan',
+      instagram: null
+    },
+    Football: {
+      facebook: 'https://www.facebook.com/fantasyfootballadvicenetwork',
+      x: 'https://x.com/FFAdviceNet',
+      youtube: 'https://www.youtube.com/@FFAdviceNet',
+      instagram: 'https://www.instagram.com/ffadvicenet/',
+      sellout: '#',
+      tiktok: null,
+      linkedin: null
+    },
+    Basketball: {
+      facebook: null,
+      x: 'https://x.com/FBBAdviceNet',
+      youtube: 'https://www.youtube.com/@FBBAdviceNet',
+      instagram: 'https://www.instagram.com/fbkadvicenet/',
+      sellout: '#',
+      tiktok: null,
+      linkedin: null
+    },
+    Baseball: {
+      facebook: null,
+      x: 'https://x.com/FBAdviceNet',
+      youtube: 'https://www.youtube.com/@FBAdviceNet',
+      instagram: 'https://www.instagram.com/fbadvicenet/',
+      sellout: '#',
+      tiktok: null,
+      linkedin: null
+    },
   };
   const currentLinks = socialLinks[activeSport];
 
@@ -75,11 +107,16 @@ export default function Header({ activeSport, setActiveSport, setCurrentView }) 
             <span className="text-xs">Search</span>
           </button>
           <div className="h-4 w-px bg-gray-700"></div>
+          
+          {/* Dynamically render ONLY the icons that have links for this specific sport */}
           <div className="flex items-center gap-4">
-            <a href={currentLinks.facebook} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Facebook size={16} /></a>
-            <a href={currentLinks.x} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><XIcon size={16} /></a>
-            <a href={currentLinks.youtube} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Youtube size={16} /></a>
-            <a href={currentLinks.instagram} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Instagram size={16} /></a>
+            {currentLinks.facebook && <a href={currentLinks.facebook} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Facebook size={16} /></a>}
+            {currentLinks.x && <a href={currentLinks.x} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><XIcon size={16} /></a>}
+            {currentLinks.youtube && <a href={currentLinks.youtube} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Youtube size={16} /></a>}
+            {currentLinks.instagram && <a href={currentLinks.instagram} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Instagram size={16} /></a>}
+            {currentLinks.tiktok && <a href={currentLinks.tiktok} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><TikTok size={16} /></a>}
+            {currentLinks.linkedin && <a href={currentLinks.linkedin} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><LinkedIn size={16} /></a>}
+            {currentLinks.sellout && <a href={currentLinks.sellout} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><SelloutCrowds size={16} /></a>}
           </div>
         </div>
       </div>
