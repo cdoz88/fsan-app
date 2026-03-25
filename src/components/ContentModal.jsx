@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, PlayCircle, ArrowLeft } from 'lucide-react';
-import { Facebook, Twitter } from './Icons';
+import { Facebook, XIcon } from './Icons';
 import { themes } from '../utils/theme';
 
 export default function ContentModal({ selectedItem, setSelectedItem, videos }) {
@@ -83,7 +83,7 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
                   <p className="font-bold text-sm">{selectedItem.author}</p>
                 </div>
                 <div className="ml-auto flex gap-2">
-                  <button className="w-8 h-8 rounded-full bg-[#1DA1F2]/10 text-[#1DA1F2] flex items-center justify-center hover:bg-[#1DA1F2] hover:text-white transition-colors"><Twitter size={14} /></button>
+                  <button className="w-8 h-8 rounded-full bg-[#1DA1F2]/10 text-[#1DA1F2] flex items-center justify-center hover:bg-[#1DA1F2] hover:text-white transition-colors"><XIcon size={14} /></button>
                   <button className="w-8 h-8 rounded-full bg-[#4267B2]/10 text-[#4267B2] flex items-center justify-center hover:bg-[#4267B2] hover:text-white transition-colors"><Facebook size={14} /></button>
                 </div>
               </div>
