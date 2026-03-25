@@ -1,9 +1,9 @@
 import React from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { themes } from '../utils/theme';
-import Sidebar from '../components/Sidebar'; // <-- Import the Sidebar!
+import Sidebar from '../components/Sidebar';
 
-export default function ArticlesArchive({ articles, activeSport, setCurrentView, setSelectedItem }) {
+export default function ArticlesArchive({ articles, activeSport, setCurrentView, setSelectedItem, loadMorePosts, isLoadingMore }) {
   const theme = themes[activeSport];
 
   return (
@@ -56,8 +56,12 @@ export default function ArticlesArchive({ articles, activeSport, setCurrentView,
         </div>
         
         {articles.length > 0 && (
-          <button className={`w-full py-4 mt-8 border border-gray-700 rounded-lg text-sm font-bold uppercase tracking-widest transition-colors bg-[#1a1a1a] ${theme.hoverText} ${theme.hoverBorder}`}>
-            Load Older Articles
+          <button 
+            onClick={loadMorePosts}
+            disabled={isLoadingMore}
+            className={`w-full py-4 mt-8 border border-gray-700 rounded-lg text-sm font-bold uppercase tracking-widest transition-colors bg-[#1a1a1a] flex items-center justify-center gap-3 ${isLoadingMore ? 'opacity-50 cursor-not-allowed' : `${theme.hoverText} ${theme.hoverBorder}`}`}
+          >
+            {isLoadingMore ? <><Loader2 size={18} className="animate-spin" /> Fetching Older Articles...</> : 'Load Older Articles'}
           </button>
         )}
       </div>

@@ -14,7 +14,50 @@ export default function App() {
   const [currentView, setCurrentView] = useState('home'); 
   const [wpPosts, setWpPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // NEW: Track which page of data we are on
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [categoryMap, setCategoryMap] = useState({});
 
+  // Helper function to format raw WordPress data
+  const formatPost = (post, defaultType, catMap) => {
+    const slugs = (post.categories || []).map(id => catMap[id] || '');
+    let sport = 'Football'; 
+    if (slugs.some(s => s.includes('basketball'))) sport = 'Basketball';
+    if (slugs.some(s => s.includes('baseball'))) sport = 'Baseball';
+
+    const imageUrl = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || null;
+    const author = post._embedded?.author?.[0]?.name || 'FSAN Staff';
+    const date = new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
+    const rawTimestamp = new Date(post.date).getTime();
+
+    let youtubeId = null;
+    let cleanContent = post.content?.rendered || '';
+    const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+    const match = cleanContent.match(ytRegex);
+    if (match && match[1]) {
+      youtubeId = match[1];
+      cleanContent = cleanContent.replace(/<iframe.*?<\/iframe>/i, '');
+    }
+
+    return {
+      id: post.id,
+      title: post.title?.rendered || 'Untitled',
+      content: cleanContent,
+      excerpt: post.excerpt?.rendered || '',
+      date,
+      rawTimestamp,
+      sport,
+      type: defaultType,
+      imageUrl,
+      author,
+      youtubeId,
+      link: post.link
+    };
+  };
+
+  // 1. INITIAL LOAD (Page 1)
   useEffect(() => {
     const fetchWordPressData = async () => {
       try {
@@ -22,62 +65,23 @@ export default function App() {
         const catRes = await fetch('https://fsan.com/wp-json/wp/v2/categories?per_page=100&_fields=id,slug');
         if (!catRes.ok) throw new Error("CORS or Network Error");
         const categories = await catRes.json();
-        const categoryMap = {};
-        categories.forEach(c => categoryMap[c.id] = c.slug);
+        
+        const newCatMap = {};
+        categories.forEach(c => newCatMap[c.id] = c.slug);
+        setCategoryMap(newCatMap); // Save for later pagination
 
-        // We use .catch(e => null) so a failure doesn't crash the whole Promise
         const [articlesRes, videosRes] = await Promise.all([
-          fetch('https://fsan.com/wp-json/wp/v2/posts?_embed&per_page=30').catch(e => null),
-          fetch('https://fsan.com/wp-json/wp/v2/yt2posts_youtube?_embed&per_page=30').catch(e => null)
+          fetch('https://fsan.com/wp-json/wp/v2/posts?_embed&per_page=30&page=1').catch(e => null),
+          fetch('https://fsan.com/wp-json/wp/v2/yt2posts_youtube?_embed&per_page=30&page=1').catch(e => null)
         ]);
 
-        // NEW SAFETY NET: If BOTH return null, the user's internet dropped completely!
-        if (!articlesRes && !videosRes) {
-          throw new Error("Network connection dropped entirely.");
-        }
+        if (!articlesRes && !videosRes) throw new Error("Network connection dropped entirely.");
 
-        // Only parse the JSON if the response exists and was successful
         const rawArticles = articlesRes?.ok ? await articlesRes.json() : [];
         const rawVideos = videosRes?.ok ? await videosRes.json() : [];
 
-        const formatPost = (post, defaultType) => {
-          const slugs = (post.categories || []).map(id => categoryMap[id] || '');
-          let sport = 'Football'; 
-          if (slugs.some(s => s.includes('basketball'))) sport = 'Basketball';
-          if (slugs.some(s => s.includes('baseball'))) sport = 'Baseball';
-
-          const imageUrl = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || null;
-          const author = post._embedded?.author?.[0]?.name || 'FSAN Staff';
-          const date = new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
-          const rawTimestamp = new Date(post.date).getTime();
-
-          let youtubeId = null;
-          let cleanContent = post.content?.rendered || '';
-          const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
-          const match = cleanContent.match(ytRegex);
-          if (match && match[1]) {
-            youtubeId = match[1];
-            cleanContent = cleanContent.replace(/<iframe.*?<\/iframe>/i, '');
-          }
-
-          return {
-            id: post.id,
-            title: post.title?.rendered || 'Untitled',
-            content: cleanContent,
-            excerpt: post.excerpt?.rendered || '',
-            date,
-            rawTimestamp,
-            sport,
-            type: defaultType,
-            imageUrl,
-            author,
-            youtubeId,
-            link: post.link
-          };
-        };
-
-        const formattedArticles = rawArticles.map(post => formatPost(post, 'article'));
-        const formattedVideos = rawVideos.map(post => formatPost(post, 'video'));
+        const formattedArticles = rawArticles.map(post => formatPost(post, 'article', newCatMap));
+        const formattedVideos = rawVideos.map(post => formatPost(post, 'video', newCatMap));
         const allPosts = [...formattedArticles, ...formattedVideos];
         allPosts.sort((a, b) => b.rawTimestamp - a.rawTimestamp);
         
@@ -92,6 +96,41 @@ export default function App() {
 
     fetchWordPressData();
   }, []);
+
+  // 2. LOAD MORE FUNCTION (Page 2, 3, 4...)
+  const loadMorePosts = async () => {
+    if (isLoadingMore) return;
+    try {
+      setIsLoadingMore(true);
+      const nextPage = currentPage + 1;
+
+      const [articlesRes, videosRes] = await Promise.all([
+        fetch(`https://fsan.com/wp-json/wp/v2/posts?_embed&per_page=30&page=${nextPage}`).catch(e => null),
+        fetch(`https://fsan.com/wp-json/wp/v2/yt2posts_youtube?_embed&per_page=30&page=${nextPage}`).catch(e => null)
+      ]);
+
+      const rawArticles = articlesRes?.ok ? await articlesRes.json() : [];
+      const rawVideos = videosRes?.ok ? await videosRes.json() : [];
+
+      const formattedArticles = rawArticles.map(post => formatPost(post, 'article', categoryMap));
+      const formattedVideos = rawVideos.map(post => formatPost(post, 'video', categoryMap));
+      
+      const newPosts = [...formattedArticles, ...formattedVideos];
+      
+      // Combine old posts with new posts and sort them!
+      setWpPosts(prevPosts => {
+        const combined = [...prevPosts, ...newPosts];
+        return combined.sort((a, b) => b.rawTimestamp - a.rawTimestamp);
+      });
+      
+      setCurrentPage(nextPage);
+
+    } catch (error) {
+      console.warn("Failed to load more posts.", error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   const generateMockData = () => {
     const mock = [];
@@ -132,11 +171,11 @@ export default function App() {
       )}
 
       {!isLoading && currentView === 'videos' && (
-        <VideosArchive videos={videos} activeSport={activeSport} setCurrentView={setCurrentView} setSelectedItem={setSelectedItem} />
+        <VideosArchive videos={videos} activeSport={activeSport} setCurrentView={setCurrentView} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
 
       {!isLoading && currentView === 'articles' && (
-        <ArticlesArchive articles={articles} activeSport={activeSport} setCurrentView={setCurrentView} setSelectedItem={setSelectedItem} />
+        <ArticlesArchive articles={articles} activeSport={activeSport} setCurrentView={setCurrentView} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
 
       {selectedItem && (
