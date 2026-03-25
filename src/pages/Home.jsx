@@ -1,6 +1,7 @@
 import React from 'react';
 import { PlayCircle } from 'lucide-react';
 import { themes } from '../utils/theme';
+import Sidebar from '../components/Sidebar'; // <-- Import our new component!
 
 export default function Home({ videos, articles, activeSport, setActiveSport, setCurrentView, setSelectedItem }) {
   const theme = themes[activeSport];
@@ -139,24 +140,9 @@ export default function Home({ videos, articles, activeSport, setActiveSport, se
         )}
       </div>
 
-      {/* RIGHT COLUMN: ADS */}
-      <div className="hidden lg:flex lg:col-span-3 flex-col gap-6">
-        <div>
-          <div className="bg-[#1a1a1a] p-3 border-b-2 border-red-600 font-bold uppercase tracking-wider text-sm shadow-md mb-4">
-            2026 Rookie Guide
-          </div>
-          <div className="bg-gradient-to-b from-red-900 to-black border border-red-800 p-4 rounded-lg text-center cursor-pointer hover:shadow-[0_0_15px_rgba(220,38,38,0.5)] transition-all relative overflow-hidden">
-             <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#fff_10px,#fff_20px)]"></div>
-             <div className="relative z-10">
-               <h3 className="text-red-500 font-black text-2xl italic tracking-tighter mb-1 uppercase drop-shadow-md">Dominate</h3>
-               <p className="text-white text-[10px] font-bold uppercase tracking-widest mb-3">Your Draft With The Ultimate<br/>Rookie Breakdown!</p>
-               <button className="bg-green-600 hover:bg-green-500 text-white w-full py-2 rounded-full font-black text-xs uppercase tracking-wider transform transition hover:scale-105 shadow-lg">
-                 Only $10 - Get Access
-               </button>
-             </div>
-          </div>
-        </div>
-      </div>
+      {/* RIGHT COLUMN: DYNAMIC SMART SIDEBAR */}
+      <Sidebar activeSport={activeSport} />
+
     </main>
   );
 }
