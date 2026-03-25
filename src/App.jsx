@@ -81,10 +81,10 @@ export default function App() {
           }
         }
 
-        // Fetch exactly 30 posts specifically for the requested category IDs
+        // Fetch exactly 16 posts specifically for the requested category IDs (Optimized for speed!)
         const [articlesRes, videosRes] = await Promise.all([
-          fetch(`https://fsan.com/wp-json/wp/v2/posts?_embed&per_page=30&page=${currentPage}${catQuery}`).catch(e => null),
-          fetch(`https://fsan.com/wp-json/wp/v2/yt2posts_youtube?_embed&per_page=30&page=${currentPage}${catQuery}`).catch(e => null)
+          fetch(`https://fsan.com/wp-json/wp/v2/posts?_embed&per_page=16&page=${currentPage}${catQuery}`).catch(e => null),
+          fetch(`https://fsan.com/wp-json/wp/v2/yt2posts_youtube?_embed&per_page=16&page=${currentPage}${catQuery}`).catch(e => null)
         ]);
 
         if (!articlesRes && !videosRes) throw new Error("Network connection dropped.");
@@ -190,7 +190,7 @@ export default function App() {
 
   const generateMockData = () => {
     const mock = [];
-    for(let i=0; i<30; i++) {
+    for(let i=0; i<16; i++) {
       mock.push({
         id: `mock-${i}`,
         title: `MOCKUP: Check Your Internet Connection`,
