@@ -55,7 +55,7 @@ export default function App() {
         // Removing "categories_exclude" fixes the massive 6-second database slowdown!
         const [articlesRes, videosRes] = await Promise.all([
           fetch('https://fsan.com/wp-json/wp/v2/posts?_embed&per_page=15').catch(e => e),
-          fetch('https://fsan.com/wp-json/wp/v2/youtube?_embed&per_page=10').catch(e => e) // Hit the CPT!
+          fetch('https://fsan.com/wp-json/wp/v2/yt2posts_youtube?_embed&per_page=10').catch(e => e) // Hit the exact CPT slug!
         ]);
 
         const rawArticles = articlesRes.ok ? await articlesRes.json() : [];
