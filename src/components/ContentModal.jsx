@@ -53,7 +53,7 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
       <div className="p-4 border-b border-gray-800 font-bold text-sm uppercase tracking-wider shrink-0">Up Next</div>
       
       <div className="overflow-y-auto p-4 flex flex-col gap-4 flex-1">
-        {videos.filter(v => v.id !== selectedItem.id).slice(0,5).map(v => (
+        {videos.filter(v => v.type === 'video' && v.id !== selectedItem.id).slice(0,5).map(v => (
           <div key={v.id} onClick={() => setSelectedItem(v)} className="flex gap-3 group cursor-pointer">
             <div className="w-24 h-16 bg-gray-800 rounded shrink-0 relative flex items-center justify-center overflow-hidden">
               {v.imageUrl && <img src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-40" alt="" />}
