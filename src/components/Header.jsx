@@ -15,12 +15,12 @@ export default function Header({ activeSport, setActiveSport, setCurrentView }) 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const theme = themes[activeSport];
 
-  // DYNAMIC MAIN LOGOS! Just drop the exact image URLs here for each sport
+  // DYNAMIC MAIN LOGOS!
   const logos = {
     All: 'https://fsan.com/wp-content/uploads/2023/12/Horizontal-White.webp',
-    Football: 'https://fsan.com/wp-content/uploads/2023/12/Horizontal-White.webp', // Add FFAN Logo here later
-    Basketball: 'https://fsan.com/wp-content/uploads/2023/12/Horizontal-White.webp', // Add FBBAN Logo here later
-    Baseball: 'https://fsan.com/wp-content/uploads/2023/12/Horizontal-White.webp', // Add FBAN Logo here later
+    Football: 'https://fsan.com/wp-content/uploads/2023/11/Horizontal-White-2.webp',
+    Basketball: 'https://fsan.com/wp-content/uploads/2023/11/Horizontal-white.webp',
+    Baseball: 'https://fsan.com/wp-content/uploads/2023/11/Horizontal-white-1.webp',
   };
 
   // Dynamic social links dictionary

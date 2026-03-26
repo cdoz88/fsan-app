@@ -8,11 +8,28 @@ import Home from './pages/Home';
 import VideosArchive from './pages/VideosArchive';
 import ArticlesArchive from './pages/ArticlesArchive';
 
+// Helpers to read the URL when the app first loads
+const getInitialSport = () => {
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('sport') || 'All';
+  }
+  return 'All';
+};
+
+const getInitialView = () => {
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('view') || 'home';
+  }
+  return 'home';
+};
+
 export default function App() {
-  // 1. Core State
-  const [activeSport, setActiveSport] = useState('All');
+  // 1. Core State (Initialized from the URL!)
+  const [activeSport, setActiveSport] = useState(getInitialSport);
+  const [currentView, setCurrentView] = useState(getInitialView); 
   const [selectedItem, setSelectedItem] = useState(null);
-  const [currentView, setCurrentView] = useState('home'); 
   const [wpPosts, setWpPosts] = useState([]);
 
   // 2. Loading & Pagination State
@@ -24,6 +41,38 @@ export default function App() {
   const [categoryMap, setCategoryMap] = useState({});
   const [isCategoriesReady, setIsCategoriesReady] = useState(false);
   const [postsCache, setPostsCache] = useState({}); 
+
+  // --- NATIVE URL ROUTING SYNC ---
+  // Updates the URL bar seamlessly whenever the sport or view changes
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    let changed = false;
+    
+    if (params.get('sport') !== activeSport) {
+      params.set('sport', activeSport);
+      changed = true;
+    }
+    if (params.get('view') !== currentView) {
+      params.set('view', currentView);
+      changed = true;
+    }
+    
+    if (changed) {
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.pushState({}, '', newUrl);
+    }
+  }, [activeSport, currentView]);
+
+  // Listen for the browser's "Back" and "Forward" buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      setActiveSport(params.get('sport') || 'All');
+      setCurrentView(params.get('view') || 'home');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // --- FETCH CATEGORIES ONCE ON MOUNT ---
   useEffect(() => {
@@ -100,7 +149,6 @@ export default function App() {
           const date = new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
           const rawTimestamp = new Date(post.date).getTime();
           
-          // Completely strip author data for videos
           const author = defaultType === 'video' ? null : (post._embedded?.author?.[0]?.name || 'FSAN Staff');
 
           let youtubeId = null;
