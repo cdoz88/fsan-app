@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlayCircle, FileText, Film, Mic, ChevronRight, LayoutList, Users, Calculator, ArrowLeftRight } from 'lucide-react';
+import { PlayCircle, FileText, Film, Mic, ChevronRight, LayoutList, Users, Calculator, ArrowLeftRight, Shirt, Flag } from 'lucide-react';
 import { Facebook, XIcon, Youtube, Instagram, TikTok, LinkedIn, SelloutCrowds } from '../components/Icons';
 import { themes } from '../utils/theme';
 
@@ -154,6 +154,22 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                     </a>
                   );
                 })}
+             </div>
+          </div>
+
+          {/* Submenu: Connect */}
+          <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
+             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Connect</h4>
+             <div className="flex flex-col gap-1">
+                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
+                  <SelloutCrowds size={18} className={theme.text} /> Exclusive Community
+                </a>
+                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
+                  <Shirt size={18} className={theme.text} /> Join A Jersey League
+                </a>
+                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
+                  <Flag size={18} className={theme.text} /> Compete in the Napkin League
+                </a>
              </div>
           </div>
 

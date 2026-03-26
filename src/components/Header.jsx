@@ -36,9 +36,6 @@ export default function Header({ activeSport, setActiveSport, setCurrentView }) 
         </div>
 
         <div className="hidden lg:flex items-center gap-6 text-gray-400 uppercase">
-          <a href="#" className="hover:text-white transition-colors">Join Our Community</a>
-          <a href="#" className="hover:text-white transition-colors">Join The Napkin League</a>
-          <a href="#" className="hover:text-white transition-colors">Join A Jersey League</a>
           <a href="#" className="hover:text-white transition-colors">Subscribe</a>
           <a href="#" className="hover:text-white transition-colors">Log In</a>
         </div>
