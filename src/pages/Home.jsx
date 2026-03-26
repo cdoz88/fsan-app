@@ -258,6 +258,9 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
             const count = items.length;
             const adTypes = ['sellout', 'rookie', 'merch'];
             const adTypeForThisDay = adTypes[groupIndex % adTypes.length]; 
+            
+            // A simple variable to mathematically cycle through layout variants!
+            const layoutStyle = groupIndex % 3;
 
             return (
               <div key={group.date} className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -274,13 +277,13 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                 {/* THE DYNAMIC EDITORIAL GRID */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   
-                  {/* LAYOUT 1: Only 1 Item */}
+                  {/* LAYOUT 1: Only 1 Item (Alternating Left & Right) */}
                   {count === 1 && (
                     <>
-                      <div className="lg:col-span-2">
+                      <div className={`lg:col-span-2 ${layoutStyle % 2 !== 0 ? 'order-first lg:order-last' : ''}`}>
                         <HorizontalCard item={items[0]} isHero={false} />
                       </div>
-                      <div className="lg:col-span-1 relative min-h-[200px] lg:min-h-0">
+                      <div className={`lg:col-span-1 relative min-h-[200px] lg:min-h-0 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-first' : ''}`}>
                         {/* Wrapper perfectly flex-matches the card height on desktop! */}
                         <div className="lg:absolute lg:inset-0 w-full h-full">
                           <PromoAd type={adTypeForThisDay} shape="square" />
@@ -289,10 +292,11 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                     </>
                   )}
 
-                  {/* LAYOUT 2: Exactly 2 Items */}
-                  {count === 2 && (
+                  {/* LAYOUT 2: Exactly 2 Items (Cycling through 3 different stack formations) */}
+                  {count === 2 && layoutStyle === 0 && (
                     <>
-                      <div className="lg:col-span-1">
+                      {/* Variant A: Vertical Left, Stacked Right (Content Top, Ad Bottom) */}
+                      <div className="lg:col-span-1 lg:row-span-2">
                         <VerticalCard item={items[0]} />
                       </div>
                       <div className="lg:col-span-2 flex flex-col gap-6">
@@ -303,6 +307,41 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                             <PromoAd type={adTypeForThisDay} shape="banner" />
                           </div>
                         </div>
+                      </div>
+                    </>
+                  )}
+
+                  {count === 2 && layoutStyle === 1 && (
+                    <>
+                      {/* Variant B: Stacked Left (Ad Top, Content Bottom), Vertical Right */}
+                      <div className="lg:col-span-2 flex flex-col gap-6 order-last lg:order-none">
+                        <div className="flex-1 relative min-h-[150px] lg:min-h-0 w-full order-last lg:order-first">
+                          {/* We 'order-last' this ad on mobile so it doesn't push the primary content down! */}
+                          <div className="lg:absolute lg:inset-0 w-full h-full">
+                            <PromoAd type={adTypeForThisDay} shape="banner" />
+                          </div>
+                        </div>
+                        <HorizontalCard item={items[1]} isHero={false} />
+                      </div>
+                      <div className="lg:col-span-1 lg:row-span-2">
+                        <VerticalCard item={items[0]} />
+                      </div>
+                    </>
+                  )}
+
+                  {count === 2 && layoutStyle === 2 && (
+                    <>
+                      {/* Variant C: Stacked Left (Content Top, Ad Bottom), Vertical Right */}
+                      <div className="lg:col-span-2 flex flex-col gap-6 order-last lg:order-none">
+                        <HorizontalCard item={items[1]} isHero={false} />
+                        <div className="flex-1 relative min-h-[150px] lg:min-h-0 w-full">
+                          <div className="lg:absolute lg:inset-0 w-full h-full">
+                            <PromoAd type={adTypeForThisDay} shape="banner" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="lg:col-span-1 lg:row-span-2">
+                        <VerticalCard item={items[0]} />
                       </div>
                     </>
                   )}
