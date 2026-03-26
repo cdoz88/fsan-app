@@ -17,13 +17,13 @@ const ShareButtons = ({ handleShare, handleCopy, copied, btnSize = "w-8 h-8", ic
 
 // --- FLOATING MODAL AD ---
 const ModalBannerAd = () => (
-  <div className="w-full shrink-0 mb-3 sm:mb-4 bg-gradient-to-r from-red-900 to-black border border-red-800 rounded-xl p-3 sm:p-4 shadow-2xl flex items-center justify-between group cursor-pointer hover:border-red-500 transition-colors relative overflow-hidden">
+  <div className="w-full shrink-0 mb-3 sm:mb-4 bg-gradient-to-r from-red-900 to-black border border-red-800 rounded-xl p-3 sm:p-4 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 group cursor-pointer hover:border-red-500 transition-colors relative overflow-hidden">
     <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#fff_10px,#fff_20px)]"></div>
-    <div className="relative z-10 flex items-center gap-4">
-      <h3 className="text-red-500 font-black text-xl lg:text-2xl italic uppercase drop-shadow-md group-hover:scale-105 transition-transform origin-left leading-none">Dominate</h3>
-      <p className="text-white text-[10px] sm:text-xs font-bold uppercase tracking-widest hidden sm:block line-clamp-1">Get The Ultimate Rookie Breakdown!</p>
+    <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-4 flex-1">
+      <h3 className="text-red-500 font-black text-xl lg:text-2xl italic uppercase drop-shadow-md group-hover:scale-105 transition-transform origin-left leading-none shrink-0">Dominate</h3>
+      <p className="text-white text-[10px] sm:text-xs font-bold uppercase tracking-widest text-left">Get The Ultimate Rookie Breakdown!</p>
     </div>
-    <button className="bg-green-600 text-white px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 shrink-0 whitespace-nowrap">
+    <button className="bg-green-600 text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-full font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 shrink-0 whitespace-nowrap w-full sm:w-auto">
       Only $10 - Get Access
     </button>
   </div>
@@ -31,9 +31,9 @@ const ModalBannerAd = () => (
 
 // --- 1. VIDEO MODAL LAYOUT ---
 const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, handleCopy, copied }) => (
-  <div className="flex flex-col lg:flex-row h-full min-h-0">
-    <div className="lg:w-3/4 flex flex-col bg-black min-h-0">
-      <div className="w-full aspect-video bg-gradient-to-br from-gray-900 to-black flex items-center justify-center relative border-b border-gray-800 overflow-hidden shrink-0">
+  <div className="flex flex-col h-full min-h-0">
+    <div className="flex-1 overflow-y-auto bg-[#121212] flex flex-col min-h-0">
+      <div className="w-full aspect-video bg-black flex items-center justify-center relative border-b border-gray-800 overflow-hidden shrink-0">
          {selectedItem.youtubeId ? (
            <iframe src={`https://www.youtube.com/embed/${selectedItem.youtubeId}?autoplay=1`} className="absolute inset-0 w-full h-full" frameBorder="0" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen></iframe>
          ) : (
@@ -43,35 +43,41 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
            </>
          )}
       </div>
-      <div className="p-6 bg-[#121212] flex-1 overflow-y-auto">
-        <h1 className="text-2xl font-bold text-white mb-4" dangerouslySetInnerHTML={{ __html: selectedItem.title }} />
-        <div className="text-gray-400 text-sm whitespace-pre-wrap leading-relaxed" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
+      <div className="p-6 md:p-8 flex-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-gray-800">
+          <div className="flex gap-2 items-center">
+            <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport]?.bg || 'bg-gray-500'}`}></span>
+            <span className="text-gray-400 font-bold text-xs uppercase tracking-wider">{selectedItem.sport} • {selectedItem.date}</span>
+          </div>
+          <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} />
+        </div>
+        
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-6 leading-tight drop-shadow-lg" dangerouslySetInnerHTML={{ __html: selectedItem.title }} />
+        
+        <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
       </div>
     </div>
     
-    <div className="lg:w-1/4 bg-[#161616] border-l border-gray-800 flex flex-col min-h-0">
-      <div className="p-4 border-b border-gray-800 font-bold text-sm uppercase tracking-wider shrink-0">Up Next</div>
-      
-      <div className="overflow-y-auto p-4 flex flex-col gap-4 flex-1">
-        {videos.filter(v => v.type === 'video' && v.id !== selectedItem.id).slice(0,5).map(v => (
-          <div key={v.id} onClick={() => setSelectedItem(v)} className="flex gap-3 group cursor-pointer">
-            <div className="w-24 h-16 bg-gray-800 rounded shrink-0 relative flex items-center justify-center overflow-hidden">
-              {v.imageUrl && <img src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-40" alt="" />}
-              <PlayCircle size={16} className="text-white/50 z-10" />
+    <div className="bg-[#1a1a1a] border-t border-gray-800 shrink-0 flex flex-col">
+      <div className="px-6 py-3 border-b border-gray-800 font-bold text-[10px] uppercase tracking-wider text-gray-500 flex justify-between items-center">
+        <span>Up Next</span>
+      </div>
+      <div className="flex overflow-x-auto p-4 md:px-6 gap-4 scrollbar-hide">
+        {videos.filter(v => v.type === 'video' && v.id !== selectedItem.id).slice(0, 10).map(v => (
+          <div key={v.id} onClick={() => setSelectedItem(v)} className="w-48 sm:w-64 shrink-0 flex flex-col gap-3 group cursor-pointer">
+            <div className="w-full aspect-video bg-[#111] rounded-xl relative flex items-center justify-center overflow-hidden border border-gray-800 group-hover:border-gray-500 transition-colors shadow-lg">
+              {v.imageUrl && <img src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-50 transition-opacity" alt="" />}
+              <PlayCircle size={32} className="text-white/60 z-10 group-hover:text-white group-hover:scale-110 transition-all" />
+              <div className="absolute top-2 left-2 flex items-center bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-sm">
+                <span className={`w-1.5 h-1.5 rounded-full ${themes[v.sport]?.bg || 'bg-gray-500'}`}></span>
+              </div>
             </div>
-            <div className="flex flex-col justify-center">
-              <h4 className={`text-xs font-bold leading-tight group-hover:${themes[v.sport]?.text || 'text-white'} line-clamp-2`} dangerouslySetInnerHTML={{ __html: v.title }} />
+            <div>
+              <h4 className={`text-xs sm:text-sm font-bold leading-tight text-gray-300 group-hover:${themes[v.sport]?.text || 'text-white'} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: v.title }} />
+              <p className="text-[10px] text-gray-500 mt-1">{v.date}</p>
             </div>
           </div>
         ))}
-      </div>
-
-      <div className="p-4 border-t border-gray-800 bg-[#1a1a1a] shrink-0">
-        <div className="flex gap-2 items-center mb-4">
-          <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport]?.bg || 'bg-gray-500'}`}></span>
-          <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">{selectedItem.sport} • {selectedItem.date}</span>
-        </div>
-        <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} />
       </div>
     </div>
   </div>
@@ -117,7 +123,7 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
       </div>
 
       {/* Bottom Shelf: Tighter and smaller so the video gets the spotlight */}
-      <div className="bg-[#1a1a1a] border-t border-gray-800 shrink-0 flex flex-col hidden sm:flex">
+      <div className="bg-[#1a1a1a] border-t border-gray-800 shrink-0 flex flex-col">
         <div className="px-4 py-3 border-b border-gray-800 font-bold text-[10px] uppercase tracking-wider text-gray-500 flex justify-between items-center">
           <span>More Shorts</span>
         </div>
