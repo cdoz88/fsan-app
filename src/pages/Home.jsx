@@ -11,8 +11,14 @@ export default function Home({ videos, articles, activeSport, setActiveSport, se
       
       {/* LEFT COLUMN: VIDEOS */}
       <div className="md:col-span-1 lg:col-span-3 flex flex-col gap-4">
-        <div className={`bg-[#1a1a1a] p-3 border-b-2 ${theme.border} font-bold uppercase tracking-wider text-sm shadow-md transition-colors duration-300`}>
-          Latest Videos
+        <div className={`bg-[#1a1a1a] p-3 border-b-2 ${theme.border} font-bold uppercase tracking-wider text-sm shadow-md flex justify-between items-center transition-colors duration-300`}>
+          <span>Latest Videos</span>
+          <button 
+            onClick={() => setCurrentView('videos')} 
+            className="text-[10px] text-gray-500 hover:text-gray-300 transition-colors tracking-widest uppercase cursor-pointer"
+          >
+            See All
+          </button>
         </div>
       
         <div className="flex flex-col gap-4">
@@ -55,6 +61,12 @@ export default function Home({ videos, articles, activeSport, setActiveSport, se
       <div className="md:col-span-2 lg:col-span-6 flex flex-col gap-4">
         <div className={`bg-[#1a1a1a] p-3 border-b-2 ${theme.border} font-bold uppercase tracking-wider text-sm shadow-md flex justify-between items-center transition-colors duration-300`}>
           <span>Latest Articles</span>
+          <button 
+            onClick={() => setCurrentView('articles')} 
+            className="text-[10px] text-gray-500 hover:text-gray-300 transition-colors tracking-widest uppercase cursor-pointer"
+          >
+            See All
+          </button>
         </div>
 
         {articles.length > 0 && (
