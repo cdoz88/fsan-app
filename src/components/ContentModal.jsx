@@ -64,60 +64,71 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
 );
 
 // --- 2. SHORT MODAL LAYOUT ---
-const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, handleCopy, copied }) => (
-  <div className="flex flex-col h-full max-h-[85vh]">
-    <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
-      
-      <div className="lg:w-1/2 bg-black flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-800 shrink-0 p-6 sm:p-10 relative">
-        <div className="w-full max-w-[340px] aspect-[9/16] bg-gray-900 rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800">
-           {selectedItem.youtubeId ? (
-             <iframe src={`https://www.youtube.com/embed/${selectedItem.youtubeId}?autoplay=1`} className="absolute inset-0 w-full h-full" frameBorder="0" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen></iframe>
-           ) : (
-             <>
-               {selectedItem.imageUrl && <img src={selectedItem.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm" alt="" />}
-               <PlayCircle size={64} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 z-10 hover:scale-110 transition-transform cursor-pointer" />
-             </>
-           )}
-        </div>
-      </div>
-      
-      <div className="lg:w-1/2 p-6 sm:p-10 bg-[#121212] flex flex-col overflow-y-auto">
-        <div className="flex gap-2 items-center mb-4">
-          <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport].bg}`}></span>
-          <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">{selectedItem.sport} • {selectedItem.date}</span>
-        </div>
-        
-        <h1 className="text-3xl font-black text-white mb-6 leading-tight drop-shadow-lg" dangerouslySetInnerHTML={{ __html: selectedItem.title }} />
-        
-        <div className="mb-6 pb-6 border-b border-gray-800">
-          <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} btnSize="w-10 h-10" iconSize={16} />
-        </div>
+const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, handleCopy, copied }) => {
+  // Filter out everything except Shorts for the bottom tray!
+  const shorts = videos.filter(v => v.type === 'short' && v.id !== selectedItem.id);
 
-        <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-1" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
-      </div>
-    </div>
-
-    <div className="bg-[#1a1a1a] border-t border-gray-800 shrink-0 flex flex-col hidden sm:flex">
-      <div className="px-6 py-3 border-b border-gray-800 font-bold text-[10px] uppercase tracking-wider text-gray-500 flex justify-between items-center">
-        <span>More Videos & Shorts</span>
-      </div>
-      <div className="flex overflow-x-auto p-4 px-6 gap-4 scrollbar-hide">
-        {videos.filter(v => v.id !== selectedItem.id).slice(0, 10).map(v => (
-          <div key={v.id} onClick={() => setSelectedItem(v)} className="w-48 shrink-0 flex flex-col gap-2 group cursor-pointer">
-            <div className="w-full aspect-video bg-[#111] rounded-lg relative flex items-center justify-center overflow-hidden border border-gray-800 group-hover:border-gray-500 transition-colors shadow-md">
-              {v.imageUrl && <img src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity" alt="" />}
-              <PlayCircle size={24} className="text-white/50 z-10 group-hover:text-white group-hover:scale-110 transition-all" />
-              {v.type === 'short' && <span className="absolute bottom-2 right-2 bg-red-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-md uppercase tracking-wider">Short</span>}
-            </div>
-            <div>
-              <h4 className={`text-xs font-bold leading-tight text-gray-300 group-hover:${themes[v.sport]?.text || 'text-white'} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: v.title }} />
-            </div>
+  return (
+    <div className="flex flex-col h-full max-h-[85vh]">
+      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
+        
+        {/* Left Side: 9:16 Video Player Container (Explicitly sized to prevent collapse) */}
+        <div className="lg:w-[400px] xl:w-[450px] shrink-0 bg-black flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-800 p-4 sm:p-8 relative">
+          <div className="w-full max-w-[320px] aspect-[9/16] bg-gray-900 rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800">
+             {selectedItem.youtubeId ? (
+               <iframe src={`https://www.youtube.com/embed/${selectedItem.youtubeId}?autoplay=1`} className="absolute inset-0 w-full h-full" frameBorder="0" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen></iframe>
+             ) : (
+               <>
+                 {selectedItem.imageUrl && <img src={selectedItem.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm" alt="" />}
+                 <PlayCircle size={64} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 z-10 hover:scale-110 transition-transform cursor-pointer" />
+               </>
+             )}
           </div>
-        ))}
+        </div>
+        
+        {/* Right Side: Title, Share & Description */}
+        <div className="flex-1 p-6 sm:p-10 bg-[#121212] flex flex-col overflow-y-auto">
+          <div className="flex gap-2 items-center mb-4">
+            <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport].bg}`}></span>
+            <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">{selectedItem.sport} • {selectedItem.date}</span>
+          </div>
+          
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-6 leading-tight drop-shadow-lg" dangerouslySetInnerHTML={{ __html: selectedItem.title }} />
+          
+          <div className="mb-6 pb-6 border-b border-gray-800">
+            <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} btnSize="w-10 h-10" iconSize={16} />
+          </div>
+
+          <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-1" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
+        </div>
+      </div>
+
+      {/* Bottom Shelf: Up Next Shorts Playlist (9:16 Posters) */}
+      <div className="bg-[#1a1a1a] border-t border-gray-800 shrink-0 flex flex-col hidden sm:flex">
+        <div className="px-6 py-4 border-b border-gray-800 font-bold text-[10px] uppercase tracking-wider text-gray-500 flex justify-between items-center">
+          <span>More Shorts</span>
+        </div>
+        <div className="flex overflow-x-auto p-6 gap-6 scrollbar-hide">
+          {shorts.slice(0, 10).map(v => (
+            <div key={v.id} onClick={() => setSelectedItem(v)} className="w-32 md:w-40 shrink-0 flex flex-col gap-3 group cursor-pointer">
+              <div className="w-full aspect-[9/16] bg-[#111] rounded-xl relative flex items-center justify-center overflow-hidden border border-gray-800 group-hover:border-gray-500 transition-colors shadow-lg">
+                {v.imageUrl && <img src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-50 transition-opacity" alt="" />}
+                <PlayCircle size={32} className="text-white/60 z-10 group-hover:text-white group-hover:scale-110 transition-all" />
+                <div className="absolute top-2 left-2 flex items-center bg-black/60 px-2 py-1 rounded backdrop-blur-sm">
+                  <span className={`w-1.5 h-1.5 rounded-full ${themes[v.sport].bg}`}></span>
+                </div>
+              </div>
+              <div>
+                <h4 className={`text-xs font-bold leading-tight text-gray-300 group-hover:${themes[v.sport]?.text || 'text-white'} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: v.title }} />
+                <p className="text-[10px] text-gray-500 mt-1">{v.date}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // --- 3. ARTICLE MODAL LAYOUT ---
 const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) => (
