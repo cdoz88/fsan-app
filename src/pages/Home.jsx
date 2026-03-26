@@ -1,20 +1,59 @@
 import React, { useState } from 'react';
 import { PlayCircle, FileText, Film, Mic, Wrench, ChevronRight, LayoutList } from 'lucide-react';
+import { Facebook, XIcon, Youtube, Instagram, TikTok, LinkedIn, SelloutCrowds } from '../components/Icons';
 import { themes } from '../utils/theme';
 
-// THE FIX: Added `currentView = 'home'` to the props here so it doesn't crash!
 export default function Home({ videos, articles, activeSport, setActiveSport, currentView = 'home', setCurrentView, setSelectedItem }) {
   const theme = themes[activeSport];
-  const [feedFilter, setFeedFilter] = useState('all'); // 'all', 'articles', 'videos'
+  const [feedFilter, setFeedFilter] = useState('all');
+
+  // Dynamic social links dictionary
+  const socialLinks = {
+    All: {
+      facebook: 'https://www.facebook.com/fantasyfootballadvicenetwork',
+      x: 'https://x.com/fsadvicenet',
+      youtube: 'https://www.youtube.com/@FFAdviceNet',
+      tiktok: 'https://www.tiktok.com/@fsadvicenetwork',
+      linkedin: 'https://www.linkedin.com/company/fantasy-sports-advice',
+      sellout: 'https://www.selloutcrowds.com/crowd/fsan',
+      instagram: null
+    },
+    Football: {
+      facebook: 'https://www.facebook.com/fantasyfootballadvicenetwork',
+      x: 'https://x.com/FFAdviceNet',
+      youtube: 'https://www.youtube.com/@FFAdviceNet',
+      instagram: 'https://www.instagram.com/ffadvicenet/',
+      sellout: '#',
+      tiktok: null,
+      linkedin: null
+    },
+    Basketball: {
+      facebook: null,
+      x: 'https://x.com/FBBAdviceNet',
+      youtube: 'https://www.youtube.com/@FBBAdviceNet',
+      instagram: 'https://www.instagram.com/fbkadvicenet/',
+      sellout: '#',
+      tiktok: null,
+      linkedin: null
+    },
+    Baseball: {
+      facebook: null,
+      x: 'https://x.com/FBAdviceNet',
+      youtube: 'https://www.youtube.com/@FBAdviceNet',
+      instagram: 'https://www.instagram.com/fbadvicenet/',
+      sellout: '#',
+      tiktok: null,
+      linkedin: null
+    },
+  };
+  const currentLinks = socialLinks[activeSport];
 
   // Combine and sort everything chronologically
   let filteredFeed = [...videos, ...articles].sort((a, b) => b.rawTimestamp - a.rawTimestamp);
 
-  // Apply the local feed filter toggle
   if (feedFilter === 'articles') filteredFeed = filteredFeed.filter(item => item.type === 'article');
   if (feedFilter === 'videos') filteredFeed = filteredFeed.filter(item => item.type === 'video');
 
-  // THE MAGIC: Group the feed into "Bundles" by Date!
   const groupedFeed = [];
   filteredFeed.forEach(item => {
     let group = groupedFeed.find(g => g.date === item.date);
@@ -25,7 +64,6 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
     group.items.push(item);
   });
 
-  // --- IN-FEED AD COMPONENTS ---
   const PromoRookieGuide = () => (
     <div className="w-full bg-gradient-to-r from-red-900 to-black border border-red-800 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between relative overflow-hidden shadow-xl mt-2 mb-6">
        <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#fff_10px,#fff_20px)]"></div>
@@ -41,7 +79,6 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
 
   const PromoSelloutCrowds = () => (
     <div className="w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/40 via-[#111] to-black border border-red-900/50 rounded-2xl p-8 md:p-12 text-center flex flex-col items-center justify-center relative overflow-hidden shadow-2xl mt-2 mb-6">
-       {/* Gritty textured overlay */}
        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20 20\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')", mixBlendMode: 'overlay' }}></div>
        
        <h2 className="text-4xl md:text-5xl font-black text-white italic tracking-tight mb-3 relative z-10 drop-shadow-lg">Join Sellout Crowds</h2>
@@ -98,6 +135,20 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                     <Wrench size={18} className={theme.text} /> {tool}
                   </a>
                 ))}
+             </div>
+          </div>
+
+          {/* Submenu: Social Links */}
+          <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
+             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Follow {activeSport === 'All' ? 'Network' : activeSport}</h4>
+             <div className="flex flex-wrap items-center gap-4 px-2 text-gray-400">
+                {currentLinks.facebook && <a href={currentLinks.facebook} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Facebook size={18} /></a>}
+                {currentLinks.x && <a href={currentLinks.x} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><XIcon size={18} /></a>}
+                {currentLinks.youtube && <a href={currentLinks.youtube} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Youtube size={18} /></a>}
+                {currentLinks.instagram && <a href={currentLinks.instagram} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Instagram size={18} /></a>}
+                {currentLinks.tiktok && <a href={currentLinks.tiktok} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><TikTok size={18} /></a>}
+                {currentLinks.linkedin && <a href={currentLinks.linkedin} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><LinkedIn size={18} /></a>}
+                {currentLinks.sellout && <a href={currentLinks.sellout} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><SelloutCrowds size={18} /></a>}
              </div>
           </div>
 

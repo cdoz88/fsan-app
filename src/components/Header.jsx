@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Search, Menu, X } from 'lucide-react';
-import { Facebook, XIcon, Youtube, Instagram, TikTok, LinkedIn, SelloutCrowds } from './Icons';
 import { themes } from '../utils/theme';
 
 const sportsConfig = [
@@ -22,47 +21,6 @@ export default function Header({ activeSport, setActiveSport, setCurrentView }) 
     Basketball: 'https://fsan.com/wp-content/uploads/2023/11/Horizontal-white.webp',
     Baseball: 'https://fsan.com/wp-content/uploads/2023/11/Horizontal-white-1.webp',
   };
-
-  // Dynamic social links dictionary
-  const socialLinks = {
-    All: {
-      facebook: 'https://www.facebook.com/fantasyfootballadvicenetwork',
-      x: 'https://x.com/fsadvicenet',
-      youtube: 'https://www.youtube.com/@FFAdviceNet',
-      tiktok: 'https://www.tiktok.com/@fsadvicenetwork',
-      linkedin: 'https://www.linkedin.com/company/fantasy-sports-advice',
-      sellout: 'https://www.selloutcrowds.com/crowd/fsan',
-      instagram: null
-    },
-    Football: {
-      facebook: 'https://www.facebook.com/fantasyfootballadvicenetwork',
-      x: 'https://x.com/FFAdviceNet',
-      youtube: 'https://www.youtube.com/@FFAdviceNet',
-      instagram: 'https://www.instagram.com/ffadvicenet/',
-      sellout: '#',
-      tiktok: null,
-      linkedin: null
-    },
-    Basketball: {
-      facebook: null,
-      x: 'https://x.com/FBBAdviceNet',
-      youtube: 'https://www.youtube.com/@FBBAdviceNet',
-      instagram: 'https://www.instagram.com/fbkadvicenet/',
-      sellout: '#',
-      tiktok: null,
-      linkedin: null
-    },
-    Baseball: {
-      facebook: null,
-      x: 'https://x.com/FBAdviceNet',
-      youtube: 'https://www.youtube.com/@FBAdviceNet',
-      instagram: 'https://www.instagram.com/fbadvicenet/',
-      sellout: '#',
-      tiktok: null,
-      linkedin: null
-    },
-  };
-  const currentLinks = socialLinks[activeSport];
 
   return (
     <>
@@ -91,9 +49,14 @@ export default function Header({ activeSport, setActiveSport, setCurrentView }) 
         </div>
       </div>
 
-      {/* Main Nav Bar */}
-      <div className="bg-[#1e1e1e] border-b border-gray-800 px-4 py-3 hidden lg:flex justify-between items-center text-sm font-bold uppercase tracking-wider z-40 relative">
-        <div className="flex items-center gap-4">
+      {/* Main Nav Bar (Using a 3-column grid to perfectly center the sport switcher) */}
+      <div className="bg-[#1e1e1e] border-b border-gray-800 px-4 py-3 hidden lg:grid grid-cols-3 items-center text-sm font-bold uppercase tracking-wider z-40 relative">
+        
+        {/* Left Column - Empty to balance the flexbox */}
+        <div></div>
+
+        {/* Center Column - Sport Switcher */}
+        <div className="flex justify-center">
           <div className="bg-[#121212] p-1 rounded-full border border-gray-800 flex items-center shadow-inner relative">
             {sportsConfig.map((sport) => (
               <button 
@@ -109,24 +72,14 @@ export default function Header({ activeSport, setActiveSport, setCurrentView }) 
           </div>
         </div>
 
-        <div className="flex items-center gap-6 text-gray-400">
+        {/* Right Column - Search Button */}
+        <div className="flex justify-end items-center text-gray-400">
           <button onClick={() => setIsSearchModalOpen(true)} className="hover:text-white transition-colors flex items-center gap-2 group">
             <Search size={18} className="group-hover:text-red-500 transition-colors" />
             <span className="text-xs">Search</span>
           </button>
-          <div className="h-4 w-px bg-gray-700"></div>
-          
-          {/* Dynamically render ONLY the icons that have links for this specific sport */}
-          <div className="flex items-center gap-4">
-            {currentLinks.facebook && <a href={currentLinks.facebook} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Facebook size={16} /></a>}
-            {currentLinks.x && <a href={currentLinks.x} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><XIcon size={16} /></a>}
-            {currentLinks.youtube && <a href={currentLinks.youtube} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Youtube size={16} /></a>}
-            {currentLinks.instagram && <a href={currentLinks.instagram} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Instagram size={16} /></a>}
-            {currentLinks.tiktok && <a href={currentLinks.tiktok} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><TikTok size={16} /></a>}
-            {currentLinks.linkedin && <a href={currentLinks.linkedin} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><LinkedIn size={16} /></a>}
-            {currentLinks.sellout && <a href={currentLinks.sellout} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><SelloutCrowds size={16} /></a>}
-          </div>
         </div>
+
       </div>
 
       {/* Offcanvas Modals */}

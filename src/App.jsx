@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 
 import Header from './components/Header';
-import ToolsBar from './components/ToolsBar';
 import ContentModal from './components/ContentModal';
 import Home from './pages/Home';
 import VideosArchive from './pages/VideosArchive';
@@ -159,7 +158,6 @@ export default function App() {
           let youtubeId = null;
           let cleanContent = post.content?.rendered || '';
           
-          // GRAB THE NEWLY EXPOSED YOUTUBE DESCRIPTION
           let customYtDesc = post.youtube_description || post.meta?.youtube_description || post.acf?.youtube_description;
           if (Array.isArray(customYtDesc)) customYtDesc = customYtDesc[0];
 
@@ -170,15 +168,10 @@ export default function App() {
             cleanContent = cleanContent.replace(/<iframe.*?<\/iframe>/i, '');
           }
 
-          // FORMAT THE CUSTOM YOUTUBE DESCRIPTION IF IT EXISTS
           if (defaultType === 'video' && customYtDesc && typeof customYtDesc === 'string' && customYtDesc.trim().length > 0) {
-            // 1. Convert newlines to <br> tags
             let formattedDesc = customYtDesc.replace(/(?:\r\n|\r|\n)/g, '<br/>');
-            
-            // 2. Convert plain text URLs into clickable links (Replicating YT2PostsCommon::add_links)
             const urlRegex = /(https?:\/\/[^\s]+)/g;
             formattedDesc = formattedDesc.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer" style="text-decoration: underline; color: #60a5fa;">${url}</a>`);
-            
             cleanContent = formattedDesc;
           }
 
@@ -283,7 +276,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#121212] text-gray-200 font-sans">
       <Header activeSport={activeSport} setActiveSport={handleSportChange} setCurrentView={setCurrentView} />
-      <ToolsBar activeSport={activeSport} />
 
       {isLoading && wpPosts.length === 0 && (
         <div className="max-w-[1600px] mx-auto p-12 flex flex-col items-center justify-center text-gray-500 min-h-[50vh]">
