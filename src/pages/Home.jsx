@@ -292,16 +292,16 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                   {/* LAYOUT 2: Exactly 2 Items */}
                   {count === 2 && (
                     <>
-                      <div className="lg:col-span-1 lg:row-span-2">
+                      <div className="lg:col-span-1">
                         <VerticalCard item={items[0]} />
                       </div>
-                      <div className="lg:col-span-2">
+                      <div className="lg:col-span-2 flex flex-col gap-6">
                         <HorizontalCard item={items[1]} isHero={false} />
-                      </div>
-                      <div className="lg:col-span-2 relative min-h-[150px] lg:min-h-0">
-                        {/* Mathematically fills the remaining difference under the horizontal card */}
-                        <div className="lg:absolute lg:inset-0 w-full h-full">
-                          <PromoAd type={adTypeForThisDay} shape="banner" />
+                        <div className="flex-1 relative min-h-[150px] lg:min-h-0 w-full">
+                          {/* absolute inset-0 guarantees it fills the flex-1 space seamlessly to match the left card! */}
+                          <div className="lg:absolute lg:inset-0 w-full h-full">
+                            <PromoAd type={adTypeForThisDay} shape="banner" />
+                          </div>
                         </div>
                       </div>
                     </>
