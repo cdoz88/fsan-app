@@ -125,7 +125,8 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
         
         {/* Left Side: Video Player perfectly sized to never crop or overflow */}
         <div className="lg:w-[400px] xl:w-[450px] shrink-0 bg-black flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-800 p-4 sm:p-6 relative min-h-0">
-          <div className="h-full max-w-full aspect-[9/16] bg-gray-900 rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800 mx-auto">
+          {/* Responsive fix: Width-based on mobile, Height-based on desktop! */}
+          <div className="w-full max-w-[260px] sm:max-w-[320px] lg:max-w-none lg:w-auto lg:h-full aspect-[9/16] bg-gray-900 rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800 mx-auto">
              {selectedItem.youtubeId ? (
                <iframe src={`https://www.youtube.com/embed/${selectedItem.youtubeId}?autoplay=1`} className="absolute inset-0 w-full h-full" frameBorder="0" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen></iframe>
              ) : (
