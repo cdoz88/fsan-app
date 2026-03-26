@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlayCircle, FileText, Film, Mic, ChevronRight, LayoutList, Users, Calculator, ArrowLeftRight, Shirt, Flag, Smartphone } from 'lucide-react';
+import { PlayCircle, FileText, Film, Mic, ChevronRight, LayoutList, Users, Calculator, ArrowLeftRight, Shirt, Flag } from 'lucide-react';
 import { Facebook, XIcon, Youtube, Instagram, TikTok, LinkedIn, SelloutCrowds } from '../components/Icons';
 import { themes } from '../utils/theme';
 
@@ -22,9 +22,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
     .sort((a, b) => b.rawTimestamp - a.rawTimestamp);
 
   if (feedFilter === 'articles') filteredFeed = filteredFeed.filter(item => item.type === 'article');
-  // Pass both standard videos AND shorts into the videos filter!
   if (feedFilter === 'videos') filteredFeed = filteredFeed.filter(item => item.type === 'video' || item.type === 'short');
-  if (feedFilter === 'shorts') filteredFeed = filteredFeed.filter(item => item.type === 'short');
   if (feedFilter === 'podcasts') filteredFeed = filteredFeed.filter(item => item.type === 'podcast');
 
   const groupedFeed = [];
@@ -106,9 +104,8 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
     </div>
   );
 
-  // NEW: THE 9:16 VERTICAL SHORT CARD
   const ShortCard = ({ item }) => (
-    <div onClick={() => setSelectedItem(item)} className="group h-full w-full sm:max-w-[320px] mx-auto cursor-pointer bg-[#111] border border-gray-800 rounded-2xl overflow-hidden shadow-xl hover:border-gray-600 transition-all flex flex-col relative aspect-[9/16]">
+    <div onClick={() => setSelectedItem(item)} className="group h-full w-full min-h-[400px] cursor-pointer bg-[#111] border border-gray-800 rounded-2xl overflow-hidden shadow-xl hover:border-gray-600 transition-all flex flex-col relative">
       {item.imageUrl ? (
          <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
       ) : (
@@ -144,7 +141,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
   );
 
   const HorizontalCard = ({ item, isHero }) => (
-    <div onClick={() => setSelectedItem(item)} className="group w-full cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden shadow-lg hover:border-gray-600 transition-all flex flex-col sm:flex-row relative">
+    <div onClick={() => setSelectedItem(item)} className="group w-full h-full cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden shadow-lg hover:border-gray-600 transition-all flex flex-col sm:flex-row relative">
       <div className={`w-full ${isHero ? 'sm:w-3/5 lg:w-2/3' : 'sm:w-1/2'} relative shrink-0 bg-[#111] overflow-hidden`}>
         {item.imageUrl ? (
           <img src={item.imageUrl} alt="" className="w-full h-auto aspect-video object-cover opacity-80 group-hover:scale-105 transition-transform duration-500 block" />
@@ -165,9 +162,8 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
     </div>
   );
 
-  // THE BRAIN: Intelligently selects the right card based on layout constraints AND post type!
   const RenderCard = ({ item, layoutType }) => {
-    if (item.type === 'short') return <ShortCard item={item} />;
+    if (layoutType === 'short') return <ShortCard item={item} />;
     if (layoutType === 'horizontal') return <HorizontalCard item={item} isHero={false} />;
     if (layoutType === 'hero') return <HorizontalCard item={item} isHero={true} />;
     return <VerticalCard item={item} />;
@@ -179,6 +175,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
       {/* LEFT COLUMN: STICKY DASHBOARD MENU */}
       <div className="hidden lg:flex lg:col-span-3 flex-col gap-6">
         <div className="sticky top-6 flex flex-col gap-6">
+          
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Browse Network</h4>
              <div className="flex flex-col gap-1">
@@ -196,10 +193,15 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                 </button>
              </div>
           </div>
+
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Pro Tools</h4>
              <div className="flex flex-col gap-1">
-                {[{ name: 'Player Rankings', icon: Users }, { name: 'Trade Calculator', icon: Calculator }, { name: 'Trade Value Chart', icon: ArrowLeftRight }].map(tool => {
+                {[
+                  { name: 'Player Rankings', icon: Users },
+                  { name: 'Trade Calculator', icon: Calculator },
+                  { name: 'Trade Value Chart', icon: ArrowLeftRight }
+                ].map(tool => {
                   const Icon = tool.icon;
                   return (
                     <a href="#" key={tool.name} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
@@ -209,14 +211,22 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                 })}
              </div>
           </div>
+
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Connect</h4>
              <div className="flex flex-col gap-1">
-                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><SelloutCrowds size={18} className={theme.text} /> Exclusive Community</a>
-                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><Shirt size={18} className={theme.text} /> Join A Jersey League</a>
-                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><Flag size={18} className={theme.text} /> Compete in the Napkin League</a>
+                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
+                  <SelloutCrowds size={18} className={theme.text} /> Exclusive Community
+                </a>
+                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
+                  <Shirt size={18} className={theme.text} /> Join A Jersey League
+                </a>
+                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
+                  <Flag size={18} className={theme.text} /> Compete in the Napkin League
+                </a>
              </div>
           </div>
+
           <div className="flex flex-col items-center justify-center gap-4 mt-2 mb-8">
              <div className="flex flex-wrap items-center justify-center gap-5 text-gray-500 px-2">
                 {currentLinks.sellout && <a href={currentLinks.sellout} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><SelloutCrowds size={20} /></a>}
@@ -228,10 +238,15 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                 {currentLinks.linkedin && <a href={currentLinks.linkedin} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><LinkedIn size={20} /></a>}
              </div>
              <div className="text-center mt-2">
-               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">&copy; {new Date().getFullYear()} Fantasy Sports Advice Network</p>
-               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mt-1">All Rights Reserved</p>
+               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+                 &copy; {new Date().getFullYear()} Fantasy Sports Advice Network
+               </p>
+               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mt-1">
+                 All Rights Reserved
+               </p>
              </div>
           </div>
+
         </div>
       </div>
 
@@ -247,9 +262,6 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
           </button>
           <button onClick={() => setFeedFilter('videos')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'videos' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <Film size={14} /> Videos
-          </button>
-          <button onClick={() => setFeedFilter('shorts')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'shorts' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
-            <Smartphone size={14} /> Shorts
           </button>
           <button onClick={() => setFeedFilter('podcasts')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'podcasts' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <Mic size={14} /> Podcasts
@@ -269,6 +281,11 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
             const adTypeForThisDay = adTypes[groupIndex % adTypes.length]; 
             const layoutStyle = groupIndex % 3;
 
+            // SMART SHORTS DETECTION LOGIC
+            const hasShort = items.some(i => i.type === 'short');
+            const shortItem = hasShort ? items.find(i => i.type === 'short') : null;
+            const otherItems = hasShort ? items.filter(i => i.id !== shortItem.id) : items;
+
             return (
               <div key={group.date} className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 
@@ -280,7 +297,62 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   
-                  {count === 1 && (
+                  {/* ======================================= */}
+                  {/* LAYOUTS WHEN A SHORT IS PRESENT IN FEED */}
+                  {/* ======================================= */}
+                  {hasShort && (
+                    <>
+                      {/* Short + Only 1 other item (Ad) */}
+                      {otherItems.length === 0 && (
+                        <>
+                          <div className={`lg:col-span-1 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}>
+                            <RenderCard item={shortItem} layoutType="short" />
+                          </div>
+                          <div className="lg:col-span-2 flex flex-col gap-6 h-full">
+                            <div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Short + 1 Content Item + Banner Ad */}
+                      {otherItems.length === 1 && (
+                        <>
+                          <div className={`lg:col-span-1 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}>
+                            <RenderCard item={shortItem} layoutType="short" />
+                          </div>
+                          <div className="lg:col-span-2 flex flex-col gap-6 h-full">
+                            <div className="w-full"><RenderCard item={otherItems[0]} layoutType="horizontal" /></div>
+                            <div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Short + 2 or more Content Items */}
+                      {otherItems.length >= 2 && (
+                        <>
+                          <div className={`lg:col-span-1 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}>
+                            <RenderCard item={shortItem} layoutType="short" />
+                          </div>
+                          <div className="lg:col-span-2 flex flex-col gap-6 h-full">
+                            <div className="flex-1 w-full"><RenderCard item={otherItems[0]} layoutType="horizontal" /></div>
+                            <div className="flex-1 w-full"><RenderCard item={otherItems[1]} layoutType="horizontal" /></div>
+                          </div>
+                          
+                          {/* Flow any remaining items normally */}
+                          {otherItems.slice(2).map(item => (
+                            <div key={item.id} className="lg:col-span-1 h-full">
+                              <RenderCard item={item} layoutType="vertical" />
+                            </div>
+                          ))}
+                        </>
+                      )}
+                    </>
+                  )}
+
+                  {/* ======================================= */}
+                  {/* STANDARD LAYOUTS (NO SHORTS PRESENT)    */}
+                  {/* ======================================= */}
+                  {!hasShort && count === 1 && (
                     <>
                       <div className={`lg:col-span-2 ${layoutStyle % 2 !== 0 ? 'order-first lg:order-last' : ''}`}>
                         <RenderCard item={items[0]} layoutType="horizontal" />
@@ -291,7 +363,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                     </>
                   )}
 
-                  {count === 2 && layoutStyle === 0 && (
+                  {!hasShort && count === 2 && layoutStyle === 0 && (
                     <>
                       <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
                       <div className="lg:col-span-2 flex flex-col gap-6 h-full">
@@ -301,7 +373,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                     </>
                   )}
 
-                  {count === 2 && layoutStyle === 1 && (
+                  {!hasShort && count === 2 && layoutStyle === 1 && (
                     <>
                       <div className="lg:col-span-2 flex flex-col gap-6 h-full order-last lg:order-none">
                         <div className="flex-1 w-full flex flex-col order-last lg:order-first"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
@@ -311,7 +383,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                     </>
                   )}
 
-                  {count === 2 && layoutStyle === 2 && (
+                  {!hasShort && count === 2 && layoutStyle === 2 && (
                     <>
                       <div className="lg:col-span-2 flex flex-col gap-6 h-full order-last lg:order-none">
                         <RenderCard item={items[1]} layoutType="horizontal" />
@@ -321,7 +393,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                     </>
                   )}
 
-                  {count === 3 && (
+                  {!hasShort && count === 3 && (
                     <>
                       <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
                       <div className="lg:col-span-1 h-full"><RenderCard item={items[1]} layoutType="vertical" /></div>
@@ -329,7 +401,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                     </>
                   )}
 
-                  {count > 3 && (
+                  {!hasShort && count > 3 && (
                     <>
                       <div className="lg:col-span-3"><RenderCard item={items[0]} layoutType="hero" /></div>
                       {items.slice(1).map(item => (
