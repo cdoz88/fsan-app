@@ -93,11 +93,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
   // ==========================================
   const CardTags = ({ item }) => (
     <div className="flex items-center gap-2 mb-3 z-20 relative">
-      {item.type === 'short' ? (
-         <span className="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider shadow-md">Short</span>
-      ) : (
-         <span className={`w-2 h-2 rounded-full ${themes[item.sport]?.bg || 'bg-gray-500'} shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.8)]`}></span>
-      )}
+      <span className={`w-2 h-2 rounded-full ${themes[item.sport]?.bg || 'bg-gray-500'} shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.8)]`}></span>
       <span className="text-gray-300 font-bold text-[10px] uppercase tracking-wider drop-shadow-md">
         {item.type === 'article' ? `By ${item.author}` : (item.playlist || 'Featured Video')}
       </span>
