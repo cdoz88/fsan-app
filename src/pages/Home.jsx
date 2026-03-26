@@ -205,16 +205,16 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                 </a>
              </div>
           </div>
-
+          {/* Social Links & Footer */}
           <div className="flex flex-col items-center justify-center gap-4 mt-2 mb-8">
              <div className="flex flex-wrap items-center justify-center gap-5 text-gray-500 px-2">
+                {currentLinks.sellout && <a href={currentLinks.sellout} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><SelloutCrowds size={20} /></a>}
                 {currentLinks.facebook && <a href={currentLinks.facebook} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Facebook size={20} /></a>}
                 {currentLinks.x && <a href={currentLinks.x} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><XIcon size={20} /></a>}
                 {currentLinks.youtube && <a href={currentLinks.youtube} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Youtube size={20} /></a>}
                 {currentLinks.instagram && <a href={currentLinks.instagram} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Instagram size={20} /></a>}
                 {currentLinks.tiktok && <a href={currentLinks.tiktok} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><TikTok size={20} /></a>}
                 {currentLinks.linkedin && <a href={currentLinks.linkedin} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><LinkedIn size={20} /></a>}
-                {currentLinks.sellout && <a href={currentLinks.sellout} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><SelloutCrowds size={20} /></a>}
              </div>
              <div className="text-center mt-2">
                <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
@@ -283,11 +283,8 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                       <div className={`lg:col-span-2 ${layoutStyle % 2 !== 0 ? 'order-first lg:order-last' : ''}`}>
                         <HorizontalCard item={items[0]} isHero={false} />
                       </div>
-                      <div className={`lg:col-span-1 relative min-h-[200px] lg:min-h-0 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-first' : ''}`}>
-                        {/* Wrapper perfectly flex-matches the card height on desktop! */}
-                        <div className="lg:absolute lg:inset-0 w-full h-full">
-                          <PromoAd type={adTypeForThisDay} shape="square" />
-                        </div>
+                      <div className={`lg:col-span-1 flex flex-col min-h-[250px] ${layoutStyle % 2 !== 0 ? 'order-last lg:order-first' : ''}`}>
+                        <PromoAd type={adTypeForThisDay} shape="square" />
                       </div>
                     </>
                   )}
@@ -301,11 +298,8 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                       </div>
                       <div className="lg:col-span-2 flex flex-col gap-6">
                         <HorizontalCard item={items[1]} isHero={false} />
-                        <div className="flex-1 relative min-h-[150px] lg:min-h-0 w-full">
-                          {/* absolute inset-0 guarantees it fills the flex-1 space seamlessly to match the left card! */}
-                          <div className="lg:absolute lg:inset-0 w-full h-full">
-                            <PromoAd type={adTypeForThisDay} shape="banner" />
-                          </div>
+                        <div className="flex-1 w-full flex flex-col min-h-[160px]">
+                          <PromoAd type={adTypeForThisDay} shape="banner" />
                         </div>
                       </div>
                     </>
@@ -315,11 +309,8 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                     <>
                       {/* Variant B: Stacked Left (Ad Top, Content Bottom), Vertical Right */}
                       <div className="lg:col-span-2 flex flex-col gap-6 order-last lg:order-none">
-                        <div className="flex-1 relative min-h-[150px] lg:min-h-0 w-full order-last lg:order-first">
-                          {/* We 'order-last' this ad on mobile so it doesn't push the primary content down! */}
-                          <div className="lg:absolute lg:inset-0 w-full h-full">
-                            <PromoAd type={adTypeForThisDay} shape="banner" />
-                          </div>
+                        <div className="flex-1 w-full flex flex-col min-h-[160px] order-last lg:order-first">
+                          <PromoAd type={adTypeForThisDay} shape="banner" />
                         </div>
                         <HorizontalCard item={items[1]} isHero={false} />
                       </div>
@@ -334,10 +325,8 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                       {/* Variant C: Stacked Left (Content Top, Ad Bottom), Vertical Right */}
                       <div className="lg:col-span-2 flex flex-col gap-6 order-last lg:order-none">
                         <HorizontalCard item={items[1]} isHero={false} />
-                        <div className="flex-1 relative min-h-[150px] lg:min-h-0 w-full">
-                          <div className="lg:absolute lg:inset-0 w-full h-full">
-                            <PromoAd type={adTypeForThisDay} shape="banner" />
-                          </div>
+                        <div className="flex-1 w-full flex flex-col min-h-[160px]">
+                          <PromoAd type={adTypeForThisDay} shape="banner" />
                         </div>
                       </div>
                       <div className="lg:col-span-1 lg:row-span-2">
