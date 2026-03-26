@@ -48,8 +48,13 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
   };
   const currentLinks = socialLinks[activeSport];
 
-  // Combine and sort everything chronologically
-  let filteredFeed = [...videos, ...articles].sort((a, b) => b.rawTimestamp - a.rawTimestamp);
+  // 1. Calculate the timestamp for exactly 8 days ago
+  const eightDaysAgo = new Date().getTime() - (8 * 24 * 60 * 60 * 1000);
+
+  // 2. Combine, filter out anything older than 8 days, and sort chronologically
+  let filteredFeed = [...videos, ...articles]
+    .filter(item => item.rawTimestamp >= eightDaysAgo)
+    .sort((a, b) => b.rawTimestamp - a.rawTimestamp);
 
   if (feedFilter === 'articles') filteredFeed = filteredFeed.filter(item => item.type === 'article');
   if (feedFilter === 'videos') filteredFeed = filteredFeed.filter(item => item.type === 'video');
@@ -138,17 +143,24 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
              </div>
           </div>
 
-          {/* Submenu: Social Links */}
-          <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
-             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Follow {activeSport === 'All' ? 'Network' : activeSport}</h4>
-             <div className="flex flex-wrap items-center gap-4 px-2 text-gray-400">
-                {currentLinks.facebook && <a href={currentLinks.facebook} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Facebook size={18} /></a>}
-                {currentLinks.x && <a href={currentLinks.x} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><XIcon size={18} /></a>}
-                {currentLinks.youtube && <a href={currentLinks.youtube} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Youtube size={18} /></a>}
-                {currentLinks.instagram && <a href={currentLinks.instagram} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Instagram size={18} /></a>}
-                {currentLinks.tiktok && <a href={currentLinks.tiktok} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><TikTok size={18} /></a>}
-                {currentLinks.linkedin && <a href={currentLinks.linkedin} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><LinkedIn size={18} /></a>}
-                {currentLinks.sellout && <a href={currentLinks.sellout} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><SelloutCrowds size={18} /></a>}
+          {/* Social Links & Footer */}
+          <div className="flex flex-col items-center justify-center gap-4 mt-2 mb-8">
+             <div className="flex flex-wrap items-center justify-center gap-5 text-gray-500 px-2">
+                {currentLinks.facebook && <a href={currentLinks.facebook} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Facebook size={20} /></a>}
+                {currentLinks.x && <a href={currentLinks.x} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><XIcon size={20} /></a>}
+                {currentLinks.youtube && <a href={currentLinks.youtube} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Youtube size={20} /></a>}
+                {currentLinks.instagram && <a href={currentLinks.instagram} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><Instagram size={20} /></a>}
+                {currentLinks.tiktok && <a href={currentLinks.tiktok} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><TikTok size={20} /></a>}
+                {currentLinks.linkedin && <a href={currentLinks.linkedin} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><LinkedIn size={20} /></a>}
+                {currentLinks.sellout && <a href={currentLinks.sellout} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><SelloutCrowds size={20} /></a>}
+             </div>
+             <div className="text-center mt-2">
+               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+                 &copy; {new Date().getFullYear()} Fantasy Sports Advice Network
+               </p>
+               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mt-1">
+                 All Rights Reserved
+               </p>
              </div>
           </div>
 
@@ -250,7 +262,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
 
           {groupedFeed.length === 0 && (
             <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border-2 border-dashed border-gray-800 rounded-2xl">
-              No content found for this filter.
+              No recent content found for this filter.
             </div>
           )}
         </div>
