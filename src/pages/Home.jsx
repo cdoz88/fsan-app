@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlayCircle, FileText, Film, Mic, Wrench, ChevronRight, LayoutList } from 'lucide-react';
+import { PlayCircle, FileText, Film, Mic, ChevronRight, LayoutList, Users, Calculator, ArrowLeftRight } from 'lucide-react';
 import { Facebook, XIcon, Youtube, Instagram, TikTok, LinkedIn, SelloutCrowds } from '../components/Icons';
 import { themes } from '../utils/theme';
 
@@ -58,6 +58,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
 
   if (feedFilter === 'articles') filteredFeed = filteredFeed.filter(item => item.type === 'article');
   if (feedFilter === 'videos') filteredFeed = filteredFeed.filter(item => item.type === 'video');
+  if (feedFilter === 'podcasts') filteredFeed = filteredFeed.filter(item => item.type === 'podcast');
 
   const groupedFeed = [];
   filteredFeed.forEach(item => {
@@ -135,11 +136,18 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Pro Tools</h4>
              <div className="flex flex-col gap-1">
-                {['Trade Analyzer', 'Dynasty Rankings', 'Rookie Mock Draft', 'Start / Sit Optimizer', 'DFS Projections'].map(tool => (
-                  <a href="#" key={tool} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
-                    <Wrench size={18} className={theme.text} /> {tool}
-                  </a>
-                ))}
+                {[
+                  { name: 'Player Rankings', icon: Users },
+                  { name: 'Trade Calculator', icon: Calculator },
+                  { name: 'Trade Value Chart', icon: ArrowLeftRight }
+                ].map(tool => {
+                  const Icon = tool.icon;
+                  return (
+                    <a href="#" key={tool.name} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
+                      <Icon size={18} className={theme.text} /> {tool.name}
+                    </a>
+                  );
+                })}
              </div>
           </div>
 
@@ -171,24 +179,30 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
       <div className="lg:col-span-9 flex flex-col gap-8 w-full max-w-5xl">
         
         {/* App-like Feed Filter Toggle */}
-        <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-1.5 flex gap-2 shadow-xl z-30">
+        <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-1.5 flex gap-2 shadow-xl z-30 overflow-x-auto scrollbar-hide">
           <button 
             onClick={() => setFeedFilter('all')} 
-            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${feedFilter === 'all' ? `${theme.bg} text-white shadow-md` : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}
+            className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${feedFilter === 'all' ? `${theme.bg} text-white shadow-md` : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}
           >
-            Latest Feed
+            All
           </button>
           <button 
             onClick={() => setFeedFilter('articles')} 
-            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'articles' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}
+            className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'articles' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}
           >
             <FileText size={14} /> Articles
           </button>
           <button 
             onClick={() => setFeedFilter('videos')} 
-            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'videos' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}
+            className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'videos' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}
           >
             <Film size={14} /> Videos
+          </button>
+          <button 
+            onClick={() => setFeedFilter('podcasts')} 
+            className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'podcasts' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}
+          >
+            <Mic size={14} /> Podcasts
           </button>
         </div>
 
