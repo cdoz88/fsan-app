@@ -19,16 +19,17 @@ export default function Home({ videos, articles, activeSport, setActiveSport, se
           {/* Slice precisely 8 videos for the left column */}
           {videos.slice(0, 8).map((video) => (
             <div key={video.id} onClick={() => setSelectedItem(video)} className="group cursor-pointer relative rounded overflow-hidden bg-[#1e1e1e] border border-gray-800 shadow-lg hover:border-gray-500 transition-all">
-              <div className="h-40 bg-gradient-to-tr from-[#1c233a] to-[#111] relative flex items-center justify-center overflow-hidden">
-                 {video.imageUrl && <img src={video.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity" />}
+              {/* Changed h-40 to aspect-video to match exact 16:9 proportions */}
+              <div className="aspect-video bg-gradient-to-tr from-[#1c233a] to-[#111] relative flex items-center justify-center overflow-hidden">
+                 {video.imageUrl && <img src={video.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity" />}
                  <PlayCircle size={48} className="text-white/60 group-hover:text-white transition-all transform group-hover:scale-110 z-10 relative" />
               </div>
-              <div className="p-3 relative z-10 bg-[#1e1e1e]">
-                <span className="text-gray-400 font-bold text-xs flex items-center">
+              {/* Removed video titles and centered the date */}
+              <div className="p-2.5 relative z-10 bg-[#1e1e1e] flex justify-center items-center">
+                <span className="text-gray-400 font-bold text-[10px] uppercase tracking-widest flex items-center">
                   {activeSport === 'All' && <span className={`w-2 h-2 rounded-full ${themes[video.sport].bg} mr-2 shrink-0`}></span>}
                   {video.date}
                 </span>
-                <h3 className={`font-bold text-sm mt-1 leading-tight group-hover:${themes[video.sport].text} transition-colors`} dangerouslySetInnerHTML={{ __html: video.title }} />
               </div>
             </div>
           ))}
@@ -76,22 +77,26 @@ export default function Home({ videos, articles, activeSport, setActiveSport, se
           </div>
         )}
 
+        {/* The 4 articles below the featured article */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
           {articles.slice(1, 5).map((article) => (
-            <div key={article.id} onClick={() => setSelectedItem(article)} className="group cursor-pointer rounded overflow-hidden bg-[#1e1e1e] shadow-lg border border-gray-800 flex flex-row h-32 hover:bg-[#252525] transition-colors relative">
-              <div className={`w-1/3 relative overflow-hidden bg-gray-800`}>
+            <div key={article.id} onClick={() => setSelectedItem(article)} className="group cursor-pointer rounded overflow-hidden bg-[#1e1e1e] shadow-lg border border-gray-800 flex flex-row hover:bg-[#252525] transition-colors relative">
+              <div className={`w-1/3 md:w-2/5 relative overflow-hidden bg-gray-800 shrink-0`}>
                 {article.imageUrl ? (
                   <img src={article.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
                 ) : (
                   <div className={`absolute inset-0 bg-gradient-to-br from-gray-700 to-[#111]`}></div>
                 )}
               </div>
-              <div className="w-2/3 p-3 flex flex-col justify-center">
-                 <div className="flex items-center gap-1.5 mb-1">
+              {/* Removed h-32 so height is dynamic, added py-4 for padding */}
+              <div className="w-2/3 md:w-3/5 p-4 flex flex-col justify-center">
+                 <div className="flex items-center gap-1.5 mb-1.5">
                    {activeSport === 'All' && <span className={`w-1.5 h-1.5 rounded-full ${themes[article.sport].bg} shrink-0`}></span>}
-                   <span className="text-gray-400 font-bold text-[10px]">{article.date}</span>
+                   <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">{article.date}</span>
                  </div>
-                 <h3 className={`font-bold text-sm leading-tight group-hover:${themes[article.sport].text} transition-colors`} dangerouslySetInnerHTML={{ __html: article.title }} />
+                 <h3 className={`font-bold text-sm leading-tight mb-1.5 group-hover:${themes[article.sport].text} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: article.title }} />
+                 {/* ADDED THE EXCERPT */}
+                 <div className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed" dangerouslySetInnerHTML={{ __html: article.excerpt }} />
               </div>
             </div>
           ))}
