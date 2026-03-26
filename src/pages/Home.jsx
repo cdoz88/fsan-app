@@ -85,13 +85,9 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
   // Tag overlay helper
   const CardTags = ({ item }) => (
     <div className="flex items-center gap-2 mb-3 z-20 relative">
-      {item.type === 'video' ? (
-         <span className="bg-red-900/80 text-white border border-red-500/50 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider backdrop-blur-sm">Video</span>
-      ) : (
-         <span className={`w-2 h-2 rounded-full ${themes[item.sport].bg} shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.8)]`}></span>
-      )}
+      <span className={`w-2 h-2 rounded-full ${themes[item.sport]?.bg || 'bg-gray-500'} shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.8)]`}></span>
       <span className="text-gray-300 font-bold text-[10px] uppercase tracking-wider drop-shadow-md">
-        {item.type === 'article' ? `By ${item.author}` : item.sport}
+        {item.type === 'article' ? `By ${item.author}` : (item.playlist || 'Featured Video')}
       </span>
     </div>
   );
@@ -102,7 +98,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
       <div className="w-full aspect-video bg-gradient-to-tr from-[#1c233a] to-[#111] relative flex items-center justify-center overflow-hidden shrink-0">
         {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />}
         {item.type === 'video' && (
-           <><div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div><PlayCircle size={48} className="text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 relative drop-shadow-lg" /></>
+           <><div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div><PlayCircle size={48} className="text-white/60 group-hover:text-white group-hover:scale-110 transition-all z-10 relative drop-shadow-lg" /></>
         )}
       </div>
       <div className="p-5 flex flex-col flex-1 bg-gradient-to-b from-[#1e1e1e] to-[#161616]">
@@ -116,10 +112,10 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
   // 2. HORIZONTAL FEATURE CARD (Image left, text right)
   const HorizontalCard = ({ item }) => (
     <div onClick={() => setSelectedItem(item)} className="group h-full w-full cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden shadow-lg hover:border-gray-600 transition-all flex flex-col sm:flex-row relative">
-      <div className="w-full sm:w-2/5 aspect-video sm:aspect-auto bg-gray-800 relative overflow-hidden shrink-0">
+      <div className={`w-full sm:w-2/5 aspect-video ${item.type === 'article' ? 'sm:aspect-auto' : 'sm:self-center'} bg-gray-800 relative overflow-hidden shrink-0`}>
         {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />}
         {item.type === 'video' && (
-           <><div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div><PlayCircle size={48} className="text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 relative drop-shadow-lg" /></>
+           <><div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div><PlayCircle size={48} className="text-white/60 group-hover:text-white group-hover:scale-110 transition-all z-10 relative drop-shadow-lg" /></>
         )}
       </div>
       <div className="p-6 flex flex-col justify-center flex-1 bg-gradient-to-b from-[#1e1e1e] to-[#161616]">
@@ -130,21 +126,36 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
     </div>
   );
 
-  // 3. MASSIVE HERO CARD (Background Image with text overlay)
-  const HeroCard = ({ item }) => (
-    <div onClick={() => setSelectedItem(item)} className="group h-full w-full min-h-[400px] cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden shadow-xl hover:border-gray-500 transition-all relative flex flex-col justify-end">
-      {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-105 transition-all duration-700" />}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
-      {item.type === 'video' && (
-         <div className="absolute inset-0 flex items-center justify-center"><PlayCircle size={64} className="text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 relative drop-shadow-2xl" /></div>
-      )}
-      <div className="relative z-10 p-6 lg:p-8 w-full md:w-4/5">
-        <CardTags item={item} />
-        <h3 className={`font-black text-3xl lg:text-4xl text-white leading-tight group-hover:${theme.text} transition-colors mb-3 drop-shadow-lg`} dangerouslySetInnerHTML={{ __html: item.title }} />
-        {item.type === 'article' && <div className="text-sm lg:text-base text-gray-300 line-clamp-2 drop-shadow" dangerouslySetInnerHTML={{ __html: item.excerpt }} />}
+  // 3. MASSIVE HERO CARD (Background Image for Articles, Stacked 16:9 for Videos)
+  const HeroCard = ({ item }) => {
+    if (item.type === 'video') {
+      return (
+        <div onClick={() => setSelectedItem(item)} className="group h-full w-full cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden shadow-xl hover:border-gray-500 transition-all relative flex flex-col">
+          <div className="w-full aspect-video bg-gradient-to-tr from-[#1c233a] to-[#111] relative flex items-center justify-center overflow-hidden shrink-0">
+            {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />}
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
+            <PlayCircle size={64} className="text-white/60 group-hover:text-white group-hover:scale-110 transition-all z-10 relative drop-shadow-2xl" />
+          </div>
+          <div className="p-6 lg:p-8 flex flex-col justify-center flex-1 bg-gradient-to-b from-[#1e1e1e] to-[#161616]">
+            <CardTags item={item} />
+            <h3 className={`font-black text-3xl lg:text-4xl leading-tight group-hover:${theme.text} transition-colors mb-3`} dangerouslySetInnerHTML={{ __html: item.title }} />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div onClick={() => setSelectedItem(item)} className="group h-full w-full min-h-[400px] cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden shadow-xl hover:border-gray-500 transition-all relative flex flex-col justify-end">
+        {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 group-hover:scale-105 transition-all duration-700" />}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
+        <div className="relative z-10 p-6 lg:p-8 w-full md:w-4/5">
+          <CardTags item={item} />
+          <h3 className={`font-black text-3xl lg:text-4xl text-white leading-tight group-hover:${theme.text} transition-colors mb-3 drop-shadow-lg`} dangerouslySetInnerHTML={{ __html: item.title }} />
+          <div className="text-sm lg:text-base text-gray-300 line-clamp-2 drop-shadow" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
 
   return (
