@@ -37,36 +37,17 @@ export default function App() {
   const [isCategoriesReady, setIsCategoriesReady] = useState(false);
   const [postsCache, setPostsCache] = useState({}); 
 
-  // --- NATIVE URL ROUTING SYNC (DEEP LINKING) ---
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let changed = false;
-    
-    if (params.get('sport') !== activeSport) {
-      params.set('sport', activeSport);
-      changed = true;
-    }
-    if (params.get('view') !== currentView) {
-      params.set('view', currentView);
-      changed = true;
-    }
-
+    if (params.get('sport') !== activeSport) { params.set('sport', activeSport); changed = true; }
+    if (params.get('view') !== currentView) { params.set('view', currentView); changed = true; }
     if (selectedItem) {
-      if (params.get('id') !== selectedItem.id.toString()) {
-        params.set('id', selectedItem.id);
-        changed = true;
-      }
+      if (params.get('id') !== selectedItem.id.toString()) { params.set('id', selectedItem.id); changed = true; }
     } else {
-      if (params.has('id')) {
-        params.delete('id');
-        changed = true;
-      }
+      if (params.has('id')) { params.delete('id'); changed = true; }
     }
-    
-    if (changed) {
-      const newUrl = `${window.location.pathname}?${params.toString()}`;
-      window.history.pushState({}, '', newUrl);
-    }
+    if (changed) window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
   }, [activeSport, currentView, selectedItem]);
 
   useEffect(() => {
@@ -80,14 +61,12 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // --- FETCH CATEGORIES ---
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const catRes = await fetch('https://fsan.com/wp-json/wp/v2/categories?per_page=100&_fields=id,slug');
         if (!catRes.ok) throw new Error("Network Error");
         const categories = await catRes.json();
-
         const map = {};
         categories.forEach(c => map[c.id] = c.slug);
         setCategoryMap(map);
@@ -100,10 +79,8 @@ export default function App() {
     fetchCategories();
   }, []);
 
-  // --- FETCH POSTS ---
   useEffect(() => {
     if (!isCategoriesReady) return;
-
     if (currentPage === 1 && postsCache[activeSport]) {
       setWpPosts(postsCache[activeSport]);
       setIsLoading(false);
@@ -117,21 +94,11 @@ export default function App() {
         let catQuery = '';
         if (activeSport !== 'All' && Object.keys(categoryMap).length > 0) {
           let targetIds = [];
-          if (activeSport === 'Basketball') {
-            targetIds = Object.keys(categoryMap).filter(id => categoryMap[id].includes('basketball'));
-          } else if (activeSport === 'Baseball') {
-            targetIds = Object.keys(categoryMap).filter(id => categoryMap[id].includes('baseball'));
-          } else if (activeSport === 'Football') {
-            targetIds = Object.keys(categoryMap).filter(id => 
-              !categoryMap[id].includes('basketball') && 
-              !categoryMap[id].includes('baseball') &&
-              categoryMap[id] !== 'uncategorized'
-            );
-          }
+          if (activeSport === 'Basketball') targetIds = Object.keys(categoryMap).filter(id => categoryMap[id].includes('basketball'));
+          else if (activeSport === 'Baseball') targetIds = Object.keys(categoryMap).filter(id => categoryMap[id].includes('baseball'));
+          else if (activeSport === 'Football') targetIds = Object.keys(categoryMap).filter(id => !categoryMap[id].includes('basketball') && !categoryMap[id].includes('baseball') && categoryMap[id] !== 'uncategorized');
 
-          if (targetIds.length > 0) {
-            catQuery = `&categories=${targetIds.join(',')}`;
-          }
+          if (targetIds.length > 0) catQuery = `&categories=${targetIds.join(',')}`;
         }
 
         const [articlesRes, videosRes] = await Promise.all([
@@ -149,6 +116,12 @@ export default function App() {
           let sport = 'Football'; 
           if (slugs.some(s => s.includes('basketball'))) sport = 'Basketball';
           if (slugs.some(s => s.includes('baseball'))) sport = 'Baseball';
+
+          // --- NEW SHORTS RECOGNITION LOGIC ---
+          let type = defaultType;
+          if (slugs.some(s => s.includes('shorts'))) {
+            type = 'short';
+          }
 
           const imageUrl = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || null;
           const date = new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
@@ -168,7 +141,7 @@ export default function App() {
             cleanContent = cleanContent.replace(/<iframe.*?<\/iframe>/i, '');
           }
 
-          if (defaultType === 'video' && customYtDesc && typeof customYtDesc === 'string' && customYtDesc.trim().length > 0) {
+          if ((type === 'video' || type === 'short') && customYtDesc && typeof customYtDesc === 'string' && customYtDesc.trim().length > 0) {
             let formattedDesc = customYtDesc.replace(/(?:\r\n|\r|\n)/g, '<br/>');
             const urlRegex = /(https?:\/\/[^\s]+)/g;
             formattedDesc = formattedDesc.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer" style="text-decoration: underline; color: #60a5fa;">${url}</a>`);
@@ -183,7 +156,7 @@ export default function App() {
             date,
             rawTimestamp,
             sport,
-            type: defaultType,
+            type: type, // Pass the dynamically identified type!
             imageUrl,
             author,
             youtubeId,
@@ -259,18 +232,18 @@ export default function App() {
         title: `MOCKUP: Check Your Internet Connection`,
         content: '<p>It looks like your network dropped while loading FSAN.</p>',
         excerpt: '<p>Please refresh the page to try again.</p>',
-        date: `MARCH 25, 2026`,
+        date: `MARCH 26, 2026`,
         sport: 'Football',
-        type: i % 3 === 0 ? 'video' : 'article',
+        type: i % 4 === 0 ? 'short' : (i % 3 === 0 ? 'video' : 'article'),
         imageUrl: null,
-        author: i % 3 === 0 ? null : 'System'
+        author: 'System'
       });
     }
     setWpPosts(mock);
   };
 
   const filteredPosts = wpPosts.filter(post => activeSport === 'All' || post.sport === activeSport);
-  const videos = filteredPosts.filter(p => p.type === 'video');
+  const videos = filteredPosts.filter(p => p.type === 'video' || p.type === 'short'); // Ensure shorts show up in Video Archive
   const articles = filteredPosts.filter(p => p.type === 'article' || p.type === 'podcast');
 
   return (

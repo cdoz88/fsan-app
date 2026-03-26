@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlayCircle, FileText, Film, Mic, ChevronRight, LayoutList, Users, Calculator, ArrowLeftRight, Shirt, Flag } from 'lucide-react';
+import { PlayCircle, FileText, Film, Mic, ChevronRight, LayoutList, Users, Calculator, ArrowLeftRight, Shirt, Flag, Smartphone } from 'lucide-react';
 import { Facebook, XIcon, Youtube, Instagram, TikTok, LinkedIn, SelloutCrowds } from '../components/Icons';
 import { themes } from '../utils/theme';
 
@@ -22,7 +22,9 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
     .sort((a, b) => b.rawTimestamp - a.rawTimestamp);
 
   if (feedFilter === 'articles') filteredFeed = filteredFeed.filter(item => item.type === 'article');
-  if (feedFilter === 'videos') filteredFeed = filteredFeed.filter(item => item.type === 'video');
+  // Pass both standard videos AND shorts into the videos filter!
+  if (feedFilter === 'videos') filteredFeed = filteredFeed.filter(item => item.type === 'video' || item.type === 'short');
+  if (feedFilter === 'shorts') filteredFeed = filteredFeed.filter(item => item.type === 'short');
   if (feedFilter === 'podcasts') filteredFeed = filteredFeed.filter(item => item.type === 'podcast');
 
   const groupedFeed = [];
@@ -74,7 +76,6 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
       );
     }
 
-    // merch
     return (
       <div className={`w-full h-full bg-[#111] border border-purple-900/50 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center cursor-pointer hover:border-purple-600 transition-all group overflow-hidden relative shadow-xl`}>
         <div className="absolute inset-0 bg-gradient-to-tr from-purple-900/30 to-black z-0 transition-opacity group-hover:opacity-80"></div>
@@ -94,10 +95,31 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
   // ==========================================
   const CardTags = ({ item }) => (
     <div className="flex items-center gap-2 mb-3 z-20 relative">
-      <span className={`w-2 h-2 rounded-full ${themes[item.sport]?.bg || 'bg-gray-500'} shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.8)]`}></span>
+      {item.type === 'short' ? (
+         <span className="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider shadow-md">Short</span>
+      ) : (
+         <span className={`w-2 h-2 rounded-full ${themes[item.sport]?.bg || 'bg-gray-500'} shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.8)]`}></span>
+      )}
       <span className="text-gray-300 font-bold text-[10px] uppercase tracking-wider drop-shadow-md">
         {item.type === 'article' ? `By ${item.author}` : (item.playlist || 'Featured Video')}
       </span>
+    </div>
+  );
+
+  // NEW: THE 9:16 VERTICAL SHORT CARD
+  const ShortCard = ({ item }) => (
+    <div onClick={() => setSelectedItem(item)} className="group h-full w-full sm:max-w-[320px] mx-auto cursor-pointer bg-[#111] border border-gray-800 rounded-2xl overflow-hidden shadow-xl hover:border-gray-600 transition-all flex flex-col relative aspect-[9/16]">
+      {item.imageUrl ? (
+         <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
+      ) : (
+         <div className="absolute inset-0 bg-gray-800" />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+      <PlayCircle size={48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
+      <div className="absolute bottom-0 left-0 right-0 p-5 z-20">
+        <CardTags item={item} />
+        <h3 className={`font-black text-lg text-white leading-tight group-hover:${theme.text} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+      </div>
     </div>
   );
 
@@ -123,8 +145,6 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
 
   const HorizontalCard = ({ item, isHero }) => (
     <div onClick={() => setSelectedItem(item)} className="group w-full cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden shadow-lg hover:border-gray-600 transition-all flex flex-col sm:flex-row relative">
-      
-      {/* 1. Image Container dictates the exact height of the row. */}
       <div className={`w-full ${isHero ? 'sm:w-3/5 lg:w-2/3' : 'sm:w-1/2'} relative shrink-0 bg-[#111] overflow-hidden`}>
         {item.imageUrl ? (
           <img src={item.imageUrl} alt="" className="w-full h-auto aspect-video object-cover opacity-80 group-hover:scale-105 transition-transform duration-500 block" />
@@ -135,8 +155,6 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
            <><div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div><PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" /></>
         )}
       </div>
-      
-      {/* 2. Text Container floats absolutely on desktop so it can NEVER push the row taller than the 16:9 image. */}
       <div className="w-full sm:flex-1 relative bg-gradient-to-b from-[#1e1e1e] to-[#161616]">
         <div className="sm:absolute sm:inset-0 p-4 lg:p-6 flex flex-col justify-center overflow-hidden">
           <CardTags item={item} />
@@ -147,13 +165,20 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
     </div>
   );
 
+  // THE BRAIN: Intelligently selects the right card based on layout constraints AND post type!
+  const RenderCard = ({ item, layoutType }) => {
+    if (item.type === 'short') return <ShortCard item={item} />;
+    if (layoutType === 'horizontal') return <HorizontalCard item={item} isHero={false} />;
+    if (layoutType === 'hero') return <HorizontalCard item={item} isHero={true} />;
+    return <VerticalCard item={item} />;
+  };
+
   return (
     <main className="max-w-[1600px] mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in duration-300">
       
       {/* LEFT COLUMN: STICKY DASHBOARD MENU */}
       <div className="hidden lg:flex lg:col-span-3 flex-col gap-6">
         <div className="sticky top-6 flex flex-col gap-6">
-          
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Browse Network</h4>
              <div className="flex flex-col gap-1">
@@ -171,15 +196,10 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                 </button>
              </div>
           </div>
-
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Pro Tools</h4>
              <div className="flex flex-col gap-1">
-                {[
-                  { name: 'Player Rankings', icon: Users },
-                  { name: 'Trade Calculator', icon: Calculator },
-                  { name: 'Trade Value Chart', icon: ArrowLeftRight }
-                ].map(tool => {
+                {[{ name: 'Player Rankings', icon: Users }, { name: 'Trade Calculator', icon: Calculator }, { name: 'Trade Value Chart', icon: ArrowLeftRight }].map(tool => {
                   const Icon = tool.icon;
                   return (
                     <a href="#" key={tool.name} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
@@ -189,22 +209,14 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                 })}
              </div>
           </div>
-
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Connect</h4>
              <div className="flex flex-col gap-1">
-                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
-                  <SelloutCrowds size={18} className={theme.text} /> Exclusive Community
-                </a>
-                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
-                  <Shirt size={18} className={theme.text} /> Join A Jersey League
-                </a>
-                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
-                  <Flag size={18} className={theme.text} /> Compete in the Napkin League
-                </a>
+                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><SelloutCrowds size={18} className={theme.text} /> Exclusive Community</a>
+                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><Shirt size={18} className={theme.text} /> Join A Jersey League</a>
+                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><Flag size={18} className={theme.text} /> Compete in the Napkin League</a>
              </div>
           </div>
-
           <div className="flex flex-col items-center justify-center gap-4 mt-2 mb-8">
              <div className="flex flex-wrap items-center justify-center gap-5 text-gray-500 px-2">
                 {currentLinks.sellout && <a href={currentLinks.sellout} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><SelloutCrowds size={20} /></a>}
@@ -216,15 +228,10 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                 {currentLinks.linkedin && <a href={currentLinks.linkedin} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><LinkedIn size={20} /></a>}
              </div>
              <div className="text-center mt-2">
-               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
-                 &copy; {new Date().getFullYear()} Fantasy Sports Advice Network
-               </p>
-               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mt-1">
-                 All Rights Reserved
-               </p>
+               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">&copy; {new Date().getFullYear()} Fantasy Sports Advice Network</p>
+               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mt-1">All Rights Reserved</p>
              </div>
           </div>
-
         </div>
       </div>
 
@@ -240,6 +247,9 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
           </button>
           <button onClick={() => setFeedFilter('videos')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'videos' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <Film size={14} /> Videos
+          </button>
+          <button onClick={() => setFeedFilter('shorts')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'shorts' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
+            <Smartphone size={14} /> Shorts
           </button>
           <button onClick={() => setFeedFilter('podcasts')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'podcasts' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <Mic size={14} /> Podcasts
@@ -257,116 +267,74 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
             const count = items.length;
             const adTypes = ['sellout', 'rookie', 'merch'];
             const adTypeForThisDay = adTypes[groupIndex % adTypes.length]; 
-            
-            // A simple variable to mathematically cycle through layout variants!
             const layoutStyle = groupIndex % 3;
 
             return (
               <div key={group.date} className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 
-                {/* Date Bundle Header */}
                 <div className="flex items-center gap-4">
                   <div className={`h-px flex-1 ${theme.bg} opacity-50`}></div>
-                  <span className={`font-black uppercase tracking-widest text-lg md:text-xl drop-shadow-md ${theme.text}`}>
-                    {displayDate}
-                  </span>
+                  <span className={`font-black uppercase tracking-widest text-lg md:text-xl drop-shadow-md ${theme.text}`}>{displayDate}</span>
                   <div className={`h-px flex-[5] ${theme.bg} opacity-50`}></div>
                 </div>
 
-                {/* THE DYNAMIC EDITORIAL GRID */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   
-                  {/* LAYOUT 1: Only 1 Item (Alternating Left & Right) */}
                   {count === 1 && (
                     <>
                       <div className={`lg:col-span-2 ${layoutStyle % 2 !== 0 ? 'order-first lg:order-last' : ''}`}>
-                        <HorizontalCard item={items[0]} isHero={false} />
+                        <RenderCard item={items[0]} layoutType="horizontal" />
                       </div>
-                      <div className={`lg:col-span-1 relative min-h-[150px] lg:min-h-0 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-first' : ''}`}>
-                        {/* Wrapper perfectly flex-matches the card height on desktop! */}
-                        <div className="lg:absolute lg:inset-0 w-full h-full">
-                          <PromoAd type={adTypeForThisDay} shape="square" />
-                        </div>
+                      <div className={`lg:col-span-1 flex flex-col h-full ${layoutStyle % 2 !== 0 ? 'order-last lg:order-first' : ''}`}>
+                        <PromoAd type={adTypeForThisDay} shape="square" />
                       </div>
                     </>
                   )}
 
-                  {/* LAYOUT 2: Exactly 2 Items (Cycling through 3 different stack formations) */}
                   {count === 2 && layoutStyle === 0 && (
                     <>
-                      {/* Variant A: Vertical Left, Stacked Right (Content Top, Ad Bottom) */}
-                      <div className="lg:col-span-1">
-                        <VerticalCard item={items[0]} />
-                      </div>
-                      <div className="lg:col-span-2 flex flex-col gap-6">
-                        <HorizontalCard item={items[1]} isHero={false} />
-                        <div className="flex-1 w-full relative min-h-[120px] lg:min-h-0">
-                          <div className="lg:absolute lg:inset-0 w-full h-full">
-                            <PromoAd type={adTypeForThisDay} shape="banner" />
-                          </div>
-                        </div>
+                      <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
+                      <div className="lg:col-span-2 flex flex-col gap-6 h-full">
+                        <RenderCard item={items[1]} layoutType="horizontal" />
+                        <div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
                       </div>
                     </>
                   )}
 
                   {count === 2 && layoutStyle === 1 && (
                     <>
-                      {/* Variant B: Stacked Left (Ad Top, Content Bottom), Vertical Right */}
-                      <div className="lg:col-span-2 flex flex-col gap-6 order-last lg:order-none">
-                        <div className="flex-1 w-full relative min-h-[120px] lg:min-h-0 order-last lg:order-first">
-                          <div className="lg:absolute lg:inset-0 w-full h-full">
-                            <PromoAd type={adTypeForThisDay} shape="banner" />
-                          </div>
-                        </div>
-                        <HorizontalCard item={items[1]} isHero={false} />
+                      <div className="lg:col-span-2 flex flex-col gap-6 h-full order-last lg:order-none">
+                        <div className="flex-1 w-full flex flex-col order-last lg:order-first"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
+                        <RenderCard item={items[1]} layoutType="horizontal" />
                       </div>
-                      <div className="lg:col-span-1">
-                        <VerticalCard item={items[0]} />
-                      </div>
+                      <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
                     </>
                   )}
 
                   {count === 2 && layoutStyle === 2 && (
                     <>
-                      {/* Variant C: Stacked Left (Content Top, Ad Bottom), Vertical Right */}
-                      <div className="lg:col-span-2 flex flex-col gap-6 order-last lg:order-none">
-                        <HorizontalCard item={items[1]} isHero={false} />
-                        <div className="flex-1 w-full relative min-h-[120px] lg:min-h-0">
-                          <div className="lg:absolute lg:inset-0 w-full h-full">
-                            <PromoAd type={adTypeForThisDay} shape="banner" />
-                          </div>
-                        </div>
+                      <div className="lg:col-span-2 flex flex-col gap-6 h-full order-last lg:order-none">
+                        <RenderCard item={items[1]} layoutType="horizontal" />
+                        <div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
                       </div>
-                      <div className="lg:col-span-1">
-                        <VerticalCard item={items[0]} />
-                      </div>
+                      <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
                     </>
                   )}
 
-                  {/* LAYOUT 3: Exactly 3 Items */}
                   {count === 3 && (
                     <>
-                      <div className="lg:col-span-1">
-                        <VerticalCard item={items[0]} />
-                      </div>
-                      <div className="lg:col-span-1">
-                        <VerticalCard item={items[1]} />
-                      </div>
-                      <div className="lg:col-span-1">
-                        <VerticalCard item={items[2]} />
-                      </div>
+                      <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
+                      <div className="lg:col-span-1 h-full"><RenderCard item={items[1]} layoutType="vertical" /></div>
+                      <div className="lg:col-span-1 h-full"><RenderCard item={items[2]} layoutType="vertical" /></div>
                     </>
                   )}
 
-                  {/* LAYOUT 4+: 4 or More Items */}
                   {count > 3 && (
                     <>
-                      <div className="lg:col-span-3">
-                        <HorizontalCard item={items[0]} isHero={true} />
-                      </div>
+                      <div className="lg:col-span-3"><RenderCard item={items[0]} layoutType="hero" /></div>
                       {items.slice(1).map(item => (
-                        <div key={item.id} className="lg:col-span-1">
-                          <VerticalCard item={item} />
+                        <div key={item.id} className="lg:col-span-1 h-full">
+                          <RenderCard item={item} layoutType="vertical" />
                         </div>
                       ))}
                     </>
@@ -374,11 +342,8 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
 
                 </div>
 
-                {/* Drop a Full-Width Banner Ad underneath for days with 3+ items */}
                 {count >= 3 && (
-                  <div className="w-full mt-2 min-h-[100px]">
-                    <PromoAd type={adTypeForThisDay} shape="banner" />
-                  </div>
+                  <div className="w-full mt-2 min-h-[100px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
                 )}
 
               </div>
