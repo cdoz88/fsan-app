@@ -1,111 +1,206 @@
 import React, { useState } from 'react';
-import { PlayCircle, FileText, Film } from 'lucide-react';
+import { PlayCircle, FileText, Film, Mic, Wrench, ChevronRight, LayoutList } from 'lucide-react';
 import { themes } from '../utils/theme';
-import Sidebar from '../components/Sidebar';
 
 export default function Home({ videos, articles, activeSport, setActiveSport, setCurrentView, setSelectedItem }) {
   const theme = themes[activeSport];
   const [feedFilter, setFeedFilter] = useState('all'); // 'all', 'articles', 'videos'
 
-  // Combine both arrays and sort them by the exact millisecond they were published!
-  let feed = [...videos, ...articles].sort((a, b) => b.rawTimestamp - a.rawTimestamp);
+  // Combine and sort everything chronologically
+  let filteredFeed = [...videos, ...articles].sort((a, b) => b.rawTimestamp - a.rawTimestamp);
 
-  // Apply the local feed filter
-  if (feedFilter === 'articles') feed = feed.filter(item => item.type === 'article');
-  if (feedFilter === 'videos') feed = feed.filter(item => item.type === 'video');
+  // Apply the local feed filter toggle
+  if (feedFilter === 'articles') filteredFeed = filteredFeed.filter(item => item.type === 'article');
+  if (feedFilter === 'videos') filteredFeed = filteredFeed.filter(item => item.type === 'video');
+
+  // THE MAGIC: Group the feed into "Bundles" by Date!
+  const groupedFeed = [];
+  filteredFeed.forEach(item => {
+    let group = groupedFeed.find(g => g.date === item.date);
+    if (!group) {
+      group = { date: item.date, items: [] };
+      groupedFeed.push(group);
+    }
+    group.items.push(item);
+  });
+
+  // --- IN-FEED AD COMPONENTS ---
+  const PromoRookieGuide = () => (
+    <div className="w-full bg-gradient-to-r from-red-900 to-black border border-red-800 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between relative overflow-hidden shadow-xl mt-2 mb-6">
+       <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#fff_10px,#fff_20px)]"></div>
+       <div className="relative z-10 mb-6 md:mb-0 text-center md:text-left">
+         <h3 className="text-red-500 font-black text-3xl md:text-4xl italic tracking-tighter uppercase drop-shadow-md mb-1">Dominate</h3>
+         <p className="text-white text-sm font-bold uppercase tracking-widest">Your Draft With The Ultimate Rookie Breakdown!</p>
+       </div>
+       <button className="bg-green-600 hover:bg-green-500 text-white px-8 py-4 rounded-full font-black text-xs uppercase tracking-wider transform transition hover:scale-105 shadow-lg relative z-10 shrink-0">
+         Only $10 - Get Access
+       </button>
+    </div>
+  );
+
+  const PromoSelloutCrowds = () => (
+    <div className="w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/40 via-[#111] to-black border border-red-900/50 rounded-2xl p-8 md:p-12 text-center flex flex-col items-center justify-center relative overflow-hidden shadow-2xl mt-2 mb-6">
+       {/* Gritty textured overlay */}
+       <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20 20\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')", mixBlendMode: 'overlay' }}></div>
+       
+       <h2 className="text-4xl md:text-5xl font-black text-white italic tracking-tight mb-3 relative z-10 drop-shadow-lg">Join Sellout Crowds</h2>
+       <p className="text-gray-300 font-bold md:text-xl tracking-wide mb-8 relative z-10">Win Your League with Real-Time Advice!</p>
+       <button className="bg-red-600 hover:bg-red-500 text-white px-8 py-3.5 rounded-lg font-black uppercase tracking-wider transition-transform hover:scale-105 shadow-lg relative z-10 flex items-center gap-2">
+          Join the Community <ChevronRight size={18} />
+       </button>
+    </div>
+  );
+
+  const PromoMerch = () => (
+    <div className="w-full bg-[#111] border border-purple-900/50 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-purple-600 transition-all group overflow-hidden relative mt-2 mb-6 shadow-xl">
+      <div className="absolute inset-0 bg-gradient-to-tr from-purple-900/30 to-black z-0 transition-opacity group-hover:opacity-80"></div>
+      <h3 className="text-purple-500 font-black text-2xl italic uppercase z-10 group-hover:scale-110 transition-transform">Fantasy Apparel</h3>
+      <p className="text-gray-400 text-sm font-bold tracking-widest z-10 mt-2">FSAN.SHOP</p>
+      <button className="mt-6 bg-transparent border-2 border-purple-600 text-purple-400 px-8 py-2 rounded-full text-xs font-black uppercase tracking-wider hover:bg-purple-600 hover:text-white transition-colors z-10">
+        Shop Now
+      </button>
+    </div>
+  );
 
   return (
     <main className="max-w-[1600px] mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in duration-300">
       
-      {/* LEFT SPACER (Keeps the feed centered on massive screens, like Twitter does) */}
-      <div className="hidden lg:block lg:col-span-2"></div>
+      {/* LEFT COLUMN: STICKY DASHBOARD MENU */}
+      <div className="hidden lg:flex lg:col-span-3 flex-col gap-6">
+        <div className="sticky top-6 flex flex-col gap-6">
+          
+          {/* Submenu: Content */}
+          <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
+             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Browse Network</h4>
+             <div className="flex flex-col gap-1">
+                <button onClick={() => setCurrentView('home')} className={`flex items-center gap-3 text-sm font-bold transition-colors p-2.5 rounded-xl w-full text-left ${currentView === 'home' ? 'bg-[#252525] text-white shadow-inner border border-gray-700' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'}`}>
+                  <LayoutList size={18} className={theme.text} /> Timeline Feed
+                </button>
+                <button onClick={() => setCurrentView('articles')} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
+                  <FileText size={18} className={theme.text} /> All Articles
+                </button>
+                <button onClick={() => setCurrentView('videos')} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
+                  <Film size={18} className={theme.text} /> All Videos
+                </button>
+                <button className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
+                  <Mic size={18} className={theme.text} /> Podcasts
+                </button>
+             </div>
+          </div>
 
-      {/* CENTER COLUMN: THE UNIFIED TIMELINE */}
-      <div className="lg:col-span-7 flex flex-col gap-6 max-w-2xl mx-auto w-full">
+          {/* Submenu: Pro Tools */}
+          <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
+             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Pro Tools</h4>
+             <div className="flex flex-col gap-1">
+                {['Trade Analyzer', 'Dynasty Rankings', 'Rookie Mock Draft', 'Start / Sit Optimizer', 'DFS Projections'].map(tool => (
+                  <a href="#" key={tool} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
+                    <Wrench size={18} className={theme.text} /> {tool}
+                  </a>
+                ))}
+             </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* CENTER & RIGHT: THE UNIFIED TIMELINE BUNDLES */}
+      <div className="lg:col-span-9 flex flex-col gap-8 w-full max-w-5xl">
         
         {/* App-like Feed Filter Toggle */}
-        <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-1.5 flex gap-2 sticky top-4 z-30 shadow-2xl backdrop-blur-md bg-opacity-90">
+        <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-1.5 flex gap-2 shadow-xl z-30">
           <button 
             onClick={() => setFeedFilter('all')} 
-            className={`flex-1 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${feedFilter === 'all' ? `${theme.bg} text-white shadow-md` : 'text-gray-500 hover:text-white'}`}
+            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${feedFilter === 'all' ? `${theme.bg} text-white shadow-md` : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}
           >
             Latest Feed
           </button>
           <button 
             onClick={() => setFeedFilter('articles')} 
-            className={`flex-1 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'articles' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white'}`}
+            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'articles' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}
           >
             <FileText size={14} /> Articles
           </button>
           <button 
             onClick={() => setFeedFilter('videos')} 
-            className={`flex-1 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'videos' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white'}`}
+            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'videos' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}
           >
             <Film size={14} /> Videos
           </button>
         </div>
 
-        {/* The Timeline Feed */}
-        <div className="flex flex-col gap-6">
-          {feed.map((item) => {
-            
-            // --- VIDEO CARD LAYOUT ---
-            if (item.type === 'video') {
-              return (
-                <div key={item.id} onClick={() => setSelectedItem(item)} className="group cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden shadow-lg hover:border-gray-600 transition-all flex flex-col">
-                  <div className="aspect-video bg-gradient-to-tr from-[#1c233a] to-[#111] relative flex items-center justify-center overflow-hidden">
-                     {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />}
-                     <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
-                     <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center z-10 group-hover:bg-red-600 transition-colors">
-                       <PlayCircle size={32} className="text-white ml-1" />
-                     </div>
-                  </div>
-                  <div className="p-5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="bg-red-900/30 text-red-500 border border-red-900/50 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">Video</span>
-                      <span className="text-gray-500 font-bold text-[10px] uppercase tracking-wider">{item.date}</span>
-                    </div>
-                    <h3 className={`font-black text-xl leading-tight group-hover:${theme.text} transition-colors`} dangerouslySetInnerHTML={{ __html: item.title }} />
-                  </div>
-                </div>
-              );
-            }
-
-            // --- ARTICLE CARD LAYOUT ---
-            return (
-              <div key={item.id} onClick={() => setSelectedItem(item)} className="group cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden shadow-lg hover:border-gray-600 transition-all flex flex-col sm:flex-row">
-                <div className="w-full sm:w-2/5 aspect-video sm:aspect-auto bg-gray-800 relative overflow-hidden shrink-0">
-                  {item.imageUrl ? (
-                    <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
-                  ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-[#111]"></div>
-                  )}
-                </div>
-                <div className="p-5 flex flex-col justify-center flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    {activeSport === 'All' && <span className={`w-2 h-2 rounded-full ${themes[item.sport].bg} shrink-0`}></span>}
-                    <span className="text-gray-500 font-bold text-[10px] uppercase tracking-wider">{item.date} • By {item.author}</span>
-                  </div>
-                  <h3 className={`font-black text-xl mb-2 leading-tight group-hover:${theme.text} transition-colors`} dangerouslySetInnerHTML={{ __html: item.title }} />
-                  <div className="text-sm text-gray-400 line-clamp-2 leading-relaxed" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
-                </div>
+        {/* The Chronological Bundles */}
+        <div className="flex flex-col gap-10">
+          {groupedFeed.map((group, groupIndex) => (
+            <div key={group.date} className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              
+              {/* Date Bundle Header */}
+              <div className="flex items-center gap-4">
+                <div className={`h-px flex-1 ${theme.bg} opacity-50`}></div>
+                <span className={`font-black uppercase tracking-widest text-lg md:text-xl drop-shadow-md ${theme.text}`}>
+                  {group.date}
+                </span>
+                <div className={`h-px flex-[5] ${theme.bg} opacity-50`}></div>
               </div>
-            );
 
-          })}
-          
-          {feed.length === 0 && (
-            <div className="py-12 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-xl">
+              {/* Grid of items for this specific date */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {group.items.map((item, itemIndex) => {
+                  
+                  // FEATURED HERO LOGIC: The very first article of a busy day spans 2 columns!
+                  const isHero = itemIndex === 0 && item.type === 'article' && group.items.length >= 3;
+
+                  return (
+                    <div key={item.id} onClick={() => setSelectedItem(item)} className={`group cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden shadow-lg hover:border-gray-600 transition-all flex flex-col ${isHero ? 'md:col-span-2 xl:col-span-2' : 'col-span-1'}`}>
+                      
+                      {/* Media Area */}
+                      <div className={`w-full aspect-video bg-gradient-to-tr from-[#1c233a] to-[#111] relative flex items-center justify-center overflow-hidden shrink-0`}>
+                        {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />}
+                        {item.type === 'video' && (
+                           <>
+                             <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
+                             <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center z-10 group-hover:bg-red-600 transition-colors shadow-lg">
+                               <PlayCircle size={32} className="text-white ml-1" />
+                             </div>
+                           </>
+                        )}
+                      </div>
+                      
+                      {/* Content Area */}
+                      <div className="p-5 flex flex-col justify-center flex-1 bg-gradient-to-b from-[#1e1e1e] to-[#161616]">
+                        <div className="flex items-center gap-2 mb-3">
+                          {item.type === 'video' ? (
+                             <span className="bg-red-900/30 text-red-500 border border-red-900/50 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">Video</span>
+                          ) : (
+                             <span className={`w-2 h-2 rounded-full ${themes[item.sport].bg} shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.3)]`}></span>
+                          )}
+                          <span className="text-gray-500 font-bold text-[10px] uppercase tracking-wider">
+                            {item.type === 'article' ? `By ${item.author}` : item.sport}
+                          </span>
+                        </div>
+                        <h3 className={`font-black ${isHero ? 'text-2xl md:text-3xl' : 'text-lg'} leading-tight group-hover:${theme.text} transition-colors mb-3`} dangerouslySetInnerHTML={{ __html: item.title }} />
+                        
+                        {item.type === 'article' && (
+                           <div className={`text-sm text-gray-400 leading-relaxed mt-auto ${isHero ? 'line-clamp-3' : 'line-clamp-2'}`} dangerouslySetInnerHTML={{ __html: item.excerpt }} />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* DYNAMIC IN-FEED ADS: Inject promos directly between the daily bundles! */}
+              {groupIndex === 0 && <PromoRookieGuide />}
+              {groupIndex === 1 && <PromoSelloutCrowds />}
+              {groupIndex === 2 && <PromoMerch />}
+              
+            </div>
+          ))}
+
+          {groupedFeed.length === 0 && (
+            <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border-2 border-dashed border-gray-800 rounded-2xl">
               No content found for this filter.
             </div>
           )}
-        </div>
-      </div>
-
-      {/* RIGHT COLUMN: SMART SIDEBAR (Sticky so it stays visible while scrolling the feed) */}
-      <div className="hidden lg:block lg:col-span-3">
-        <div className="sticky top-4">
-          <Sidebar activeSport={activeSport} />
         </div>
       </div>
 
