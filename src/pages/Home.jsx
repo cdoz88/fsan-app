@@ -70,6 +70,12 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
     group.items.push(item);
   });
 
+  // Calculate formatted date strings for Today and Yesterday
+  const todayStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
+
   const PromoRookieGuide = () => (
     <div className="w-full bg-gradient-to-r from-red-900 to-black border border-red-800 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between relative overflow-hidden shadow-xl mt-2 mb-6">
        <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#fff_10px,#fff_20px)]"></div>
@@ -208,14 +214,20 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
 
         {/* The Chronological Bundles */}
         <div className="flex flex-col gap-10">
-          {groupedFeed.map((group, groupIndex) => (
+          {groupedFeed.map((group, groupIndex) => {
+            // Check if this bundle's date matches Today or Yesterday
+            let displayDate = group.date;
+            if (group.date === todayStr) displayDate = 'Today';
+            else if (group.date === yesterdayStr) displayDate = 'Yesterday';
+
+            return (
             <div key={group.date} className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               
               {/* Date Bundle Header */}
               <div className="flex items-center gap-4">
                 <div className={`h-px flex-1 ${theme.bg} opacity-50`}></div>
                 <span className={`font-black uppercase tracking-widest text-lg md:text-xl drop-shadow-md ${theme.text}`}>
-                  {group.date}
+                  {displayDate}
                 </span>
                 <div className={`h-px flex-[5] ${theme.bg} opacity-50`}></div>
               </div>
@@ -236,9 +248,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                         {item.type === 'video' && (
                            <>
                              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
-                             <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center z-10 group-hover:bg-red-600 transition-colors shadow-lg">
-                               <PlayCircle size={32} className="text-white ml-1" />
-                             </div>
+                             <PlayCircle size={48} className="text-white/60 group-hover:text-white group-hover:scale-110 transition-all z-10 relative" />
                            </>
                         )}
                       </div>
@@ -272,7 +282,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
               {groupIndex === 2 && <PromoMerch />}
               
             </div>
-          ))}
+          )})}
 
           {groupedFeed.length === 0 && (
             <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border-2 border-dashed border-gray-800 rounded-2xl">
