@@ -25,23 +25,20 @@ const getInitialView = () => {
 };
 
 export default function App() {
-  // 1. Core State
   const [activeSport, setActiveSport] = useState(getInitialSport);
   const [currentView, setCurrentView] = useState(getInitialView); 
   const [selectedItem, setSelectedItem] = useState(null);
   const [wpPosts, setWpPosts] = useState([]);
 
-  // 2. Loading & Pagination State
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // 3. Category & Cache State
   const [categoryMap, setCategoryMap] = useState({});
   const [isCategoriesReady, setIsCategoriesReady] = useState(false);
   const [postsCache, setPostsCache] = useState({}); 
 
-  // --- NATIVE URL ROUTING SYNC (NOW WITH DEEP LINKING) ---
+  // --- NATIVE URL ROUTING SYNC (DEEP LINKING) ---
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let changed = false;
@@ -55,7 +52,6 @@ export default function App() {
       changed = true;
     }
 
-    // Add the specific article/video ID to the URL when someone clicks it
     if (selectedItem) {
       if (params.get('id') !== selectedItem.id.toString()) {
         params.set('id', selectedItem.id);
@@ -85,7 +81,7 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // --- FETCH CATEGORIES ONCE ON MOUNT ---
+  // --- FETCH CATEGORIES ---
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -105,7 +101,7 @@ export default function App() {
     fetchCategories();
   }, []);
 
-  // --- FETCH POSTS WHEN SPORT OR PAGE CHANGES ---
+  // --- FETCH POSTS ---
   useEffect(() => {
     if (!isCategoriesReady) return;
 
@@ -158,16 +154,25 @@ export default function App() {
           const imageUrl = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || null;
           const date = new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
           const rawTimestamp = new Date(post.date).getTime();
-          
           const author = defaultType === 'video' ? null : (post._embedded?.author?.[0]?.name || 'FSAN Staff');
 
           let youtubeId = null;
           let cleanContent = post.content?.rendered || '';
+          
+          // EXTRACT YOUTUBE DESCRIPTION FROM CUSTOM WP FIELDS
+          let customYtDesc = post.meta?.youtube_description || post.acf?.youtube_description || post.youtube_description;
+          if (Array.isArray(customYtDesc)) customYtDesc = customYtDesc[0];
+
           const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
           const match = cleanContent.match(ytRegex);
           if (match && match[1]) {
             youtubeId = match[1];
             cleanContent = cleanContent.replace(/<iframe.*?<\/iframe>/i, '');
+          }
+
+          // If a custom youtube description exists for this video, override the cleanContent with it!
+          if (defaultType === 'video' && customYtDesc && typeof customYtDesc === 'string' && customYtDesc.trim().length > 0) {
+            cleanContent = customYtDesc;
           }
 
           return {
@@ -212,7 +217,6 @@ export default function App() {
           });
         }
 
-        // DEEP LINKING LOGIC: If a user clicked a specific link, pop open the modal!
         const params = new URLSearchParams(window.location.search);
         const urlId = params.get('id');
         if (urlId && !selectedItem) {
@@ -232,15 +236,11 @@ export default function App() {
     fetchWordPressData();
   }, [activeSport, currentPage, isCategoriesReady]);
 
-  // --- HANDLERS ---
   const handleSportChange = (sport) => {
     if (sport !== activeSport) {
       setActiveSport(sport);
       setCurrentPage(1);
-      
-      if (!postsCache[sport]) {
-        setWpPosts([]); 
-      }
+      if (!postsCache[sport]) setWpPosts([]); 
     }
   };
 
@@ -297,7 +297,6 @@ export default function App() {
         <ArticlesArchive articles={articles} activeSport={activeSport} setCurrentView={setCurrentView} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
 
-      {/* The Separated Modal Component! */}
       {selectedItem && (
         <ContentModal selectedItem={selectedItem} setSelectedItem={setSelectedItem} videos={videos} />
       )}
