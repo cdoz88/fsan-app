@@ -15,6 +15,14 @@ export default function Header({ activeSport, setActiveSport, setCurrentView }) 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const theme = themes[activeSport];
 
+  // DYNAMIC MAIN LOGOS! Just drop the exact image URLs here for each sport
+  const logos = {
+    All: 'https://fsan.com/wp-content/uploads/2023/12/Horizontal-White.webp',
+    Football: 'https://fsan.com/wp-content/uploads/2023/12/Horizontal-White.webp', // Add FFAN Logo here later
+    Basketball: 'https://fsan.com/wp-content/uploads/2023/12/Horizontal-White.webp', // Add FBBAN Logo here later
+    Baseball: 'https://fsan.com/wp-content/uploads/2023/12/Horizontal-White.webp', // Add FBAN Logo here later
+  };
+
   // Dynamic social links dictionary
   const socialLinks = {
     All: {
@@ -62,9 +70,9 @@ export default function Header({ activeSport, setActiveSport, setCurrentView }) 
       <div className="bg-[#1a1a1a] border-b border-gray-800 px-4 py-2 flex justify-between items-center text-xs font-semibold tracking-wide z-50 relative">
         <div className="flex items-center gap-3">
           <img 
-            src="https://fsan.com/wp-content/uploads/2023/12/Horizontal-White.webp" 
+            src={logos[activeSport]} 
             alt="FSAN Logo" 
-            className="h-8 md:h-10 cursor-pointer object-contain" 
+            className="h-8 md:h-10 cursor-pointer object-contain transition-all duration-300" 
             onClick={() => setCurrentView('home')} 
           />
         </div>
