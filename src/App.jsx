@@ -159,8 +159,8 @@ export default function App() {
           let youtubeId = null;
           let cleanContent = post.content?.rendered || '';
           
-          // EXTRACT YOUTUBE DESCRIPTION FROM CUSTOM WP FIELDS
-          let customYtDesc = post.meta?.youtube_description || post.acf?.youtube_description || post.youtube_description;
+          // GRAB THE NEWLY EXPOSED YOUTUBE DESCRIPTION
+          let customYtDesc = post.youtube_description || post.meta?.youtube_description || post.acf?.youtube_description;
           if (Array.isArray(customYtDesc)) customYtDesc = customYtDesc[0];
 
           const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
@@ -170,9 +170,16 @@ export default function App() {
             cleanContent = cleanContent.replace(/<iframe.*?<\/iframe>/i, '');
           }
 
-          // If a custom youtube description exists for this video, override the cleanContent with it!
+          // FORMAT THE CUSTOM YOUTUBE DESCRIPTION IF IT EXISTS
           if (defaultType === 'video' && customYtDesc && typeof customYtDesc === 'string' && customYtDesc.trim().length > 0) {
-            cleanContent = customYtDesc;
+            // 1. Convert newlines to <br> tags
+            let formattedDesc = customYtDesc.replace(/(?:\r\n|\r|\n)/g, '<br/>');
+            
+            // 2. Convert plain text URLs into clickable links (Replicating YT2PostsCommon::add_links)
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            formattedDesc = formattedDesc.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer" style="text-decoration: underline; color: #60a5fa;">${url}</a>`);
+            
+            cleanContent = formattedDesc;
           }
 
           return {
