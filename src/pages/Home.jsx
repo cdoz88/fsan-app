@@ -46,13 +46,13 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
   const PromoAd = ({ type, shape }) => {
     if (type === 'rookie') {
       return (
-        <div className={`w-full h-full bg-gradient-to-br from-red-900 to-black border border-red-800 rounded-2xl ${shape === 'banner' ? 'p-4 md:p-6 flex-col md:flex-row' : 'p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-xl cursor-pointer hover:border-red-500 transition-colors group`}>
+        <div className={`w-full h-full bg-gradient-to-br from-red-900 to-black border border-red-800 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-xl cursor-pointer hover:border-red-500 transition-colors group`}>
            <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#fff_10px,#fff_20px)]"></div>
-           <div className={`relative z-10 flex-1 ${shape === 'banner' ? 'md:text-left mb-3 md:mb-0 md:mr-4' : 'mb-4'}`}>
-             <h3 className="text-red-500 font-black text-2xl lg:text-3xl italic uppercase drop-shadow-md group-hover:scale-105 transition-transform origin-left">Dominate</h3>
-             <p className="text-white text-[10px] lg:text-xs font-bold uppercase tracking-widest mt-1 line-clamp-2">Get The Ultimate Rookie Breakdown!</p>
+           <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-2 md:mb-4'}`}>
+             <h3 className="text-red-500 font-black text-xl lg:text-2xl italic uppercase drop-shadow-md group-hover:scale-105 transition-transform origin-left leading-none">Dominate</h3>
+             <p className="text-white text-[10px] font-bold uppercase tracking-widest mt-1 line-clamp-1 md:line-clamp-2">Get The Ultimate Rookie Breakdown!</p>
            </div>
-           <button className="bg-green-600 text-white px-4 py-2 lg:px-6 lg:py-3 rounded-full font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 shrink-0 whitespace-nowrap">
+           <button className="bg-green-600 text-white px-4 py-2 lg:px-5 lg:py-2.5 rounded-full font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 shrink-0 whitespace-nowrap mt-2 sm:mt-0">
              Only $10 - Get Access
            </button>
         </div>
@@ -61,13 +61,13 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
 
     if (type === 'sellout') {
       return (
-        <div className={`w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/40 via-[#111] to-black border border-red-900/50 rounded-2xl ${shape === 'banner' ? 'p-4 md:p-6 flex-col md:flex-row' : 'p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-2xl cursor-pointer hover:border-red-600 transition-colors group`}>
+        <div className={`w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/40 via-[#111] to-black border border-red-900/50 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-2xl cursor-pointer hover:border-red-600 transition-colors group`}>
            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20 20\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')", mixBlendMode: 'overlay' }}></div>
-           <div className={`relative z-10 flex-1 ${shape === 'banner' ? 'md:text-left mb-3 md:mb-0 md:mr-4' : 'mb-4'}`}>
-             <h2 className="text-2xl lg:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-left line-clamp-1">Join Sellout Crowds</h2>
-             <p className="text-gray-300 font-bold text-[10px] lg:text-xs tracking-wide relative z-10 line-clamp-2">Win Your League with Real-Time Advice!</p>
+           <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-2 md:mb-4'}`}>
+             <h2 className="text-xl lg:text-2xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-left line-clamp-1">Join Sellout Crowds</h2>
+             <p className="text-gray-300 font-bold text-[10px] tracking-wide relative z-10 line-clamp-1 md:line-clamp-2">Win Your League with Real-Time Advice!</p>
            </div>
-           <button className="bg-red-600 text-white px-4 py-2 lg:px-6 lg:py-3 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 flex items-center gap-2 shrink-0 whitespace-nowrap">
+           <button className="bg-red-600 text-white px-4 py-2 lg:px-5 lg:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 flex items-center justify-center gap-2 shrink-0 whitespace-nowrap mt-2 sm:mt-0">
               Join Community <ChevronRight size={14} />
            </button>
         </div>
@@ -76,13 +76,13 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
 
     // merch
     return (
-      <div className={`w-full h-full bg-[#111] border border-purple-900/50 rounded-2xl ${shape === 'banner' ? 'p-4 md:p-6 flex-col md:flex-row' : 'p-6 flex-col'} flex items-center justify-center text-center cursor-pointer hover:border-purple-600 transition-all group overflow-hidden relative shadow-xl`}>
+      <div className={`w-full h-full bg-[#111] border border-purple-900/50 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center cursor-pointer hover:border-purple-600 transition-all group overflow-hidden relative shadow-xl`}>
         <div className="absolute inset-0 bg-gradient-to-tr from-purple-900/30 to-black z-0 transition-opacity group-hover:opacity-80"></div>
-        <div className={`relative z-10 flex-1 ${shape === 'banner' ? 'md:text-left mb-3 md:mb-0 md:mr-4' : 'mb-4'}`}>
-          <h3 className="text-purple-500 font-black text-2xl lg:text-3xl italic uppercase z-10 group-hover:scale-110 transition-transform origin-left line-clamp-1">Fantasy Apparel</h3>
-          <p className="text-gray-400 text-[10px] lg:text-xs font-bold tracking-widest z-10 mt-1">FSAN.SHOP</p>
+        <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-2 md:mb-4'}`}>
+          <h3 className="text-purple-500 font-black text-xl lg:text-2xl italic uppercase z-10 group-hover:scale-110 transition-transform origin-left line-clamp-1 leading-none">Fantasy Apparel</h3>
+          <p className="text-gray-400 text-[10px] font-bold tracking-widest z-10 mt-1 line-clamp-1">FSAN.SHOP</p>
         </div>
-        <button className="bg-transparent border-2 border-purple-600 text-purple-400 px-4 py-2 lg:px-6 lg:py-3 rounded-full text-[10px] font-black uppercase tracking-wider group-hover:bg-purple-600 group-hover:text-white transition-colors z-10 shrink-0 whitespace-nowrap">
+        <button className="bg-transparent border-2 border-purple-600 text-purple-400 px-4 py-2 lg:px-5 lg:py-2.5 rounded-full text-[10px] font-black uppercase tracking-wider group-hover:bg-purple-600 group-hover:text-white transition-colors z-10 shrink-0 whitespace-nowrap mt-2 sm:mt-0">
           Shop Now
         </button>
       </div>
@@ -121,7 +121,6 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
     </div>
   );
 
-  // This horizontal card has been completely rebuilt to ensure NO stretching and NO cropping.
   const HorizontalCard = ({ item, isHero }) => (
     <div onClick={() => setSelectedItem(item)} className="group w-full cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden shadow-lg hover:border-gray-600 transition-all flex flex-col sm:flex-row relative">
       
@@ -205,7 +204,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                 </a>
              </div>
           </div>
-          {/* Social Links & Footer */}
+
           <div className="flex flex-col items-center justify-center gap-4 mt-2 mb-8">
              <div className="flex flex-wrap items-center justify-center gap-5 text-gray-500 px-2">
                 {currentLinks.sellout && <a href={currentLinks.sellout} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><SelloutCrowds size={20} /></a>}
@@ -283,8 +282,11 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                       <div className={`lg:col-span-2 ${layoutStyle % 2 !== 0 ? 'order-first lg:order-last' : ''}`}>
                         <HorizontalCard item={items[0]} isHero={false} />
                       </div>
-                      <div className={`lg:col-span-1 flex flex-col h-full ${layoutStyle % 2 !== 0 ? 'order-last lg:order-first' : ''}`}>
-                        <PromoAd type={adTypeForThisDay} shape="square" />
+                      <div className={`lg:col-span-1 relative min-h-[150px] lg:min-h-0 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-first' : ''}`}>
+                        {/* Wrapper perfectly flex-matches the card height on desktop! */}
+                        <div className="lg:absolute lg:inset-0 w-full h-full">
+                          <PromoAd type={adTypeForThisDay} shape="square" />
+                        </div>
                       </div>
                     </>
                   )}
@@ -293,13 +295,15 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                   {count === 2 && layoutStyle === 0 && (
                     <>
                       {/* Variant A: Vertical Left, Stacked Right (Content Top, Ad Bottom) */}
-                      <div className="lg:col-span-1 h-full">
+                      <div className="lg:col-span-1">
                         <VerticalCard item={items[0]} />
                       </div>
-                      <div className="lg:col-span-2 flex flex-col gap-6 h-full">
+                      <div className="lg:col-span-2 flex flex-col gap-6">
                         <HorizontalCard item={items[1]} isHero={false} />
-                        <div className="flex-1 w-full flex flex-col">
-                          <PromoAd type={adTypeForThisDay} shape="banner" />
+                        <div className="flex-1 w-full relative min-h-[120px] lg:min-h-0">
+                          <div className="lg:absolute lg:inset-0 w-full h-full">
+                            <PromoAd type={adTypeForThisDay} shape="banner" />
+                          </div>
                         </div>
                       </div>
                     </>
@@ -308,13 +312,15 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                   {count === 2 && layoutStyle === 1 && (
                     <>
                       {/* Variant B: Stacked Left (Ad Top, Content Bottom), Vertical Right */}
-                      <div className="lg:col-span-2 flex flex-col gap-6 h-full order-last lg:order-none">
-                        <div className="flex-1 w-full flex flex-col order-last lg:order-first">
-                          <PromoAd type={adTypeForThisDay} shape="banner" />
+                      <div className="lg:col-span-2 flex flex-col gap-6 order-last lg:order-none">
+                        <div className="flex-1 w-full relative min-h-[120px] lg:min-h-0 order-last lg:order-first">
+                          <div className="lg:absolute lg:inset-0 w-full h-full">
+                            <PromoAd type={adTypeForThisDay} shape="banner" />
+                          </div>
                         </div>
                         <HorizontalCard item={items[1]} isHero={false} />
                       </div>
-                      <div className="lg:col-span-1 h-full">
+                      <div className="lg:col-span-1">
                         <VerticalCard item={items[0]} />
                       </div>
                     </>
@@ -323,13 +329,15 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                   {count === 2 && layoutStyle === 2 && (
                     <>
                       {/* Variant C: Stacked Left (Content Top, Ad Bottom), Vertical Right */}
-                      <div className="lg:col-span-2 flex flex-col gap-6 h-full order-last lg:order-none">
+                      <div className="lg:col-span-2 flex flex-col gap-6 order-last lg:order-none">
                         <HorizontalCard item={items[1]} isHero={false} />
-                        <div className="flex-1 w-full flex flex-col">
-                          <PromoAd type={adTypeForThisDay} shape="banner" />
+                        <div className="flex-1 w-full relative min-h-[120px] lg:min-h-0">
+                          <div className="lg:absolute lg:inset-0 w-full h-full">
+                            <PromoAd type={adTypeForThisDay} shape="banner" />
+                          </div>
                         </div>
                       </div>
-                      <div className="lg:col-span-1 h-full">
+                      <div className="lg:col-span-1">
                         <VerticalCard item={items[0]} />
                       </div>
                     </>
@@ -338,13 +346,13 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                   {/* LAYOUT 3: Exactly 3 Items */}
                   {count === 3 && (
                     <>
-                      <div className="lg:col-span-1 h-full">
+                      <div className="lg:col-span-1">
                         <VerticalCard item={items[0]} />
                       </div>
-                      <div className="lg:col-span-1 h-full">
+                      <div className="lg:col-span-1">
                         <VerticalCard item={items[1]} />
                       </div>
-                      <div className="lg:col-span-1 h-full">
+                      <div className="lg:col-span-1">
                         <VerticalCard item={items[2]} />
                       </div>
                     </>
@@ -357,7 +365,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                         <HorizontalCard item={items[0]} isHero={true} />
                       </div>
                       {items.slice(1).map(item => (
-                        <div key={item.id} className="lg:col-span-1 h-full">
+                        <div key={item.id} className="lg:col-span-1">
                           <VerticalCard item={item} />
                         </div>
                       ))}
@@ -368,7 +376,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
 
                 {/* Drop a Full-Width Banner Ad underneath for days with 3+ items */}
                 {count >= 3 && (
-                  <div className="w-full mt-2">
+                  <div className="w-full mt-2 min-h-[100px]">
                     <PromoAd type={adTypeForThisDay} shape="banner" />
                   </div>
                 )}
