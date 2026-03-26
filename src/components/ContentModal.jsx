@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, PlayCircle, ArrowLeft, Link as LinkIcon, Check } from 'lucide-react';
+import { X, ArrowLeft, PlayCircle, Link as LinkIcon, Check } from 'lucide-react';
 import { Facebook, XIcon, Reddit } from './Icons';
 import { themes } from '../utils/theme';
 
@@ -15,10 +15,24 @@ const ShareButtons = ({ handleShare, handleCopy, copied, btnSize = "w-8 h-8", ic
   </div>
 );
 
+// --- FLOATING MODAL AD ---
+const ModalBannerAd = () => (
+  <div className="w-full shrink-0 mb-3 sm:mb-4 bg-gradient-to-r from-red-900 to-black border border-red-800 rounded-xl p-3 sm:p-4 shadow-2xl flex items-center justify-between group cursor-pointer hover:border-red-500 transition-colors relative overflow-hidden">
+    <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#fff_10px,#fff_20px)]"></div>
+    <div className="relative z-10 flex items-center gap-4">
+      <h3 className="text-red-500 font-black text-xl lg:text-2xl italic uppercase drop-shadow-md group-hover:scale-105 transition-transform origin-left leading-none">Dominate</h3>
+      <p className="text-white text-[10px] sm:text-xs font-bold uppercase tracking-widest hidden sm:block line-clamp-1">Get The Ultimate Rookie Breakdown!</p>
+    </div>
+    <button className="bg-green-600 text-white px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 shrink-0 whitespace-nowrap">
+      Only $10 - Get Access
+    </button>
+  </div>
+);
+
 // --- 1. VIDEO MODAL LAYOUT ---
 const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, handleCopy, copied }) => (
-  <div className="flex flex-col lg:flex-row h-full max-h-[85vh]">
-    <div className="lg:w-3/4 flex flex-col bg-black">
+  <div className="flex flex-col lg:flex-row h-full min-h-0">
+    <div className="lg:w-3/4 flex flex-col bg-black min-h-0">
       <div className="w-full aspect-video bg-gradient-to-br from-gray-900 to-black flex items-center justify-center relative border-b border-gray-800 overflow-hidden shrink-0">
          {selectedItem.youtubeId ? (
            <iframe src={`https://www.youtube.com/embed/${selectedItem.youtubeId}?autoplay=1`} className="absolute inset-0 w-full h-full" frameBorder="0" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen></iframe>
@@ -35,7 +49,7 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
       </div>
     </div>
     
-    <div className="lg:w-1/4 bg-[#161616] border-l border-gray-800 flex flex-col max-h-[85vh]">
+    <div className="lg:w-1/4 bg-[#161616] border-l border-gray-800 flex flex-col min-h-0">
       <div className="p-4 border-b border-gray-800 font-bold text-sm uppercase tracking-wider shrink-0">Up Next</div>
       
       <div className="overflow-y-auto p-4 flex flex-col gap-4 flex-1">
@@ -46,7 +60,7 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
               <PlayCircle size={16} className="text-white/50 z-10" />
             </div>
             <div className="flex flex-col justify-center">
-              <h4 className={`text-xs font-bold leading-tight group-hover:${themes[v.sport].text} line-clamp-2`} dangerouslySetInnerHTML={{ __html: v.title }} />
+              <h4 className={`text-xs font-bold leading-tight group-hover:${themes[v.sport]?.text || 'text-white'} line-clamp-2`} dangerouslySetInnerHTML={{ __html: v.title }} />
             </div>
           </div>
         ))}
@@ -54,7 +68,7 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
 
       <div className="p-4 border-t border-gray-800 bg-[#1a1a1a] shrink-0">
         <div className="flex gap-2 items-center mb-4">
-          <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport].bg}`}></span>
+          <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport]?.bg || 'bg-gray-500'}`}></span>
           <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">{selectedItem.sport} • {selectedItem.date}</span>
         </div>
         <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} />
@@ -65,16 +79,15 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
 
 // --- 2. SHORT MODAL LAYOUT ---
 const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, handleCopy, copied }) => {
-  // Filter out everything except Shorts for the bottom tray!
   const shorts = videos.filter(v => v.type === 'short' && v.id !== selectedItem.id);
 
   return (
-    <div className="flex flex-col h-full max-h-[85vh]">
+    <div className="flex flex-col h-full min-h-0">
       <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
         
-        {/* Left Side: 9:16 Video Player Container (Explicitly sized to prevent collapse) */}
-        <div className="lg:w-[400px] xl:w-[450px] shrink-0 bg-black flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-800 p-4 sm:p-8 relative">
-          <div className="w-full max-w-[320px] aspect-[9/16] bg-gray-900 rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800">
+        {/* Left Side: Video Player perfectly sized to never crop or overflow */}
+        <div className="lg:w-[400px] xl:w-[450px] shrink-0 bg-black flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-800 p-4 sm:p-6 relative min-h-0">
+          <div className="h-full max-w-full aspect-[9/16] bg-gray-900 rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800 mx-auto">
              {selectedItem.youtubeId ? (
                <iframe src={`https://www.youtube.com/embed/${selectedItem.youtubeId}?autoplay=1`} className="absolute inset-0 w-full h-full" frameBorder="0" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen></iframe>
              ) : (
@@ -86,10 +99,10 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
           </div>
         </div>
         
-        {/* Right Side: Title, Share & Description */}
+        {/* Right Side: Title & Description */}
         <div className="flex-1 p-6 sm:p-10 bg-[#121212] flex flex-col overflow-y-auto">
           <div className="flex gap-2 items-center mb-4">
-            <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport].bg}`}></span>
+            <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport]?.bg || 'bg-gray-500'}`}></span>
             <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">{selectedItem.sport} • {selectedItem.date}</span>
           </div>
           
@@ -103,24 +116,23 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
         </div>
       </div>
 
-      {/* Bottom Shelf: Up Next Shorts Playlist (9:16 Posters) */}
+      {/* Bottom Shelf: Tighter and smaller so the video gets the spotlight */}
       <div className="bg-[#1a1a1a] border-t border-gray-800 shrink-0 flex flex-col hidden sm:flex">
-        <div className="px-6 py-4 border-b border-gray-800 font-bold text-[10px] uppercase tracking-wider text-gray-500 flex justify-between items-center">
+        <div className="px-4 py-3 border-b border-gray-800 font-bold text-[10px] uppercase tracking-wider text-gray-500 flex justify-between items-center">
           <span>More Shorts</span>
         </div>
-        <div className="flex overflow-x-auto p-6 gap-6 scrollbar-hide">
+        <div className="flex overflow-x-auto p-4 gap-4 scrollbar-hide">
           {shorts.slice(0, 10).map(v => (
-            <div key={v.id} onClick={() => setSelectedItem(v)} className="w-32 md:w-40 shrink-0 flex flex-col gap-3 group cursor-pointer">
+            <div key={v.id} onClick={() => setSelectedItem(v)} className="w-20 md:w-24 shrink-0 flex flex-col gap-2 group cursor-pointer">
               <div className="w-full aspect-[9/16] bg-[#111] rounded-xl relative flex items-center justify-center overflow-hidden border border-gray-800 group-hover:border-gray-500 transition-colors shadow-lg">
                 {v.imageUrl && <img src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-50 transition-opacity" alt="" />}
-                <PlayCircle size={32} className="text-white/60 z-10 group-hover:text-white group-hover:scale-110 transition-all" />
-                <div className="absolute top-2 left-2 flex items-center bg-black/60 px-2 py-1 rounded backdrop-blur-sm">
-                  <span className={`w-1.5 h-1.5 rounded-full ${themes[v.sport].bg}`}></span>
+                <PlayCircle size={24} className="text-white/60 z-10 group-hover:text-white group-hover:scale-110 transition-all" />
+                <div className="absolute top-1 left-1 flex items-center bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-sm">
+                  <span className={`w-1.5 h-1.5 rounded-full ${themes[v.sport]?.bg || 'bg-gray-500'}`}></span>
                 </div>
               </div>
               <div>
-                <h4 className={`text-xs font-bold leading-tight text-gray-300 group-hover:${themes[v.sport]?.text || 'text-white'} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: v.title }} />
-                <p className="text-[10px] text-gray-500 mt-1">{v.date}</p>
+                <h4 className={`text-[10px] font-bold leading-tight text-gray-300 group-hover:${themes[v.sport]?.text || 'text-white'} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: v.title }} />
               </div>
             </div>
           ))}
@@ -132,15 +144,15 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
 
 // --- 3. ARTICLE MODAL LAYOUT ---
 const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) => (
-  <div className="flex flex-col max-h-[85vh] overflow-y-auto">
-    <div className="w-full h-64 md:h-96 bg-gray-800 relative overflow-hidden">
+  <div className="flex flex-col h-full overflow-y-auto">
+    <div className="w-full h-64 md:h-96 bg-gray-800 relative overflow-hidden shrink-0">
       {selectedItem.imageUrl && <img src={selectedItem.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />}
       <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent"></div>
     </div>
     
     <div className="p-6 md:p-10 -mt-24 relative z-10 max-w-4xl mx-auto w-full">
       <div className="flex gap-2 items-center mb-3">
-        <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport].bg}`}></span>
+        <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport]?.bg || 'bg-gray-500'}`}></span>
         <span className="text-gray-300 font-bold text-xs uppercase tracking-wider bg-black/50 px-3 py-1 rounded-full backdrop-blur-sm border border-gray-700">
           {selectedItem.sport} • {selectedItem.date}
         </span>
@@ -160,7 +172,7 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
         </div>
       </div>
 
-      <div className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport].text} hover:prose-a:text-white`} dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
+      <div className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport]?.text || 'text-white'} hover:prose-a:text-white`} dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
       
       <div className="mt-12 pt-8 border-t border-gray-800">
         <a href={selectedItem.link} target="_blank" rel="noreferrer" className="text-xs text-gray-500 hover:text-white flex items-center gap-2">
@@ -196,17 +208,26 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
   };
 
   return (
-    <div className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-sm flex justify-center p-4 sm:p-8 overflow-y-auto">
+    <div className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-sm flex justify-center items-center p-4 sm:p-6 overflow-hidden">
       <div className="fixed inset-0" onClick={() => setSelectedItem(null)}></div>
       
-      <button onClick={() => setSelectedItem(null)} className="fixed top-6 right-6 z-50 p-2 bg-[#1a1a1a] border border-gray-700 hover:bg-red-600 hover:border-red-600 rounded-full text-white transition-all shadow-xl">
+      <button onClick={() => setSelectedItem(null)} className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[120] p-2 bg-[#1a1a1a] border border-gray-700 hover:bg-red-600 hover:border-red-600 rounded-full text-white transition-all shadow-xl">
         <X size={24} />
       </button>
 
-      <div className={`relative z-10 w-full animate-in fade-in zoom-in-95 duration-200 ${selectedItem.type === 'article' ? 'max-w-4xl' : 'max-w-6xl'} my-auto bg-[#121212] border border-gray-800 rounded-xl shadow-2xl overflow-hidden`}>
-        {selectedItem.type === 'video' && <VideoModalLayout selectedItem={selectedItem} videos={videos} setSelectedItem={setSelectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
-        {selectedItem.type === 'short' && <ShortModalLayout selectedItem={selectedItem} videos={videos} setSelectedItem={setSelectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
-        {selectedItem.type === 'article' && <ArticleModalLayout selectedItem={selectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
+      {/* The 95vh Theater Wrapper */}
+      <div className={`relative z-10 w-full animate-in fade-in zoom-in-95 duration-200 ${selectedItem.type === 'article' ? 'max-w-4xl' : 'max-w-6xl'} h-[95vh] flex flex-col`}>
+        
+        {/* Floating Banner Ad */}
+        <ModalBannerAd />
+
+        {/* Content Box */}
+        <div className="w-full flex-1 bg-[#121212] border border-gray-800 rounded-xl shadow-2xl overflow-hidden flex flex-col min-h-0">
+          {selectedItem.type === 'video' && <VideoModalLayout selectedItem={selectedItem} videos={videos} setSelectedItem={setSelectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
+          {selectedItem.type === 'short' && <ShortModalLayout selectedItem={selectedItem} videos={videos} setSelectedItem={setSelectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
+          {selectedItem.type === 'article' && <ArticleModalLayout selectedItem={selectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
+        </div>
+        
       </div>
     </div>
   );
