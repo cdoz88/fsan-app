@@ -283,7 +283,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                       <div className={`lg:col-span-2 ${layoutStyle % 2 !== 0 ? 'order-first lg:order-last' : ''}`}>
                         <HorizontalCard item={items[0]} isHero={false} />
                       </div>
-                      <div className={`lg:col-span-1 flex flex-col min-h-[250px] ${layoutStyle % 2 !== 0 ? 'order-last lg:order-first' : ''}`}>
+                      <div className={`lg:col-span-1 flex flex-col h-full ${layoutStyle % 2 !== 0 ? 'order-last lg:order-first' : ''}`}>
                         <PromoAd type={adTypeForThisDay} shape="square" />
                       </div>
                     </>
@@ -293,12 +293,12 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                   {count === 2 && layoutStyle === 0 && (
                     <>
                       {/* Variant A: Vertical Left, Stacked Right (Content Top, Ad Bottom) */}
-                      <div className="lg:col-span-1 lg:row-span-2">
+                      <div className="lg:col-span-1 h-full">
                         <VerticalCard item={items[0]} />
                       </div>
-                      <div className="lg:col-span-2 flex flex-col gap-6">
+                      <div className="lg:col-span-2 flex flex-col gap-6 h-full">
                         <HorizontalCard item={items[1]} isHero={false} />
-                        <div className="flex-1 w-full flex flex-col min-h-[160px]">
+                        <div className="flex-1 w-full flex flex-col">
                           <PromoAd type={adTypeForThisDay} shape="banner" />
                         </div>
                       </div>
@@ -308,13 +308,13 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                   {count === 2 && layoutStyle === 1 && (
                     <>
                       {/* Variant B: Stacked Left (Ad Top, Content Bottom), Vertical Right */}
-                      <div className="lg:col-span-2 flex flex-col gap-6 order-last lg:order-none">
-                        <div className="flex-1 w-full flex flex-col min-h-[160px] order-last lg:order-first">
+                      <div className="lg:col-span-2 flex flex-col gap-6 h-full order-last lg:order-none">
+                        <div className="flex-1 w-full flex flex-col order-last lg:order-first">
                           <PromoAd type={adTypeForThisDay} shape="banner" />
                         </div>
                         <HorizontalCard item={items[1]} isHero={false} />
                       </div>
-                      <div className="lg:col-span-1 lg:row-span-2">
+                      <div className="lg:col-span-1 h-full">
                         <VerticalCard item={items[0]} />
                       </div>
                     </>
@@ -323,13 +323,13 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                   {count === 2 && layoutStyle === 2 && (
                     <>
                       {/* Variant C: Stacked Left (Content Top, Ad Bottom), Vertical Right */}
-                      <div className="lg:col-span-2 flex flex-col gap-6 order-last lg:order-none">
+                      <div className="lg:col-span-2 flex flex-col gap-6 h-full order-last lg:order-none">
                         <HorizontalCard item={items[1]} isHero={false} />
-                        <div className="flex-1 w-full flex flex-col min-h-[160px]">
+                        <div className="flex-1 w-full flex flex-col">
                           <PromoAd type={adTypeForThisDay} shape="banner" />
                         </div>
                       </div>
-                      <div className="lg:col-span-1 lg:row-span-2">
+                      <div className="lg:col-span-1 h-full">
                         <VerticalCard item={items[0]} />
                       </div>
                     </>
@@ -338,13 +338,13 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                   {/* LAYOUT 3: Exactly 3 Items */}
                   {count === 3 && (
                     <>
-                      <div className="lg:col-span-1">
+                      <div className="lg:col-span-1 h-full">
                         <VerticalCard item={items[0]} />
                       </div>
-                      <div className="lg:col-span-1">
+                      <div className="lg:col-span-1 h-full">
                         <VerticalCard item={items[1]} />
                       </div>
-                      <div className="lg:col-span-1">
+                      <div className="lg:col-span-1 h-full">
                         <VerticalCard item={items[2]} />
                       </div>
                     </>
@@ -357,7 +357,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                         <HorizontalCard item={items[0]} isHero={true} />
                       </div>
                       {items.slice(1).map(item => (
-                        <div key={item.id} className="lg:col-span-1">
+                        <div key={item.id} className="lg:col-span-1 h-full">
                           <VerticalCard item={item} />
                         </div>
                       ))}
