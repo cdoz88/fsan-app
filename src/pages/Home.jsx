@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { PlayCircle, FileText, Film, Mic, Wrench, ChevronRight, LayoutList } from 'lucide-react';
 import { themes } from '../utils/theme';
 
-export default function Home({ videos, articles, activeSport, setActiveSport, setCurrentView, setSelectedItem }) {
+// THE FIX: Added `currentView = 'home'` to the props here so it doesn't crash!
+export default function Home({ videos, articles, activeSport, setActiveSport, currentView = 'home', setCurrentView, setSelectedItem }) {
   const theme = themes[activeSport];
   const [feedFilter, setFeedFilter] = useState('all'); // 'all', 'articles', 'videos'
 
