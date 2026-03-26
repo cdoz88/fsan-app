@@ -24,6 +24,10 @@ export const LinkedIn = ({ size = 24, className = "" }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
 );
 
+export const Reddit = ({ size = 24, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1.846-5.462a.453.453 0 00-.453.452c0 .25.203.453.453.453.41 0 .848-.12 1.258-.337.41.217.848.337 1.258.337.25 0 .452-.203.452-.453a.453.453 0 00-.452-.452c-.287 0-.585-.084-.858-.235a3.91 3.91 0 00-1.658 0c-.273.15-.57.235-.858.235zm3.17-2.316a1.18 1.18 0 100-2.36 1.18 1.18 0 000 2.36zm-4.484 0a1.18 1.18 0 100-2.36 1.18 1.18 0 000 2.36zm7.256-1.574c0-.986-.802-1.788-1.788-1.788-.475 0-.904.185-1.226.488-1.077-.735-2.52-1.224-4.11-1.282l.88-2.69 2.502.822a1.594 1.594 0 101.62-1.488 1.583 1.583 0 00-1.127.46l-2.825-.928a.453.453 0 00-.568.293l-1.026 3.125c-1.614.04-3.08.535-4.174 1.282a1.776 1.776 0 00-1.226-.488c-.986 0-1.788.802-1.788 1.788 0 .66.36 1.233.9 1.55a4.238 4.238 0 00-.063.725c0 2.518 2.83 4.562 6.315 4.562 3.484 0 6.315-2.044 6.315-4.562 0-.246-.022-.488-.063-.725.54-.317.9-.89.9-1.55z"/></svg>
+);
+
 export const SelloutCrowds = ({ size = 24, className = "" }) => (
   <svg width={size} height={size} viewBox="0 0 362.85 305.65" xmlns="http://www.w3.org/2000/svg" className={className}>
     <g>

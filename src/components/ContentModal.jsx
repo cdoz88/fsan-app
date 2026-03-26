@@ -1,10 +1,30 @@
-import React from 'react';
-import { X, PlayCircle, ArrowLeft } from 'lucide-react';
-import { Facebook, XIcon } from './Icons';
+import React, { useState } from 'react';
+import { X, PlayCircle, ArrowLeft, Link as LinkIcon, Check } from 'lucide-react';
+import { Facebook, XIcon, Reddit } from './Icons';
 import { themes } from '../utils/theme';
 
 export default function ContentModal({ selectedItem, setSelectedItem, videos }) {
+  const [copied, setCopied] = useState(false);
+
   if (!selectedItem) return null;
+
+  const handleShare = (platform) => {
+    const url = window.location.href;
+    const title = selectedItem.title;
+    let shareUrl = '';
+
+    if (platform === 'facebook') shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    if (platform === 'x') shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
+    if (platform === 'reddit') shareUrl = `https://reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`;
+
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-sm flex justify-center p-4 sm:p-8 overflow-y-auto">
@@ -16,10 +36,13 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
 
       <div className={`relative z-10 w-full animate-in fade-in zoom-in-95 duration-200 ${selectedItem.type === 'video' ? 'max-w-6xl' : 'max-w-4xl'} my-auto bg-[#121212] border border-gray-800 rounded-xl shadow-2xl overflow-hidden`}>
         
+        {/* --- VIDEO MODAL LAYOUT --- */}
         {selectedItem.type === 'video' && (
           <div className="flex flex-col lg:flex-row h-full max-h-[85vh]">
+            
+            {/* Left Side: Video Player & Description */}
             <div className="lg:w-3/4 flex flex-col bg-black">
-              <div className="w-full aspect-video bg-gradient-to-br from-gray-900 to-black flex items-center justify-center relative border-b border-gray-800 overflow-hidden">
+              <div className="w-full aspect-video bg-gradient-to-br from-gray-900 to-black flex items-center justify-center relative border-b border-gray-800 overflow-hidden shrink-0">
                  {selectedItem.youtubeId ? (
                    <iframe src={`https://www.youtube.com/embed/${selectedItem.youtubeId}?autoplay=1`} className="absolute inset-0 w-full h-full" frameBorder="0" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen></iframe>
                  ) : (
@@ -30,18 +53,17 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
                  )}
               </div>
               <div className="p-6 bg-[#121212] flex-1 overflow-y-auto">
-                <div className="flex gap-2 items-center mb-2">
-                  <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport].bg}`}></span>
-                  <span className="text-gray-400 font-bold text-xs uppercase tracking-wider">{selectedItem.sport} • {selectedItem.date}</span>
-                </div>
                 <h1 className="text-2xl font-bold text-white mb-4" dangerouslySetInnerHTML={{ __html: selectedItem.title }} />
-                <div className="text-gray-400 text-sm" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
+                {/* YouTube Description properly formatted with line breaks */}
+                <div className="text-gray-400 text-sm whitespace-pre-wrap leading-relaxed" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
               </div>
             </div>
             
+            {/* Right Side: Up Next & Share Buttons */}
             <div className="lg:w-1/4 bg-[#161616] border-l border-gray-800 flex flex-col max-h-[85vh]">
-              <div className="p-4 border-b border-gray-800 font-bold text-sm uppercase tracking-wider">Up Next</div>
-              <div className="overflow-y-auto p-4 flex flex-col gap-4">
+              <div className="p-4 border-b border-gray-800 font-bold text-sm uppercase tracking-wider shrink-0">Up Next</div>
+              
+              <div className="overflow-y-auto p-4 flex flex-col gap-4 flex-1">
                 {videos.filter(v => v.id !== selectedItem.id).slice(0,5).map(v => (
                   <div key={v.id} onClick={() => setSelectedItem(v)} className="flex gap-3 group cursor-pointer">
                     <div className="w-24 h-16 bg-gray-800 rounded shrink-0 relative flex items-center justify-center overflow-hidden">
@@ -54,10 +76,30 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
                   </div>
                 ))}
               </div>
+
+              {/* The New Divider & Open Area */}
+              <div className="p-4 border-t border-gray-800 bg-[#1a1a1a] shrink-0">
+                <div className="flex gap-2 items-center mb-4">
+                  <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport].bg}`}></span>
+                  <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">{selectedItem.sport} • {selectedItem.date}</span>
+                </div>
+                
+                {/* Share Buttons */}
+                <div className="flex gap-2">
+                  <button onClick={() => handleShare('facebook')} className="w-8 h-8 rounded-full bg-[#4267B2]/10 text-[#4267B2] flex items-center justify-center hover:bg-[#4267B2] hover:text-white transition-colors" title="Share on Facebook"><Facebook size={14} /></button>
+                  <button onClick={() => handleShare('x')} className="w-8 h-8 rounded-full bg-[#1DA1F2]/10 text-[#1DA1F2] flex items-center justify-center hover:bg-[#1DA1F2] hover:text-white transition-colors" title="Share on X"><XIcon size={14} /></button>
+                  <button onClick={() => handleShare('reddit')} className="w-8 h-8 rounded-full bg-[#FF4500]/10 text-[#FF4500] flex items-center justify-center hover:bg-[#FF4500] hover:text-white transition-colors" title="Share on Reddit"><Reddit size={14} /></button>
+                  <button onClick={handleCopy} className={`w-8 h-8 rounded-full ${copied ? 'bg-green-500/20 text-green-500' : 'bg-gray-700/50 text-gray-400 hover:bg-gray-600 hover:text-white'} flex items-center justify-center transition-colors`} title="Copy Link">
+                    {copied ? <Check size={14} /> : <LinkIcon size={14} />}
+                  </button>
+                </div>
+              </div>
+
             </div>
           </div>
         )}
 
+        {/* --- ARTICLE MODAL LAYOUT --- */}
         {selectedItem.type === 'article' && (
           <div className="flex flex-col max-h-[85vh] overflow-y-auto">
             <div className="w-full h-64 md:h-96 bg-gray-800 relative overflow-hidden">
@@ -83,8 +125,12 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
                   <p className="font-bold text-sm">{selectedItem.author}</p>
                 </div>
                 <div className="ml-auto flex gap-2">
-                  <button className="w-8 h-8 rounded-full bg-[#1DA1F2]/10 text-[#1DA1F2] flex items-center justify-center hover:bg-[#1DA1F2] hover:text-white transition-colors"><XIcon size={14} /></button>
-                  <button className="w-8 h-8 rounded-full bg-[#4267B2]/10 text-[#4267B2] flex items-center justify-center hover:bg-[#4267B2] hover:text-white transition-colors"><Facebook size={14} /></button>
+                  <button onClick={() => handleShare('facebook')} className="w-8 h-8 rounded-full bg-[#4267B2]/10 text-[#4267B2] flex items-center justify-center hover:bg-[#4267B2] hover:text-white transition-colors" title="Share on Facebook"><Facebook size={14} /></button>
+                  <button onClick={() => handleShare('x')} className="w-8 h-8 rounded-full bg-[#1DA1F2]/10 text-[#1DA1F2] flex items-center justify-center hover:bg-[#1DA1F2] hover:text-white transition-colors" title="Share on X"><XIcon size={14} /></button>
+                  <button onClick={() => handleShare('reddit')} className="w-8 h-8 rounded-full bg-[#FF4500]/10 text-[#FF4500] flex items-center justify-center hover:bg-[#FF4500] hover:text-white transition-colors" title="Share on Reddit"><Reddit size={14} /></button>
+                  <button onClick={handleCopy} className={`w-8 h-8 rounded-full ${copied ? 'bg-green-500/20 text-green-500' : 'bg-gray-700/50 text-gray-400 hover:bg-gray-600 hover:text-white'} flex items-center justify-center transition-colors`} title="Copy Link">
+                    {copied ? <Check size={14} /> : <LinkIcon size={14} />}
+                  </button>
                 </div>
               </div>
 

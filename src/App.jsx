@@ -8,7 +8,6 @@ import Home from './pages/Home';
 import VideosArchive from './pages/VideosArchive';
 import ArticlesArchive from './pages/ArticlesArchive';
 
-// Helpers to read the URL when the app first loads
 const getInitialSport = () => {
   if (typeof window !== 'undefined') {
     const params = new URLSearchParams(window.location.search);
@@ -26,7 +25,7 @@ const getInitialView = () => {
 };
 
 export default function App() {
-  // 1. Core State (Initialized from the URL!)
+  // 1. Core State
   const [activeSport, setActiveSport] = useState(getInitialSport);
   const [currentView, setCurrentView] = useState(getInitialView); 
   const [selectedItem, setSelectedItem] = useState(null);
@@ -42,7 +41,7 @@ export default function App() {
   const [isCategoriesReady, setIsCategoriesReady] = useState(false);
   const [postsCache, setPostsCache] = useState({}); 
 
-  // --- NATIVE URL ROUTING SYNC ---
+  // --- NATIVE URL ROUTING SYNC (NOW WITH DEEP LINKING) ---
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let changed = false;
@@ -55,18 +54,32 @@ export default function App() {
       params.set('view', currentView);
       changed = true;
     }
+
+    // Add the specific article/video ID to the URL when someone clicks it
+    if (selectedItem) {
+      if (params.get('id') !== selectedItem.id.toString()) {
+        params.set('id', selectedItem.id);
+        changed = true;
+      }
+    } else {
+      if (params.has('id')) {
+        params.delete('id');
+        changed = true;
+      }
+    }
     
     if (changed) {
       const newUrl = `${window.location.pathname}?${params.toString()}`;
       window.history.pushState({}, '', newUrl);
     }
-  }, [activeSport, currentView]);
+  }, [activeSport, currentView, selectedItem]);
 
   useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
       setActiveSport(params.get('sport') || 'All');
       setCurrentView(params.get('view') || 'home');
+      if (!params.get('id')) setSelectedItem(null);
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -126,7 +139,6 @@ export default function App() {
           }
         }
 
-        // OPTIMIZED FETCH: 15 Articles, 12 Videos
         const [articlesRes, videosRes] = await Promise.all([
           fetch(`https://fsan.com/wp-json/wp/v2/posts?_embed&per_page=15&page=${currentPage}${catQuery}`).catch(e => null),
           fetch(`https://fsan.com/wp-json/wp/v2/yt2posts_youtube?_embed&per_page=12&page=${currentPage}${catQuery}`).catch(e => null)
@@ -178,23 +190,34 @@ export default function App() {
         const formattedVideos = rawVideos.map(post => formatPost(post, 'video'));
         const newPosts = [...formattedArticles, ...formattedVideos];
 
+        let finalPostsToRender = [];
+
         if (currentPage === 1) {
           newPosts.sort((a, b) => b.rawTimestamp - a.rawTimestamp);
+          finalPostsToRender = newPosts;
           setWpPosts(newPosts);
           setPostsCache(prev => ({ ...prev, [activeSport]: newPosts }));
         } else {
           setWpPosts(prev => {
             const combined = [...prev, ...newPosts];
             const uniqueIds = new Set();
-            const filteredCombined = combined.filter(p => {
+            finalPostsToRender = combined.filter(p => {
               if (uniqueIds.has(p.id)) return false;
               uniqueIds.add(p.id);
               return true;
             }).sort((a, b) => b.rawTimestamp - a.rawTimestamp);
             
-            setPostsCache(cache => ({ ...cache, [activeSport]: filteredCombined }));
-            return filteredCombined;
+            setPostsCache(cache => ({ ...cache, [activeSport]: finalPostsToRender }));
+            return finalPostsToRender;
           });
+        }
+
+        // DEEP LINKING LOGIC: If a user clicked a specific link, pop open the modal!
+        const params = new URLSearchParams(window.location.search);
+        const urlId = params.get('id');
+        if (urlId && !selectedItem) {
+          const itemToOpen = finalPostsToRender.find(p => p.id.toString() === urlId);
+          if (itemToOpen) setSelectedItem(itemToOpen);
         }
 
       } catch (error) {
@@ -255,7 +278,6 @@ export default function App() {
       <Header activeSport={activeSport} setActiveSport={handleSportChange} setCurrentView={setCurrentView} />
       <ToolsBar activeSport={activeSport} />
 
-      {/* THE FIX: Removed the "currentView === 'home'" restriction so the spinner shows everywhere! */}
       {isLoading && wpPosts.length === 0 && (
         <div className="max-w-[1600px] mx-auto p-12 flex flex-col items-center justify-center text-gray-500 min-h-[50vh]">
           <Loader2 size={48} className="animate-spin text-red-600 mb-4" />
@@ -275,6 +297,7 @@ export default function App() {
         <ArticlesArchive articles={articles} activeSport={activeSport} setCurrentView={setCurrentView} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
 
+      {/* The Separated Modal Component! */}
       {selectedItem && (
         <ContentModal selectedItem={selectedItem} setSelectedItem={setSelectedItem} videos={videos} />
       )}
