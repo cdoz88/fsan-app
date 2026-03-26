@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlayCircle, FileText, Film, Mic, ChevronRight, LayoutList, Users, Calculator, ArrowLeftRight, Shirt, Flag } from 'lucide-react';
+import { PlayCircle, FileText, Film, Mic, ChevronRight, LayoutList, Users, Calculator, ArrowLeftRight, Shirt, Flag, Star } from 'lucide-react';
 import { Facebook, XIcon, Youtube, Instagram, TikTok, LinkedIn, SelloutCrowds } from '../components/Icons';
 import { themes } from '../utils/theme';
 
@@ -204,9 +204,9 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
         <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-1.5 flex gap-2 shadow-xl z-30 overflow-x-auto scrollbar-hide">
           <button 
             onClick={() => setFeedFilter('all')} 
-            className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${feedFilter === 'all' ? `${theme.bg} text-white shadow-md` : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}
+            className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'all' ? `${theme.bg} text-white shadow-md` : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}
           >
-            All
+            <LayoutList size={14} /> All
           </button>
           <button 
             onClick={() => setFeedFilter('articles')} 
