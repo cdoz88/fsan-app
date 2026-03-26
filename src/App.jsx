@@ -43,7 +43,6 @@ export default function App() {
   const [postsCache, setPostsCache] = useState({}); 
 
   // --- NATIVE URL ROUTING SYNC ---
-  // Updates the URL bar seamlessly whenever the sport or view changes
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let changed = false;
@@ -63,7 +62,6 @@ export default function App() {
     }
   }, [activeSport, currentView]);
 
-  // Listen for the browser's "Back" and "Forward" buttons
   useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
@@ -257,7 +255,8 @@ export default function App() {
       <Header activeSport={activeSport} setActiveSport={handleSportChange} setCurrentView={setCurrentView} />
       <ToolsBar activeSport={activeSport} />
 
-      {isLoading && currentView === 'home' && wpPosts.length === 0 && (
+      {/* THE FIX: Removed the "currentView === 'home'" restriction so the spinner shows everywhere! */}
+      {isLoading && wpPosts.length === 0 && (
         <div className="max-w-[1600px] mx-auto p-12 flex flex-col items-center justify-center text-gray-500 min-h-[50vh]">
           <Loader2 size={48} className="animate-spin text-red-600 mb-4" />
           <p className="font-bold uppercase tracking-widest text-sm">Fetching {activeSport === 'All' ? 'Live Data' : `${activeSport} Data`}...</p>
