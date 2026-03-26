@@ -44,18 +44,15 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
   // UNIVERSAL FLUID AD DISPENSER
   // ==========================================
   const PromoAd = ({ type, shape }) => {
-    // type: 'sellout', 'rookie', 'merch'
-    // shape: 'square' (1 column), 'banner' (full width)
-
     if (type === 'rookie') {
       return (
-        <div className={`w-full h-full bg-gradient-to-br from-red-900 to-black border border-red-800 rounded-2xl ${shape === 'banner' ? 'p-6 md:p-8 flex-col md:flex-row' : 'p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-xl cursor-pointer hover:border-red-500 transition-colors group`}>
+        <div className={`w-full h-full bg-gradient-to-br from-red-900 to-black border border-red-800 rounded-2xl ${shape === 'banner' ? 'p-4 md:p-6 flex-col md:flex-row' : 'p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-xl cursor-pointer hover:border-red-500 transition-colors group`}>
            <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#fff_10px,#fff_20px)]"></div>
-           <div className={`relative z-10 ${shape === 'banner' ? 'md:mr-auto md:text-left mb-4 md:mb-0' : 'mb-4'}`}>
-             <h3 className="text-red-500 font-black text-3xl italic uppercase drop-shadow-md group-hover:scale-105 transition-transform origin-left">Dominate</h3>
-             <p className="text-white text-xs font-bold uppercase tracking-widest mt-1">Get The Ultimate Rookie Breakdown!</p>
+           <div className={`relative z-10 flex-1 ${shape === 'banner' ? 'md:text-left mb-3 md:mb-0 md:mr-4' : 'mb-4'}`}>
+             <h3 className="text-red-500 font-black text-2xl lg:text-3xl italic uppercase drop-shadow-md group-hover:scale-105 transition-transform origin-left">Dominate</h3>
+             <p className="text-white text-[10px] lg:text-xs font-bold uppercase tracking-widest mt-1 line-clamp-2">Get The Ultimate Rookie Breakdown!</p>
            </div>
-           <button className="bg-green-600 text-white px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 whitespace-nowrap">
+           <button className="bg-green-600 text-white px-4 py-2 lg:px-6 lg:py-3 rounded-full font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 shrink-0 whitespace-nowrap">
              Only $10 - Get Access
            </button>
         </div>
@@ -64,13 +61,13 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
 
     if (type === 'sellout') {
       return (
-        <div className={`w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/40 via-[#111] to-black border border-red-900/50 rounded-2xl ${shape === 'banner' ? 'p-6 md:p-8 flex-col md:flex-row' : 'p-6 sm:p-8 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-2xl cursor-pointer hover:border-red-600 transition-colors group`}>
+        <div className={`w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/40 via-[#111] to-black border border-red-900/50 rounded-2xl ${shape === 'banner' ? 'p-4 md:p-6 flex-col md:flex-row' : 'p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-2xl cursor-pointer hover:border-red-600 transition-colors group`}>
            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20 20\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')", mixBlendMode: 'overlay' }}></div>
-           <div className={`relative z-10 ${shape === 'banner' ? 'md:mr-auto md:text-left mb-4 md:mb-0' : 'mb-4'}`}>
-             <h2 className="text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-left">Join Sellout Crowds</h2>
-             <p className="text-gray-300 font-bold text-xs tracking-wide relative z-10">Win Your League with Real-Time Advice!</p>
+           <div className={`relative z-10 flex-1 ${shape === 'banner' ? 'md:text-left mb-3 md:mb-0 md:mr-4' : 'mb-4'}`}>
+             <h2 className="text-2xl lg:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-left line-clamp-1">Join Sellout Crowds</h2>
+             <p className="text-gray-300 font-bold text-[10px] lg:text-xs tracking-wide relative z-10 line-clamp-2">Win Your League with Real-Time Advice!</p>
            </div>
-           <button className="bg-red-600 text-white px-6 py-3 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 flex items-center gap-2 whitespace-nowrap">
+           <button className="bg-red-600 text-white px-4 py-2 lg:px-6 lg:py-3 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 flex items-center gap-2 shrink-0 whitespace-nowrap">
               Join Community <ChevronRight size={14} />
            </button>
         </div>
@@ -79,13 +76,13 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
 
     // merch
     return (
-      <div className={`w-full h-full bg-[#111] border border-purple-900/50 rounded-2xl ${shape === 'banner' ? 'p-6 md:p-8 flex-col md:flex-row' : 'p-6 sm:p-8 flex-col'} flex items-center justify-center text-center cursor-pointer hover:border-purple-600 transition-all group overflow-hidden relative shadow-xl`}>
+      <div className={`w-full h-full bg-[#111] border border-purple-900/50 rounded-2xl ${shape === 'banner' ? 'p-4 md:p-6 flex-col md:flex-row' : 'p-6 flex-col'} flex items-center justify-center text-center cursor-pointer hover:border-purple-600 transition-all group overflow-hidden relative shadow-xl`}>
         <div className="absolute inset-0 bg-gradient-to-tr from-purple-900/30 to-black z-0 transition-opacity group-hover:opacity-80"></div>
-        <div className={`relative z-10 ${shape === 'banner' ? 'md:mr-auto md:text-left mb-4 md:mb-0' : 'mb-4'}`}>
-          <h3 className="text-purple-500 font-black text-3xl italic uppercase z-10 group-hover:scale-110 transition-transform origin-left">Fantasy Apparel</h3>
-          <p className="text-gray-400 text-xs font-bold tracking-widest z-10 mt-1">FSAN.SHOP</p>
+        <div className={`relative z-10 flex-1 ${shape === 'banner' ? 'md:text-left mb-3 md:mb-0 md:mr-4' : 'mb-4'}`}>
+          <h3 className="text-purple-500 font-black text-2xl lg:text-3xl italic uppercase z-10 group-hover:scale-110 transition-transform origin-left line-clamp-1">Fantasy Apparel</h3>
+          <p className="text-gray-400 text-[10px] lg:text-xs font-bold tracking-widest z-10 mt-1">FSAN.SHOP</p>
         </div>
-        <button className="bg-transparent border-2 border-purple-600 text-purple-400 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-wider group-hover:bg-purple-600 group-hover:text-white transition-colors z-10 whitespace-nowrap">
+        <button className="bg-transparent border-2 border-purple-600 text-purple-400 px-4 py-2 lg:px-6 lg:py-3 rounded-full text-[10px] font-black uppercase tracking-wider group-hover:bg-purple-600 group-hover:text-white transition-colors z-10 shrink-0 whitespace-nowrap">
           Shop Now
         </button>
       </div>
@@ -107,9 +104,13 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
   const VerticalCard = ({ item }) => (
     <div onClick={() => setSelectedItem(item)} className="group h-full w-full cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden shadow-lg hover:border-gray-600 transition-all flex flex-col relative">
       <div className="w-full aspect-video relative flex items-center justify-center overflow-hidden shrink-0 bg-[#111]">
-        {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />}
+        {item.imageUrl ? (
+           <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
+        ) : (
+           <div className="absolute inset-0 bg-gray-800" />
+        )}
         {item.type === 'video' && (
-           <><div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div><PlayCircle size={48} className="text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 relative drop-shadow-lg" /></>
+           <><div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div><PlayCircle size={48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" /></>
         )}
       </div>
       <div className="p-5 flex flex-col flex-1 bg-gradient-to-b from-[#1e1e1e] to-[#161616]">
@@ -120,18 +121,29 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
     </div>
   );
 
+  // This horizontal card has been completely rebuilt to ensure NO stretching and NO cropping.
   const HorizontalCard = ({ item, isHero }) => (
-    <div onClick={() => setSelectedItem(item)} className="group h-full w-full cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden shadow-lg hover:border-gray-600 transition-all flex flex-col sm:flex-row relative">
-      <div className={`w-full ${isHero ? 'sm:w-3/5 lg:w-2/3' : 'sm:w-1/2'} aspect-video relative flex items-center justify-center overflow-hidden shrink-0 bg-[#111]`}>
-        {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />}
+    <div onClick={() => setSelectedItem(item)} className="group w-full cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden shadow-lg hover:border-gray-600 transition-all flex flex-col sm:flex-row relative">
+      
+      {/* 1. Image Container dictates the exact height of the row. */}
+      <div className={`w-full ${isHero ? 'sm:w-3/5 lg:w-2/3' : 'sm:w-1/2'} relative shrink-0 bg-[#111] overflow-hidden`}>
+        {item.imageUrl ? (
+          <img src={item.imageUrl} alt="" className="w-full h-auto aspect-video object-cover opacity-80 group-hover:scale-105 transition-transform duration-500 block" />
+        ) : (
+          <div className="w-full aspect-video bg-gray-800 block" />
+        )}
         {item.type === 'video' && (
-           <><div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div><PlayCircle size={isHero ? 64 : 48} className="text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 relative drop-shadow-lg" /></>
+           <><div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div><PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" /></>
         )}
       </div>
-      <div className="p-6 flex flex-col justify-center flex-1 bg-gradient-to-b from-[#1e1e1e] to-[#161616]">
-        <CardTags item={item} />
-        <h3 className={`font-black ${isHero ? 'text-2xl lg:text-4xl' : 'text-xl lg:text-2xl'} leading-tight group-hover:${theme.text} transition-colors mb-3`} dangerouslySetInnerHTML={{ __html: item.title }} />
-        <div className={`text-sm text-gray-400 ${isHero ? 'line-clamp-3 lg:line-clamp-4' : 'line-clamp-2 lg:line-clamp-3'}`} dangerouslySetInnerHTML={{ __html: item.excerpt }} />
+      
+      {/* 2. Text Container floats absolutely on desktop so it can NEVER push the row taller than the 16:9 image. */}
+      <div className="w-full sm:flex-1 relative bg-gradient-to-b from-[#1e1e1e] to-[#161616]">
+        <div className="sm:absolute sm:inset-0 p-4 lg:p-6 flex flex-col justify-center overflow-hidden">
+          <CardTags item={item} />
+          <h3 className={`font-black ${isHero ? 'text-2xl lg:text-4xl' : 'text-xl lg:text-2xl'} leading-tight group-hover:${theme.text} transition-colors mb-2 line-clamp-2 lg:line-clamp-3`} dangerouslySetInnerHTML={{ __html: item.title }} />
+          <div className={`text-sm text-gray-400 ${isHero ? 'line-clamp-3 lg:line-clamp-4' : 'line-clamp-2 lg:line-clamp-3'}`} dangerouslySetInnerHTML={{ __html: item.excerpt }} />
+        </div>
       </div>
     </div>
   );
@@ -245,7 +257,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
             const items = group.items;
             const count = items.length;
             const adTypes = ['sellout', 'rookie', 'merch'];
-            const adTypeForThisDay = adTypes[groupIndex % adTypes.length]; // Mathematically rotates the ads sequentially!
+            const adTypeForThisDay = adTypes[groupIndex % adTypes.length]; 
 
             return (
               <div key={group.date} className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -268,8 +280,11 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                       <div className="lg:col-span-2">
                         <HorizontalCard item={items[0]} isHero={false} />
                       </div>
-                      <div className="lg:col-span-1">
-                        <PromoAd type={adTypeForThisDay} shape="square" />
+                      <div className="lg:col-span-1 relative min-h-[200px] lg:min-h-0">
+                        {/* Wrapper perfectly flex-matches the card height on desktop! */}
+                        <div className="lg:absolute lg:inset-0 w-full h-full">
+                          <PromoAd type={adTypeForThisDay} shape="square" />
+                        </div>
                       </div>
                     </>
                   )}
@@ -277,19 +292,22 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                   {/* LAYOUT 2: Exactly 2 Items */}
                   {count === 2 && (
                     <>
-                      <div className="lg:col-span-1">
+                      <div className="lg:col-span-1 lg:row-span-2">
                         <VerticalCard item={items[0]} />
                       </div>
-                      <div className="lg:col-span-1">
-                        <VerticalCard item={items[1]} />
+                      <div className="lg:col-span-2">
+                        <HorizontalCard item={items[1]} isHero={false} />
                       </div>
-                      <div className="lg:col-span-1">
-                        <PromoAd type={adTypeForThisDay} shape="square" />
+                      <div className="lg:col-span-2 relative min-h-[150px] lg:min-h-0">
+                        {/* Mathematically fills the remaining difference under the horizontal card */}
+                        <div className="lg:absolute lg:inset-0 w-full h-full">
+                          <PromoAd type={adTypeForThisDay} shape="banner" />
+                        </div>
                       </div>
                     </>
                   )}
 
-                  {/* LAYOUT 3: Exactly 3 Items (Plus Banner Ad Underneath!) */}
+                  {/* LAYOUT 3: Exactly 3 Items */}
                   {count === 3 && (
                     <>
                       <div className="lg:col-span-1">
@@ -304,7 +322,7 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                     </>
                   )}
 
-                  {/* LAYOUT 4+: 4 or More Items (Hero at Top, Plus Banner Ad Underneath!) */}
+                  {/* LAYOUT 4+: 4 or More Items */}
                   {count > 3 && (
                     <>
                       <div className="lg:col-span-3">
