@@ -31,8 +31,10 @@ const ModalBannerAd = () => (
 
 // --- 1. VIDEO MODAL LAYOUT ---
 const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, handleCopy, copied }) => (
-  <div className="flex flex-col h-full min-h-0">
-    <div className="flex-1 overflow-y-auto bg-[#121212] flex flex-col min-h-0">
+  <div className="flex flex-col lg:flex-row h-full min-h-0">
+    
+    {/* MAIN CONTENT AREA (Scrolls on Mobile, Left Column on Desktop) */}
+    <div className="flex-1 lg:w-3/4 flex flex-col bg-[#121212] overflow-y-auto lg:overflow-hidden min-h-0">
       <div className="w-full aspect-video bg-black flex items-center justify-center relative border-b border-gray-800 overflow-hidden shrink-0">
          {selectedItem.youtubeId ? (
            <iframe src={`https://www.youtube.com/embed/${selectedItem.youtubeId}?autoplay=1`} className="absolute inset-0 w-full h-full" frameBorder="0" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen></iframe>
@@ -43,8 +45,9 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
            </>
          )}
       </div>
-      <div className="p-6 md:p-8 flex-1">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-gray-800">
+      <div className="p-6 md:p-8 flex-1 lg:overflow-y-auto">
+        {/* MOBILE ONLY: Meta & Share */}
+        <div className="flex lg:hidden flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-gray-800">
           <div className="flex gap-2 items-center">
             <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport]?.bg || 'bg-gray-500'}`}></span>
             <span className="text-gray-400 font-bold text-xs uppercase tracking-wider">{selectedItem.sport} • {selectedItem.date}</span>
@@ -58,7 +61,8 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
       </div>
     </div>
     
-    <div className="bg-[#1a1a1a] border-t border-gray-800 shrink-0 flex flex-col">
+    {/* MOBILE ONLY: Horizontal Up Next Shelf */}
+    <div className="lg:hidden bg-[#1a1a1a] border-t border-gray-800 shrink-0 flex flex-col">
       <div className="px-6 py-3 border-b border-gray-800 font-bold text-[10px] uppercase tracking-wider text-gray-500 flex justify-between items-center">
         <span>Up Next</span>
       </div>
@@ -80,6 +84,34 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
         ))}
       </div>
     </div>
+
+    {/* DESKTOP ONLY: Vertical Up Next Sidebar */}
+    <div className="hidden lg:flex lg:w-1/4 bg-[#161616] border-l border-gray-800 flex-col min-h-0">
+      <div className="p-4 border-b border-gray-800 font-bold text-sm uppercase tracking-wider shrink-0">Up Next</div>
+      
+      <div className="overflow-y-auto p-4 flex flex-col gap-4 flex-1">
+        {videos.filter(v => v.type === 'video' && v.id !== selectedItem.id).slice(0, 10).map(v => (
+          <div key={v.id} onClick={() => setSelectedItem(v)} className="flex gap-3 group cursor-pointer">
+            <div className="w-24 h-16 bg-gray-800 rounded shrink-0 relative flex items-center justify-center overflow-hidden">
+              {v.imageUrl && <img src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-40" alt="" />}
+              <PlayCircle size={16} className="text-white/50 z-10" />
+            </div>
+            <div className="flex flex-col justify-center">
+              <h4 className={`text-xs font-bold leading-tight group-hover:${themes[v.sport]?.text || 'text-white'} line-clamp-2`} dangerouslySetInnerHTML={{ __html: v.title }} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="p-4 border-t border-gray-800 bg-[#1a1a1a] shrink-0">
+        <div className="flex gap-2 items-center mb-4">
+          <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport]?.bg || 'bg-gray-500'}`}></span>
+          <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">{selectedItem.sport} • {selectedItem.date}</span>
+        </div>
+        <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} />
+      </div>
+    </div>
+
   </div>
 );
 
