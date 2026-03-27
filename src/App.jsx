@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PlaybookLoader from './components/PlaybookLoader';
 import Header from './components/Header';
-import ToolsBar from './components/ToolsBar';
 import ContentModal from './components/ContentModal';
 import Home from './pages/Home';
 import VideosArchive from './pages/VideosArchive';
@@ -199,8 +198,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#121212] text-gray-200 font-sans">
       <Header activeSport={activeSport} setActiveSport={handleSportChange} setCurrentView={handleViewChange} />
-      
-      <ToolsBar activeSport={activeSport} />
 
       {isInitialLoad && (
         <div className="max-w-[1600px] mx-auto p-12 flex flex-col items-center justify-center text-gray-500 min-h-[50vh]">
