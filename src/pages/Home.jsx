@@ -284,13 +284,8 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
             else if (group.date === yesterdayStr) displayDate = 'Yesterday';
 
             const items = group.items;
-            const count = items.length;
             const adTypes = ['sellout', 'rookie', 'merch'];
             const adTypeForThisDay = adTypes[groupIndex % adTypes.length]; 
-
-            const hasShort = items.some(i => i.type === 'short');
-            const shortItem = hasShort ? items.find(i => i.type === 'short') : null;
-            const otherItems = hasShort ? items.filter(i => i.id !== shortItem.id) : items;
 
             return (
               <div key={group.date} className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -300,80 +295,26 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                   <div className={`h-px flex-[5] ${theme.bg} opacity-50`}></div>
                 </div>
 
-                {hasShort ? (
-                  <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Left Col: The Short */}
-                    <div className="w-full lg:w-1/3 shrink-0">
-                      <RenderCard item={shortItem} layoutType="short" />
-                    </div>
-                    
-                    {/* Right Col: The Grid */}
-                    {otherItems.length > 0 && (
-                      <div className="w-full lg:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
-                        {otherItems.map(item => (
-                          <div key={item.id} className="col-span-1">
-                            <RenderCard item={item} />
-                          </div>
-                        ))}
-                        {/* If odd number of other items, perfectly fill the hole with a Square ad! */}
-                        {otherItems.length % 2 !== 0 && (
-                          <div className="col-span-1 min-h-[250px] h-full">
-                            <PromoAd type={adTypeForThisDay} shape="square" />
-                          </div>
-                        )}
+                {/* THE SAFE FALLBACK GRID: No complex math, just a clean responsive layout aligned to the top */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+                  {items.map((item, index) => {
+                    // Let the first item span 2 columns if it's a big news day
+                    const isHero = index === 0 && items.length >= 4 && item.type !== 'short';
+                    const spanClass = isHero ? 'md:col-span-2 lg:col-span-2' : 'col-span-1';
+                    const layout = isHero ? 'hero' : (item.type === 'short' ? 'short' : 'vertical');
+
+                    return (
+                      <div key={item.id} className={spanClass}>
+                        <RenderCard item={item} layoutType={layout} />
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* The Pure Mathematical 3-Column Grid Layout */}
-                    
-                    {count === 1 && (
-                      <>
-                        <div className="sm:col-span-2 lg:col-span-2"><RenderCard item={items[0]} layoutType="hero" /></div>
-                        <div className="sm:col-span-1 lg:col-span-1 min-h-[250px] h-full"><PromoAd type={adTypeForThisDay} shape="square" /></div>
-                      </>
-                    )}
+                    );
+                  })}
+                </div>
 
-                    {count === 2 && (
-                      <>
-                        <div className="col-span-1"><RenderCard item={items[0]} /></div>
-                        <div className="col-span-1"><RenderCard item={items[1]} /></div>
-                        <div className="col-span-1 min-h-[250px] h-full"><PromoAd type={adTypeForThisDay} shape="square" /></div>
-                      </>
-                    )}
-
-                    {count === 3 && items.map(item => (
-                      <div key={item.id} className="col-span-1"><RenderCard item={item} /></div>
-                    ))}
-
-                    {count === 4 && (
-                      <>
-                        <div className="sm:col-span-2 lg:col-span-2"><RenderCard item={items[0]} layoutType="hero" /></div>
-                        <div className="col-span-1 min-h-[250px] h-full"><PromoAd type={adTypeForThisDay} shape="square" /></div>
-                        {items.slice(1).map(item => (
-                          <div key={item.id} className="col-span-1"><RenderCard item={item} /></div>
-                        ))}
-                      </>
-                    )}
-
-                    {count > 4 && (
-                      <>
-                        <div className="sm:col-span-2 lg:col-span-2"><RenderCard item={items[0]} layoutType="hero" /></div>
-                        <div className="col-span-1"><RenderCard item={items[1]} /></div>
-                        {items.slice(2).map(item => (
-                          <div key={item.id} className="col-span-1"><RenderCard item={item} /></div>
-                        ))}
-                        
-                        {/* Pad the final row to keep the grid perfectly rectangular */}
-                        {(count - 2) % 3 === 1 && (
-                          <div className="sm:col-span-2 lg:col-span-2 min-h-[150px] h-full"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
-                        )}
-                        {(count - 2) % 3 === 2 && (
-                          <div className="col-span-1 min-h-[250px] h-full"><PromoAd type={adTypeForThisDay} shape="square" /></div>
-                        )}
-                      </>
-                    )}
+                {/* Just drop a single banner ad at the bottom of the day if there's enough content */}
+                {items.length >= 3 && (
+                  <div className="w-full mt-2">
+                    <PromoAd type={adTypeForThisDay} shape="banner" />
                   </div>
                 )}
               </div>
