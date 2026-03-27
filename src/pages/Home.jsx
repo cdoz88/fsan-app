@@ -127,19 +127,17 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
   const VideoCard = ({ item, isHero }) => (
     <div onClick={() => setSelectedItem(item)} className={`group w-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
       {item.imageUrl ? (
-         <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" />
+         <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
       ) : (
          <div className="absolute inset-0 bg-gray-800" />
       )}
-      
-      {/* Hidden by default! Slides up on hover! */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/50 to-transparent opacity-90"></div>
       
       <PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
       
-      {/* Hidden by default! Slides up on hover! */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-5 z-20 flex flex-col justify-end opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+      <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-5 z-20 flex flex-col justify-end">
         <CardTags item={item} />
+        {/* Adjusted font sizes slightly down so the text doesn't block the uncropped thumbnail */}
         <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'} text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
       </div>
     </div>
@@ -287,6 +285,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
             const count = items.length;
             const adTypes = ['sellout', 'rookie', 'merch'];
             const adTypeForThisDay = adTypes[groupIndex % adTypes.length]; 
+            const layoutStyle = groupIndex % 3;
 
             const hasShort = items.some(i => i.type === 'short');
             const shortItem = hasShort ? items.find(i => i.type === 'short') : null;
@@ -300,82 +299,101 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                   <div className={`h-px flex-[5] ${theme.bg} opacity-50`}></div>
                 </div>
 
-                {hasShort ? (
-                  <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Left Col: The Short */}
-                    <div className="w-full lg:w-1/3 shrink-0">
-                      <RenderCard item={shortItem} layoutType="short" />
-                    </div>
-                    
-                    {/* Right Col: The Grid */}
-                    {otherItems.length > 0 && (
-                      <div className="w-full lg:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
-                        {otherItems.map(item => (
-                          <div key={item.id} className="col-span-1">
-                            <RenderCard item={item} />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {hasShort && (
+                    <>
+                      {otherItems.length === 0 && (
+                        <>
+                          <div className={`lg:col-span-1 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}><RenderCard item={shortItem} layoutType="short" /></div>
+                          <div className="lg:col-span-2 flex flex-col gap-6 h-full"><div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div></div>
+                        </>
+                      )}
+                      {otherItems.length === 1 && (
+                        <>
+                          <div className={`lg:col-span-1 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}><RenderCard item={shortItem} layoutType="short" /></div>
+                          <div className="lg:col-span-2 flex flex-col gap-6 h-full">
+                            <div className="w-full"><RenderCard item={otherItems[0]} layoutType="horizontal" /></div>
+                            <div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
                           </div>
-                        ))}
-                        {/* If odd number of other items, perfectly fill the hole with a Square ad! */}
-                        {otherItems.length % 2 !== 0 && (
-                          <div className="col-span-1 min-h-[250px] h-full">
-                            <PromoAd type={adTypeForThisDay} shape="square" />
+                        </>
+                      )}
+                      {otherItems.length >= 2 && (
+                        <>
+                          <div className={`lg:col-span-1 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}><RenderCard item={shortItem} layoutType="short" /></div>
+                          <div className="lg:col-span-2 flex flex-col gap-6 h-full">
+                            <div className="w-full"><RenderCard item={otherItems[0]} layoutType="horizontal" /></div>
+                            <div className="w-full"><RenderCard item={otherItems[1]} layoutType="horizontal" /></div>
+                            {/* AD INJECTED HERE: Fills the exact remaining height to match the Short! */}
+                            <div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
                           </div>
-                        )}
+                          {otherItems.slice(2).map(item => (<div key={item.id} className="lg:col-span-1 h-full"><RenderCard item={item} layoutType="vertical" /></div>))}
+                        </>
+                      )}
+                    </>
+                  )}
+
+                  {!hasShort && count === 1 && (
+                    <>
+                      <div className={`lg:col-span-2 ${layoutStyle % 2 !== 0 ? 'order-first lg:order-last' : ''}`}><RenderCard item={items[0]} layoutType="horizontal" /></div>
+                      <div className={`lg:col-span-1 flex flex-col h-full min-h-[250px] ${layoutStyle % 2 !== 0 ? 'order-last lg:order-first' : ''}`}><PromoAd type={adTypeForThisDay} shape="square" /></div>
+                    </>
+                  )}
+
+                  {!hasShort && count === 2 && layoutStyle === 0 && (
+                    <>
+                      <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
+                      <div className="lg:col-span-2 flex flex-col gap-6 h-full">
+                        <div className="w-full"><RenderCard item={items[1]} layoutType="horizontal" /></div>
+                        <div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* The Pure Mathematical 3-Column Grid Layout */}
-                    
-                    {count === 1 && (
-                      <>
-                        <div className="sm:col-span-2 lg:col-span-2"><RenderCard item={items[0]} layoutType="hero" /></div>
-                        <div className="sm:col-span-1 lg:col-span-1 min-h-[250px] h-full"><PromoAd type={adTypeForThisDay} shape="square" /></div>
-                      </>
-                    )}
+                    </>
+                  )}
 
-                    {count === 2 && (
-                      <>
-                        <div className="col-span-1"><RenderCard item={items[0]} /></div>
-                        <div className="col-span-1"><RenderCard item={items[1]} /></div>
-                        <div className="col-span-1 min-h-[250px] h-full"><PromoAd type={adTypeForThisDay} shape="square" /></div>
-                      </>
-                    )}
+                  {!hasShort && count === 2 && layoutStyle === 1 && (
+                    <>
+                      <div className="lg:col-span-2 flex flex-col gap-6 h-full order-last lg:order-none">
+                        <div className="flex-1 w-full flex flex-col min-h-[120px] order-last lg:order-first"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
+                        <div className="w-full"><RenderCard item={items[1]} layoutType="horizontal" /></div>
+                      </div>
+                      <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
+                    </>
+                  )}
 
-                    {count === 3 && items.map(item => (
-                      <div key={item.id} className="col-span-1"><RenderCard item={item} /></div>
-                    ))}
+                  {!hasShort && count === 2 && layoutStyle === 2 && (
+                    <>
+                      <div className="lg:col-span-2 flex flex-col gap-6 h-full order-last lg:order-none">
+                        <div className="w-full"><RenderCard item={items[1]} layoutType="horizontal" /></div>
+                        <div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
+                      </div>
+                      <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
+                    </>
+                  )}
 
-                    {count === 4 && (
-                      <>
-                        <div className="sm:col-span-2 lg:col-span-2"><RenderCard item={items[0]} layoutType="hero" /></div>
-                        <div className="col-span-1 min-h-[250px] h-full"><PromoAd type={adTypeForThisDay} shape="square" /></div>
-                        {items.slice(1).map(item => (
-                          <div key={item.id} className="col-span-1"><RenderCard item={item} /></div>
-                        ))}
-                      </>
-                    )}
+                  {/* REBUILT FOR 3 ITEMS: Guarantees equal heights and injects an ad to fill space! */}
+                  {!hasShort && count === 3 && (
+                    <>
+                      <div className={`lg:col-span-2 flex flex-col gap-6 h-full ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}>
+                        <div className="w-full"><RenderCard item={items[0]} layoutType="horizontal" /></div>
+                        <div className="w-full"><RenderCard item={items[1]} layoutType="horizontal" /></div>
+                        <div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
+                      </div>
+                      <div className="lg:col-span-1 flex flex-col h-full">
+                        <div className="w-full"><RenderCard item={items[2]} layoutType="vertical" /></div>
+                      </div>
+                    </>
+                  )}
 
-                    {count > 4 && (
-                      <>
-                        <div className="sm:col-span-2 lg:col-span-2"><RenderCard item={items[0]} layoutType="hero" /></div>
-                        <div className="col-span-1"><RenderCard item={items[1]} /></div>
-                        {items.slice(2).map(item => (
-                          <div key={item.id} className="col-span-1"><RenderCard item={item} /></div>
-                        ))}
-                        
-                        {/* Pad the final row to keep the grid perfectly rectangular */}
-                        {(count - 2) % 3 === 1 && (
-                          <div className="sm:col-span-2 lg:col-span-2 min-h-[150px] h-full"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
-                        )}
-                        {(count - 2) % 3 === 2 && (
-                          <div className="col-span-1 min-h-[250px] h-full"><PromoAd type={adTypeForThisDay} shape="square" /></div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
+                  {!hasShort && count > 3 && (
+                    <>
+                      <div className="lg:col-span-3 w-full"><RenderCard item={items[0]} layoutType="hero" /></div>
+                      {items.slice(1).map(item => (<div key={item.id} className="lg:col-span-1 h-full"><RenderCard item={item} layoutType="vertical" /></div>))}
+                      {/* Only inject the full-width bottom ad on MASSIVE days to cap off the row */}
+                      <div className="lg:col-span-3 mt-2 w-full flex flex-col min-h-[120px]">
+                        <PromoAd type={adTypeForThisDay} shape="banner" />
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             );
           })}
