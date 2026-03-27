@@ -1,30 +1,72 @@
-import React from 'react';
-import { ArrowLeft, Loader2, Mic } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { themes } from '../utils/theme';
+import Sidebar from '../components/Sidebar';
 
-// Inlined to resolve preview compilation errors
-const themes = {
-  All: { text: 'text-gray-300', border: 'border-gray-500', hoverText: 'hover:text-white', hoverBorder: 'hover:border-gray-400', bg: 'bg-gradient-to-r from-gray-500 to-gray-700', toolsBg: 'bg-[#1a1a1a] border-gray-800' },
-  Football: { text: 'text-red-500', border: 'border-red-600', hoverText: 'hover:text-red-400', hoverBorder: 'hover:border-red-500', bg: 'bg-red-600', toolsBg: 'bg-red-900/20 border-red-900/50' },
-  Basketball: { text: 'text-orange-500', border: 'border-orange-500', hoverText: 'hover:text-orange-400', hoverBorder: 'hover:border-orange-500', bg: 'bg-orange-500', toolsBg: 'bg-orange-900/20 border-orange-900/50' },
-  Baseball: { text: 'text-blue-500', border: 'border-blue-500', hoverText: 'hover:text-blue-400', hoverBorder: 'hover:border-blue-500', bg: 'bg-blue-500', toolsBg: 'bg-blue-900/20 border-blue-900/50' },
-};
+// --- NEW: Dynamic Spreaker Card Component ---
+const PodcastShowCard = ({ podcast, onClick }) => {
+  const [spreakerData, setSpreakerData] = useState(null);
 
-// Inlined to resolve preview compilation errors
-const Sidebar = ({ activeSport }) => (
-  <div className="hidden lg:flex lg:col-span-3 flex-col gap-6 w-full">
-    <div className="bg-[#1a1a1a] p-4 border border-gray-800 rounded-xl shadow-xl text-center text-gray-500 h-full min-h-[400px] flex items-center justify-center">
-      <div className="flex flex-col gap-2">
-        <h4 className="font-bold uppercase tracking-widest text-[10px]">{activeSport || 'All'} Sidebar</h4>
-        <p className="text-xs">Placeholder for standalone preview</p>
-      </div>
+  useEffect(() => {
+    // Fetch rich data directly from Spreaker using the ID from your REST API
+    if (podcast.spreakerShowId) {
+      fetch(`https://api.spreaker.com/v2/shows/${podcast.spreakerShowId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.response && data.response.show) {
+            setSpreakerData(data.response.show);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [podcast.spreakerShowId]);
+
+  // Override WordPress data with Spreaker data if available
+  const title = spreakerData?.title || podcast.title;
+  const imageUrl = spreakerData?.image_original_url || podcast.imageUrl;
+  
+  let description = podcast.content;
+  if (spreakerData?.description) {
+    // Format plain text newlines into HTML breaks for the ContentModal
+    description = spreakerData.description.replace(/(?:\r\n|\r|\n)/g, '<br/>');
+  }
+
+  const handleCardClick = () => {
+    // Pass the enriched data to your existing ContentModal!
+    onClick({
+      ...podcast,
+      title: title,
+      content: description,
+      imageUrl: imageUrl,
+    });
+  };
+
+  return (
+    <div 
+      onClick={handleCardClick} 
+      className="cursor-pointer group relative rounded-xl overflow-hidden aspect-square border border-gray-800 hover:border-gray-500 transition-all shadow-xl bg-[#111]"
+    >
+      {imageUrl ? (
+        <img 
+          src={imageUrl} 
+          alt={title} 
+          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1c233a] to-[#111] flex items-center justify-center p-4 text-center">
+          <span className="font-bold text-gray-500">{title}</span>
+        </div>
+      )}
+      {/* Subtle overlay on hover to indicate clickability */}
+      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
     </div>
-  </div>
-);
+  );
+};
 
 export default function PodcastsArchive({ podcasts = [], activeSport = 'All', setCurrentView, setSelectedItem, loadMorePosts, isLoadingMore }) {
   const theme = themes[activeSport] || themes.All;
 
-  // ONLY grab the Master Show categories OR things the decoder successfully pulled a show_id from!
+  // Filter for Master Shows using your category slugs or spreakerShowId
   const masterSlugs = ['podcast', 'podcast-basketball', 'podcast-baseball'];
   const showPodcasts = podcasts.filter(p => p.spreakerShowId || p.category_slugs?.some(slug => masterSlugs.includes(slug)));
 
@@ -34,44 +76,28 @@ export default function PodcastsArchive({ podcasts = [], activeSport = 'All', se
       {/* MAIN CONTENT */}
       <div className="lg:col-span-9 flex flex-col">
         <div className="flex items-center gap-4 mb-6">
-           <button onClick={() => setCurrentView('home')} className="hover:text-white flex items-center gap-2 text-gray-400 font-bold uppercase text-xs tracking-wider transition-colors"><ArrowLeft size={16}/> Back to Dashboard</button>
+           <button onClick={() => setCurrentView('home')} className="hover:text-white flex items-center gap-2 text-gray-400 font-bold uppercase text-xs tracking-wider transition-colors">
+             <ArrowLeft size={16}/> Back to Dashboard
+           </button>
         </div>
         
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 pb-4 border-b border-gray-800">
           <div>
-            <h1 className={`text-4xl font-black uppercase tracking-wider ${theme.text} drop-shadow-lg`}>{activeSport === 'All' ? 'Network' : activeSport} Podcasts</h1>
+            <h1 className={`text-4xl font-black uppercase tracking-wider ${theme.text} drop-shadow-lg`}>
+              {activeSport === 'All' ? 'Network' : activeSport} Podcasts
+            </h1>
             <p className="text-gray-400 mt-2 text-sm">Browse our lineup of full shows and network podcasts.</p>
           </div>
         </div>
 
-        {/* --- MASTER SHOWS GRID --- */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {/* --- 1:1 MASTER SHOWS GRID --- */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {showPodcasts.map(master => (
-            <div key={master.id} onClick={() => setSelectedItem(master)} className="bg-[#1e1e1e] border border-gray-800 rounded-2xl shadow-xl flex flex-col cursor-pointer group hover:bg-[#252525] hover:border-gray-600 transition-all relative overflow-hidden">
-              
-              <div className="w-full aspect-[16/9] bg-gray-900 relative overflow-hidden shrink-0 border-b border-gray-800">
-                 {master.imageUrl ? (
-                   <img src={master.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
-                 ) : (
-                   <div className="absolute inset-0 bg-gradient-to-br from-[#1c233a] to-[#111]"></div>
-                 )}
-                 <div className="absolute inset-0 bg-gradient-to-t from-[#1e1e1e] via-transparent to-transparent opacity-90"></div>
-                 
-                 <div className="absolute top-4 left-4 bg-black/70 px-3 py-1.5 rounded-full backdrop-blur-sm border border-gray-700 flex items-center gap-2 shadow-lg">
-                   <Mic className={`${themes[master.sport]?.text || theme.text}`} size={14} />
-                   <span className="font-bold uppercase tracking-widest text-[10px] text-gray-300">Show Playlist</span>
-                 </div>
-              </div>
-
-              <div className="p-6 flex flex-col flex-1">
-                <div className="flex items-center gap-2 mb-3 z-20 relative">
-                  <span className={`w-2 h-2 rounded-full ${themes[master.sport]?.bg || 'bg-gray-500'} shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.8)]`}></span>
-                  <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">{master.sport} Podcast</span>
-                </div>
-                <h3 className={`font-black text-2xl leading-tight group-hover:${themes[master.sport]?.text || 'text-white'} transition-colors mb-3 drop-shadow-md z-10 relative`} dangerouslySetInnerHTML={{ __html: master.title }} />
-                <div className="text-gray-400 text-sm line-clamp-3 z-10 relative" dangerouslySetInnerHTML={{ __html: master.excerpt }} />
-              </div>
-            </div>
+            <PodcastShowCard 
+              key={master.id} 
+              podcast={master} 
+              onClick={setSelectedItem} 
+            />
           ))}
           
           {showPodcasts.length === 0 && (
