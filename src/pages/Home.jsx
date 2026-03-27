@@ -396,31 +396,37 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
 
                     {!hasShort && count === 2 && layoutStyle === 0 && (
                       <>
-                        <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
-                        <div className="lg:col-span-2 flex flex-col gap-6 h-full">
+                        <div className="lg:col-span-1 flex flex-col gap-6 h-full">
+                          <RenderCard item={items[0]} layoutType="vertical" />
+                          <div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="square" /></div>
+                        </div>
+                        <div className="lg:col-span-2 h-full">
                           <RenderCard item={items[1]} layoutType="horizontal" />
-                          <div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
                         </div>
                       </>
                     )}
 
                     {!hasShort && count === 2 && layoutStyle === 1 && (
                       <>
-                        <div className="lg:col-span-2 flex flex-col gap-6 h-full order-last lg:order-none">
-                          <div className="flex-1 w-full flex flex-col order-last lg:order-first"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
+                        <div className="lg:col-span-2 h-full order-last lg:order-none">
                           <RenderCard item={items[1]} layoutType="horizontal" />
                         </div>
-                        <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
+                        <div className="lg:col-span-1 flex flex-col gap-6 h-full">
+                          <div className="flex-1 w-full flex flex-col order-last lg:order-first"><PromoAd type={adTypeForThisDay} shape="square" /></div>
+                          <RenderCard item={items[0]} layoutType="vertical" />
+                        </div>
                       </>
                     )}
 
                     {!hasShort && count === 2 && layoutStyle === 2 && (
                       <>
-                        <div className="lg:col-span-2 flex flex-col gap-6 h-full order-last lg:order-none">
+                        <div className="lg:col-span-2 h-full order-last lg:order-none">
                           <RenderCard item={items[1]} layoutType="horizontal" />
-                          <div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
                         </div>
-                        <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
+                        <div className="lg:col-span-1 flex flex-col gap-6 h-full">
+                          <RenderCard item={items[0]} layoutType="vertical" />
+                          <div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="square" /></div>
+                        </div>
                       </>
                     )}
 
