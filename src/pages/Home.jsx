@@ -124,7 +124,8 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
 
   // BRAND NEW: The Cinematic Video Overlay Card!
   const VideoCard = ({ item, isHero }) => (
-    <div onClick={() => setSelectedItem(item)} className={`group h-full w-full min-h-[250px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
+    {/* Removed h-full and min-h-[250px]. Added aspect-video to strictly lock it to 16:9! */}
+    <div onClick={() => setSelectedItem(item)} className={`group w-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
       {item.imageUrl ? (
          <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
       ) : (
@@ -134,9 +135,10 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
       
       <PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
       
-      <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-6 z-20 flex flex-col justify-end">
+      <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-5 z-20 flex flex-col justify-end">
         <CardTags item={item} />
-        <h3 className={`font-black ${isHero ? 'text-2xl lg:text-4xl' : 'text-xl lg:text-2xl'} text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-2 lg:line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+        {/* Adjusted font sizes slightly down so the text doesn't block the uncropped thumbnail */}
+        <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'} text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
       </div>
     </div>
   );
