@@ -1,13 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { PlayCircle, FileText, Film, Mic, ChevronRight, LayoutList, Users, Calculator, ArrowLeftRight, Shirt, HeartHandshake, ShoppingCart, ChevronUp } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { PlayCircle, FileText, Film, Mic, ChevronRight, LayoutList, Users, Calculator, ArrowLeftRight, Shirt, HeartHandshake } from 'lucide-react';
 import { Facebook, XIcon, Youtube, Instagram, TikTok, LinkedIn, SelloutCrowds } from '../components/Icons';
 import { themes } from '../utils/theme';
 import PlaybookLoader from '../components/PlaybookLoader';
 
 export default function Home({ wpPosts, activeSport, currentView, setCurrentView, feedFilter, setFeedFilter, setSelectedItem, loadMorePosts, isLoadingMore, hasMore, isLoading }) {
-  const theme = themes[activeSport] || themes.All;
+  const theme = themes[activeSport];
   const observerTarget = useRef(null);
-  const [showScrollTop, setShowScrollTop] = useState(false);
 
   const socialLinks = {
     All: { facebook: 'https://www.facebook.com/fantasyfootballadvicenetwork', x: 'https://x.com/fsadvicenet', youtube: 'https://www.youtube.com/@FFAdviceNet', tiktok: 'https://www.tiktok.com/@fsadvicenetwork', linkedin: 'https://www.linkedin.com/company/fantasy-sports-advice', sellout: 'https://www.selloutcrowds.com/crowd/fsan', instagram: null },
@@ -17,6 +16,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
   };
   const currentLinks = socialLinks[activeSport];
 
+  // --- INFINITE SCROLL OBSERVER ---
   useEffect(() => {
     const observer = new IntersectionObserver(
       entries => {
@@ -30,14 +30,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     return () => observer.disconnect();
   }, [isLoadingMore, hasMore, loadMorePosts]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 400);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
+  // Group the posts
   const groupedFeed = [];
   wpPosts.forEach(item => {
     let group = groupedFeed.find(g => g.date === item.date);
@@ -53,15 +46,15 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayStr = yesterday.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
 
-  // --- AD COMPONENT ---
+  // ==========================================
+  // UNIVERSAL FLUID AD DISPENSER
+  // ==========================================
   const PromoAd = ({ type, shape }) => {
-    const heightClass = shape === 'banner' ? 'min-h-[140px]' : 'min-h-[250px]';
-
     if (type === 'rookie') {
       return (
-        <div className={`w-full h-full ${heightClass} bg-gradient-to-br from-red-900 to-black border border-red-800 rounded-2xl ${shape === 'banner' ? 'p-4 sm:flex-row' : 'p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-xl cursor-pointer hover:border-red-500 transition-colors group`}>
+        <div className={`w-full h-full bg-gradient-to-br from-red-900 to-black border border-red-800 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-xl cursor-pointer hover:border-red-500 transition-colors group`}>
            <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#fff_10px,#fff_20px)]"></div>
-           <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-4'}`}>
+           <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-2 md:mb-4'}`}>
              <h3 className="text-red-500 font-black text-xl lg:text-2xl italic uppercase drop-shadow-md group-hover:scale-105 transition-transform origin-left leading-none">Dominate</h3>
              <p className="text-white text-[10px] font-bold uppercase tracking-widest mt-1 line-clamp-1 md:line-clamp-2">Get The Ultimate Rookie Breakdown!</p>
            </div>
@@ -74,9 +67,9 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
 
     if (type === 'sellout') {
       return (
-        <div className={`w-full h-full ${heightClass} bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/40 via-[#111] to-black border border-red-900/50 rounded-2xl ${shape === 'banner' ? 'p-4 sm:flex-row' : 'p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-2xl cursor-pointer hover:border-red-600 transition-colors group`}>
+        <div className={`w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/40 via-[#111] to-black border border-red-900/50 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-2xl cursor-pointer hover:border-red-600 transition-colors group`}>
            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20 20\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')", mixBlendMode: 'overlay' }}></div>
-           <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-4'}`}>
+           <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-2 md:mb-4'}`}>
              <h2 className="text-xl lg:text-2xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-left line-clamp-1">Join Sellout Crowds</h2>
              <p className="text-gray-300 font-bold text-[10px] tracking-wide relative z-10 line-clamp-1 md:line-clamp-2">Win Your League with Real-Time Advice!</p>
            </div>
@@ -88,9 +81,9 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     }
 
     return (
-      <div className={`w-full h-full ${heightClass} bg-[#111] border border-purple-900/50 rounded-2xl ${shape === 'banner' ? 'p-4 sm:flex-row' : 'p-6 flex-col'} flex items-center justify-center text-center cursor-pointer hover:border-purple-600 transition-all group overflow-hidden relative shadow-xl`}>
+      <div className={`w-full h-full bg-[#111] border border-purple-900/50 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center cursor-pointer hover:border-purple-600 transition-all group overflow-hidden relative shadow-xl`}>
         <div className="absolute inset-0 bg-gradient-to-tr from-purple-900/30 to-black z-0 transition-opacity group-hover:opacity-80"></div>
-        <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-4'}`}>
+        <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-2 md:mb-4'}`}>
           <h3 className="text-purple-500 font-black text-xl lg:text-2xl italic uppercase z-10 group-hover:scale-110 transition-transform origin-left line-clamp-1 leading-none">Fantasy Apparel</h3>
           <p className="text-gray-400 text-[10px] font-bold tracking-widest z-10 mt-1 line-clamp-1">FSAN.SHOP</p>
         </div>
@@ -101,6 +94,9 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     );
   };
 
+  // ==========================================
+  // CONTENT CARD COMPONENTS
+  // ==========================================
   const CardTags = ({ item }) => (
     <div className="flex items-center gap-2 mb-3 z-20 relative">
       <span className={`w-2 h-2 rounded-full ${themes[item.sport]?.bg || 'bg-gray-500'} shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.8)]`}></span>
@@ -111,7 +107,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
   );
 
   const ShortCard = ({ item }) => (
-    <div onClick={() => setSelectedItem(item)} className={`group w-full min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
+    <div onClick={() => setSelectedItem(item)} className={`group h-full w-full min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
       {item.imageUrl ? (
          <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
       ) : (
@@ -126,7 +122,8 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
-  // 1. REVERTED TO PRISTINE VIDEO CARD: 16:9 Aspect Ratio, Title Hidden until Hover, No Cropping.
+  // BRAND NEW: The Cinematic Video Overlay Card!
+  // Removed h-full and min-h-[250px]. Added aspect-video to strictly lock it to 16:9!
   const VideoCard = ({ item, isHero }) => (
     <div onClick={() => setSelectedItem(item)} className={`group w-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
       {item.imageUrl ? (
@@ -148,26 +145,9 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
-  // 2. REVERTED TO PRISTINE PODCAST CARD: No artificial height stretching, precise Spreaker Flags.
-  const PodcastCard = ({ item }) => (
-    <div className={`w-full bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl transition-all`}>
-      {item.spreakerId ? (
-        <iframe 
-          src={`https://widget.spreaker.com/player?episode_id=${item.spreakerId}&theme=dark&playlist=false&playlist-continuous=false&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-episode-description=false&hide-transcript=true&hide-download=true`} 
-          width="100%" 
-          height="200px"
-          frameBorder="0" 
-          allow="autoplay; picture-in-picture"
-          style={{ display: 'block' }}
-        ></iframe>
-      ) : (
-         <div className="w-full h-[200px] flex items-center justify-center text-gray-500 font-bold uppercase tracking-widest text-xs">Audio Unavailable</div>
-      )}
-    </div>
-  );
-
+  // UPDATED: Now strictly for Articles (No more video logic inside)
   const VerticalCard = ({ item }) => (
-    <div onClick={() => setSelectedItem(item)} className={`group w-full h-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
+    <div onClick={() => setSelectedItem(item)} className={`group h-full w-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
       <div className="w-full aspect-video relative flex items-center justify-center overflow-hidden shrink-0 bg-[#111]">
         {item.imageUrl ? (
            <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
@@ -183,51 +163,58 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
+  // UPDATED: Now strictly for Articles (No more video logic inside)
   const HorizontalCard = ({ item, isHero }) => (
     <div onClick={() => setSelectedItem(item)} className={`group w-full h-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col sm:flex-row relative`}>
       <div className={`w-full ${isHero ? 'sm:w-3/5 lg:w-2/3' : 'sm:w-1/2'} relative shrink-0 bg-[#111] overflow-hidden`}>
         {item.imageUrl ? (
-          <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
+          <img src={item.imageUrl} alt="" className="w-full h-auto aspect-video object-cover opacity-80 group-hover:scale-105 transition-transform duration-500 block" />
         ) : (
-          <div className="absolute inset-0 bg-gray-800" />
+          <div className="w-full aspect-video bg-gray-800 block" />
         )}
       </div>
-      <div className="w-full sm:flex-1 bg-gradient-to-b from-[#1e1e1e] to-[#161616] p-4 lg:p-6 flex flex-col justify-center">
-        <CardTags item={item} />
-        <h3 className={`font-black ${isHero ? 'text-2xl lg:text-4xl' : 'text-xl lg:text-2xl'} leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors mb-2 line-clamp-2 lg:line-clamp-3`} dangerouslySetInnerHTML={{ __html: item.title }} />
-        <div className={`text-sm text-gray-400 ${isHero ? 'line-clamp-3 lg:line-clamp-4' : 'line-clamp-2 lg:line-clamp-3'}`} dangerouslySetInnerHTML={{ __html: item.excerpt }} />
+      <div className="w-full sm:flex-1 relative bg-gradient-to-b from-[#1e1e1e] to-[#161616]">
+        <div className="sm:absolute sm:inset-0 p-4 lg:p-6 flex flex-col justify-center overflow-hidden">
+          <CardTags item={item} />
+          <h3 className={`font-black ${isHero ? 'text-2xl lg:text-4xl' : 'text-xl lg:text-2xl'} leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors mb-2 line-clamp-2 lg:line-clamp-3`} dangerouslySetInnerHTML={{ __html: item.title }} />
+          <div className={`text-sm text-gray-400 ${isHero ? 'line-clamp-3 lg:line-clamp-4' : 'line-clamp-2 lg:line-clamp-3'}`} dangerouslySetInnerHTML={{ __html: item.excerpt }} />
+        </div>
       </div>
     </div>
   );
 
+  // UPDATED: The router that intercepts Videos and assigns the cinematic card
   const RenderCard = ({ item, layoutType }) => {
     if (layoutType === 'short') return <ShortCard item={item} />;
+    
+    // Intercept videos immediately, giving them the cinematic overlay layout!
     if (item.type === 'video') return <VideoCard item={item} isHero={layoutType === 'hero'} />;
-    if (item.type === 'podcast') return <PodcastCard item={item} />;
+    
     if (layoutType === 'horizontal') return <HorizontalCard item={item} isHero={false} />;
     if (layoutType === 'hero') return <HorizontalCard item={item} isHero={true} />;
     return <VerticalCard item={item} />;
   };
 
   return (
+    // UPDATED GRID: From 12 columns down to 5 columns so the sidebar takes exactly 20%
     <main className="max-w-[1600px] mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-5 gap-8 animate-in fade-in duration-300">
       
-      {/* SIDEBAR */}
+      {/* LEFT COLUMN: STICKY DASHBOARD MENU (Now takes 1 of 5 columns) */}
       <div className="hidden lg:flex lg:col-span-1 flex-col gap-6">
-        <div className="sticky top-[88px] flex flex-col gap-6">
+        <div className="sticky top-6 flex flex-col gap-6">
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Browse Network</h4>
              <div className="flex flex-col gap-1">
-                <button onClick={() => { setCurrentView('home'); window.scrollTo(0, 0); }} className={`flex items-center gap-3 text-sm font-bold transition-colors p-2.5 rounded-xl w-full text-left ${currentView === 'home' ? 'bg-[#252525] text-white shadow-inner border border-gray-700' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'}`}>
+                <button onClick={() => setCurrentView('home')} className={`flex items-center gap-3 text-sm font-bold transition-colors p-2.5 rounded-xl w-full text-left ${currentView === 'home' ? 'bg-[#252525] text-white shadow-inner border border-gray-700' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'}`}>
                   <LayoutList size={18} className={theme.text} /> Timeline Feed
                 </button>
-                <button onClick={() => { setCurrentView('articles'); window.scrollTo(0, 0); }} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
+                <button onClick={() => setCurrentView('articles')} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
                   <FileText size={18} className={theme.text} /> All Articles
                 </button>
-                <button onClick={() => { setCurrentView('videos'); window.scrollTo(0, 0); }} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
+                <button onClick={() => setCurrentView('videos')} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
                   <Film size={18} className={theme.text} /> All Videos
                 </button>
-                <button onClick={() => { setCurrentView('podcasts'); window.scrollTo(0, 0); }} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
+                <button className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
                   <Mic size={18} className={theme.text} /> All Podcasts
                 </button>
              </div>
@@ -251,7 +238,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                 <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><SelloutCrowds size={18} className={theme.text} /> Exclusive Community</a>
                 <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><Shirt size={18} className={theme.text} /> Join A Jersey League</a>
                 <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><HeartHandshake size={18} className={theme.text} /> Play for Charity</a>
-                <a href="https://fsan.shop" target="_blank" rel="noreferrer" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><ShoppingCart size={18} className={theme.text} /> Merch Shop</a>
              </div>
           </div>
           <div className="flex flex-col items-center justify-center gap-4 mt-2 mb-8">
@@ -265,94 +251,46 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                 {currentLinks.linkedin && <a href={currentLinks.linkedin} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><LinkedIn size={20} /></a>}
              </div>
              <div className="text-center mt-2">
-               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">&copy; {new Date().getFullYear()} FSAN</p>
+               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">&copy; {new Date().getFullYear()} Fantasy Sports Advice Network</p>
                <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mt-1">All Rights Reserved</p>
              </div>
           </div>
         </div>
       </div>
 
+      {/* CENTER & RIGHT: THE UNIFIED TIMELINE BENTO BOX (Now takes 4 of 5 columns) */}
       <div className="lg:col-span-4 flex flex-col gap-8 w-full max-w-5xl">
+        
         <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-1.5 flex gap-2 shadow-xl z-30 overflow-x-auto scrollbar-hide">
-          <button onClick={() => { setFeedFilter('all'); window.scrollTo(0, 0); }} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'all' ? `${theme.bg} text-white shadow-md` : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
+          <button onClick={() => setFeedFilter('all')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'all' ? `${theme.bg} text-white shadow-md` : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <LayoutList size={14} /> All
           </button>
-          <button onClick={() => { setFeedFilter('articles'); window.scrollTo(0, 0); }} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'articles' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
+          <button onClick={() => setFeedFilter('articles')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'articles' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <FileText size={14} /> Articles
           </button>
-          <button onClick={() => { setFeedFilter('videos'); window.scrollTo(0, 0); }} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'videos' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
+          <button onClick={() => setFeedFilter('videos')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'videos' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <Film size={14} /> Videos
           </button>
-          <button onClick={() => { setFeedFilter('podcasts'); window.scrollTo(0, 0); }} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'podcasts' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
+          <button onClick={() => setFeedFilter('podcasts')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'podcasts' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <Mic size={14} /> Podcasts
           </button>
         </div>
 
+        {/* The Chronological Bento Box Bundles */}
         <div className={`flex flex-col gap-12 transition-opacity duration-300 ${isLoading ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
           {groupedFeed.map((group, groupIndex) => {
             let displayDate = group.date;
             if (group.date === todayStr) displayDate = 'Today';
             else if (group.date === yesterdayStr) displayDate = 'Yesterday';
 
-            // 3. THE NEW CLEAN ROW PACKER
-            // Eliminates "items-stretch" to prevent black gaps.
-            // Explicitly assigns Podcasts to a 2/3 column width so they always fit perfectly.
+            const items = group.items;
+            const count = items.length;
             const adTypes = ['sellout', 'rookie', 'merch'];
             const adTypeForThisDay = adTypes[groupIndex % adTypes.length]; 
-            
-            const rows = [];
-            let currentRow = [];
-            let currentCap = 0;
 
-            const flushRow = () => {
-              if (currentCap > 0) {
-                if (currentCap === 1) {
-                    currentRow.push({ type: 'ad', shape: 'banner', span: 2 });
-                } else if (currentCap === 2) {
-                    currentRow.push({ type: 'ad', shape: 'square', span: 1 });
-                }
-                
-                // Visual variety: flip the order if row has a span 2 and span 1
-                const isFlipped = rows.length % 2 !== 0;
-                if (isFlipped && currentRow.length === 2 && currentRow[0].span === 2 && currentRow[1].span === 1) {
-                  currentRow.reverse();
-                }
-
-                rows.push(currentRow);
-                currentRow = [];
-                currentCap = 0;
-              }
-            };
-
-            group.items.forEach((item, index) => {
-                let span = 1;
-                let layout = 'vertical';
-
-                if (item.type === 'podcast') {
-                    span = 2;
-                    layout = 'podcast';
-                } else if (item.type === 'short') {
-                    span = 1;
-                    layout = 'short';
-                } else if (index === 0 && group.items.length >= 3 && item.type === 'article') {
-                    span = 2;
-                    layout = 'hero';
-                } else if (item.type === 'video') {
-                    span = 1;
-                    layout = 'video';
-                } else {
-                    span = 1;
-                    layout = 'vertical';
-                }
-
-                if (currentCap + span > 3) {
-                    flushRow();
-                }
-
-                currentRow.push({ type: 'item', item, span, layout });
-                currentCap += span;
-            });
-            flushRow(); 
+            const hasShort = items.some(i => i.type === 'short');
+            const shortItem = hasShort ? items.find(i => i.type === 'short') : null;
+            const otherItems = hasShort ? items.filter(i => i.id !== shortItem.id) : items;
 
             return (
               <div key={group.date} className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -362,36 +300,90 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                   <div className={`h-px flex-[5] ${theme.bg} opacity-50`}></div>
                 </div>
 
-                <div className="flex flex-col gap-6">
-                  {rows.map((row, rowIndex) => (
-                    <div key={rowIndex} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-                      {row.map((cell, cellIndex) => {
-                        const spanClass = cell.span === 2 ? 'md:col-span-2' : 'md:col-span-1';
-                        
-                        if (cell.type === 'ad') {
-                          return (
-                            <div key={`ad-${cellIndex}`} className={`${spanClass} w-full h-full`}>
-                               <PromoAd type={adTypeForThisDay} shape={cell.shape} />
-                            </div>
-                          );
-                        }
-
-                        return (
-                          <div key={cell.item.id} className={`${spanClass} w-full h-full`}>
-                             <RenderCard item={cell.item} layoutType={cell.layout} />
-                          </div>
-                        );
-                      })}
+                {hasShort ? (
+                  <div className="flex flex-col lg:flex-row gap-6">
+                    {/* Left Col: The Short */}
+                    <div className="w-full lg:w-1/3 shrink-0">
+                      <RenderCard item={shortItem} layoutType="short" />
                     </div>
-                  ))}
-                </div>
+                    
+                    {/* Right Col: The Grid */}
+                    {otherItems.length > 0 && (
+                      <div className="w-full lg:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+                        {otherItems.map(item => (
+                          <div key={item.id} className="col-span-1">
+                            <RenderCard item={item} />
+                          </div>
+                        ))}
+                        {/* If odd number of other items, perfectly fill the hole with a Square ad! */}
+                        {otherItems.length % 2 !== 0 && (
+                          <div className="col-span-1 min-h-[250px] h-full">
+                            <PromoAd type={adTypeForThisDay} shape="square" />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* The Pure Mathematical 3-Column Grid Layout */}
+                    
+                    {count === 1 && (
+                      <>
+                        <div className="sm:col-span-2 lg:col-span-2"><RenderCard item={items[0]} layoutType="hero" /></div>
+                        <div className="sm:col-span-1 lg:col-span-1 min-h-[250px] h-full"><PromoAd type={adTypeForThisDay} shape="square" /></div>
+                      </>
+                    )}
+
+                    {count === 2 && (
+                      <>
+                        <div className="col-span-1"><RenderCard item={items[0]} /></div>
+                        <div className="col-span-1"><RenderCard item={items[1]} /></div>
+                        <div className="col-span-1 min-h-[250px] h-full"><PromoAd type={adTypeForThisDay} shape="square" /></div>
+                      </>
+                    )}
+
+                    {count === 3 && items.map(item => (
+                      <div key={item.id} className="col-span-1"><RenderCard item={item} /></div>
+                    ))}
+
+                    {count === 4 && (
+                      <>
+                        <div className="sm:col-span-2 lg:col-span-2"><RenderCard item={items[0]} layoutType="hero" /></div>
+                        <div className="col-span-1 min-h-[250px] h-full"><PromoAd type={adTypeForThisDay} shape="square" /></div>
+                        {items.slice(1).map(item => (
+                          <div key={item.id} className="col-span-1"><RenderCard item={item} /></div>
+                        ))}
+                      </>
+                    )}
+
+                    {count > 4 && (
+                      <>
+                        <div className="sm:col-span-2 lg:col-span-2"><RenderCard item={items[0]} layoutType="hero" /></div>
+                        <div className="col-span-1"><RenderCard item={items[1]} /></div>
+                        {items.slice(2).map(item => (
+                          <div key={item.id} className="col-span-1"><RenderCard item={item} /></div>
+                        ))}
+                        
+                        {/* Pad the final row to keep the grid perfectly rectangular */}
+                        {(count - 2) % 3 === 1 && (
+                          <div className="sm:col-span-2 lg:col-span-2 min-h-[150px] h-full"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
+                        )}
+                        {(count - 2) % 3 === 2 && (
+                          <div className="col-span-1 min-h-[250px] h-full"><PromoAd type={adTypeForThisDay} shape="square" /></div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
 
+          {/* INFINITE SCROLL LOADER / TRIPWIRE */}
           {hasMore && (
             <div ref={observerTarget} className="w-full py-12 flex justify-center items-center">
-              <PlaybookLoader className="scale-125" />
+              {isLoadingMore && <PlaybookLoader className="scale-125" />}
             </div>
           )}
 
@@ -402,17 +394,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
           )}
         </div>
       </div>
-
-      {showScrollTop && (
-        <button 
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-6 right-6 z-50 p-3 bg-red-600 text-white rounded-full shadow-[0_0_15px_rgba(220,38,38,0.5)] hover:bg-red-500 hover:scale-110 transition-all duration-300"
-          aria-label="Scroll to top"
-        >
-          <ChevronUp size={24} />
-        </button>
-      )}
-
     </main>
   );
 }
