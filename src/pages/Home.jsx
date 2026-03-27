@@ -122,6 +122,26 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
+  // BRAND NEW: The Cinematic Video Overlay Card!
+  const VideoCard = ({ item, isHero }) => (
+    <div onClick={() => setSelectedItem(item)} className={`group h-full w-full min-h-[250px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
+      {item.imageUrl ? (
+         <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
+      ) : (
+         <div className="absolute inset-0 bg-gray-800" />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/50 to-transparent opacity-90"></div>
+      
+      <PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
+      
+      <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-6 z-20 flex flex-col justify-end">
+        <CardTags item={item} />
+        <h3 className={`font-black ${isHero ? 'text-2xl lg:text-4xl' : 'text-xl lg:text-2xl'} text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-2 lg:line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+      </div>
+    </div>
+  );
+
+  // UPDATED: Now strictly for Articles (No more video logic inside)
   const VerticalCard = ({ item }) => (
     <div onClick={() => setSelectedItem(item)} className={`group h-full w-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
       <div className="w-full aspect-video relative flex items-center justify-center overflow-hidden shrink-0 bg-[#111]">
@@ -130,18 +150,16 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
         ) : (
            <div className="absolute inset-0 bg-gray-800" />
         )}
-        {item.type === 'video' && (
-           <><div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div><PlayCircle size={48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" /></>
-        )}
       </div>
       <div className="p-5 flex flex-col flex-1 bg-gradient-to-b from-[#1e1e1e] to-[#161616]">
         <CardTags item={item} />
         <h3 className={`font-black text-lg leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors mb-3`} dangerouslySetInnerHTML={{ __html: item.title }} />
-        {item.type === 'article' && <div className="text-sm text-gray-400 line-clamp-2 mt-auto" dangerouslySetInnerHTML={{ __html: item.excerpt }} />}
+        <div className="text-sm text-gray-400 line-clamp-2 mt-auto" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
       </div>
     </div>
   );
 
+  // UPDATED: Now strictly for Articles (No more video logic inside)
   const HorizontalCard = ({ item, isHero }) => (
     <div onClick={() => setSelectedItem(item)} className={`group w-full h-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col sm:flex-row relative`}>
       <div className={`w-full ${isHero ? 'sm:w-3/5 lg:w-2/3' : 'sm:w-1/2'} relative shrink-0 bg-[#111] overflow-hidden`}>
@@ -150,22 +168,24 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
         ) : (
           <div className="w-full aspect-video bg-gray-800 block" />
         )}
-        {item.type === 'video' && (
-           <><div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div><PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" /></>
-        )}
       </div>
       <div className="w-full sm:flex-1 relative bg-gradient-to-b from-[#1e1e1e] to-[#161616]">
         <div className="sm:absolute sm:inset-0 p-4 lg:p-6 flex flex-col justify-center overflow-hidden">
           <CardTags item={item} />
-          <h3 className={`font-black ${isHero ? 'text-2xl lg:text-4xl' : 'text-xl lg:text-2xl'} leading-tight group-hover:${theme.text} transition-colors mb-2 line-clamp-2 lg:line-clamp-3`} dangerouslySetInnerHTML={{ __html: item.title }} />
+          <h3 className={`font-black ${isHero ? 'text-2xl lg:text-4xl' : 'text-xl lg:text-2xl'} leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors mb-2 line-clamp-2 lg:line-clamp-3`} dangerouslySetInnerHTML={{ __html: item.title }} />
           <div className={`text-sm text-gray-400 ${isHero ? 'line-clamp-3 lg:line-clamp-4' : 'line-clamp-2 lg:line-clamp-3'}`} dangerouslySetInnerHTML={{ __html: item.excerpt }} />
         </div>
       </div>
     </div>
   );
 
+  // UPDATED: The router that intercepts Videos and assigns the cinematic card
   const RenderCard = ({ item, layoutType }) => {
     if (layoutType === 'short') return <ShortCard item={item} />;
+    
+    // Intercept videos immediately, giving them the cinematic overlay layout!
+    if (item.type === 'video') return <VideoCard item={item} isHero={layoutType === 'hero'} />;
+    
     if (layoutType === 'horizontal') return <HorizontalCard item={item} isHero={false} />;
     if (layoutType === 'hero') return <HorizontalCard item={item} isHero={true} />;
     return <VerticalCard item={item} />;
