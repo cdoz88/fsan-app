@@ -161,8 +161,8 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
 // --- 3. PODCAST MODAL LAYOUT ---
 const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) => (
   <div className="flex flex-col lg:flex-row h-full min-h-0">
-    {/* Left Side: Dynamic Podcast Player Embed */}
-    <div className="lg:w-[400px] xl:w-[480px] shrink-0 bg-[#0a0a0a] flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-800 p-4 sm:p-6 relative min-h-0">
+    {/* Left Side: Dynamic Podcast Player Embed (NOW THE WIDE COLUMN) */}
+    <div className="flex-1 bg-[#0a0a0a] flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-800 p-4 sm:p-6 relative min-h-0">
       <div className="w-full h-full min-h-[400px] bg-[#111] rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800">
         {selectedItem.spreakerShowId ? (
           <iframe 
@@ -188,15 +188,16 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
       </div>
     </div>
 
-    {/* Right Side: Description and Share */}
-    <div className="flex-1 p-6 sm:p-10 bg-[#121212] flex flex-col overflow-y-auto">
+    {/* Right Side: Description and Share (NOW THE NARROW COLUMN) */}
+    <div className="lg:w-[400px] xl:w-[450px] shrink-0 p-6 sm:p-10 bg-[#121212] flex flex-col overflow-y-auto">
       <div className="flex gap-2 items-center mb-4">
         <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport]?.bg || 'bg-gray-500'}`}></span>
         {/* Specifically left off the Date here as requested! */}
         <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">{selectedItem.sport} Podcast</span>
       </div>
       
-      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-6 leading-tight drop-shadow-lg" dangerouslySetInnerHTML={{ __html: selectedItem.title }} />
+      {/* Adjusted title size to fit better in the narrow column */}
+      <h1 className="text-2xl sm:text-3xl font-black text-white mb-6 leading-tight drop-shadow-lg" dangerouslySetInnerHTML={{ __html: selectedItem.title }} />
       
       <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-1 mb-8" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
 
