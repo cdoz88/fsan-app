@@ -17,7 +17,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
   };
   const currentLinks = socialLinks[activeSport];
 
-  // --- INFINITE SCROLL OBSERVER ---
   useEffect(() => {
     const observer = new IntersectionObserver(
       entries => {
@@ -31,7 +30,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     return () => observer.disconnect();
   }, [isLoadingMore, hasMore, loadMorePosts]);
 
-  // --- SCROLL TO TOP LISTENER ---
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 400);
@@ -40,7 +38,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Group the posts
   const groupedFeed = [];
   wpPosts.forEach(item => {
     let group = groupedFeed.find(g => g.date === item.date);
@@ -56,9 +53,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayStr = yesterday.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
 
-  // ==========================================
-  // UNIVERSAL FLUID AD DISPENSER
-  // ==========================================
   const PromoAd = ({ type, shape }) => {
     if (type === 'rookie') {
       return (
@@ -104,9 +98,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     );
   };
 
-  // ==========================================
-  // CONTENT CARD COMPONENTS
-  // ==========================================
   const CardTags = ({ item }) => (
     <div className="flex items-center gap-2 mb-3 z-20 relative">
       <span className={`w-2 h-2 rounded-full ${themes[item.sport]?.bg || 'bg-gray-500'} shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.8)]`}></span>
@@ -132,8 +123,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
-  // BRAND NEW: The Cinematic Video Overlay Card!
-  // Removed h-full and min-h-[250px]. Added aspect-video to strictly lock it to 16:9!
   const VideoCard = ({ item, isHero }) => (
     <div onClick={() => setSelectedItem(item)} className={`group w-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
       {item.imageUrl ? (
@@ -141,13 +130,8 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
       ) : (
          <div className="absolute inset-0 bg-gray-800" />
       )}
-      
-      {/* Hidden by default! Slides up on hover! */}
       <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      
       <PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
-      
-      {/* Hidden by default! Slides up on hover! */}
       <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-5 z-20 flex flex-col justify-end opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
         <CardTags item={item} />
         <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'} text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
@@ -155,18 +139,13 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
-  // BRAND NEW: The Inline Podcast Card!
   const PodcastCard = ({ item, isHero }) => (
     <div className={`group w-full bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative ${isHero ? 'sm:flex-row' : ''}`}>
-      
-      {/* Clickable Info Section */}
       <div onClick={() => setSelectedItem(item)} className={`p-5 lg:p-6 flex flex-col flex-1 cursor-pointer ${isHero ? 'sm:w-1/2' : ''}`}>
         <CardTags item={item} />
         <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-xl'} leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors mb-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
         <div className="text-sm text-gray-400 line-clamp-2 mb-4" dangerouslySetInnerHTML={{ __html: item.excerpt || item.content }} />
       </div>
-      
-      {/* SPREAKER INLINE PLAYER - Intentionally lacks onClick so it doesn't trigger modal when pressing play! */}
       <div className={`w-full bg-[#111] border-t sm:border-t-0 sm:border-l border-gray-800 shrink-0 flex items-center ${isHero ? 'sm:w-1/2' : ''}`}>
         {item.spreakerId ? (
           <iframe 
@@ -183,7 +162,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
-  // UPDATED: Now strictly for Articles (No more video logic inside)
   const VerticalCard = ({ item }) => (
     <div onClick={() => setSelectedItem(item)} className={`group h-full w-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
       <div className="w-full aspect-video relative flex items-center justify-center overflow-hidden shrink-0 bg-[#111]">
@@ -201,7 +179,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
-  // UPDATED: Now strictly for Articles (No more video logic inside)
   const HorizontalCard = ({ item, isHero }) => (
     <div onClick={() => setSelectedItem(item)} className={`group w-full h-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col sm:flex-row relative`}>
       <div className={`w-full ${isHero ? 'sm:w-3/5 lg:w-2/3' : 'sm:w-1/2'} relative shrink-0 bg-[#111] overflow-hidden`}>
@@ -218,28 +195,21 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
           <div className={`text-sm text-gray-400 ${isHero ? 'line-clamp-3 lg:line-clamp-4' : 'line-clamp-2 lg:line-clamp-3'}`} dangerouslySetInnerHTML={{ __html: item.excerpt }} />
         </div>
       </div>
-  // UPDATED: The router that intercepts Videos and Podcasts
+    </div>
+  );
+
   const RenderCard = ({ item, layoutType }) => {
     if (layoutType === 'short') return <ShortCard item={item} />;
-    
-    // Intercept videos immediately, giving them the cinematic overlay layout!
     if (item.type === 'video') return <VideoCard item={item} isHero={layoutType === 'hero'} />;
-    
-    // Intercept podcasts to use the inline player
     if (item.type === 'podcast') return <PodcastCard item={item} isHero={layoutType === 'hero'} />;
-    
     if (layoutType === 'horizontal') return <HorizontalCard item={item} isHero={false} />;
     if (layoutType === 'hero') return <HorizontalCard item={item} isHero={true} />;
     return <VerticalCard item={item} />;
   };
 
   return (
-    // UPDATED GRID: From 12 columns down to 5 columns so the sidebar takes exactly 20%
     <main className="max-w-[1600px] mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-5 gap-8 animate-in fade-in duration-300">
-      
-      {/* LEFT COLUMN: STICKY DASHBOARD MENU (Now takes 1 of 5 columns) */}
       <div className="hidden lg:flex lg:col-span-1 flex-col gap-6">
-        {/* Adjusted top offset so it doesn't collide with the new Sticky Header! */}
         <div className="sticky top-[88px] flex flex-col gap-6">
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Browse Network</h4>
@@ -253,7 +223,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                 <button onClick={() => { setCurrentView('videos'); window.scrollTo(0, 0); }} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
                   <Film size={18} className={theme.text} /> All Videos
                 </button>
-                {/* FIXED: Now properly routes to the new Podcasts view! */}
                 <button onClick={() => { setCurrentView('podcasts'); window.scrollTo(0, 0); }} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
                   <Mic size={18} className={theme.text} /> All Podcasts
                 </button>
@@ -299,9 +268,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
         </div>
       </div>
 
-      {/* CENTER & RIGHT: THE UNIFIED TIMELINE BENTO BOX (Now takes 4 of 5 columns) */}
       <div className="lg:col-span-4 flex flex-col gap-8 w-full max-w-5xl">
-        
         <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-1.5 flex gap-2 shadow-xl z-30 overflow-x-auto scrollbar-hide">
           <button onClick={() => { setFeedFilter('all'); window.scrollTo(0, 0); }} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'all' ? `${theme.bg} text-white shadow-md` : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <LayoutList size={14} /> All
@@ -317,7 +284,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
           </button>
         </div>
 
-        {/* The Chronological Bento Box Bundles */}
         <div className={`flex flex-col gap-12 transition-opacity duration-300 ${isLoading ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
           {groupedFeed.map((group, groupIndex) => {
             let displayDate = group.date;
@@ -336,10 +302,8 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                   <div className={`h-px flex-[5] ${theme.bg} opacity-50`}></div>
                 </div>
 
-                {/* THE SAFE FALLBACK GRID: No complex math, just a clean responsive layout aligned to the top */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
                   {items.map((item, index) => {
-                    // Let the first item span 2 columns if it's a big news day
                     const isHero = index === 0 && items.length >= 4 && item.type !== 'short';
                     const spanClass = isHero ? 'md:col-span-2 lg:col-span-2' : 'col-span-1';
                     const layout = isHero ? 'hero' : (item.type === 'short' ? 'short' : 'vertical');
@@ -352,9 +316,8 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                   })}
                 </div>
 
-                {/* Just drop a single banner ad at the bottom of the day if there's enough content */}
                 {items.length >= 3 && (
-                  <div className="w-full mt-2">
+                  <div className="w-full mt-2 min-h-[120px]">
                     <PromoAd type={adTypeForThisDay} shape="banner" />
                   </div>
                 )}
@@ -362,7 +325,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
             );
           })}
 
-          {/* INFINITE SCROLL LOADER / TRIPWIRE */}
           {hasMore && (
             <div ref={observerTarget} className="w-full py-12 flex justify-center items-center">
               {isLoadingMore && <PlaybookLoader className="scale-125" />}
@@ -377,7 +339,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
         </div>
       </div>
 
-      {/* SCROLL TO TOP BUTTON */}
       {showScrollTop && (
         <button 
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}

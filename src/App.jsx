@@ -6,7 +6,7 @@ import ContentModal from './components/ContentModal';
 import Home from './pages/Home';
 import VideosArchive from './pages/VideosArchive';
 import ArticlesArchive from './pages/ArticlesArchive';
-import PodcastsArchive from './pages/PodcastsArchive'; // NEW IMPORT
+import PodcastsArchive from './pages/PodcastsArchive';
 
 const getInitialSport = () => {
   if (typeof window !== 'undefined') {
@@ -66,7 +66,6 @@ export default function App() {
 
   // --- THE NEW INFINITE FETCH ENGINE ---
   useEffect(() => {
-    // Determine the exact type to ask WordPress for based on our current view/filter
     const targetType = currentView === 'home' ? feedFilter : currentView;
     const cacheKey = `${activeSport}-${targetType}`;
 
@@ -81,11 +80,9 @@ export default function App() {
       try {
         if (currentPage === 1) setIsLoading(true);
 
-        // Fetch exactly 10 items directly from our Custom PHP Endpoint!
         const res = await fetch(`https://fsan.com/wp-json/fsan/v1/feed?per_page=10&page=${currentPage}&sport=${activeSport}&type=${targetType}`);
         if (!res.ok) throw new Error("API failed");
         
-        // Grab pagination data
         const totalPages = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);
         setHasMore(currentPage < totalPages);
 
@@ -114,7 +111,6 @@ export default function App() {
           let spreakerId = post.spreaker_episode_id || null;
           if (spreakerId) {
              type = 'podcast';
-             // Strip out any legacy WPBakery/Spreaker shortcodes so they don't render as ugly text
              cleanContent = cleanContent.replace(/\[\/?vc_[^\]]*\]/g, '').replace(/\[spreaker[^\]]*\]/g, '');
           }
 
@@ -144,7 +140,7 @@ export default function App() {
             imageUrl,
             author,
             youtubeId,
-            spreakerId, // Pass the new ID down to the UI
+            spreakerId,
             link: post.link
           };
         };
@@ -179,7 +175,6 @@ export default function App() {
     fetchWordPressData();
   }, [activeSport, currentPage, currentView, feedFilter]);
 
-  // Resets pagination whenever a master filter is clicked (No longer wipes existing posts!)
   const handleSportChange = (sport) => { if (sport !== activeSport) { setActiveSport(sport); setCurrentPage(1); } };
   const handleViewChange = (view) => { if (view !== currentView) { setCurrentView(view); setCurrentPage(1); } };
   const handleFeedFilterChange = (filter) => { if (filter !== feedFilter) { setFeedFilter(filter); setCurrentPage(1); } };
@@ -191,10 +186,7 @@ export default function App() {
     }
   };
 
-  // Only show the massive full-screen loader if we have absolutely zero data to show
   const isInitialLoad = isLoading && wpPosts.length === 0;
-
-  // Add Podcasts to the master filtering array
   const podcasts = wpPosts.filter(p => p.type === 'podcast');
 
   return (
@@ -212,7 +204,6 @@ export default function App() {
         <Home wpPosts={wpPosts} activeSport={activeSport} currentView={currentView} setCurrentView={handleViewChange} feedFilter={feedFilter} setFeedFilter={handleFeedFilterChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} hasMore={hasMore} isLoading={isLoading} />
       )}
 
-      {/* Other Views will be wired similarly later, but left intact for now */}
       {!isInitialLoad && currentView === 'videos' && (
         <VideosArchive videos={wpPosts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
@@ -221,7 +212,6 @@ export default function App() {
         <ArticlesArchive articles={wpPosts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
 
-      {/* NEW VIEW ROUTER FOR PODCASTS */}
       {!isInitialLoad && currentView === 'podcasts' && (
         <PodcastsArchive podcasts={podcasts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
