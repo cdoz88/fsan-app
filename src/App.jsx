@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PlaybookLoader from './components/PlaybookLoader';
 import Header from './components/Header';
+import ToolsBar from './components/ToolsBar';
 import ContentModal from './components/ContentModal';
 import Home from './pages/Home';
 import VideosArchive from './pages/VideosArchive';
@@ -27,14 +28,18 @@ export default function App() {
   const [activeSport, setActiveSport] = useState(getInitialSport);
   const [currentView, setCurrentView] = useState(getInitialView); 
   const [feedFilter, setFeedFilter] = useState('all'); 
+  
   const [selectedItem, setSelectedItem] = useState(null);
   const [wpPosts, setWpPosts] = useState([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+
   const [postsCache, setPostsCache] = useState({}); 
 
+  // URL Syncing
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let changed = false;
@@ -59,6 +64,7 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // --- INFINITE FETCH ENGINE ---
   useEffect(() => {
     const targetType = currentView === 'home' ? feedFilter : currentView;
     const cacheKey = `${activeSport}-${targetType}`;
@@ -91,10 +97,10 @@ export default function App() {
           let type = defaultType;
           if (slugs.some(s => s.includes('shorts'))) type = 'short';
 
-          // PODCAST DETECTION: Individual Episodes (spreakerId exists) OR Master Playlists (category matches)
+          // PODCAST DETECTION: Individual Episodes OR Master Playlists
           let spreakerId = post.spreaker_episode_id || null;
           const isMasterCategory = slugs.some(s => ['podcast', 'podcast-basketball', 'podcast-baseball'].includes(s));
-          const isEpisodeCategory = slugs.some(s => s.includes('-pod-episode'));
+          const isEpisodeCategory = slugs.some(s => ['football-pod-episode', 'basketball-pod-episode', 'baseball-pod-episode', 'pod-episode'].includes(s));
           
           if (spreakerId || isMasterCategory || isEpisodeCategory) {
              type = 'podcast';
@@ -121,6 +127,11 @@ export default function App() {
             const urlRegex = /(https?:\/\/[^\s]+)/g;
             formattedDesc = formattedDesc.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer" style="text-decoration: underline; color: #60a5fa;">${url}</a>`);
             cleanContent = formattedDesc;
+          }
+
+          // Strip out WPBakery or Spreaker shortcodes so they don't render as text on Master Playlist cards
+          if (type === 'podcast') {
+              cleanContent = cleanContent.replace(/\[\/?vc_[^\]]*\]/g, '').replace(/\[spreaker[^\]]*\]/g, '');
           }
 
           return {
@@ -188,6 +199,8 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#121212] text-gray-200 font-sans">
       <Header activeSport={activeSport} setActiveSport={handleSportChange} setCurrentView={handleViewChange} />
+      
+      <ToolsBar activeSport={activeSport} />
 
       {isInitialLoad && (
         <div className="max-w-[1600px] mx-auto p-12 flex flex-col items-center justify-center text-gray-500 min-h-[50vh]">
@@ -208,6 +221,7 @@ export default function App() {
         <ArticlesArchive articles={wpPosts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
 
+      {/* FIXED: Reconnected the Podcasts Archive Router! */}
       {!isInitialLoad && currentView === 'podcasts' && (
         <PodcastsArchive podcasts={podcasts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
