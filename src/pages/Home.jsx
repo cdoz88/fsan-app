@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { PlayCircle, FileText, Film, Mic, ChevronRight, LayoutList, Users, Calculator, ArrowLeftRight, Shirt, Flag } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { PlayCircle, FileText, Film, Mic, ChevronRight, LayoutList, Users, Calculator, ArrowLeftRight, Shirt, Flag, Smartphone, Loader2 } from 'lucide-react';
 import { Facebook, XIcon, Youtube, Instagram, TikTok, LinkedIn, SelloutCrowds } from '../components/Icons';
 import { themes } from '../utils/theme';
 
-export default function Home({ videos, articles, activeSport, setActiveSport, currentView = 'home', setCurrentView, setSelectedItem }) {
+export default function Home({ wpPosts, activeSport, currentView, setCurrentView, feedFilter, setFeedFilter, setSelectedItem, loadMorePosts, isLoadingMore, hasMore }) {
   const theme = themes[activeSport];
-  const [feedFilter, setFeedFilter] = useState('all');
+  const observerTarget = useRef(null);
 
   const socialLinks = {
     All: { facebook: 'https://www.facebook.com/fantasyfootballadvicenetwork', x: 'https://x.com/fsadvicenet', youtube: 'https://www.youtube.com/@FFAdviceNet', tiktok: 'https://www.tiktok.com/@fsadvicenetwork', linkedin: 'https://www.linkedin.com/company/fantasy-sports-advice', sellout: 'https://www.selloutcrowds.com/crowd/fsan', instagram: null },
@@ -15,18 +15,23 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
   };
   const currentLinks = socialLinks[activeSport];
 
-  const eightDaysAgo = new Date().getTime() - (8 * 24 * 60 * 60 * 1000);
+  // --- INFINITE SCROLL OBSERVER ---
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && !isLoadingMore && hasMore) {
+          loadMorePosts();
+        }
+      },
+      { threshold: 0.1, rootMargin: '400px' } // Triggers slightly before they actually hit the bottom!
+    );
+    if (observerTarget.current) observer.observe(observerTarget.current);
+    return () => observer.disconnect();
+  }, [isLoadingMore, hasMore, loadMorePosts]);
 
-  let filteredFeed = [...videos, ...articles]
-    .filter(item => item.rawTimestamp >= eightDaysAgo)
-    .sort((a, b) => b.rawTimestamp - a.rawTimestamp);
-
-  if (feedFilter === 'articles') filteredFeed = filteredFeed.filter(item => item.type === 'article');
-  if (feedFilter === 'videos') filteredFeed = filteredFeed.filter(item => item.type === 'video' || item.type === 'short');
-  if (feedFilter === 'podcasts') filteredFeed = filteredFeed.filter(item => item.type === 'podcast');
-
+  // Group the posts (The server already filtered them!)
   const groupedFeed = [];
-  filteredFeed.forEach(item => {
+  wpPosts.forEach(item => {
     let group = groupedFeed.find(g => g.date === item.date);
     if (!group) {
       group = { date: item.date, items: [] };
@@ -171,7 +176,6 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
       {/* LEFT COLUMN: STICKY DASHBOARD MENU */}
       <div className="hidden lg:flex lg:col-span-3 flex-col gap-6">
         <div className="sticky top-6 flex flex-col gap-6">
-          
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Browse Network</h4>
              <div className="flex flex-col gap-1">
@@ -189,15 +193,10 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                 </button>
              </div>
           </div>
-
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Pro Tools</h4>
              <div className="flex flex-col gap-1">
-                {[
-                  { name: 'Player Rankings', icon: Users },
-                  { name: 'Trade Calculator', icon: Calculator },
-                  { name: 'Trade Value Chart', icon: ArrowLeftRight }
-                ].map(tool => {
+                {[{ name: 'Player Rankings', icon: Users }, { name: 'Trade Calculator', icon: Calculator }, { name: 'Trade Value Chart', icon: ArrowLeftRight }].map(tool => {
                   const Icon = tool.icon;
                   return (
                     <a href="#" key={tool.name} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
@@ -207,22 +206,14 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                 })}
              </div>
           </div>
-
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Connect</h4>
              <div className="flex flex-col gap-1">
-                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
-                  <SelloutCrowds size={18} className={theme.text} /> Exclusive Community
-                </a>
-                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
-                  <Shirt size={18} className={theme.text} /> Join A Jersey League
-                </a>
-                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl">
-                  <Flag size={18} className={theme.text} /> Compete in the Napkin League
-                </a>
+                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><SelloutCrowds size={18} className={theme.text} /> Exclusive Community</a>
+                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><Shirt size={18} className={theme.text} /> Join A Jersey League</a>
+                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><Flag size={18} className={theme.text} /> Compete in the Napkin League</a>
              </div>
           </div>
-
           <div className="flex flex-col items-center justify-center gap-4 mt-2 mb-8">
              <div className="flex flex-wrap items-center justify-center gap-5 text-gray-500 px-2">
                 {currentLinks.sellout && <a href={currentLinks.sellout} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><SelloutCrowds size={20} /></a>}
@@ -234,15 +225,10 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                 {currentLinks.linkedin && <a href={currentLinks.linkedin} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><LinkedIn size={20} /></a>}
              </div>
              <div className="text-center mt-2">
-               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
-                 &copy; {new Date().getFullYear()} Fantasy Sports Advice Network
-               </p>
-               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mt-1">
-                 All Rights Reserved
-               </p>
+               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">&copy; {new Date().getFullYear()} Fantasy Sports Advice Network</p>
+               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mt-1">All Rights Reserved</p>
              </div>
           </div>
-
         </div>
       </div>
 
@@ -258,6 +244,9 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
           </button>
           <button onClick={() => setFeedFilter('videos')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'videos' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <Film size={14} /> Videos
+          </button>
+          <button onClick={() => setFeedFilter('shorts')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'shorts' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
+            <Smartphone size={14} /> Shorts
           </button>
           <button onClick={() => setFeedFilter('podcasts')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'podcasts' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <Mic size={14} /> Podcasts
@@ -277,14 +266,12 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
             const adTypeForThisDay = adTypes[groupIndex % adTypes.length]; 
             const layoutStyle = groupIndex % 3;
 
-            // SMART SHORTS DETECTION LOGIC
             const hasShort = items.some(i => i.type === 'short');
             const shortItem = hasShort ? items.find(i => i.type === 'short') : null;
             const otherItems = hasShort ? items.filter(i => i.id !== shortItem.id) : items;
 
             return (
               <div key={group.date} className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                
                 <div className="flex items-center gap-4">
                   <div className={`h-px flex-1 ${theme.bg} opacity-50`}></div>
                   <span className={`font-black uppercase tracking-widest text-lg md:text-xl drop-shadow-md ${theme.text}`}>{displayDate}</span>
@@ -292,70 +279,40 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  
-                  {/* ======================================= */}
-                  {/* LAYOUTS WHEN A SHORT IS PRESENT IN FEED */}
-                  {/* ======================================= */}
                   {hasShort && (
                     <>
-                      {/* Short + Only 1 other item (Ad) */}
                       {otherItems.length === 0 && (
                         <>
-                          <div className={`lg:col-span-1 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}>
-                            <RenderCard item={shortItem} layoutType="short" />
-                          </div>
-                          <div className="lg:col-span-2 flex flex-col gap-6 h-full">
-                            <div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
-                          </div>
+                          <div className={`lg:col-span-1 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}><RenderCard item={shortItem} layoutType="short" /></div>
+                          <div className="lg:col-span-2 flex flex-col gap-6 h-full"><div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div></div>
                         </>
                       )}
-
-                      {/* Short + 1 Content Item + Banner Ad */}
                       {otherItems.length === 1 && (
                         <>
-                          <div className={`lg:col-span-1 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}>
-                            <RenderCard item={shortItem} layoutType="short" />
-                          </div>
+                          <div className={`lg:col-span-1 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}><RenderCard item={shortItem} layoutType="short" /></div>
                           <div className="lg:col-span-2 flex flex-col gap-6 h-full">
                             <div className="w-full"><RenderCard item={otherItems[0]} layoutType="horizontal" /></div>
                             <div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
                           </div>
                         </>
                       )}
-
-                      {/* Short + 2 or more Content Items */}
                       {otherItems.length >= 2 && (
                         <>
-                          <div className={`lg:col-span-1 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}>
-                            <RenderCard item={shortItem} layoutType="short" />
-                          </div>
+                          <div className={`lg:col-span-1 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}><RenderCard item={shortItem} layoutType="short" /></div>
                           <div className="lg:col-span-2 flex flex-col gap-6 h-full">
                             <div className="flex-1 w-full"><RenderCard item={otherItems[0]} layoutType="horizontal" /></div>
                             <div className="flex-1 w-full"><RenderCard item={otherItems[1]} layoutType="horizontal" /></div>
                           </div>
-                          
-                          {/* Flow any remaining items normally */}
-                          {otherItems.slice(2).map(item => (
-                            <div key={item.id} className="lg:col-span-1 h-full">
-                              <RenderCard item={item} layoutType="vertical" />
-                            </div>
-                          ))}
+                          {otherItems.slice(2).map(item => (<div key={item.id} className="lg:col-span-1 h-full"><RenderCard item={item} layoutType="vertical" /></div>))}
                         </>
                       )}
                     </>
                   )}
 
-                  {/* ======================================= */}
-                  {/* STANDARD LAYOUTS (NO SHORTS PRESENT)    */}
-                  {/* ======================================= */}
                   {!hasShort && count === 1 && (
                     <>
-                      <div className={`lg:col-span-2 ${layoutStyle % 2 !== 0 ? 'order-first lg:order-last' : ''}`}>
-                        <RenderCard item={items[0]} layoutType="horizontal" />
-                      </div>
-                      <div className={`lg:col-span-1 flex flex-col h-full ${layoutStyle % 2 !== 0 ? 'order-last lg:order-first' : ''}`}>
-                        <PromoAd type={adTypeForThisDay} shape="square" />
-                      </div>
+                      <div className={`lg:col-span-2 ${layoutStyle % 2 !== 0 ? 'order-first lg:order-last' : ''}`}><RenderCard item={items[0]} layoutType="horizontal" /></div>
+                      <div className={`lg:col-span-1 flex flex-col h-full ${layoutStyle % 2 !== 0 ? 'order-last lg:order-first' : ''}`}><PromoAd type={adTypeForThisDay} shape="square" /></div>
                     </>
                   )}
 
@@ -400,23 +357,22 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
                   {!hasShort && count > 3 && (
                     <>
                       <div className="lg:col-span-3"><RenderCard item={items[0]} layoutType="hero" /></div>
-                      {items.slice(1).map(item => (
-                        <div key={item.id} className="lg:col-span-1 h-full">
-                          <RenderCard item={item} layoutType="vertical" />
-                        </div>
-                      ))}
+                      {items.slice(1).map(item => (<div key={item.id} className="lg:col-span-1 h-full"><RenderCard item={item} layoutType="vertical" /></div>))}
                     </>
                   )}
-
                 </div>
 
-                {count >= 3 && (
-                  <div className="w-full mt-2 min-h-[100px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
-                )}
-
+                {count >= 3 && (<div className="w-full mt-2 min-h-[100px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>)}
               </div>
             );
           })}
+
+          {/* INFINITE SCROLL LOADER / TRIPWIRE */}
+          {hasMore && (
+            <div ref={observerTarget} className="w-full py-12 flex justify-center items-center">
+              {isLoadingMore && <Loader2 size={32} className="animate-spin text-red-600" />}
+            </div>
+          )}
 
           {groupedFeed.length === 0 && (
             <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border-2 border-dashed border-gray-800 rounded-2xl">
@@ -425,7 +381,6 @@ export default function Home({ videos, articles, activeSport, setActiveSport, cu
           )}
         </div>
       </div>
-
     </main>
   );
 }

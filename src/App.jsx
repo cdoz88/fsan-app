@@ -26,15 +26,16 @@ const getInitialView = () => {
 export default function App() {
   const [activeSport, setActiveSport] = useState(getInitialSport);
   const [currentView, setCurrentView] = useState(getInitialView); 
+  const [feedFilter, setFeedFilter] = useState('all'); // Moved from Home.jsx to trigger API fetches!
+  
   const [selectedItem, setSelectedItem] = useState(null);
   const [wpPosts, setWpPosts] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-  const [categoryMap, setCategoryMap] = useState({});
-  const [isCategoriesReady, setIsCategoriesReady] = useState(false);
   const [postsCache, setPostsCache] = useState({}); 
 
   // URL Syncing
@@ -62,32 +63,15 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Fetch Category Map (Only used now to translate the 'activeSport' filter into an ID for the API)
+  // --- THE NEW INFINITE FETCH ENGINE ---
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const catRes = await fetch('https://fsan.com/wp-json/wp/v2/categories?per_page=100&_fields=id,slug');
-        if (!catRes.ok) throw new Error("Network Error");
-        const categories = await catRes.json();
-        const map = {};
-        categories.forEach(c => map[c.id] = c.slug);
-        setCategoryMap(map);
-        setIsCategoriesReady(true);
-      } catch (e) {
-        console.warn("Failed to fetch categories");
-        setIsCategoriesReady(true); 
-      }
-    };
-    fetchCategories();
-  }, []);
+    // Determine the exact type to ask WordPress for based on our current view/filter
+    const targetType = currentView === 'home' ? feedFilter : currentView;
+    const cacheKey = `${activeSport}-${targetType}`;
 
-  // --- THE NEW UNIFIED FETCH ENGINE ---
-  useEffect(() => {
-    if (!isCategoriesReady) return;
-    
-    // Check Cache First! (Optimistic UI)
-    if (currentPage === 1 && postsCache[activeSport]) {
-      setWpPosts(postsCache[activeSport]);
+    // Optimistic UI: Check Cache First
+    if (currentPage === 1 && postsCache[cacheKey]) {
+      setWpPosts(postsCache[cacheKey]);
       setIsLoading(false);
       return; 
     }
@@ -96,39 +80,25 @@ export default function App() {
       try {
         if (currentPage === 1) setIsLoading(true);
 
-        // Build Category Query if filtering by sport
-        let catQuery = '';
-        if (activeSport !== 'All' && Object.keys(categoryMap).length > 0) {
-          let targetIds = [];
-          if (activeSport === 'Basketball') targetIds = Object.keys(categoryMap).filter(id => categoryMap[id].includes('basketball'));
-          else if (activeSport === 'Baseball') targetIds = Object.keys(categoryMap).filter(id => categoryMap[id].includes('baseball'));
-          else if (activeSport === 'Football') targetIds = Object.keys(categoryMap).filter(id => !categoryMap[id].includes('basketball') && !categoryMap[id].includes('baseball') && categoryMap[id] !== 'uncategorized');
-
-          if (targetIds.length > 0) catQuery = `&categories=${targetIds.join(',')}`;
-        }
-
-        // ONE SINGLE FETCH TO OUR CUSTOM ENDPOINT!
-        const res = await fetch(`https://fsan.com/wp-json/fsan/v1/feed?per_page=15&page=${currentPage}${catQuery}`);
+        // Fetch exactly 10 items directly from our Custom PHP Endpoint!
+        const res = await fetch(`https://fsan.com/wp-json/fsan/v1/feed?per_page=10&page=${currentPage}&sport=${activeSport}&type=${targetType}`);
         if (!res.ok) throw new Error("API failed");
         
+        // Grab pagination data
+        const totalPages = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);
+        setHasMore(currentPage < totalPages);
+
         const rawPosts = await res.json();
 
         const formatPost = (post) => {
-          // The PHP snippet now provides the slugs directly!
           const slugs = post.category_slugs || []; 
-          
           let sport = 'Football'; 
           if (slugs.some(s => s.includes('basketball'))) sport = 'Basketball';
           if (slugs.some(s => s.includes('baseball'))) sport = 'Baseball';
 
-          // Identify Base Type
           let defaultType = post.post_type === 'yt2posts_youtube' ? 'video' : 'article';
-          
-          // Identify Shorts
           let type = defaultType;
-          if (slugs.some(s => s.includes('shorts'))) {
-            type = 'short';
-          }
+          if (slugs.some(s => s.includes('shorts'))) type = 'short';
 
           const imageUrl = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || null;
           const date = new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
@@ -137,18 +107,15 @@ export default function App() {
 
           let youtubeId = null;
           let cleanContent = post.content?.rendered || '';
-          
           let customYtDesc = post.youtube_description;
 
-          // Parse YouTube iFrame
           const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
           const match = cleanContent.match(ytRegex);
           if (match && match[1]) {
             youtubeId = match[1];
-            cleanContent = cleanContent.replace(/<iframe.*?<\/iframe>/i, ''); // Strip iframe from description
+            cleanContent = cleanContent.replace(/<iframe.*?<\/iframe>/i, ''); 
           }
 
-          // Format custom YouTube Description
           if ((type === 'video' || type === 'short') && customYtDesc && typeof customYtDesc === 'string' && customYtDesc.trim().length > 0) {
             let formattedDesc = customYtDesc.replace(/(?:\r\n|\r|\n)/g, '<br/>');
             const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -174,39 +141,25 @@ export default function App() {
 
         const newPosts = rawPosts.map(formatPost);
 
-        let finalPostsToRender = [];
-
         if (currentPage === 1) {
-          finalPostsToRender = newPosts; // No need to sort, WP did it!
           setWpPosts(newPosts);
-          setPostsCache(prev => ({ ...prev, [activeSport]: newPosts }));
+          setPostsCache(prev => ({ ...prev, [cacheKey]: newPosts }));
         } else {
           setWpPosts(prev => {
             const combined = [...prev, ...newPosts];
-            // Deduplicate just in case
             const uniqueIds = new Set();
-            finalPostsToRender = combined.filter(p => {
+            const finalPosts = combined.filter(p => {
               if (uniqueIds.has(p.id)) return false;
               uniqueIds.add(p.id);
               return true;
             });
-            
-            setPostsCache(cache => ({ ...cache, [activeSport]: finalPostsToRender }));
-            return finalPostsToRender;
+            setPostsCache(cache => ({ ...cache, [cacheKey]: finalPosts }));
+            return finalPosts;
           });
-        }
-
-        // Open modal if URL has ID
-        const params = new URLSearchParams(window.location.search);
-        const urlId = params.get('id');
-        if (urlId && !selectedItem) {
-          const itemToOpen = finalPostsToRender.find(p => p.id.toString() === urlId);
-          if (itemToOpen) setSelectedItem(itemToOpen);
         }
 
       } catch (error) {
         console.warn("API failed: ", error);
-        if (currentPage === 1) generateMockData();
       } finally {
         setIsLoading(false);
         setIsLoadingMore(false);
@@ -214,48 +167,23 @@ export default function App() {
     };
 
     fetchWordPressData();
-  }, [activeSport, currentPage, isCategoriesReady]);
+  }, [activeSport, currentPage, currentView, feedFilter]);
 
-  const handleSportChange = (sport) => {
-    if (sport !== activeSport) {
-      setActiveSport(sport);
-      setCurrentPage(1);
-      if (!postsCache[sport]) setWpPosts([]); 
-    }
-  };
+  // Resets pagination whenever a master filter is clicked
+  const handleSportChange = (sport) => { if (sport !== activeSport) { setActiveSport(sport); setCurrentPage(1); setWpPosts([]); } };
+  const handleViewChange = (view) => { if (view !== currentView) { setCurrentView(view); setCurrentPage(1); setWpPosts([]); } };
+  const handleFeedFilterChange = (filter) => { if (filter !== feedFilter) { setFeedFilter(filter); setCurrentPage(1); setWpPosts([]); } };
 
   const loadMorePosts = () => {
-    if (!isLoadingMore) {
+    if (!isLoadingMore && hasMore) {
       setIsLoadingMore(true);
       setCurrentPage(prev => prev + 1);
     }
   };
 
-  const generateMockData = () => {
-    const mock = [];
-    for(let i=0; i<15; i++) {
-      mock.push({
-        id: `mock-${i}`,
-        title: `MOCKUP: Check Your Internet Connection`,
-        content: '<p>It looks like your network dropped while loading FSAN.</p>',
-        excerpt: '<p>Please refresh the page to try again.</p>',
-        date: `MARCH 26, 2026`,
-        sport: 'Football',
-        type: i % 4 === 0 ? 'short' : (i % 3 === 0 ? 'video' : 'article'),
-        imageUrl: null,
-        author: 'System'
-      });
-    }
-    setWpPosts(mock);
-  };
-
-  const filteredPosts = wpPosts.filter(post => activeSport === 'All' || post.sport === activeSport);
-  const videos = filteredPosts.filter(p => p.type === 'video' || p.type === 'short');
-  const articles = filteredPosts.filter(p => p.type === 'article' || p.type === 'podcast');
-
   return (
     <div className="min-h-screen bg-[#121212] text-gray-200 font-sans">
-      <Header activeSport={activeSport} setActiveSport={handleSportChange} setCurrentView={setCurrentView} />
+      <Header activeSport={activeSport} setActiveSport={handleSportChange} setCurrentView={handleViewChange} />
 
       {isLoading && wpPosts.length === 0 && (
         <div className="max-w-[1600px] mx-auto p-12 flex flex-col items-center justify-center text-gray-500 min-h-[50vh]">
@@ -265,19 +193,20 @@ export default function App() {
       )}
 
       {!isLoading && currentView === 'home' && (
-        <Home videos={videos} articles={articles} activeSport={activeSport} setActiveSport={handleSportChange} setCurrentView={setCurrentView} setSelectedItem={setSelectedItem} />
+        <Home wpPosts={wpPosts} activeSport={activeSport} currentView={currentView} setCurrentView={handleViewChange} feedFilter={feedFilter} setFeedFilter={handleFeedFilterChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} hasMore={hasMore} />
       )}
 
+      {/* Other Views will be wired similarly later, but left intact for now */}
       {!isLoading && currentView === 'videos' && (
-        <VideosArchive videos={videos} activeSport={activeSport} setCurrentView={setCurrentView} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
+        <VideosArchive videos={wpPosts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
 
       {!isLoading && currentView === 'articles' && (
-        <ArticlesArchive articles={articles} activeSport={activeSport} setCurrentView={setCurrentView} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
+        <ArticlesArchive articles={wpPosts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
 
       {selectedItem && (
-        <ContentModal selectedItem={selectedItem} setSelectedItem={setSelectedItem} videos={videos} />
+        <ContentModal selectedItem={selectedItem} setSelectedItem={setSelectedItem} videos={wpPosts} />
       )}
     </div>
   );
