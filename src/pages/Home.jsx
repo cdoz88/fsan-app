@@ -59,9 +59,12 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
   // UNIVERSAL FLUID AD DISPENSER
   // ==========================================
   const PromoAd = ({ type, shape }) => {
+    // Give square ads a clean 200px minimum height so they perfectly match podcasts
+    const heightClass = shape === 'banner' ? 'min-h-[120px]' : 'min-h-[200px]';
+
     if (type === 'rookie') {
       return (
-        <div className={`w-full h-full bg-gradient-to-br from-red-900 to-black border border-red-800 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-xl cursor-pointer hover:border-red-500 transition-colors group`}>
+        <div className={`w-full ${heightClass} bg-gradient-to-br from-red-900 to-black border border-red-800 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-xl cursor-pointer hover:border-red-500 transition-colors group`}>
            <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#fff_10px,#fff_20px)]"></div>
            <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-2 md:mb-4'}`}>
              <h3 className="text-red-500 font-black text-xl lg:text-2xl italic uppercase drop-shadow-md group-hover:scale-105 transition-transform origin-left leading-none">Dominate</h3>
@@ -76,7 +79,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
 
     if (type === 'sellout') {
       return (
-        <div className={`w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/40 via-[#111] to-black border border-red-900/50 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-2xl cursor-pointer hover:border-red-600 transition-colors group`}>
+        <div className={`w-full ${heightClass} bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/40 via-[#111] to-black border border-red-900/50 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-2xl cursor-pointer hover:border-red-600 transition-colors group`}>
            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20 20\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')", mixBlendMode: 'overlay' }}></div>
            <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-2 md:mb-4'}`}>
              <h2 className="text-xl lg:text-2xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-left line-clamp-1">Join Sellout Crowds</h2>
@@ -90,7 +93,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     }
 
     return (
-      <div className={`w-full h-full bg-[#111] border border-purple-900/50 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center cursor-pointer hover:border-purple-600 transition-all group overflow-hidden relative shadow-xl`}>
+      <div className={`w-full ${heightClass} bg-[#111] border border-purple-900/50 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center cursor-pointer hover:border-purple-600 transition-all group overflow-hidden relative shadow-xl`}>
         <div className="absolute inset-0 bg-gradient-to-tr from-purple-900/30 to-black z-0 transition-opacity group-hover:opacity-80"></div>
         <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-2 md:mb-4'}`}>
           <h3 className="text-purple-500 font-black text-xl lg:text-2xl italic uppercase z-10 group-hover:scale-110 transition-transform origin-left line-clamp-1 leading-none">Fantasy Apparel</h3>
@@ -131,8 +134,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
-  // BRAND NEW: The Cinematic Video Overlay Card!
-  // No h-full or cropping wrappers. Strictly perfectly scaled 16:9 box!
   const VideoCard = ({ item, isHero }) => (
     <div onClick={() => setSelectedItem(item)} className={`group w-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
       {item.imageUrl ? (
@@ -154,22 +155,19 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
-  // BRAND NEW: PURE IFRAME PODCAST
-  // Title, description stripped out of React. Hide transcript/likes/comments/logo on Spreaker, KEEP share/info.
-  // HEIGHT COMPRESSED to 150px to perfectly frame the minimal Spreaker layout and fix grid offsets!
   const PodcastCard = ({ item }) => (
     <div className={`w-full bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl transition-all`}>
       {item.spreakerId ? (
         <iframe 
           src={`https://widget.spreaker.com/player?episode_id=${item.spreakerId}&theme=dark&playlist=false&playlist-continuous=false&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-episode-description=false&hide-transcript=true&hide-download=true`} 
           width="100%" 
-          height="150px"
+          height="200px"
           frameBorder="0" 
           allow="autoplay; picture-in-picture"
           style={{ display: 'block' }}
         ></iframe>
       ) : (
-         <div className="w-full h-[150px] flex items-center justify-center text-gray-500 font-bold uppercase tracking-widest text-xs">Audio Unavailable</div>
+         <div className="w-full h-[200px] flex items-center justify-center text-gray-500 font-bold uppercase tracking-widest text-xs">Audio Unavailable</div>
       )}
     </div>
   );
@@ -261,7 +259,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                 <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><SelloutCrowds size={18} className={theme.text} /> Exclusive Community</a>
                 <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><Shirt size={18} className={theme.text} /> Join A Jersey League</a>
                 <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><HeartHandshake size={18} className={theme.text} /> Play for Charity</a>
-                <a href="https://fsan.shop" target="_blank" rel="noreferrer" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><ShoppingCart size={18} className={theme.text} /> Merch Shop</a>
              </div>
           </div>
           <div className="flex flex-col items-center justify-center gap-4 mt-2 mb-8">
@@ -275,7 +272,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                 {currentLinks.linkedin && <a href={currentLinks.linkedin} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><LinkedIn size={20} /></a>}
              </div>
              <div className="text-center mt-2">
-               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">&copy; {new Date().getFullYear()} FSAN</p>
+               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">&copy; {new Date().getFullYear()} Fantasy Sports Advice Network</p>
                <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mt-1">All Rights Reserved</p>
              </div>
           </div>
@@ -286,16 +283,16 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
       <div className="lg:col-span-4 flex flex-col gap-8 w-full max-w-5xl">
         
         <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-1.5 flex gap-2 shadow-xl z-30 overflow-x-auto scrollbar-hide">
-          <button onClick={() => { setFeedFilter('all'); window.scrollTo(0, 0); }} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'all' ? `${theme.bg} text-white shadow-md` : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
+          <button onClick={() => setFeedFilter('all')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'all' ? `${theme.bg} text-white shadow-md` : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <LayoutList size={14} /> All
           </button>
-          <button onClick={() => { setFeedFilter('articles'); window.scrollTo(0, 0); }} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'articles' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
+          <button onClick={() => setFeedFilter('articles')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'articles' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <FileText size={14} /> Articles
           </button>
-          <button onClick={() => { setFeedFilter('videos'); window.scrollTo(0, 0); }} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'videos' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
+          <button onClick={() => setFeedFilter('videos')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'videos' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <Film size={14} /> Videos
           </button>
-          <button onClick={() => { setFeedFilter('podcasts'); window.scrollTo(0, 0); }} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'podcasts' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
+          <button onClick={() => setFeedFilter('podcasts')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'podcasts' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <Mic size={14} /> Podcasts
           </button>
         </div>
@@ -321,8 +318,8 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                const isFlipped = podIdx % 2 !== 0;
 
                return (
-                 // `items-start` prevents the row from stretching vertically!
-                 <div key={`pod-row-${pod.id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 items-start">
+                 // `items-start` prevents the row from stretching vertically! Removed the double margin.
+                 <div key={`pod-row-${pod.id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                    <div className={`lg:col-span-2 w-full ${isFlipped ? 'order-last lg:order-last' : ''}`}>
                      <RenderCard item={pod} layoutType="podcast" />
                    </div>
@@ -330,7 +327,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                      {pairItem ? (
                        <RenderCard item={pairItem} layoutType="vertical" />
                      ) : (
-                       <div className="w-full min-h-[200px] flex flex-col"><PromoAd type={adTypeForThisDay} shape="square" /></div>
+                       <div className="w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="square" /></div>
                      )}
                    </div>
                  </div>
@@ -397,37 +394,31 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
 
                     {!hasShort && count === 2 && layoutStyle === 0 && (
                       <>
-                        <div className="lg:col-span-1 flex flex-col gap-6 h-full">
-                          <RenderCard item={items[0]} layoutType="vertical" />
-                          <div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="square" /></div>
-                        </div>
-                        <div className="lg:col-span-2 h-full">
+                        <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
+                        <div className="lg:col-span-2 flex flex-col gap-6 h-full">
                           <RenderCard item={items[1]} layoutType="horizontal" />
+                          <div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
                         </div>
                       </>
                     )}
 
                     {!hasShort && count === 2 && layoutStyle === 1 && (
                       <>
-                        <div className="lg:col-span-2 h-full order-last lg:order-none">
+                        <div className="lg:col-span-2 flex flex-col gap-6 h-full order-last lg:order-none">
+                          <div className="flex-1 w-full flex flex-col order-last lg:order-first"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
                           <RenderCard item={items[1]} layoutType="horizontal" />
                         </div>
-                        <div className="lg:col-span-1 flex flex-col gap-6 h-full">
-                          <div className="flex-1 w-full flex flex-col order-last lg:order-first"><PromoAd type={adTypeForThisDay} shape="square" /></div>
-                          <RenderCard item={items[0]} layoutType="vertical" />
-                        </div>
+                        <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
                       </>
                     )}
 
                     {!hasShort && count === 2 && layoutStyle === 2 && (
                       <>
-                        <div className="lg:col-span-2 h-full order-last lg:order-none">
+                        <div className="lg:col-span-2 flex flex-col gap-6 h-full order-last lg:order-none">
                           <RenderCard item={items[1]} layoutType="horizontal" />
+                          <div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
                         </div>
-                        <div className="lg:col-span-1 flex flex-col gap-6 h-full">
-                          <RenderCard item={items[0]} layoutType="vertical" />
-                          <div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="square" /></div>
-                        </div>
+                        <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
                       </>
                     )}
 
