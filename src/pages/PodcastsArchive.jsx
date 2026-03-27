@@ -45,16 +45,35 @@ export default function PodcastsArchive({ podcasts = [], activeSport = 'All', se
         </div>
 
         {/* --- MASTER SHOWS GRID --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {showPodcasts.map(master => (
-            <div key={master.id} onClick={() => setSelectedItem(master)} className="bg-[#1e1e1e] border border-gray-800 rounded-2xl shadow-xl flex flex-col cursor-pointer group hover:bg-[#252525] transition-colors relative overflow-hidden">
-              <div className="p-6 lg:p-8 flex flex-col flex-1">
-                <div className="flex items-center gap-2 mb-4 z-20 relative">
-                  <Mic className={`${themes[master.sport]?.text || theme.text}`} size={18} />
-                  <span className={`font-black uppercase tracking-widest ${themes[master.sport]?.text || theme.text} text-[10px]`}>Full Show Playlist</span>
+            <div key={master.id} onClick={() => setSelectedItem(master)} className="bg-[#1e1e1e] border border-gray-800 rounded-2xl shadow-xl flex flex-col cursor-pointer group hover:bg-[#252525] hover:border-gray-600 transition-all relative overflow-hidden">
+              
+              {/* THE RESTORED IMAGE HEADER */}
+              <div className="w-full aspect-[16/9] bg-gray-900 relative overflow-hidden shrink-0 border-b border-gray-800">
+                 {master.imageUrl ? (
+                   <img src={master.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
+                 ) : (
+                   <div className="absolute inset-0 bg-gradient-to-br from-[#1c233a] to-[#111]"></div>
+                 )}
+                 {/* Dark fade at the bottom of the image so it blends smoothly into the card */}
+                 <div className="absolute inset-0 bg-gradient-to-t from-[#1e1e1e] via-transparent to-transparent opacity-90"></div>
+                 
+                 {/* Floating Podcast Badge */}
+                 <div className="absolute top-4 left-4 bg-black/70 px-3 py-1.5 rounded-full backdrop-blur-sm border border-gray-700 flex items-center gap-2 shadow-lg">
+                   <Mic className={`${themes[master.sport]?.text || theme.text}`} size={14} />
+                   <span className="font-bold uppercase tracking-widest text-[10px] text-gray-300">Show Playlist</span>
+                 </div>
+              </div>
+
+              {/* TEXT CONTENT */}
+              <div className="p-6 flex flex-col flex-1">
+                <div className="flex items-center gap-2 mb-3 z-20 relative">
+                  <span className={`w-2 h-2 rounded-full ${themes[master.sport]?.bg || 'bg-gray-500'} shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.8)]`}></span>
+                  <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">{master.sport} Podcast</span>
                 </div>
-                <h3 className={`font-black text-2xl md:text-3xl leading-tight group-hover:${themes[master.sport]?.text || 'text-white'} transition-colors mb-4 drop-shadow-md z-10 relative`} dangerouslySetInnerHTML={{ __html: master.title }} />
-                <div className="text-gray-400 text-sm line-clamp-4 z-10 relative" dangerouslySetInnerHTML={{ __html: master.excerpt }} />
+                <h3 className={`font-black text-2xl leading-tight group-hover:${themes[master.sport]?.text || 'text-white'} transition-colors mb-3 drop-shadow-md z-10 relative`} dangerouslySetInnerHTML={{ __html: master.title }} />
+                <div className="text-gray-400 text-sm line-clamp-3 z-10 relative" dangerouslySetInnerHTML={{ __html: master.excerpt }} />
               </div>
             </div>
           ))}
