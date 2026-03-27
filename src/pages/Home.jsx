@@ -123,8 +123,8 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
   );
 
   // BRAND NEW: The Cinematic Video Overlay Card!
+  // Removed h-full and min-h-[250px]. Added aspect-video to strictly lock it to 16:9!
   const VideoCard = ({ item, isHero }) => (
-    {/* Removed h-full and min-h-[250px]. Added aspect-video to strictly lock it to 16:9! */}
     <div onClick={() => setSelectedItem(item)} className={`group w-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
       {item.imageUrl ? (
          <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
