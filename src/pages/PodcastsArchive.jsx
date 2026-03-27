@@ -78,17 +78,7 @@ export default function PodcastsArchive({ podcasts = [], activeSport = 'All', se
         <h3 className="font-black uppercase tracking-widest text-gray-500 text-sm mb-6">Recent Episodes</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {individualEpisodes.map((podcast) => (
-             <div key={podcast.id} className={`group w-full bg-[#1e1e1e] border ${themes[podcast.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[podcast.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
-              
-              <div onClick={() => setSelectedItem(podcast)} className="p-5 lg:p-6 flex flex-col flex-1 cursor-pointer">
-                <div className="flex items-center gap-2 mb-3 z-20 relative">
-                  <span className={`w-2 h-2 rounded-full ${themes[podcast.sport]?.bg || 'bg-gray-500'} shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.8)]`}></span>
-                  <span className="text-gray-300 font-bold text-[10px] uppercase tracking-wider drop-shadow-md">{podcast.date} • By {podcast.author}</span>
-                </div>
-                <h3 className={`font-black text-xl leading-tight group-hover:${themes[podcast.sport]?.text || 'text-white'} transition-colors mb-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: podcast.title }} />
-              </div>
-              
-              <div className="w-full bg-[#111] border-t border-gray-800 shrink-0 flex items-center">
+             <div key={podcast.id} className={`w-full bg-[#111] border ${themes[podcast.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl transition-all`}>
                 {podcast.spreakerId ? (
                   <iframe 
                     src={`https://widget.spreaker.com/player?episode_id=${podcast.spreakerId}&theme=dark&playlist=false&playlist-continuous=false&chapters-image=true&episode_image_position=right&hide-logo=false&hide-likes=false&hide-comments=false&hide-sharing=false&hide-download=true`} 
@@ -96,11 +86,11 @@ export default function PodcastsArchive({ podcasts = [], activeSport = 'All', se
                     height="200px"
                     frameBorder="0" 
                     allow="autoplay; picture-in-picture"
+                    style={{ display: 'block' }}
                   ></iframe>
                 ) : (
                    <div className="w-full h-[200px] flex items-center justify-center text-gray-500 font-bold uppercase tracking-widest text-xs">Audio Unavailable</div>
                 )}
-              </div>
             </div>
           ))}
           {individualEpisodes.length === 0 && (

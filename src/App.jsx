@@ -94,7 +94,9 @@ export default function App() {
           // PODCAST DETECTION: Individual Episodes (spreakerId exists) OR Master Playlists (category matches)
           let spreakerId = post.spreaker_episode_id || null;
           const isMasterCategory = slugs.some(s => ['podcast', 'podcast-basketball', 'podcast-baseball'].includes(s));
-          if (spreakerId || isMasterCategory) {
+          const isEpisodeCategory = slugs.some(s => s.includes('-pod-episode'));
+          
+          if (spreakerId || isMasterCategory || isEpisodeCategory) {
              type = 'podcast';
           }
 
