@@ -68,7 +68,6 @@ export default function App() {
     const targetType = currentView === 'home' ? feedFilter : currentView;
     const cacheKey = `${activeSport}-${targetType}`;
 
-    // PREVENT FLASHING: Clear the feed immediately if we are switching views/sports and don't have it cached!
     if (currentPage === 1) {
       if (postsCache[cacheKey]) {
         setWpPosts(postsCache[cacheKey]);
@@ -103,38 +102,34 @@ export default function App() {
           let cleanContent = post.content?.rendered || '';
           let excerpt = post.excerpt?.rendered || '';
 
-          // 1. Direct API Grab (This handles all your new Automated Posts cleanly!)
-          let spreakerShowId = post.spreaker_show_id || null;
-          let spreakerId = post.spreaker_episode_id || null;
+          // 1. Decode WPBakery (if present)
+          const decodeWP = (text) => {
+            return text.replace(/\[vc_raw_html[^\]]*\](.*?)\[\/vc_raw_html\]/gi, (match, b64) => {
+              try { return decodeURIComponent(atob(b64.replace(/\s/g, ''))); } catch(e) { return ''; }
+            });
+          };
+          cleanContent = decodeWP(cleanContent);
+          excerpt = decodeWP(excerpt);
 
-          // 2. Legacy WPBakery Fallback Decoder (For your old manual posts)
-          if (!spreakerShowId && !spreakerId) {
-            const decodeWP = (text) => {
-              return text.replace(/\[vc_raw_html[^\]]*\](.*?)\[\/vc_raw_html\]/gi, (match, b64) => {
-                try { return decodeURIComponent(atob(b64.replace(/\s/g, ''))); } catch(e) { return ''; }
-              });
-            };
-            cleanContent = decodeWP(cleanContent);
-            excerpt = decodeWP(excerpt);
+          // 2. Robust ID Extraction
+          const showMatch = cleanContent.match(/show_id=([0-9]+)/);
+          const epMatch = cleanContent.match(/episode_id=([0-9]+)/);
+          
+          let spreakerShowId = post.spreaker_show_id || (showMatch ? showMatch[1] : null);
+          let spreakerId = post.spreaker_episode_id || (epMatch ? epMatch[1] : null);
 
-            const showMatch = cleanContent.match(/show_id=([0-9]+)/);
-            const epMatch = cleanContent.match(/episode_id=([0-9]+)/);
-            if (showMatch) spreakerShowId = showMatch[1];
-            if (epMatch) spreakerId = epMatch[1];
-          }
-
-          // 3. Podcast Detection!
+          // 3. Category Detection
           const isMasterCategory = slugs.some(s => ['podcast', 'podcast-basketball', 'podcast-baseball'].includes(s));
           const isEpisodeCategory = slugs.some(s => ['football-pod-episode', 'basketball-pod-episode', 'baseball-pod-episode', 'pod-episode'].includes(s));
           
-          // FLAG: Determine if this is a Master Show so we can keep it off the Timeline!
+          // A Master Show is anything with a show_id OR sitting in a master category
           const isMasterShow = !!spreakerShowId || isMasterCategory;
 
-          if (spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('[spreaker')) {
+          if (spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('spreaker')) {
              type = 'podcast';
           }
 
-          // 4. Content Scrubber (Removes all [vc_...] and [spreaker...] brackets so the UI stays clean)
+          // 4. Content Scrubber
           const stripTags = (html) => html.replace(/\[\/?vc_[^\]]+\]/gi, '').replace(/\[spreaker[^\]]*\]/gi, '').trim();
           cleanContent = stripTags(cleanContent);
           excerpt = stripTags(excerpt);
@@ -170,7 +165,7 @@ export default function App() {
             rawTimestamp,
             sport,
             type,
-            isMasterShow, // Appended here so we can filter it safely!
+            isMasterShow, 
             category_slugs: slugs,
             imageUrl,
             author,
@@ -224,11 +219,23 @@ export default function App() {
 
   const isInitialLoad = isLoading && wpPosts.length === 0;
   
-  // STRIP MASTER SHOWS OUT OF TIMELINE/ARTICLE/VIDEO VIEWS!
+  // ==========================================
+  // STRICT ROUTING FILTERS
+  // ==========================================
   const timelinePosts = wpPosts.filter(p => !p.isMasterShow);
   
-  // ALL PODCASTS (Master and Episodes) map to the Podcast Archive correctly
-  const podcasts = wpPosts.filter(p => p.type === 'podcast');
+  const articlePosts = timelinePosts.filter(p => p.type === 'article');
+  const videoPosts = timelinePosts.filter(p => p.type === 'video' || p.type === 'short');
+  const podcastEpisodes = timelinePosts.filter(p => p.type === 'podcast');
+
+  // Filter the home feed based on the user's selected sub-tab
+  let homeFeed = timelinePosts;
+  if (feedFilter === 'articles') homeFeed = articlePosts;
+  if (feedFilter === 'videos') homeFeed = videoPosts;
+  if (feedFilter === 'podcasts') homeFeed = podcastEpisodes;
+
+  // Master Podcasts ONLY go to the Podcasts Archive
+  const masterPodcasts = wpPosts.filter(p => p.isMasterShow);
 
   return (
     <div className="min-h-screen bg-[#121212] text-gray-200 font-sans">
@@ -241,20 +248,21 @@ export default function App() {
         </div>
       )}
 
+      {/* Notice how cleanly the filtered feeds map directly to their corresponding views! */}
       {!isInitialLoad && currentView === 'home' && (
-        <Home wpPosts={timelinePosts} activeSport={activeSport} currentView={currentView} setCurrentView={handleViewChange} feedFilter={feedFilter} setFeedFilter={handleFeedFilterChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} hasMore={hasMore} isLoading={isLoading} />
+        <Home wpPosts={homeFeed} activeSport={activeSport} currentView={currentView} setCurrentView={handleViewChange} feedFilter={feedFilter} setFeedFilter={handleFeedFilterChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} hasMore={hasMore} isLoading={isLoading} />
       )}
 
       {!isInitialLoad && currentView === 'videos' && (
-        <VideosArchive videos={timelinePosts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
+        <VideosArchive videos={videoPosts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
 
       {!isInitialLoad && currentView === 'articles' && (
-        <ArticlesArchive articles={timelinePosts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
+        <ArticlesArchive articles={articlePosts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
 
       {!isInitialLoad && currentView === 'podcasts' && (
-        <PodcastsArchive podcasts={podcasts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
+        <PodcastsArchive podcasts={masterPodcasts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
 
       {selectedItem && (
