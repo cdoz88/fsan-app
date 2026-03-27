@@ -59,12 +59,11 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
   // UNIVERSAL FLUID AD DISPENSER
   // ==========================================
   const PromoAd = ({ type, shape }) => {
-    // Give square ads a clean 200px minimum height so they perfectly match podcasts
     const heightClass = shape === 'banner' ? 'min-h-[120px]' : 'min-h-[200px]';
 
     if (type === 'rookie') {
       return (
-        <div className={`w-full ${heightClass} bg-gradient-to-br from-red-900 to-black border border-red-800 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-xl cursor-pointer hover:border-red-500 transition-colors group`}>
+        <div className={`w-full h-full bg-gradient-to-br from-red-900 to-black border border-red-800 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-xl cursor-pointer hover:border-red-500 transition-colors group`}>
            <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#fff_10px,#fff_20px)]"></div>
            <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-2 md:mb-4'}`}>
              <h3 className="text-red-500 font-black text-xl lg:text-2xl italic uppercase drop-shadow-md group-hover:scale-105 transition-transform origin-left leading-none">Dominate</h3>
@@ -79,7 +78,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
 
     if (type === 'sellout') {
       return (
-        <div className={`w-full ${heightClass} bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/40 via-[#111] to-black border border-red-900/50 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-2xl cursor-pointer hover:border-red-600 transition-colors group`}>
+        <div className={`w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/40 via-[#111] to-black border border-red-900/50 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-2xl cursor-pointer hover:border-red-600 transition-colors group`}>
            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20 20\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')", mixBlendMode: 'overlay' }}></div>
            <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-2 md:mb-4'}`}>
              <h2 className="text-xl lg:text-2xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-left line-clamp-1">Join Sellout Crowds</h2>
@@ -93,7 +92,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     }
 
     return (
-      <div className={`w-full ${heightClass} bg-[#111] border border-purple-900/50 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center cursor-pointer hover:border-purple-600 transition-all group overflow-hidden relative shadow-xl`}>
+      <div className={`w-full h-full bg-[#111] border border-purple-900/50 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center cursor-pointer hover:border-purple-600 transition-all group overflow-hidden relative shadow-xl`}>
         <div className="absolute inset-0 bg-gradient-to-tr from-purple-900/30 to-black z-0 transition-opacity group-hover:opacity-80"></div>
         <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-2 md:mb-4'}`}>
           <h3 className="text-purple-500 font-black text-xl lg:text-2xl italic uppercase z-10 group-hover:scale-110 transition-transform origin-left line-clamp-1 leading-none">Fantasy Apparel</h3>
@@ -113,7 +112,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     <div className="flex items-center gap-2 mb-3 z-20 relative">
       <span className={`w-2 h-2 rounded-full ${themes[item.sport]?.bg || 'bg-gray-500'} shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.8)]`}></span>
       <span className="text-gray-300 font-bold text-[10px] uppercase tracking-wider drop-shadow-md">
-        {item.type === 'article' ? `By ${item.author}` : (item.playlist || 'Featured Video')}
+        {item.type === 'article' ? `By ${item.author}` : (item.playlist || 'Featured Content')}
       </span>
     </div>
   );
@@ -161,19 +160,19 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
         <iframe 
           src={`https://widget.spreaker.com/player?episode_id=${item.spreakerId}&theme=dark&playlist=false&playlist-continuous=false&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-episode-description=false&hide-transcript=true&hide-download=true`} 
           width="100%" 
-          height="200px"
+          height="150px"
           frameBorder="0" 
           allow="autoplay; picture-in-picture"
           style={{ display: 'block' }}
         ></iframe>
       ) : (
-         <div className="w-full h-[200px] flex items-center justify-center text-gray-500 font-bold uppercase tracking-widest text-xs">Audio Unavailable</div>
+         <div className="w-full h-[150px] flex items-center justify-center text-gray-500 font-bold uppercase tracking-widest text-xs">Audio Unavailable</div>
       )}
     </div>
   );
 
   const VerticalCard = ({ item }) => (
-    <div onClick={() => setSelectedItem(item)} className={`group w-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
+    <div onClick={() => setSelectedItem(item)} className={`group h-full w-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
       <div className="w-full aspect-video relative flex items-center justify-center overflow-hidden shrink-0 bg-[#111]">
         {item.imageUrl ? (
            <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
@@ -211,7 +210,10 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
   const RenderCard = ({ item, layoutType }) => {
     if (layoutType === 'short') return <ShortCard item={item} />;
     if (item.type === 'video') return <VideoCard item={item} isHero={layoutType === 'hero'} />;
-    if (item.type === 'podcast') return <PodcastCard item={item} />;
+    
+    // Safety Fallback: Master Shows shouldn't hit PodcastCard (Audio Unavailable), they should look like regular Horizontal/Vertical Cards until clicked!
+    if (item.type === 'podcast' && item.spreakerId) return <PodcastCard item={item} />;
+    
     if (layoutType === 'horizontal') return <HorizontalCard item={item} isHero={false} />;
     if (layoutType === 'hero') return <HorizontalCard item={item} isHero={true} />;
     return <VerticalCard item={item} />;
@@ -222,7 +224,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
       
       {/* SIDEBAR */}
       <div className="hidden lg:flex lg:col-span-1 flex-col gap-6">
-        <div className="sticky top-[88px] flex flex-col gap-6">
+        <div className="sticky top-6 flex flex-col gap-6">
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Browse Network</h4>
              <div className="flex flex-col gap-1">
@@ -303,22 +305,22 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
             if (group.date === todayStr) displayDate = 'Today';
             else if (group.date === yesterdayStr) displayDate = 'Yesterday';
 
-            // STEP 1: Process Podcasts First (Assigns them to 2/3 Slots with no vertical stretching)
+            // STEP 1: Process Timeline Podcasts (Strictly Episodes With Player IDs)
             const allItems = [...group.items];
-            const podcasts = allItems.filter(i => i.type === 'podcast');
-            let remainingItems = allItems.filter(i => i.type !== 'podcast');
+            const podcasts = allItems.filter(i => i.type === 'podcast' && i.spreakerId);
+            
+            // Master Shows and Articles fall perfectly into the Bento Box!
+            let remainingItems = allItems.filter(i => !(i.type === 'podcast' && i.spreakerId));
             
             const adTypes = ['sellout', 'rookie', 'merch'];
             const adTypeForThisDay = adTypes[groupIndex % adTypes.length]; 
             const layoutStyle = groupIndex % 3;
 
             const podcastRows = podcasts.map((pod, podIdx) => {
-               // Steal an item to pair with the podcast if available, otherwise pair with a square ad.
                const pairItem = remainingItems.length > 0 ? remainingItems.shift() : null;
                const isFlipped = podIdx % 2 !== 0;
 
                return (
-                 // `items-start` prevents the row from stretching vertically! Removed the double margin.
                  <div key={`pod-row-${pod.id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                    <div className={`lg:col-span-2 w-full ${isFlipped ? 'order-last lg:order-last' : ''}`}>
                      <RenderCard item={pod} layoutType="podcast" />

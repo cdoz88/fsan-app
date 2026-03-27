@@ -24,9 +24,9 @@ const Sidebar = ({ activeSport }) => (
 export default function PodcastsArchive({ podcasts = [], activeSport = 'All', setCurrentView, setSelectedItem, loadMorePosts, isLoadingMore }) {
   const theme = themes[activeSport] || themes.All;
 
-  // ONLY grab the Master Show categories!
+  // ONLY grab the Master Show categories OR things the decoder successfully pulled a show_id from!
   const masterSlugs = ['podcast', 'podcast-basketball', 'podcast-baseball'];
-  const showPodcasts = podcasts.filter(p => p.category_slugs?.some(slug => masterSlugs.includes(slug)));
+  const showPodcasts = podcasts.filter(p => p.spreakerShowId || p.category_slugs?.some(slug => masterSlugs.includes(slug)));
 
   return (
     <main className="max-w-[1600px] mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -49,24 +49,20 @@ export default function PodcastsArchive({ podcasts = [], activeSport = 'All', se
           {showPodcasts.map(master => (
             <div key={master.id} onClick={() => setSelectedItem(master)} className="bg-[#1e1e1e] border border-gray-800 rounded-2xl shadow-xl flex flex-col cursor-pointer group hover:bg-[#252525] hover:border-gray-600 transition-all relative overflow-hidden">
               
-              {/* THE RESTORED IMAGE HEADER */}
               <div className="w-full aspect-[16/9] bg-gray-900 relative overflow-hidden shrink-0 border-b border-gray-800">
                  {master.imageUrl ? (
                    <img src={master.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
                  ) : (
                    <div className="absolute inset-0 bg-gradient-to-br from-[#1c233a] to-[#111]"></div>
                  )}
-                 {/* Dark fade at the bottom of the image so it blends smoothly into the card */}
                  <div className="absolute inset-0 bg-gradient-to-t from-[#1e1e1e] via-transparent to-transparent opacity-90"></div>
                  
-                 {/* Floating Podcast Badge */}
                  <div className="absolute top-4 left-4 bg-black/70 px-3 py-1.5 rounded-full backdrop-blur-sm border border-gray-700 flex items-center gap-2 shadow-lg">
                    <Mic className={`${themes[master.sport]?.text || theme.text}`} size={14} />
                    <span className="font-bold uppercase tracking-widest text-[10px] text-gray-300">Show Playlist</span>
                  </div>
               </div>
 
-              {/* TEXT CONTENT */}
               <div className="p-6 flex flex-col flex-1">
                 <div className="flex items-center gap-2 mb-3 z-20 relative">
                   <span className={`w-2 h-2 rounded-full ${themes[master.sport]?.bg || 'bg-gray-500'} shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.8)]`}></span>

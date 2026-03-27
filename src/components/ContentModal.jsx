@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, ArrowLeft, PlayCircle, Link as LinkIcon, Check } from 'lucide-react';
-import { Facebook, XIcon, Reddit } from './Icons';
-import { themes } from '../utils/theme';
+import { Facebook, XIcon, Reddit } from './Icons.jsx';
+import { themes } from '../utils/theme.js';
 
 // --- REUSABLE SHARE BUTTONS COMPONENT ---
 const ShareButtons = ({ handleShare, handleCopy, copied, btnSize = "w-8 h-8", iconSize = 14 }) => (
@@ -32,8 +32,6 @@ const ModalBannerAd = () => (
 // --- 1. VIDEO MODAL LAYOUT ---
 const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, handleCopy, copied }) => (
   <div className="flex flex-col lg:flex-row h-full min-h-0">
-    
-    {/* MAIN CONTENT AREA (Scrolls on Mobile, Left Column on Desktop) */}
     <div className="flex-1 lg:w-3/4 flex flex-col bg-[#121212] overflow-y-auto lg:overflow-hidden min-h-0">
       <div className="w-full aspect-video bg-black flex items-center justify-center relative border-b border-gray-800 overflow-hidden shrink-0">
          {selectedItem.youtubeId ? (
@@ -46,7 +44,6 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
          )}
       </div>
       <div className="p-6 md:p-8 flex-1 lg:overflow-y-auto">
-        {/* MOBILE ONLY: Meta & Share */}
         <div className="flex lg:hidden flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-gray-800">
           <div className="flex gap-2 items-center">
             <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport]?.bg || 'bg-gray-500'}`}></span>
@@ -54,14 +51,11 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
           </div>
           <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} />
         </div>
-        
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-6 leading-tight drop-shadow-lg" dangerouslySetInnerHTML={{ __html: selectedItem.title }} />
-        
         <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
       </div>
     </div>
     
-    {/* MOBILE ONLY: Horizontal Up Next Shelf */}
     <div className="lg:hidden bg-[#1a1a1a] border-t border-gray-800 shrink-0 flex flex-col">
       <div className="px-6 py-3 border-b border-gray-800 font-bold text-[10px] uppercase tracking-wider text-gray-500 flex justify-between items-center">
         <span>Up Next</span>
@@ -85,10 +79,8 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
       </div>
     </div>
 
-    {/* DESKTOP ONLY: Vertical Up Next Sidebar */}
     <div className="hidden lg:flex lg:w-1/4 bg-[#161616] border-l border-gray-800 flex-col min-h-0">
       <div className="p-4 border-b border-gray-800 font-bold text-sm uppercase tracking-wider shrink-0">Up Next</div>
-      
       <div className="overflow-y-auto p-4 flex flex-col gap-4 flex-1">
         {videos.filter(v => v.type === 'video' && v.id !== selectedItem.id).slice(0, 10).map(v => (
           <div key={v.id} onClick={() => setSelectedItem(v)} className="flex gap-3 group cursor-pointer">
@@ -102,7 +94,6 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
           </div>
         ))}
       </div>
-
       <div className="p-4 border-t border-gray-800 bg-[#1a1a1a] shrink-0">
         <div className="flex gap-2 items-center mb-4">
           <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport]?.bg || 'bg-gray-500'}`}></span>
@@ -111,7 +102,6 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
         <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} />
       </div>
     </div>
-
   </div>
 );
 
@@ -122,10 +112,7 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
   return (
     <div className="flex flex-col h-full min-h-0">
       <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
-        
-        {/* Left Side: Video Player perfectly sized to never crop or overflow */}
         <div className="lg:w-[400px] xl:w-[450px] shrink-0 bg-black flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-800 p-4 sm:p-6 relative min-h-0">
-          {/* Responsive fix: Width-based on mobile, Height-based on desktop! */}
           <div className="w-full max-w-[260px] sm:max-w-[320px] lg:max-w-none lg:w-auto lg:h-full aspect-[9/16] bg-gray-900 rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800 mx-auto">
              {selectedItem.youtubeId ? (
                <iframe src={`https://www.youtube.com/embed/${selectedItem.youtubeId}?autoplay=1`} className="absolute inset-0 w-full h-full" frameBorder="0" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen></iframe>
@@ -137,25 +124,18 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
              )}
           </div>
         </div>
-        
-        {/* Right Side: Title & Description */}
         <div className="flex-1 p-6 sm:p-10 bg-[#121212] flex flex-col overflow-y-auto">
           <div className="flex gap-2 items-center mb-4">
             <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport]?.bg || 'bg-gray-500'}`}></span>
             <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">{selectedItem.sport} • {selectedItem.date}</span>
           </div>
-          
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-6 leading-tight drop-shadow-lg" dangerouslySetInnerHTML={{ __html: selectedItem.title }} />
-          
           <div className="mb-6 pb-6 border-b border-gray-800">
             <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} btnSize="w-10 h-10" iconSize={16} />
           </div>
-
           <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-1" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
         </div>
       </div>
-
-      {/* Bottom Shelf: Tighter and smaller so the video gets the spotlight */}
       <div className="bg-[#1a1a1a] border-t border-gray-800 shrink-0 flex flex-col">
         <div className="px-4 py-3 border-b border-gray-800 font-bold text-[10px] uppercase tracking-wider text-gray-500 flex justify-between items-center">
           <span>More Shorts</span>
@@ -166,9 +146,6 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
               <div className="w-full aspect-[9/16] bg-[#111] rounded-xl relative flex items-center justify-center overflow-hidden border border-gray-800 group-hover:border-gray-500 transition-colors shadow-lg">
                 {v.imageUrl && <img src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-50 transition-opacity" alt="" />}
                 <PlayCircle size={24} className="text-white/60 z-10 group-hover:text-white group-hover:scale-110 transition-all" />
-                <div className="absolute top-1 left-1 flex items-center bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-sm">
-                  <span className={`w-1.5 h-1.5 rounded-full ${themes[v.sport]?.bg || 'bg-gray-500'}`}></span>
-                </div>
               </div>
               <div>
                 <h4 className={`text-[10px] font-bold leading-tight text-gray-300 group-hover:${themes[v.sport]?.text || 'text-white'} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: v.title }} />
@@ -181,7 +158,7 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
   );
 };
 
-// --- 3. ARTICLE MODAL LAYOUT ---
+// --- 3. ARTICLE & PODCAST MODAL LAYOUT ---
 const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) => (
   <div className="flex flex-col h-full overflow-y-auto">
     <div className="w-full h-64 md:h-96 bg-gray-800 relative overflow-hidden shrink-0">
@@ -211,6 +188,34 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
         </div>
       </div>
 
+      {/* PODCAST PLAYERS */}
+      {selectedItem.spreakerShowId && (
+        <div className="mb-8 w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-800 bg-[#111]">
+          <iframe 
+            src={`https://widget.spreaker.com/player?show_id=${selectedItem.spreakerShowId}&theme=dark&playlist=show&playlist-continuous=true&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-download=true`} 
+            width="100%" 
+            height="350px"
+            frameBorder="0" 
+            allow="autoplay; picture-in-picture"
+            style={{ display: 'block' }}
+          ></iframe>
+        </div>
+      )}
+      
+      {selectedItem.spreakerId && !selectedItem.spreakerShowId && (
+        <div className="mb-8 w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-800 bg-[#111]">
+          <iframe 
+            src={`https://widget.spreaker.com/player?episode_id=${selectedItem.spreakerId}&theme=dark&playlist=false&playlist-continuous=false&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-download=true`} 
+            width="100%" 
+            height="200px"
+            frameBorder="0" 
+            allow="autoplay; picture-in-picture"
+            style={{ display: 'block' }}
+          ></iframe>
+        </div>
+      )}
+
+      {/* TEXT CONTENT */}
       <div className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport]?.text || 'text-white'} hover:prose-a:text-white`} dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
       
       <div className="mt-12 pt-8 border-t border-gray-800">
@@ -254,17 +259,14 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
         <X size={24} />
       </button>
 
-      {/* The 95vh Theater Wrapper */}
-      <div className={`relative z-10 w-full animate-in fade-in zoom-in-95 duration-200 ${selectedItem.type === 'article' ? 'max-w-4xl' : 'max-w-6xl'} h-[95vh] flex flex-col`}>
+      <div className={`relative z-10 w-full animate-in fade-in zoom-in-95 duration-200 ${selectedItem.type === 'article' || selectedItem.type === 'podcast' ? 'max-w-4xl' : 'max-w-6xl'} h-[95vh] flex flex-col`}>
         
-        {/* Floating Banner Ad */}
         <ModalBannerAd />
 
-        {/* Content Box */}
         <div className="w-full flex-1 bg-[#121212] border border-gray-800 rounded-xl shadow-2xl overflow-hidden flex flex-col min-h-0">
           {selectedItem.type === 'video' && <VideoModalLayout selectedItem={selectedItem} videos={videos} setSelectedItem={setSelectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
           {selectedItem.type === 'short' && <ShortModalLayout selectedItem={selectedItem} videos={videos} setSelectedItem={setSelectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
-          {selectedItem.type === 'article' && <ArticleModalLayout selectedItem={selectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
+          {(selectedItem.type === 'article' || selectedItem.type === 'podcast') && <ArticleModalLayout selectedItem={selectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
         </div>
         
       </div>

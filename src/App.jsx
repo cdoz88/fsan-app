@@ -96,14 +96,42 @@ export default function App() {
           let type = defaultType;
           if (slugs.some(s => s.includes('shorts'))) type = 'short';
 
-          // PODCAST DETECTION: Individual Episodes OR Master Playlists
-          let spreakerId = post.spreaker_episode_id || null;
+          let cleanContent = post.content?.rendered || '';
+          let excerpt = post.excerpt?.rendered || '';
+
+          // 1. WPBakery Base64 Decoder!
+          // Translates the hidden [vc_raw_html] encoded text into the pure [spreaker] shortcode
+          const decodeWP = (text) => {
+            return text.replace(/\[vc_raw_html[^\]]*\](.*?)\[\/vc_raw_html\]/gi, (match, b64) => {
+              try { return decodeURIComponent(atob(b64.replace(/\s/g, ''))); } catch(e) { return ''; }
+            });
+          };
+          cleanContent = decodeWP(cleanContent);
+          excerpt = decodeWP(excerpt);
+
+          // 2. Extract Spreaker IDs!
+          let spreakerShowId = null;
+          let spreakerEpisodeIdExtracted = null;
+          const showMatch = cleanContent.match(/show_id=([0-9]+)/);
+          const epMatch = cleanContent.match(/episode_id=([0-9]+)/);
+          
+          if (showMatch) spreakerShowId = showMatch[1];
+          if (epMatch) spreakerEpisodeIdExtracted = epMatch[1];
+
+          let spreakerId = post.spreaker_episode_id || spreakerEpisodeIdExtracted || null;
+
+          // 3. Podcast Detection!
           const isMasterCategory = slugs.some(s => ['podcast', 'podcast-basketball', 'podcast-baseball'].includes(s));
           const isEpisodeCategory = slugs.some(s => ['football-pod-episode', 'basketball-pod-episode', 'baseball-pod-episode', 'pod-episode'].includes(s));
           
-          if (spreakerId || isMasterCategory || isEpisodeCategory) {
+          if (spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('[spreaker')) {
              type = 'podcast';
           }
+
+          // 4. Content Scrubber (Removes all [vc_...] and [spreaker...] brackets so the UI stays clean)
+          const stripTags = (html) => html.replace(/\[\/?vc_[^\]]+\]/gi, '').replace(/\[spreaker[^\]]*\]/gi, '').trim();
+          cleanContent = stripTags(cleanContent);
+          excerpt = stripTags(excerpt);
 
           const imageUrl = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || null;
           const date = new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
@@ -112,12 +140,11 @@ export default function App() {
 
           let youtubeId = null;
           let customYtDesc = post.youtube_description;
-          let cleanContent = post.content?.rendered || '';
 
           const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
-          const match = cleanContent.match(ytRegex);
-          if (match && match[1]) {
-            youtubeId = match[1];
+          const ytMatch = cleanContent.match(ytRegex);
+          if (ytMatch && ytMatch[1]) {
+            youtubeId = ytMatch[1];
             cleanContent = cleanContent.replace(/<iframe.*?<\/iframe>/i, ''); 
           }
 
@@ -128,16 +155,11 @@ export default function App() {
             cleanContent = formattedDesc;
           }
 
-          // Strip out WPBakery or Spreaker shortcodes so they don't render as text on Master Playlist cards
-          if (type === 'podcast') {
-              cleanContent = cleanContent.replace(/\[\/?vc_[^\]]*\]/g, '').replace(/\[spreaker[^\]]*\]/g, '');
-          }
-
           return {
             id: post.id,
             title: post.title?.rendered || 'Untitled',
             content: cleanContent,
-            excerpt: post.excerpt?.rendered || '',
+            excerpt: excerpt,
             date,
             rawTimestamp,
             sport,
@@ -147,6 +169,7 @@ export default function App() {
             author,
             youtubeId,
             spreakerId,
+            spreakerShowId, // Passed to ContentModal!
             link: post.link
           };
         };
@@ -218,7 +241,6 @@ export default function App() {
         <ArticlesArchive articles={wpPosts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
 
-      {/* FIXED: Reconnected the Podcasts Archive Router! */}
       {!isInitialLoad && currentView === 'podcasts' && (
         <PodcastsArchive podcasts={podcasts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
