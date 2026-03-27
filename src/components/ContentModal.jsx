@@ -250,7 +250,7 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
     <div className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-sm flex justify-center items-center p-4 sm:p-6 overflow-hidden">
       <div className="fixed inset-0" onClick={() => setSelectedItem(null)}></div>
       
-      <button onClick={() => setSelectedItem(null)} className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[120] p-2 bg-[#1a1a1a] border border-gray-700 hover:bg-gray-700 hover:border-gray-500 rounded-full text-white transition-all shadow-xl">
+      <button onClick={() => setSelectedItem(null)} className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[120] p-2 bg-[#1a1a1a] border border-gray-700 hover:bg-red-600 hover:border-red-600 rounded-full text-white transition-all shadow-xl">
         <X size={24} />
       </button>
 
