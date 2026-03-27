@@ -158,7 +158,57 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
   );
 };
 
-// --- 3. ARTICLE & PODCAST MODAL LAYOUT ---
+// --- 3. PODCAST MODAL LAYOUT ---
+const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) => (
+  <div className="flex flex-col lg:flex-row h-full min-h-0">
+    {/* Left Side: Dynamic Podcast Player Embed */}
+    <div className="lg:w-[400px] xl:w-[480px] shrink-0 bg-[#0a0a0a] flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-800 p-4 sm:p-6 relative min-h-0">
+      <div className="w-full h-full min-h-[400px] bg-[#111] rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800">
+        {selectedItem.spreakerShowId ? (
+          <iframe 
+            src={`https://widget.spreaker.com/player?show_id=${selectedItem.spreakerShowId}&theme=dark&playlist=show&playlist-continuous=true&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-download=true`} 
+            width="100%" 
+            height="100%"
+            frameBorder="0" 
+            allow="autoplay; picture-in-picture"
+            style={{ display: 'block', minHeight: '400px' }}
+          ></iframe>
+        ) : selectedItem.spreakerId ? (
+          <iframe 
+            src={`https://widget.spreaker.com/player?episode_id=${selectedItem.spreakerId}&theme=dark&playlist=false&playlist-continuous=false&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-download=true`} 
+            width="100%" 
+            height="100%"
+            frameBorder="0" 
+            allow="autoplay; picture-in-picture"
+            style={{ display: 'block', minHeight: '400px' }}
+          ></iframe>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-500 font-bold uppercase tracking-widest text-xs">Audio Unavailable</div>
+        )}
+      </div>
+    </div>
+
+    {/* Right Side: Description and Share */}
+    <div className="flex-1 p-6 sm:p-10 bg-[#121212] flex flex-col overflow-y-auto">
+      <div className="flex gap-2 items-center mb-4">
+        <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport]?.bg || 'bg-gray-500'}`}></span>
+        {/* Specifically left off the Date here as requested! */}
+        <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">{selectedItem.sport} Podcast</span>
+      </div>
+      
+      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-6 leading-tight drop-shadow-lg" dangerouslySetInnerHTML={{ __html: selectedItem.title }} />
+      
+      <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-1 mb-8" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
+
+      <div className="pt-6 border-t border-gray-800 mt-auto">
+        <h4 className="text-gray-500 font-bold text-[10px] uppercase tracking-widest mb-3">Share this podcast</h4>
+        <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} btnSize="w-10 h-10" iconSize={16} />
+      </div>
+    </div>
+  </div>
+);
+
+// --- 4. ARTICLE MODAL LAYOUT ---
 const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) => (
   <div className="flex flex-col h-full overflow-y-auto">
     <div className="w-full h-64 md:h-96 bg-gray-800 relative overflow-hidden shrink-0">
@@ -187,33 +237,6 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
           <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} />
         </div>
       </div>
-
-      {/* PODCAST PLAYERS */}
-      {selectedItem.spreakerShowId && (
-        <div className="mb-8 w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-800 bg-[#111]">
-          <iframe 
-            src={`https://widget.spreaker.com/player?show_id=${selectedItem.spreakerShowId}&theme=dark&playlist=show&playlist-continuous=true&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-download=true`} 
-            width="100%" 
-            height="350px"
-            frameBorder="0" 
-            allow="autoplay; picture-in-picture"
-            style={{ display: 'block' }}
-          ></iframe>
-        </div>
-      )}
-      
-      {selectedItem.spreakerId && !selectedItem.spreakerShowId && (
-        <div className="mb-8 w-full rounded-2xl overflow-hidden shadow-2xl border border-gray-800 bg-[#111]">
-          <iframe 
-            src={`https://widget.spreaker.com/player?episode_id=${selectedItem.spreakerId}&theme=dark&playlist=false&playlist-continuous=false&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-download=true`} 
-            width="100%" 
-            height="200px"
-            frameBorder="0" 
-            allow="autoplay; picture-in-picture"
-            style={{ display: 'block' }}
-          ></iframe>
-        </div>
-      )}
 
       {/* TEXT CONTENT */}
       <div className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport]?.text || 'text-white'} hover:prose-a:text-white`} dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
@@ -259,14 +282,15 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
         <X size={24} />
       </button>
 
-      <div className={`relative z-10 w-full animate-in fade-in zoom-in-95 duration-200 ${selectedItem.type === 'article' || selectedItem.type === 'podcast' ? 'max-w-4xl' : 'max-w-6xl'} h-[95vh] flex flex-col`}>
+      <div className={`relative z-10 w-full animate-in fade-in zoom-in-95 duration-200 ${selectedItem.type === 'article' ? 'max-w-4xl' : 'max-w-6xl'} h-[95vh] flex flex-col`}>
         
         <ModalBannerAd />
 
         <div className="w-full flex-1 bg-[#121212] border border-gray-800 rounded-xl shadow-2xl overflow-hidden flex flex-col min-h-0">
           {selectedItem.type === 'video' && <VideoModalLayout selectedItem={selectedItem} videos={videos} setSelectedItem={setSelectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
           {selectedItem.type === 'short' && <ShortModalLayout selectedItem={selectedItem} videos={videos} setSelectedItem={setSelectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
-          {(selectedItem.type === 'article' || selectedItem.type === 'podcast') && <ArticleModalLayout selectedItem={selectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
+          {selectedItem.type === 'podcast' && <PodcastModalLayout selectedItem={selectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
+          {selectedItem.type === 'article' && <ArticleModalLayout selectedItem={selectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
         </div>
         
       </div>
