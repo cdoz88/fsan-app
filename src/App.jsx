@@ -6,6 +6,7 @@ import ContentModal from './components/ContentModal';
 import Home from './pages/Home';
 import VideosArchive from './pages/VideosArchive';
 import ArticlesArchive from './pages/ArticlesArchive';
+import PodcastsArchive from './pages/PodcastsArchive'; // NEW IMPORT
 
 const getInitialSport = () => {
   if (typeof window !== 'undefined') {
@@ -106,8 +107,16 @@ export default function App() {
           const author = defaultType === 'video' ? null : (post._embedded?.author?.[0]?.name || 'FSAN Staff');
 
           let youtubeId = null;
-          let cleanContent = post.content?.rendered || '';
           let customYtDesc = post.youtube_description;
+          let cleanContent = post.content?.rendered || '';
+          
+          // CLEAN PODCAST DETECTION: Just check if the custom field exists!
+          let spreakerId = post.spreaker_episode_id || null;
+          if (spreakerId) {
+             type = 'podcast';
+             // Strip out any legacy WPBakery/Spreaker shortcodes so they don't render as ugly text
+             cleanContent = cleanContent.replace(/\[\/?vc_[^\]]*\]/g, '').replace(/\[spreaker[^\]]*\]/g, '');
+          }
 
           const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
           const match = cleanContent.match(ytRegex);
@@ -135,6 +144,7 @@ export default function App() {
             imageUrl,
             author,
             youtubeId,
+            spreakerId, // Pass the new ID down to the UI
             link: post.link
           };
         };
@@ -184,6 +194,9 @@ export default function App() {
   // Only show the massive full-screen loader if we have absolutely zero data to show
   const isInitialLoad = isLoading && wpPosts.length === 0;
 
+  // Add Podcasts to the master filtering array
+  const podcasts = wpPosts.filter(p => p.type === 'podcast');
+
   return (
     <div className="min-h-screen bg-[#121212] text-gray-200 font-sans">
       <Header activeSport={activeSport} setActiveSport={handleSportChange} setCurrentView={handleViewChange} />
@@ -206,6 +219,11 @@ export default function App() {
 
       {!isInitialLoad && currentView === 'articles' && (
         <ArticlesArchive articles={wpPosts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
+      )}
+
+      {/* NEW VIEW ROUTER FOR PODCASTS */}
+      {!isInitialLoad && currentView === 'podcasts' && (
+        <PodcastsArchive podcasts={podcasts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
 
       {selectedItem && (

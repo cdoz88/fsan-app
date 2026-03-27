@@ -155,6 +155,34 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
+  // BRAND NEW: The Inline Podcast Card!
+  const PodcastCard = ({ item, isHero }) => (
+    <div className={`group w-full bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative ${isHero ? 'sm:flex-row' : ''}`}>
+      
+      {/* Clickable Info Section */}
+      <div onClick={() => setSelectedItem(item)} className={`p-5 lg:p-6 flex flex-col flex-1 cursor-pointer ${isHero ? 'sm:w-1/2' : ''}`}>
+        <CardTags item={item} />
+        <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-xl'} leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors mb-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+        <div className="text-sm text-gray-400 line-clamp-2 mb-4" dangerouslySetInnerHTML={{ __html: item.excerpt || item.content }} />
+      </div>
+      
+      {/* SPREAKER INLINE PLAYER - Intentionally lacks onClick so it doesn't trigger modal when pressing play! */}
+      <div className={`w-full bg-[#111] border-t sm:border-t-0 sm:border-l border-gray-800 shrink-0 flex items-center ${isHero ? 'sm:w-1/2' : ''}`}>
+        {item.spreakerId ? (
+          <iframe 
+            src={`https://widget.spreaker.com/player?episode_id=${item.spreakerId}&theme=dark&playlist=false&playlist-continuous=false&chapters-image=true&episode_image_position=right&hide-logo=false&hide-likes=false&hide-comments=false&hide-sharing=false&hide-download=true`} 
+            width="100%" 
+            height="200px"
+            frameBorder="0" 
+            allow="autoplay; picture-in-picture"
+          ></iframe>
+        ) : (
+           <div className="w-full h-[200px] flex items-center justify-center text-gray-500 font-bold uppercase tracking-widest text-xs">Audio Unavailable</div>
+        )}
+      </div>
+    </div>
+  );
+
   // UPDATED: Now strictly for Articles (No more video logic inside)
   const VerticalCard = ({ item }) => (
     <div onClick={() => setSelectedItem(item)} className={`group h-full w-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
@@ -190,15 +218,15 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
           <div className={`text-sm text-gray-400 ${isHero ? 'line-clamp-3 lg:line-clamp-4' : 'line-clamp-2 lg:line-clamp-3'}`} dangerouslySetInnerHTML={{ __html: item.excerpt }} />
         </div>
       </div>
-    </div>
-  );
-
-  // UPDATED: The router that intercepts Videos and assigns the cinematic card
+  // UPDATED: The router that intercepts Videos and Podcasts
   const RenderCard = ({ item, layoutType }) => {
     if (layoutType === 'short') return <ShortCard item={item} />;
     
     // Intercept videos immediately, giving them the cinematic overlay layout!
     if (item.type === 'video') return <VideoCard item={item} isHero={layoutType === 'hero'} />;
+    
+    // Intercept podcasts to use the inline player
+    if (item.type === 'podcast') return <PodcastCard item={item} isHero={layoutType === 'hero'} />;
     
     if (layoutType === 'horizontal') return <HorizontalCard item={item} isHero={false} />;
     if (layoutType === 'hero') return <HorizontalCard item={item} isHero={true} />;
@@ -225,7 +253,8 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                 <button onClick={() => { setCurrentView('videos'); window.scrollTo(0, 0); }} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
                   <Film size={18} className={theme.text} /> All Videos
                 </button>
-                <button onClick={() => window.scrollTo(0, 0)} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
+                {/* FIXED: Now properly routes to the new Podcasts view! */}
+                <button onClick={() => { setCurrentView('podcasts'); window.scrollTo(0, 0); }} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
                   <Mic size={18} className={theme.text} /> All Podcasts
                 </button>
              </div>
