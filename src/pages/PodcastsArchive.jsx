@@ -1,63 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { themes } from '../utils/theme';
 import Sidebar from '../components/Sidebar';
 
-// --- NEW: Dynamic Spreaker Card Component ---
+// Simple, dumb component that just renders the data WordPress gives it!
 const PodcastShowCard = ({ podcast, onClick }) => {
-  const [spreakerData, setSpreakerData] = useState(null);
-
-  useEffect(() => {
-    // Fetch rich data directly from Spreaker using the ID from your REST API
-    if (podcast.spreakerShowId) {
-      fetch(`https://api.spreaker.com/v2/shows/${podcast.spreakerShowId}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.response && data.response.show) {
-            setSpreakerData(data.response.show);
-          }
-        })
-        .catch(console.error);
-    }
-  }, [podcast.spreakerShowId]);
-
-  // Override WordPress data with Spreaker data if available
-  const title = spreakerData?.title || podcast.title;
-  const imageUrl = spreakerData?.image_original_url || podcast.imageUrl;
-  
-  let description = podcast.content;
-  if (spreakerData?.description) {
-    // Format plain text newlines into HTML breaks for the ContentModal
-    description = spreakerData.description.replace(/(?:\r\n|\r|\n)/g, '<br/>');
-  }
-
-  const handleCardClick = () => {
-    // Pass the enriched data to your existing ContentModal!
-    onClick({
-      ...podcast,
-      title: title,
-      content: description,
-      imageUrl: imageUrl,
-    });
-  };
-
   return (
     <div 
-      onClick={handleCardClick} 
+      onClick={() => onClick(podcast)} 
       className="cursor-pointer group relative rounded-xl overflow-hidden aspect-square border border-gray-800 hover:border-gray-500 transition-all shadow-xl bg-[#111]"
     >
-      {imageUrl ? (
+      {podcast.imageUrl ? (
         <img 
-          src={imageUrl} 
-          alt={title} 
+          src={podcast.imageUrl} 
+          alt={podcast.title} 
           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
         />
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-[#1c233a] to-[#111] flex items-center justify-center p-4 text-center">
-          <span className="font-bold text-gray-500">{title}</span>
+          <span className="font-bold text-gray-500" dangerouslySetInnerHTML={{ __html: podcast.title }} />
         </div>
       )}
-      {/* Subtle overlay on hover to indicate clickability */}
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
     </div>
   );
@@ -66,14 +29,12 @@ const PodcastShowCard = ({ podcast, onClick }) => {
 export default function PodcastsArchive({ podcasts = [], activeSport = 'All', setCurrentView, setSelectedItem, loadMorePosts, isLoadingMore }) {
   const theme = themes[activeSport] || themes.All;
 
-  // Filter for Master Shows using your category slugs or spreakerShowId
   const masterSlugs = ['podcast', 'podcast-basketball', 'podcast-baseball'];
   const showPodcasts = podcasts.filter(p => p.spreakerShowId || p.category_slugs?.some(slug => masterSlugs.includes(slug)));
 
   return (
     <main className="max-w-[1600px] mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
       
-      {/* MAIN CONTENT */}
       <div className="lg:col-span-9 flex flex-col">
         <div className="flex items-center gap-4 mb-6">
            <button onClick={() => setCurrentView('home')} className="hover:text-white flex items-center gap-2 text-gray-400 font-bold uppercase text-xs tracking-wider transition-colors">
@@ -90,7 +51,6 @@ export default function PodcastsArchive({ podcasts = [], activeSport = 'All', se
           </div>
         </div>
 
-        {/* --- 1:1 MASTER SHOWS GRID --- */}
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {showPodcasts.map(master => (
             <PodcastShowCard 
