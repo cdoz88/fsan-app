@@ -68,16 +68,20 @@ export default function App() {
     const targetType = currentView === 'home' ? feedFilter : currentView;
     const cacheKey = `${activeSport}-${targetType}`;
 
-    if (currentPage === 1 && postsCache[cacheKey]) {
-      setWpPosts(postsCache[cacheKey]);
-      setIsLoading(false);
-      return; 
+    // PREVENT FLASHING: Clear the feed immediately if we are switching views/sports and don't have it cached!
+    if (currentPage === 1) {
+      if (postsCache[cacheKey]) {
+        setWpPosts(postsCache[cacheKey]);
+        setIsLoading(false);
+        return; 
+      } else {
+        setWpPosts([]); 
+        setIsLoading(true);
+      }
     }
 
     const fetchWordPressData = async () => {
       try {
-        if (currentPage === 1) setIsLoading(true);
-
         const res = await fetch(`https://fsan.com/wp-json/fsan/v1/feed?per_page=10&page=${currentPage}&sport=${activeSport}&type=${targetType}`);
         if (!res.ok) throw new Error("API failed");
         
@@ -123,6 +127,9 @@ export default function App() {
           const isMasterCategory = slugs.some(s => ['podcast', 'podcast-basketball', 'podcast-baseball'].includes(s));
           const isEpisodeCategory = slugs.some(s => ['football-pod-episode', 'basketball-pod-episode', 'baseball-pod-episode', 'pod-episode'].includes(s));
           
+          // FLAG: Determine if this is a Master Show so we can keep it off the Timeline!
+          const isMasterShow = !!spreakerShowId || isMasterCategory;
+
           if (spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('[spreaker')) {
              type = 'podcast';
           }
@@ -163,12 +170,13 @@ export default function App() {
             rawTimestamp,
             sport,
             type,
+            isMasterShow, // Appended here so we can filter it safely!
             category_slugs: slugs,
             imageUrl,
             author,
             youtubeId,
             spreakerId,
-            spreakerShowId, // Passed to ContentModal!
+            spreakerShowId, 
             link: post.link
           };
         };
@@ -215,6 +223,11 @@ export default function App() {
   };
 
   const isInitialLoad = isLoading && wpPosts.length === 0;
+  
+  // STRIP MASTER SHOWS OUT OF TIMELINE/ARTICLE/VIDEO VIEWS!
+  const timelinePosts = wpPosts.filter(p => !p.isMasterShow);
+  
+  // ALL PODCASTS (Master and Episodes) map to the Podcast Archive correctly
   const podcasts = wpPosts.filter(p => p.type === 'podcast');
 
   return (
@@ -229,15 +242,15 @@ export default function App() {
       )}
 
       {!isInitialLoad && currentView === 'home' && (
-        <Home wpPosts={wpPosts} activeSport={activeSport} currentView={currentView} setCurrentView={handleViewChange} feedFilter={feedFilter} setFeedFilter={handleFeedFilterChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} hasMore={hasMore} isLoading={isLoading} />
+        <Home wpPosts={timelinePosts} activeSport={activeSport} currentView={currentView} setCurrentView={handleViewChange} feedFilter={feedFilter} setFeedFilter={handleFeedFilterChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} hasMore={hasMore} isLoading={isLoading} />
       )}
 
       {!isInitialLoad && currentView === 'videos' && (
-        <VideosArchive videos={wpPosts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
+        <VideosArchive videos={timelinePosts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
 
       {!isInitialLoad && currentView === 'articles' && (
-        <ArticlesArchive articles={wpPosts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
+        <ArticlesArchive articles={timelinePosts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
 
       {!isInitialLoad && currentView === 'podcasts' && (
@@ -245,7 +258,7 @@ export default function App() {
       )}
 
       {selectedItem && (
-        <ContentModal selectedItem={selectedItem} setSelectedItem={setSelectedItem} videos={wpPosts} />
+        <ContentModal selectedItem={selectedItem} setSelectedItem={setSelectedItem} videos={timelinePosts} />
       )}
     </div>
   );
