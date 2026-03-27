@@ -26,7 +26,7 @@ const getInitialView = () => {
 export default function App() {
   const [activeSport, setActiveSport] = useState(getInitialSport);
   const [currentView, setCurrentView] = useState(getInitialView); 
-  const [feedFilter, setFeedFilter] = useState('all'); // Moved from Home.jsx to trigger API fetches!
+  const [feedFilter, setFeedFilter] = useState('all'); 
   
   const [selectedItem, setSelectedItem] = useState(null);
   const [wpPosts, setWpPosts] = useState([]);
@@ -169,10 +169,10 @@ export default function App() {
     fetchWordPressData();
   }, [activeSport, currentPage, currentView, feedFilter]);
 
-  // Resets pagination whenever a master filter is clicked
-  const handleSportChange = (sport) => { if (sport !== activeSport) { setActiveSport(sport); setCurrentPage(1); setWpPosts([]); } };
-  const handleViewChange = (view) => { if (view !== currentView) { setCurrentView(view); setCurrentPage(1); setWpPosts([]); } };
-  const handleFeedFilterChange = (filter) => { if (filter !== feedFilter) { setFeedFilter(filter); setCurrentPage(1); setWpPosts([]); } };
+  // Resets pagination whenever a master filter is clicked (No longer wipes existing posts!)
+  const handleSportChange = (sport) => { if (sport !== activeSport) { setActiveSport(sport); setCurrentPage(1); } };
+  const handleViewChange = (view) => { if (view !== currentView) { setCurrentView(view); setCurrentPage(1); } };
+  const handleFeedFilterChange = (filter) => { if (filter !== feedFilter) { setFeedFilter(filter); setCurrentPage(1); } };
 
   const loadMorePosts = () => {
     if (!isLoadingMore && hasMore) {
@@ -181,27 +181,30 @@ export default function App() {
     }
   };
 
+  // Only show the massive full-screen loader if we have absolutely zero data to show
+  const isInitialLoad = isLoading && wpPosts.length === 0;
+
   return (
     <div className="min-h-screen bg-[#121212] text-gray-200 font-sans">
       <Header activeSport={activeSport} setActiveSport={handleSportChange} setCurrentView={handleViewChange} />
 
-      {isLoading && wpPosts.length === 0 && (
+      {isInitialLoad && (
         <div className="max-w-[1600px] mx-auto p-12 flex flex-col items-center justify-center text-gray-500 min-h-[50vh]">
           <Loader2 size={48} className="animate-spin text-red-600 mb-4" />
           <p className="font-bold uppercase tracking-widest text-sm">Fetching {activeSport === 'All' ? 'Live Data' : `${activeSport} Data`}...</p>
         </div>
       )}
 
-      {!isLoading && currentView === 'home' && (
-        <Home wpPosts={wpPosts} activeSport={activeSport} currentView={currentView} setCurrentView={handleViewChange} feedFilter={feedFilter} setFeedFilter={handleFeedFilterChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} hasMore={hasMore} />
+      {!isInitialLoad && currentView === 'home' && (
+        <Home wpPosts={wpPosts} activeSport={activeSport} currentView={currentView} setCurrentView={handleViewChange} feedFilter={feedFilter} setFeedFilter={handleFeedFilterChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} hasMore={hasMore} isLoading={isLoading} />
       )}
 
       {/* Other Views will be wired similarly later, but left intact for now */}
-      {!isLoading && currentView === 'videos' && (
+      {!isInitialLoad && currentView === 'videos' && (
         <VideosArchive videos={wpPosts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
 
-      {!isLoading && currentView === 'articles' && (
+      {!isInitialLoad && currentView === 'articles' && (
         <ArticlesArchive articles={wpPosts} activeSport={activeSport} setCurrentView={handleViewChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
       )}
 
