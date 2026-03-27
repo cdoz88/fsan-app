@@ -29,7 +29,7 @@ export default function VideosArchive({ videos, activeSport, setCurrentView, set
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {videos.map((video) => (
-            <div key={video.id} onClick={() => setSelectedItem(video)} className="group cursor-pointer relative rounded-lg overflow-hidden bg-[#1e1e1e] border border-gray-800 shadow-lg hover:border-gray-500 transition-all flex flex-col h-full">
+            <div key={video.id} onClick={() => setSelectedItem(video)} className={`group cursor-pointer relative rounded-lg overflow-hidden bg-[#1e1e1e] border ${themes[video.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 shadow-lg ${themes[video.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col h-full`}>
               <div className="aspect-video bg-gradient-to-tr from-[#1c233a] to-[#111] relative flex items-center justify-center overflow-hidden">
                  {video.imageUrl && <img src={video.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity" />}
                  <PlayCircle size={48} className="text-white/60 group-hover:text-white group-hover:scale-110 transition-all z-10 relative" />

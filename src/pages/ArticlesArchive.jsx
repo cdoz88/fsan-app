@@ -31,7 +31,7 @@ export default function ArticlesArchive({ articles, activeSport, setCurrentView,
 
         <div className="flex flex-col gap-4">
           {articles.map((article) => (
-            <div key={article.id} onClick={() => setSelectedItem(article)} className="group cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-lg p-4 flex flex-col sm:flex-row gap-6 hover:border-gray-500 transition-all shadow-md">
+            <div key={article.id} onClick={() => setSelectedItem(article)} className={`group cursor-pointer bg-[#1e1e1e] border ${themes[article.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-lg p-4 flex flex-col sm:flex-row gap-6 ${themes[article.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all shadow-md`}>
               <div className="w-full sm:w-64 h-40 bg-gray-800 rounded-md shrink-0 relative overflow-hidden">
                 {article.imageUrl ? (
                   <img src={article.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all transform group-hover:scale-105" />

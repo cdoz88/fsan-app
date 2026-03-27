@@ -107,7 +107,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
   );
 
   const ShortCard = ({ item }) => (
-    <div onClick={() => setSelectedItem(item)} className="group h-full w-full min-h-[400px] cursor-pointer bg-[#111] border border-gray-800 rounded-2xl overflow-hidden shadow-xl hover:border-gray-600 transition-all flex flex-col relative">
+    <div onClick={() => setSelectedItem(item)} className={`group h-full w-full min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
       {item.imageUrl ? (
          <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
       ) : (
@@ -117,13 +117,13 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
       <PlayCircle size={48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
       <div className="absolute bottom-0 left-0 right-0 p-5 z-20">
         <CardTags item={item} />
-        <h3 className={`font-black text-lg text-white leading-tight group-hover:${theme.text} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+        <h3 className={`font-black text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
       </div>
     </div>
   );
 
   const VerticalCard = ({ item }) => (
-    <div onClick={() => setSelectedItem(item)} className="group h-full w-full cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden shadow-lg hover:border-gray-600 transition-all flex flex-col relative">
+    <div onClick={() => setSelectedItem(item)} className={`group h-full w-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
       <div className="w-full aspect-video relative flex items-center justify-center overflow-hidden shrink-0 bg-[#111]">
         {item.imageUrl ? (
            <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
@@ -136,14 +136,14 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
       </div>
       <div className="p-5 flex flex-col flex-1 bg-gradient-to-b from-[#1e1e1e] to-[#161616]">
         <CardTags item={item} />
-        <h3 className={`font-black text-lg leading-tight group-hover:${theme.text} transition-colors mb-3`} dangerouslySetInnerHTML={{ __html: item.title }} />
+        <h3 className={`font-black text-lg leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors mb-3`} dangerouslySetInnerHTML={{ __html: item.title }} />
         {item.type === 'article' && <div className="text-sm text-gray-400 line-clamp-2 mt-auto" dangerouslySetInnerHTML={{ __html: item.excerpt }} />}
       </div>
     </div>
   );
 
   const HorizontalCard = ({ item, isHero }) => (
-    <div onClick={() => setSelectedItem(item)} className="group w-full h-full cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden shadow-lg hover:border-gray-600 transition-all flex flex-col sm:flex-row relative">
+    <div onClick={() => setSelectedItem(item)} className={`group w-full h-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col sm:flex-row relative`}>
       <div className={`w-full ${isHero ? 'sm:w-3/5 lg:w-2/3' : 'sm:w-1/2'} relative shrink-0 bg-[#111] overflow-hidden`}>
         {item.imageUrl ? (
           <img src={item.imageUrl} alt="" className="w-full h-auto aspect-video object-cover opacity-80 group-hover:scale-105 transition-transform duration-500 block" />
