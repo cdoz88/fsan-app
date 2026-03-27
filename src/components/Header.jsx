@@ -82,7 +82,7 @@ export default function Header({ activeSport, setActiveSport, setCurrentView }) 
         {/* Right Side: Search, Subscribe, Log In (Desktop) */}
         <div className="hidden lg:flex items-center text-xs font-bold uppercase tracking-widest text-gray-400">
           <button onClick={() => setIsSearchModalOpen(true)} className="hover:text-white transition-colors flex items-center gap-2 pr-6 group">
-            <Search size={18} className="group-hover:text-red-500 transition-colors" />
+            <Search size={18} className="group-hover:text-white transition-colors" />
             <span>Search</span>
           </button>
           
@@ -107,7 +107,7 @@ export default function Header({ activeSport, setActiveSport, setCurrentView }) 
         <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-start justify-center pt-[15vh] px-4">
           <div className="w-full max-w-3xl">
             <div className="flex items-center gap-4 bg-[#1e1e1e] border border-gray-700 p-2 rounded-lg shadow-2xl">
-              <Search size={24} className="text-red-500 ml-3" />
+              <Search size={24} className="text-gray-400 ml-3" />
               <input type="text" autoFocus placeholder="Search players, articles, videos..." className="flex-1 bg-transparent text-white text-xl p-2 outline-none placeholder-gray-500" />
               <button onClick={() => setIsSearchModalOpen(false)} className="p-2 hover:bg-gray-800 rounded-md transition-colors text-gray-400 hover:text-white"><X size={24} /></button>
             </div>
@@ -122,10 +122,10 @@ export default function Header({ activeSport, setActiveSport, setCurrentView }) 
             <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-gray-400 hover:text-white transition-colors"><X size={32} /></button>
           </div>
           <div className="flex flex-col items-center gap-6 text-lg font-bold uppercase tracking-widest p-8 overflow-y-auto h-full mt-8">
-            <a href="#" className="hover:text-red-500 transition-colors">Subscribe</a>
-            <a href="#" className="hover:text-red-500 transition-colors">Log In</a>
+            <a href="#" className="hover:text-white transition-colors">Subscribe</a>
+            <a href="#" className="hover:text-white transition-colors">Log In</a>
             <div className="w-16 h-px bg-gray-800 my-4"></div>
-            <a href="#" className="hover:text-red-500 transition-colors text-center">Join Our Community</a>
+            <a href="#" className="hover:text-white transition-colors text-center">Join Our Community</a>
           </div>
         </div>
       )}
