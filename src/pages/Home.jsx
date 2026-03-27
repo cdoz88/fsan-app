@@ -305,7 +305,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                       {otherItems.length === 0 && (
                         <>
                           <div className={`lg:col-span-1 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}><RenderCard item={shortItem} layoutType="short" /></div>
-                          <div className="lg:col-span-2 flex flex-col gap-6 h-full"><div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div></div>
+                          <div className="lg:col-span-2 flex flex-col gap-6 h-full"><div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div></div>
                         </>
                       )}
                       {otherItems.length === 1 && (
@@ -313,7 +313,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                           <div className={`lg:col-span-1 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}><RenderCard item={shortItem} layoutType="short" /></div>
                           <div className="lg:col-span-2 flex flex-col gap-6 h-full">
                             <div className="w-full"><RenderCard item={otherItems[0]} layoutType="horizontal" /></div>
-                            <div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
+                            <div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
                           </div>
                         </>
                       )}
@@ -321,8 +321,10 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                         <>
                           <div className={`lg:col-span-1 ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}><RenderCard item={shortItem} layoutType="short" /></div>
                           <div className="lg:col-span-2 flex flex-col gap-6 h-full">
-                            <div className="flex-1 w-full"><RenderCard item={otherItems[0]} layoutType="horizontal" /></div>
-                            <div className="flex-1 w-full"><RenderCard item={otherItems[1]} layoutType="horizontal" /></div>
+                            <div className="w-full"><RenderCard item={otherItems[0]} layoutType="horizontal" /></div>
+                            <div className="w-full"><RenderCard item={otherItems[1]} layoutType="horizontal" /></div>
+                            {/* AD INJECTED HERE: Fills the exact remaining height to match the Short! */}
+                            <div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
                           </div>
                           {otherItems.slice(2).map(item => (<div key={item.id} className="lg:col-span-1 h-full"><RenderCard item={item} layoutType="vertical" /></div>))}
                         </>
@@ -333,7 +335,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                   {!hasShort && count === 1 && (
                     <>
                       <div className={`lg:col-span-2 ${layoutStyle % 2 !== 0 ? 'order-first lg:order-last' : ''}`}><RenderCard item={items[0]} layoutType="horizontal" /></div>
-                      <div className={`lg:col-span-1 flex flex-col h-full ${layoutStyle % 2 !== 0 ? 'order-last lg:order-first' : ''}`}><PromoAd type={adTypeForThisDay} shape="square" /></div>
+                      <div className={`lg:col-span-1 flex flex-col h-full min-h-[250px] ${layoutStyle % 2 !== 0 ? 'order-last lg:order-first' : ''}`}><PromoAd type={adTypeForThisDay} shape="square" /></div>
                     </>
                   )}
 
@@ -341,8 +343,8 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                     <>
                       <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
                       <div className="lg:col-span-2 flex flex-col gap-6 h-full">
-                        <RenderCard item={items[1]} layoutType="horizontal" />
-                        <div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
+                        <div className="w-full"><RenderCard item={items[1]} layoutType="horizontal" /></div>
+                        <div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
                       </div>
                     </>
                   )}
@@ -350,8 +352,8 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                   {!hasShort && count === 2 && layoutStyle === 1 && (
                     <>
                       <div className="lg:col-span-2 flex flex-col gap-6 h-full order-last lg:order-none">
-                        <div className="flex-1 w-full flex flex-col order-last lg:order-first"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
-                        <RenderCard item={items[1]} layoutType="horizontal" />
+                        <div className="flex-1 w-full flex flex-col min-h-[120px] order-last lg:order-first"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
+                        <div className="w-full"><RenderCard item={items[1]} layoutType="horizontal" /></div>
                       </div>
                       <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
                     </>
@@ -360,30 +362,38 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                   {!hasShort && count === 2 && layoutStyle === 2 && (
                     <>
                       <div className="lg:col-span-2 flex flex-col gap-6 h-full order-last lg:order-none">
-                        <RenderCard item={items[1]} layoutType="horizontal" />
-                        <div className="flex-1 w-full flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
+                        <div className="w-full"><RenderCard item={items[1]} layoutType="horizontal" /></div>
+                        <div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
                       </div>
                       <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
                     </>
                   )}
 
+                  {/* REBUILT FOR 3 ITEMS: Guarantees equal heights and injects an ad to fill space! */}
                   {!hasShort && count === 3 && (
                     <>
-                      <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
-                      <div className="lg:col-span-1 h-full"><RenderCard item={items[1]} layoutType="vertical" /></div>
-                      <div className="lg:col-span-1 h-full"><RenderCard item={items[2]} layoutType="vertical" /></div>
+                      <div className={`lg:col-span-2 flex flex-col gap-6 h-full ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}>
+                        <div className="w-full"><RenderCard item={items[0]} layoutType="horizontal" /></div>
+                        <div className="w-full"><RenderCard item={items[1]} layoutType="horizontal" /></div>
+                        <div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
+                      </div>
+                      <div className="lg:col-span-1 flex flex-col h-full">
+                        <div className="w-full"><RenderCard item={items[2]} layoutType="vertical" /></div>
+                      </div>
                     </>
                   )}
 
                   {!hasShort && count > 3 && (
                     <>
-                      <div className="lg:col-span-3"><RenderCard item={items[0]} layoutType="hero" /></div>
+                      <div className="lg:col-span-3 w-full"><RenderCard item={items[0]} layoutType="hero" /></div>
                       {items.slice(1).map(item => (<div key={item.id} className="lg:col-span-1 h-full"><RenderCard item={item} layoutType="vertical" /></div>))}
+                      {/* Only inject the full-width bottom ad on MASSIVE days to cap off the row */}
+                      <div className="lg:col-span-3 mt-2 w-full flex flex-col min-h-[120px]">
+                        <PromoAd type={adTypeForThisDay} shape="banner" />
+                      </div>
                     </>
                   )}
                 </div>
-
-                {count >= 3 && (<div className="w-full mt-2 min-h-[100px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>)}
               </div>
             );
           })}
