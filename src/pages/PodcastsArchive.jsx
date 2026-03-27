@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Loader2, Mic } from 'lucide-react';
 
+// Inlined to resolve preview compilation errors
 const themes = {
   All: { text: 'text-gray-300', border: 'border-gray-500', hoverText: 'hover:text-white', hoverBorder: 'hover:border-gray-400', bg: 'bg-gradient-to-r from-gray-500 to-gray-700', toolsBg: 'bg-[#1a1a1a] border-gray-800' },
   Football: { text: 'text-red-500', border: 'border-red-600', hoverText: 'hover:text-red-400', hoverBorder: 'hover:border-red-500', bg: 'bg-red-600', toolsBg: 'bg-red-900/20 border-red-900/50' },
@@ -8,6 +9,7 @@ const themes = {
   Baseball: { text: 'text-blue-500', border: 'border-blue-500', hoverText: 'hover:text-blue-400', hoverBorder: 'hover:border-blue-500', bg: 'bg-blue-500', toolsBg: 'bg-blue-900/20 border-blue-900/50' },
 };
 
+// Inlined to resolve preview compilation errors
 const Sidebar = ({ activeSport }) => (
   <div className="hidden lg:flex lg:col-span-3 flex-col gap-6 w-full">
     <div className="bg-[#1a1a1a] p-4 border border-gray-800 rounded-xl shadow-xl text-center text-gray-500 h-full min-h-[400px] flex items-center justify-center">
@@ -76,7 +78,9 @@ export default function PodcastsArchive({ podcasts = [], activeSport = 'All', se
 
         {/* --- INDIVIDUAL EPISODES GRID --- */}
         <h3 className="font-black uppercase tracking-widest text-gray-500 text-sm mb-6">Recent Episodes</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        {/* CHANGED TO A 1-COLUMN STACK: Guarantees massive width so Spreaker ALWAYS shows the horizontal layout! */}
+        <div className="grid grid-cols-1 gap-6">
           {individualEpisodes.map((podcast) => (
              <div key={podcast.id} className={`w-full bg-[#111] border ${themes[podcast.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl transition-all`}>
                 {podcast.spreakerId ? (

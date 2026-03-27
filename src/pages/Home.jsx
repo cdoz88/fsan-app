@@ -5,7 +5,7 @@ import { themes } from '../utils/theme';
 import PlaybookLoader from '../components/PlaybookLoader';
 
 export default function Home({ wpPosts, activeSport, currentView, setCurrentView, feedFilter, setFeedFilter, setSelectedItem, loadMorePosts, isLoadingMore, hasMore, isLoading }) {
-  const theme = themes[activeSport];
+  const theme = themes[activeSport] || themes.All;
   const observerTarget = useRef(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -123,25 +123,29 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
+  // REDESIGNED: Pure 16:9 Thumbnail logic. Centers vertically if forced to stretch in the grid!
   const VideoCard = ({ item, isHero }) => (
-    <div onClick={() => setSelectedItem(item)} className={`group w-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
-      {item.imageUrl ? (
-         <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" />
-      ) : (
-         <div className="absolute inset-0 bg-gray-800" />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      <PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
-      <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-5 z-20 flex flex-col justify-end opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
-        <CardTags item={item} />
-        <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'} text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+    <div onClick={() => setSelectedItem(item)} className={`group w-full h-full cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col justify-center relative`}>
+      <div className="w-full aspect-video relative flex items-center justify-center bg-black">
+        {item.imageUrl ? (
+           <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" />
+        ) : (
+           <div className="absolute inset-0 bg-gray-900" />
+        )}
+        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-all duration-300"></div>
+        <PlayCircle size={isHero ? 72 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/90 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300 z-10 drop-shadow-2xl" />
+        
+        {/* Subtle Sport Tag */}
+        <div className="absolute top-3 left-3 flex items-center bg-black/60 px-2 py-1 rounded-full backdrop-blur-sm z-20">
+          <span className={`w-2 h-2 rounded-full ${themes[item.sport]?.bg || 'bg-gray-500'} shrink-0`}></span>
+        </div>
       </div>
     </div>
   );
 
-  // BRAND NEW: The Inline Podcast Card!
+  // REDESIGNED: Stripped outer UI, flex centers the iframe vertically if the row stretches.
   const PodcastCard = ({ item }) => (
-    <div className={`w-full bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl transition-all`}>
+    <div className={`w-full h-full bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl transition-all flex flex-col justify-center`}>
       {item.spreakerId ? (
         <iframe 
           src={`https://widget.spreaker.com/player?episode_id=${item.spreakerId}&theme=dark&playlist=false&playlist-continuous=false&chapters-image=true&episode_image_position=right&hide-logo=false&hide-likes=false&hide-comments=false&hide-sharing=false&hide-download=true`} 
@@ -157,7 +161,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
-  // UPDATED: Now strictly for Articles (No more video logic inside)
   const VerticalCard = ({ item }) => (
     <div onClick={() => setSelectedItem(item)} className={`group h-full w-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
       <div className="w-full aspect-video relative flex items-center justify-center overflow-hidden shrink-0 bg-[#111]">
@@ -298,11 +301,26 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                   <div className={`h-px flex-[5] ${theme.bg} opacity-50`}></div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+                {/* THE NEW 12-COLUMN SMART GRID ENGINE */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 items-stretch">
                   {items.map((item, index) => {
-                    const isHero = index === 0 && items.length >= 4 && item.type !== 'short';
-                    const spanClass = isHero ? 'md:col-span-2 lg:col-span-2' : 'col-span-1';
-                    const layout = isHero ? 'hero' : (item.type === 'short' ? 'short' : 'vertical');
+                    const isPodcast = item.type === 'podcast';
+                    const isShort = item.type === 'short';
+                    
+                    // Only assign a Hero layout if we have at least 3 items today, and it isn't a podcast/short
+                    const isHero = index === 0 && !isPodcast && !isShort && items.length >= 3;
+
+                    // Base Spans: Standard cards take 4 columns (1/3 of row)
+                    let spanClass = 'md:col-span-1 lg:col-span-4'; 
+
+                    // Overrides for massive structural elements
+                    if (isPodcast) {
+                       spanClass = 'md:col-span-2 lg:col-span-12'; // 100% Full Width
+                    } else if (isHero) {
+                       spanClass = 'md:col-span-2 lg:col-span-8'; // 2/3 Width
+                    }
+
+                    const layout = isHero ? 'hero' : (isShort ? 'short' : 'vertical');
 
                     return (
                       <div key={item.id} className={spanClass}>
@@ -312,6 +330,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                   })}
                 </div>
 
+                {/* Safe full-width Banner Ad padding */}
                 {items.length >= 3 && (
                   <div className="w-full mt-2 min-h-[120px]">
                     <PromoAd type={adTypeForThisDay} shape="banner" />
