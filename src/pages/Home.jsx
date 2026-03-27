@@ -156,25 +156,26 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
 
   // BRAND NEW: PURE IFRAME PODCAST
   // Title, description stripped out of React. Hide transcript/likes/comments/logo on Spreaker, KEEP share/info.
+  // HEIGHT COMPRESSED to 150px to perfectly frame the minimal Spreaker layout and fix grid offsets!
   const PodcastCard = ({ item }) => (
     <div className={`w-full bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl transition-all`}>
       {item.spreakerId ? (
         <iframe 
           src={`https://widget.spreaker.com/player?episode_id=${item.spreakerId}&theme=dark&playlist=false&playlist-continuous=false&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-episode-description=false&hide-transcript=true&hide-download=true`} 
           width="100%" 
-          height="200px"
+          height="150px"
           frameBorder="0" 
           allow="autoplay; picture-in-picture"
           style={{ display: 'block' }}
         ></iframe>
       ) : (
-         <div className="w-full h-[200px] flex items-center justify-center text-gray-500 font-bold uppercase tracking-widest text-xs">Audio Unavailable</div>
+         <div className="w-full h-[150px] flex items-center justify-center text-gray-500 font-bold uppercase tracking-widest text-xs">Audio Unavailable</div>
       )}
     </div>
   );
 
   const VerticalCard = ({ item }) => (
-    <div onClick={() => setSelectedItem(item)} className={`group h-full w-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
+    <div onClick={() => setSelectedItem(item)} className={`group w-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
       <div className="w-full aspect-video relative flex items-center justify-center overflow-hidden shrink-0 bg-[#111]">
         {item.imageUrl ? (
            <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
