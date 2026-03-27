@@ -54,9 +54,11 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
   const yesterdayStr = yesterday.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
 
   const PromoAd = ({ type, shape }) => {
+    const heightClass = shape === 'banner' ? 'min-h-[120px]' : 'min-h-[250px]';
+
     if (type === 'rookie') {
       return (
-        <div className={`w-full h-full bg-gradient-to-br from-red-900 to-black border border-red-800 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-xl cursor-pointer hover:border-red-500 transition-colors group`}>
+        <div className={`w-full ${heightClass} bg-gradient-to-br from-red-900 to-black border border-red-800 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-xl cursor-pointer hover:border-red-500 transition-colors group`}>
            <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#fff_10px,#fff_20px)]"></div>
            <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-2 md:mb-4'}`}>
              <h3 className="text-red-500 font-black text-xl lg:text-2xl italic uppercase drop-shadow-md group-hover:scale-105 transition-transform origin-left leading-none">Dominate</h3>
@@ -71,7 +73,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
 
     if (type === 'sellout') {
       return (
-        <div className={`w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/40 via-[#111] to-black border border-red-900/50 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-2xl cursor-pointer hover:border-red-600 transition-colors group`}>
+        <div className={`w-full ${heightClass} bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/40 via-[#111] to-black border border-red-900/50 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center relative overflow-hidden shadow-2xl cursor-pointer hover:border-red-600 transition-colors group`}>
            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20 20\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')", mixBlendMode: 'overlay' }}></div>
            <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-2 md:mb-4'}`}>
              <h2 className="text-xl lg:text-2xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-left line-clamp-1">Join Sellout Crowds</h2>
@@ -85,7 +87,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     }
 
     return (
-      <div className={`w-full h-full bg-[#111] border border-purple-900/50 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center cursor-pointer hover:border-purple-600 transition-all group overflow-hidden relative shadow-xl`}>
+      <div className={`w-full ${heightClass} bg-[#111] border border-purple-900/50 rounded-2xl ${shape === 'banner' ? 'p-3 md:p-4 flex-col sm:flex-row' : 'p-4 md:p-6 flex-col'} flex items-center justify-center text-center cursor-pointer hover:border-purple-600 transition-all group overflow-hidden relative shadow-xl`}>
         <div className="absolute inset-0 bg-gradient-to-tr from-purple-900/30 to-black z-0 transition-opacity group-hover:opacity-80"></div>
         <div className={`relative z-10 flex-1 flex flex-col justify-center ${shape === 'banner' ? 'sm:text-left sm:mr-4' : 'mb-2 md:mb-4'}`}>
           <h3 className="text-purple-500 font-black text-xl lg:text-2xl italic uppercase z-10 group-hover:scale-110 transition-transform origin-left line-clamp-1 leading-none">Fantasy Apparel</h3>
@@ -108,7 +110,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
   );
 
   const ShortCard = ({ item }) => (
-    <div onClick={() => setSelectedItem(item)} className={`group h-full w-full min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
+    <div onClick={() => setSelectedItem(item)} className={`group w-full min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
       {item.imageUrl ? (
          <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
       ) : (
@@ -123,27 +125,32 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
-  // Pure 16:9 Thumbnail. Flexes container to eliminate gaps while perfectly centering video vertically!
+  // RESTORED: Pure strictly-constrained 16:9 Video Card with slide-up cinematic overlay!
   const VideoCard = ({ item, isHero }) => (
-    <div onClick={() => setSelectedItem(item)} className={`group w-full h-full cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col justify-center relative`}>
-      <div className="w-full aspect-video relative flex items-center justify-center bg-black overflow-hidden rounded-xl">
-        {item.imageUrl ? (
-           <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" />
-        ) : (
-           <div className="absolute inset-0 bg-gray-900" />
-        )}
-        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-all duration-300"></div>
-        <PlayCircle size={isHero ? 72 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/90 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300 z-10 drop-shadow-2xl" />
-        <div className="absolute top-3 left-3 flex items-center bg-black/60 px-2 py-1 rounded-full backdrop-blur-sm z-20">
-          <span className={`w-2 h-2 rounded-full ${themes[item.sport]?.bg || 'bg-gray-500'} shrink-0`}></span>
-        </div>
+    <div onClick={() => setSelectedItem(item)} className={`group w-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
+      {item.imageUrl ? (
+         <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" />
+      ) : (
+         <div className="absolute inset-0 bg-gray-800" />
+      )}
+      
+      {/* Hidden by default! Slides up on hover! */}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      
+      <PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
+      
+      {/* Hidden by default! Slides up on hover! */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-5 z-20 flex flex-col justify-end opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+        <CardTags item={item} />
+        <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'} text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
       </div>
     </div>
   );
 
-  // Pure Spreaker iframe - Flex centers vertically to eliminate grid gaps!
+  // PURE IFRAME PODCAST: Title and description stripped. Perfectly bordered audio player with precise 200px height.
+  // Updated URL Parameters to show Info & Share, but hide Transcript, Likes, Comments, Logo.
   const PodcastCard = ({ item }) => (
-    <div className={`w-full h-full bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl transition-all flex flex-col justify-center`}>
+    <div className={`w-full bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl transition-all flex flex-col justify-center`}>
       {item.spreakerId ? (
         <iframe 
           src={`https://widget.spreaker.com/player?episode_id=${item.spreakerId}&theme=dark&playlist=false&playlist-continuous=false&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-episode-description=false&hide-transcript=true&hide-download=true`} 
@@ -160,7 +167,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
   );
 
   const VerticalCard = ({ item }) => (
-    <div onClick={() => setSelectedItem(item)} className={`group h-full w-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
+    <div onClick={() => setSelectedItem(item)} className={`group w-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative`}>
       <div className="w-full aspect-video relative flex items-center justify-center overflow-hidden shrink-0 bg-[#111]">
         {item.imageUrl ? (
            <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
@@ -177,25 +184,22 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
   );
 
   const HorizontalCard = ({ item, isHero }) => (
-    <div onClick={() => setSelectedItem(item)} className={`group w-full h-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col sm:flex-row relative`}>
-      <div className={`w-full ${isHero ? 'sm:w-3/5 lg:w-2/3' : 'sm:w-1/2'} relative shrink-0 bg-[#111] overflow-hidden`}>
+    <div onClick={() => setSelectedItem(item)} className={`group w-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col sm:flex-row relative`}>
+      <div className={`w-full ${isHero ? 'sm:w-3/5 lg:w-2/3' : 'sm:w-1/2'} relative shrink-0 bg-[#111] overflow-hidden min-h-[200px]`}>
         {item.imageUrl ? (
-          <img src={item.imageUrl} alt="" className="w-full h-auto aspect-video object-cover opacity-80 group-hover:scale-105 transition-transform duration-500 block" />
+          <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500 block" />
         ) : (
-          <div className="w-full aspect-video bg-gray-800 block" />
+          <div className="absolute inset-0 bg-gray-800 block" />
         )}
       </div>
-      <div className="w-full sm:flex-1 relative bg-gradient-to-b from-[#1e1e1e] to-[#161616]">
-        <div className="sm:absolute sm:inset-0 p-4 lg:p-6 flex flex-col justify-center overflow-hidden">
-          <CardTags item={item} />
-          <h3 className={`font-black ${isHero ? 'text-2xl lg:text-4xl' : 'text-xl lg:text-2xl'} leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors mb-2 line-clamp-2 lg:line-clamp-3`} dangerouslySetInnerHTML={{ __html: item.title }} />
-          <div className={`text-sm text-gray-400 ${isHero ? 'line-clamp-3 lg:line-clamp-4' : 'line-clamp-2 lg:line-clamp-3'}`} dangerouslySetInnerHTML={{ __html: item.excerpt }} />
-        </div>
+      <div className="w-full sm:flex-1 bg-gradient-to-b from-[#1e1e1e] to-[#161616] p-4 lg:p-6 flex flex-col justify-center">
+        <CardTags item={item} />
+        <h3 className={`font-black ${isHero ? 'text-2xl lg:text-4xl' : 'text-xl lg:text-2xl'} leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors mb-2 line-clamp-2 lg:line-clamp-3`} dangerouslySetInnerHTML={{ __html: item.title }} />
+        <div className={`text-sm text-gray-400 ${isHero ? 'line-clamp-3 lg:line-clamp-4' : 'line-clamp-2 lg:line-clamp-3'}`} dangerouslySetInnerHTML={{ __html: item.excerpt }} />
       </div>
     </div>
   );
 
-  // The router that intercepts Videos and Podcasts seamlessly into the math grid!
   const RenderCard = ({ item, layoutType }) => {
     if (layoutType === 'short') return <ShortCard item={item} />;
     if (item.type === 'video') return <VideoCard item={item} isHero={layoutType === 'hero'} />;
@@ -207,8 +211,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
 
   return (
     <main className="max-w-[1600px] mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-5 gap-8 animate-in fade-in duration-300">
-      
-      {/* SIDEBAR */}
       <div className="hidden lg:flex lg:col-span-1 flex-col gap-6">
         <div className="sticky top-[88px] flex flex-col gap-6">
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
@@ -290,8 +292,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
             if (group.date === todayStr) displayDate = 'Today';
             else if (group.date === yesterdayStr) displayDate = 'Yesterday';
 
-            // DYNAMIC SMART ALLOCATOR:
-            // This guarantees Podcasts are 2/3 width, Shorts are 1/3 tall, and Ads fill the gaps!
+            // DYNAMIC SMART ALLOCATOR
             const shorts = [...group.items.filter(i => i.type === 'short')];
             const podcasts = [...group.items.filter(i => i.type === 'podcast')];
             const standards = [...group.items.filter(i => i.type !== 'short' && i.type !== 'podcast')];
@@ -300,13 +301,11 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
             const adTypeForThisDay = adTypes[groupIndex % adTypes.length]; 
             
             const rows = [];
-            let layoutCounter = groupIndex; // Toggle for left/right visual variety
+            let layoutCounter = groupIndex; 
 
-            // 1. Shorts get a 1/3 tall column, paired with two 2/3 horizontal slots
             while (shorts.length > 0) {
               const shortItem = shorts.shift();
               const rightItems = [];
-              // Fill the two 2/3 slots (prefer Podcasts, then Standards, then Ads)
               for (let i = 0; i < 2; i++) {
                 if (podcasts.length > 0) rightItems.push({ type: 'item', item: podcasts.shift() });
                 else if (standards.length > 0) rightItems.push({ type: 'item', item: standards.shift() });
@@ -317,13 +316,15 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
               layoutCounter++;
 
               rows.push(
-                <div key={`row-short-${shortItem.id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-                  <div className={`lg:col-span-1 h-full ${isFlipped ? 'order-last lg:order-last' : ''}`}>
+                // CHANGED: items-start instead of items-stretch prevents artificial stretching / black gaps!
+                <div key={`row-short-${shortItem.id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                  {/* CHANGED: Removed h-full padding here too! */}
+                  <div className={`lg:col-span-1 ${isFlipped ? 'order-last lg:order-last' : ''}`}>
                     <RenderCard item={shortItem} layoutType="short" />
                   </div>
-                  <div className={`lg:col-span-2 flex flex-col gap-6 h-full ${isFlipped ? 'order-first lg:order-first' : ''}`}>
+                  <div className={`lg:col-span-2 flex flex-col gap-6 ${isFlipped ? 'order-first lg:order-first' : ''}`}>
                     {rightItems.map((ri, idx) => (
-                      <div key={idx} className="flex-1 w-full flex flex-col min-h-[120px]">
+                      <div key={idx} className="w-full flex flex-col">
                         {ri.type === 'item' ? (
                           <RenderCard item={ri.item} layoutType="horizontal" />
                         ) : (
@@ -336,7 +337,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
               );
             }
 
-            // 2. Remaining Podcasts MUST be 2/3 width, paired with a 1/3 Standard or Ad
             while (podcasts.length > 0) {
               const podItem = podcasts.shift();
               const pairItem = standards.length > 0 ? { type: 'item', item: standards.shift() } : { type: 'ad', adType: 'square' };
@@ -345,11 +345,11 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
               layoutCounter++;
 
               rows.push(
-                <div key={`row-pod-${podItem.id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-                  <div className={`lg:col-span-2 h-full ${isFlipped ? 'order-last lg:order-last' : ''}`}>
+                <div key={`row-pod-${podItem.id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                  <div className={`lg:col-span-2 ${isFlipped ? 'order-last lg:order-last' : ''}`}>
                     <RenderCard item={podItem} layoutType="podcast" />
                   </div>
-                  <div className={`lg:col-span-1 flex flex-col h-full min-h-[250px] ${isFlipped ? 'order-first lg:order-first' : ''}`}>
+                  <div className={`lg:col-span-1 flex flex-col ${isFlipped ? 'order-first lg:order-first' : ''}`}>
                     {pairItem.type === 'item' ? (
                       <RenderCard item={pairItem.item} layoutType="vertical" />
                     ) : (
@@ -360,12 +360,10 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
               );
             }
 
-            // 3. Process the rest of the Standard items into perfect blocks
-            // If massive day, do a 3/3 Hero header first
             if (standards.length > 3) {
               const heroItem = standards.shift();
               rows.push(
-                <div key={`row-hero-${heroItem.id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                <div key={`row-hero-${heroItem.id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                   <div className="lg:col-span-3 w-full">
                     <RenderCard item={heroItem} layoutType="hero" />
                   </div>
@@ -373,14 +371,13 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
               );
             }
 
-            // Chunk the remaining Standards
             while (standards.length > 0) {
               if (standards.length >= 3) {
                 const chunk = [standards.shift(), standards.shift(), standards.shift()];
                 rows.push(
-                  <div key={`row-std-3-${chunk[0].id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                  <div key={`row-std-3-${chunk[0].id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                     {chunk.map(c => (
-                      <div key={c.id} className="lg:col-span-1 h-full">
+                      <div key={c.id} className="lg:col-span-1">
                         <RenderCard item={c} layoutType="vertical" />
                       </div>
                     ))}
@@ -391,15 +388,15 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                 const isFlipped = layoutCounter % 2 !== 0;
                 layoutCounter++;
                 rows.push(
-                  <div key={`row-std-2-${chunk[0].id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-                    <div className={`lg:col-span-1 h-full ${isFlipped ? 'order-last lg:order-last' : ''}`}>
+                  <div key={`row-std-2-${chunk[0].id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                    <div className={`lg:col-span-1 ${isFlipped ? 'order-last lg:order-last' : ''}`}>
                       <RenderCard item={chunk[0]} layoutType="vertical" />
                     </div>
-                    <div className={`lg:col-span-2 flex flex-col gap-6 h-full ${isFlipped ? 'order-first lg:order-first' : ''}`}>
+                    <div className={`lg:col-span-2 flex flex-col gap-6 ${isFlipped ? 'order-first lg:order-first' : ''}`}>
                       <div className="w-full">
                         <RenderCard item={chunk[1]} layoutType="horizontal" />
                       </div>
-                      <div className="flex-1 w-full flex flex-col min-h-[120px]">
+                      <div className="w-full flex flex-col">
                         <PromoAd type={adTypeForThisDay} shape="banner" />
                       </div>
                     </div>
@@ -410,11 +407,11 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                 const isFlipped = layoutCounter % 2 !== 0;
                 layoutCounter++;
                 rows.push(
-                  <div key={`row-std-1-${item.id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-                    <div className={`lg:col-span-2 h-full ${isFlipped ? 'order-last lg:order-last' : ''}`}>
+                  <div key={`row-std-1-${item.id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                    <div className={`lg:col-span-2 ${isFlipped ? 'order-last lg:order-last' : ''}`}>
                       <RenderCard item={item} layoutType="horizontal" />
                     </div>
-                    <div className={`lg:col-span-1 flex flex-col h-full min-h-[250px] ${isFlipped ? 'order-first lg:order-last' : ''}`}>
+                    <div className={`lg:col-span-1 flex flex-col ${isFlipped ? 'order-first lg:order-last' : ''}`}>
                       <PromoAd type={adTypeForThisDay} shape="square" />
                     </div>
                   </div>
@@ -430,7 +427,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                   <div className={`h-px flex-[5] ${theme.bg} opacity-50`}></div>
                 </div>
 
-                {/* THE NEW DYNAMIC ROW STACK */}
                 <div className="flex flex-col gap-6">
                   {rows}
                 </div>
@@ -440,7 +436,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
 
           {hasMore && (
             <div ref={observerTarget} className="w-full py-12 flex justify-center items-center">
-              {isLoadingMore && <PlaybookLoader className="scale-125" />}
+              <PlaybookLoader className="scale-125" />
             </div>
           )}
 
