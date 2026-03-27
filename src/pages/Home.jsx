@@ -290,16 +290,137 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
             if (group.date === todayStr) displayDate = 'Today';
             else if (group.date === yesterdayStr) displayDate = 'Yesterday';
 
-            // Podcasts are kept inside the items array so they flow into the grid naturally!
-            const items = group.items;
-            const count = items.length;
-            const hasShort = items.some(i => i.type === 'short');
-            const shortItem = hasShort ? items.find(i => i.type === 'short') : null;
-            const otherItems = hasShort ? items.filter(i => i.id !== shortItem.id) : items;
+            // DYNAMIC SMART ALLOCATOR:
+            // This guarantees Podcasts are 2/3 width, Shorts are 1/3 tall, and Ads fill the gaps!
+            const shorts = [...group.items.filter(i => i.type === 'short')];
+            const podcasts = [...group.items.filter(i => i.type === 'podcast')];
+            const standards = [...group.items.filter(i => i.type !== 'short' && i.type !== 'podcast')];
             
-            const layoutStyle = groupIndex % 3; 
             const adTypes = ['sellout', 'rookie', 'merch'];
             const adTypeForThisDay = adTypes[groupIndex % adTypes.length]; 
+            
+            const rows = [];
+            let layoutCounter = groupIndex; // Toggle for left/right visual variety
+
+            // 1. Shorts get a 1/3 tall column, paired with two 2/3 horizontal slots
+            while (shorts.length > 0) {
+              const shortItem = shorts.shift();
+              const rightItems = [];
+              // Fill the two 2/3 slots (prefer Podcasts, then Standards, then Ads)
+              for (let i = 0; i < 2; i++) {
+                if (podcasts.length > 0) rightItems.push({ type: 'item', item: podcasts.shift() });
+                else if (standards.length > 0) rightItems.push({ type: 'item', item: standards.shift() });
+                else rightItems.push({ type: 'ad', adType: 'banner' });
+              }
+
+              const isFlipped = layoutCounter % 2 !== 0;
+              layoutCounter++;
+
+              rows.push(
+                <div key={`row-short-${shortItem.id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                  <div className={`lg:col-span-1 h-full ${isFlipped ? 'order-last lg:order-last' : ''}`}>
+                    <RenderCard item={shortItem} layoutType="short" />
+                  </div>
+                  <div className={`lg:col-span-2 flex flex-col gap-6 h-full ${isFlipped ? 'order-first lg:order-first' : ''}`}>
+                    {rightItems.map((ri, idx) => (
+                      <div key={idx} className="flex-1 w-full flex flex-col min-h-[120px]">
+                        {ri.type === 'item' ? (
+                          <RenderCard item={ri.item} layoutType="horizontal" />
+                        ) : (
+                          <PromoAd type={adTypeForThisDay} shape="banner" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
+            // 2. Remaining Podcasts MUST be 2/3 width, paired with a 1/3 Standard or Ad
+            while (podcasts.length > 0) {
+              const podItem = podcasts.shift();
+              const pairItem = standards.length > 0 ? { type: 'item', item: standards.shift() } : { type: 'ad', adType: 'square' };
+              
+              const isFlipped = layoutCounter % 2 !== 0;
+              layoutCounter++;
+
+              rows.push(
+                <div key={`row-pod-${podItem.id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                  <div className={`lg:col-span-2 h-full ${isFlipped ? 'order-last lg:order-last' : ''}`}>
+                    <RenderCard item={podItem} layoutType="podcast" />
+                  </div>
+                  <div className={`lg:col-span-1 flex flex-col h-full min-h-[250px] ${isFlipped ? 'order-first lg:order-first' : ''}`}>
+                    {pairItem.type === 'item' ? (
+                      <RenderCard item={pairItem.item} layoutType="vertical" />
+                    ) : (
+                      <PromoAd type={adTypeForThisDay} shape="square" />
+                    )}
+                  </div>
+                </div>
+              );
+            }
+
+            // 3. Process the rest of the Standard items into perfect blocks
+            // If massive day, do a 3/3 Hero header first
+            if (standards.length > 3) {
+              const heroItem = standards.shift();
+              rows.push(
+                <div key={`row-hero-${heroItem.id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                  <div className="lg:col-span-3 w-full">
+                    <RenderCard item={heroItem} layoutType="hero" />
+                  </div>
+                </div>
+              );
+            }
+
+            // Chunk the remaining Standards
+            while (standards.length > 0) {
+              if (standards.length >= 3) {
+                const chunk = [standards.shift(), standards.shift(), standards.shift()];
+                rows.push(
+                  <div key={`row-std-3-${chunk[0].id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                    {chunk.map(c => (
+                      <div key={c.id} className="lg:col-span-1 h-full">
+                        <RenderCard item={c} layoutType="vertical" />
+                      </div>
+                    ))}
+                  </div>
+                );
+              } else if (standards.length === 2) {
+                const chunk = [standards.shift(), standards.shift()];
+                const isFlipped = layoutCounter % 2 !== 0;
+                layoutCounter++;
+                rows.push(
+                  <div key={`row-std-2-${chunk[0].id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                    <div className={`lg:col-span-1 h-full ${isFlipped ? 'order-last lg:order-last' : ''}`}>
+                      <RenderCard item={chunk[0]} layoutType="vertical" />
+                    </div>
+                    <div className={`lg:col-span-2 flex flex-col gap-6 h-full ${isFlipped ? 'order-first lg:order-first' : ''}`}>
+                      <div className="w-full">
+                        <RenderCard item={chunk[1]} layoutType="horizontal" />
+                      </div>
+                      <div className="flex-1 w-full flex flex-col min-h-[120px]">
+                        <PromoAd type={adTypeForThisDay} shape="banner" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              } else if (standards.length === 1) {
+                const item = standards.shift();
+                const isFlipped = layoutCounter % 2 !== 0;
+                layoutCounter++;
+                rows.push(
+                  <div key={`row-std-1-${item.id}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                    <div className={`lg:col-span-2 h-full ${isFlipped ? 'order-last lg:order-last' : ''}`}>
+                      <RenderCard item={item} layoutType="horizontal" />
+                    </div>
+                    <div className={`lg:col-span-1 flex flex-col h-full min-h-[250px] ${isFlipped ? 'order-first lg:order-last' : ''}`}>
+                      <PromoAd type={adTypeForThisDay} shape="square" />
+                    </div>
+                  </div>
+                );
+              }
+            }
 
             return (
               <div key={group.date} className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -309,71 +430,10 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                   <div className={`h-px flex-[5] ${theme.bg} opacity-50`}></div>
                 </div>
 
-                {/* THE RESTORED BENTO BOX MATH (Podcasts will flex dynamically based on placement!) */}
-                {count > 0 && (
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-                    
-                    {/* SCENARIO A: Row contains a Short */}
-                    {hasShort && (
-                      <>
-                        <div className={`lg:col-span-1 h-full ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}>
-                          <RenderCard item={shortItem} layoutType="short" />
-                        </div>
-                        <div className="lg:col-span-2 flex flex-col gap-6 h-full">
-                          {otherItems.length === 0 && <div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>}
-                          {otherItems.length > 0 && <div className="w-full"><RenderCard item={otherItems[0]} layoutType="horizontal" /></div>}
-                          {otherItems.length > 1 && <div className="w-full"><RenderCard item={otherItems[1]} layoutType="horizontal" /></div>}
-                          {otherItems.length <= 1 && <div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>}
-                        </div>
-                        {otherItems.slice(2).map(item => (
-                          <div key={item.id} className="lg:col-span-1 h-full"><RenderCard item={item} layoutType="vertical" /></div>
-                        ))}
-                        {otherItems.length > 2 && (otherItems.length - 2) % 3 === 1 && <div className="lg:col-span-2 h-full min-h-[150px] flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div>}
-                        {otherItems.length > 2 && (otherItems.length - 2) % 3 === 2 && <div className="lg:col-span-1 h-full min-h-[250px] flex flex-col"><PromoAd type={adTypeForThisDay} shape="square" /></div>}
-                      </>
-                    )}
-
-                    {/* SCENARIO B: 1 Single Item */}
-                    {!hasShort && count === 1 && (
-                      <>
-                        <div className={`lg:col-span-2 h-full ${layoutStyle % 2 !== 0 ? 'order-last lg:order-first' : ''}`}><RenderCard item={items[0]} layoutType="horizontal" /></div>
-                        <div className={`lg:col-span-1 flex flex-col h-full min-h-[250px] ${layoutStyle % 2 !== 0 ? 'order-first lg:order-last' : ''}`}><PromoAd type={adTypeForThisDay} shape="square" /></div>
-                      </>
-                    )}
-
-                    {/* SCENARIO C: 2 Items */}
-                    {!hasShort && count === 2 && (
-                      <>
-                        <div className={`lg:col-span-1 h-full ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}><RenderCard item={items[0]} layoutType="vertical" /></div>
-                        <div className={`lg:col-span-2 flex flex-col gap-6 h-full ${layoutStyle % 2 !== 0 ? 'order-first lg:order-first' : ''}`}>
-                          <div className="w-full"><RenderCard item={items[1]} layoutType="horizontal" /></div>
-                          <div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
-                        </div>
-                      </>
-                    )}
-
-                    {/* SCENARIO D: 3 Items */}
-                    {!hasShort && count === 3 && (
-                      <>
-                        <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
-                        <div className="lg:col-span-1 h-full"><RenderCard item={items[1]} layoutType="vertical" /></div>
-                        <div className="lg:col-span-1 h-full"><RenderCard item={items[2]} layoutType="vertical" /></div>
-                      </>
-                    )}
-
-                    {/* SCENARIO E: More than 3 items (Massive Day) */}
-                    {!hasShort && count > 3 && (
-                      <>
-                        <div className="lg:col-span-3 w-full"><RenderCard item={items[0]} layoutType="hero" /></div>
-                        {items.slice(1).map(item => (
-                          <div key={item.id} className="lg:col-span-1 h-full"><RenderCard item={item} layoutType="vertical" /></div>
-                        ))}
-                        {(count - 1) % 3 === 1 && <div className="lg:col-span-2 h-full min-h-[150px] flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div>}
-                        {(count - 1) % 3 === 2 && <div className="lg:col-span-1 h-full min-h-[250px] flex flex-col"><PromoAd type={adTypeForThisDay} shape="square" /></div>}
-                      </>
-                    )}
-                  </div>
-                )}
+                {/* THE NEW DYNAMIC ROW STACK */}
+                <div className="flex flex-col gap-6">
+                  {rows}
+                </div>
               </div>
             );
           })}
