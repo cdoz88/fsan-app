@@ -99,26 +99,25 @@ export default function App() {
           let cleanContent = post.content?.rendered || '';
           let excerpt = post.excerpt?.rendered || '';
 
-          // 1. WPBakery Base64 Decoder!
-          // Translates the hidden [vc_raw_html] encoded text into the pure [spreaker] shortcode
-          const decodeWP = (text) => {
-            return text.replace(/\[vc_raw_html[^\]]*\](.*?)\[\/vc_raw_html\]/gi, (match, b64) => {
-              try { return decodeURIComponent(atob(b64.replace(/\s/g, ''))); } catch(e) { return ''; }
-            });
-          };
-          cleanContent = decodeWP(cleanContent);
-          excerpt = decodeWP(excerpt);
+          // 1. Direct API Grab (This handles all your new Automated Posts cleanly!)
+          let spreakerShowId = post.spreaker_show_id || null;
+          let spreakerId = post.spreaker_episode_id || null;
 
-          // 2. Extract Spreaker IDs!
-          let spreakerShowId = null;
-          let spreakerEpisodeIdExtracted = null;
-          const showMatch = cleanContent.match(/show_id=([0-9]+)/);
-          const epMatch = cleanContent.match(/episode_id=([0-9]+)/);
-          
-          if (showMatch) spreakerShowId = showMatch[1];
-          if (epMatch) spreakerEpisodeIdExtracted = epMatch[1];
+          // 2. Legacy WPBakery Fallback Decoder (For your old manual posts)
+          if (!spreakerShowId && !spreakerId) {
+            const decodeWP = (text) => {
+              return text.replace(/\[vc_raw_html[^\]]*\](.*?)\[\/vc_raw_html\]/gi, (match, b64) => {
+                try { return decodeURIComponent(atob(b64.replace(/\s/g, ''))); } catch(e) { return ''; }
+              });
+            };
+            cleanContent = decodeWP(cleanContent);
+            excerpt = decodeWP(excerpt);
 
-          let spreakerId = post.spreaker_episode_id || spreakerEpisodeIdExtracted || null;
+            const showMatch = cleanContent.match(/show_id=([0-9]+)/);
+            const epMatch = cleanContent.match(/episode_id=([0-9]+)/);
+            if (showMatch) spreakerShowId = showMatch[1];
+            if (epMatch) spreakerId = epMatch[1];
+          }
 
           // 3. Podcast Detection!
           const isMasterCategory = slugs.some(s => ['podcast', 'podcast-basketball', 'podcast-baseball'].includes(s));
