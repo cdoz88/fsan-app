@@ -123,10 +123,10 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
-  // REDESIGNED: Pure 16:9 Thumbnail logic. Centers vertically if forced to stretch in the grid!
+  // PURE CINEMATIC VIDEO CARD: Flexes outer container to fill grid heights without cropping 16:9 inner thumbnail!
   const VideoCard = ({ item, isHero }) => (
     <div onClick={() => setSelectedItem(item)} className={`group w-full h-full cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col justify-center relative`}>
-      <div className="w-full aspect-video relative flex items-center justify-center bg-black">
+      <div className="w-full aspect-video relative flex items-center justify-center bg-black overflow-hidden rounded-xl">
         {item.imageUrl ? (
            <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" />
         ) : (
@@ -134,8 +134,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
         )}
         <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-all duration-300"></div>
         <PlayCircle size={isHero ? 72 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/90 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300 z-10 drop-shadow-2xl" />
-        
-        {/* Subtle Sport Tag */}
         <div className="absolute top-3 left-3 flex items-center bg-black/60 px-2 py-1 rounded-full backdrop-blur-sm z-20">
           <span className={`w-2 h-2 rounded-full ${themes[item.sport]?.bg || 'bg-gray-500'} shrink-0`}></span>
         </div>
@@ -143,9 +141,9 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
-  // REDESIGNED: Stripped outer UI, flex centers the iframe vertically if the row stretches.
+  // PURE IFRAME PODCAST: Title and description stripped. Just beautifully bordered audio player!
   const PodcastCard = ({ item }) => (
-    <div className={`w-full h-full bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl transition-all flex flex-col justify-center`}>
+    <div className={`w-full bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl transition-all`}>
       {item.spreakerId ? (
         <iframe 
           src={`https://widget.spreaker.com/player?episode_id=${item.spreakerId}&theme=dark&playlist=false&playlist-continuous=false&chapters-image=true&episode_image_position=right&hide-logo=false&hide-likes=false&hide-comments=false&hide-sharing=false&hide-download=true`} 
@@ -200,7 +198,6 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
   const RenderCard = ({ item, layoutType }) => {
     if (layoutType === 'short') return <ShortCard item={item} />;
     if (item.type === 'video') return <VideoCard item={item} isHero={layoutType === 'hero'} />;
-    if (item.type === 'podcast') return <PodcastCard item={item} />;
     if (layoutType === 'horizontal') return <HorizontalCard item={item} isHero={false} />;
     if (layoutType === 'hero') return <HorizontalCard item={item} isHero={true} />;
     return <VerticalCard item={item} />;
@@ -289,7 +286,16 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
             if (group.date === todayStr) displayDate = 'Today';
             else if (group.date === yesterdayStr) displayDate = 'Yesterday';
 
-            const items = group.items;
+            // 1. EXTRACT PODCASTS SO THEY CAN BE FULL WIDTH ROWS
+            const podcasts = group.items.filter(i => i.type === 'podcast');
+            const items = group.items.filter(i => i.type !== 'podcast');
+            
+            const count = items.length;
+            const hasShort = items.some(i => i.type === 'short');
+            const shortItem = hasShort ? items.find(i => i.type === 'short') : null;
+            const otherItems = hasShort ? items.filter(i => i.id !== shortItem.id) : items;
+            
+            const layoutStyle = groupIndex % 3; 
             const adTypes = ['sellout', 'rookie', 'merch'];
             const adTypeForThisDay = adTypes[groupIndex % adTypes.length]; 
 
@@ -301,39 +307,80 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                   <div className={`h-px flex-[5] ${theme.bg} opacity-50`}></div>
                 </div>
 
-                {/* THE NEW 12-COLUMN SMART GRID ENGINE */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 items-stretch">
-                  {items.map((item, index) => {
-                    const isPodcast = item.type === 'podcast';
-                    const isShort = item.type === 'short';
-                    
-                    // Only assign a Hero layout if we have at least 3 items today, and it isn't a podcast/short
-                    const isHero = index === 0 && !isPodcast && !isShort && items.length >= 3;
-
-                    // Base Spans: Standard cards take 4 columns (1/3 of row)
-                    let spanClass = 'md:col-span-1 lg:col-span-4'; 
-
-                    // Overrides for massive structural elements
-                    if (isPodcast) {
-                       spanClass = 'md:col-span-2 lg:col-span-12'; // 100% Full Width
-                    } else if (isHero) {
-                       spanClass = 'md:col-span-2 lg:col-span-8'; // 2/3 Width
-                    }
-
-                    const layout = isHero ? 'hero' : (isShort ? 'short' : 'vertical');
-
-                    return (
-                      <div key={item.id} className={spanClass}>
-                        <RenderCard item={item} layoutType={layout} />
+                {/* 2. RENDER PODCASTS AS MASSIVE HORIZONTAL BANNERS TO GUARANTEE IMAGE WIDTH */}
+                {podcasts.length > 0 && (
+                  <div className="flex flex-col gap-6 w-full mb-2">
+                    {podcasts.map(pod => (
+                      <div key={pod.id} className="w-full">
+                        <PodcastCard item={pod} />
                       </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                )}
 
-                {/* Safe full-width Banner Ad padding */}
-                {items.length >= 3 && (
-                  <div className="w-full mt-2 min-h-[120px]">
-                    <PromoAd type={adTypeForThisDay} shape="banner" />
+                {/* 3. THE RESTORED BENTO BOX MATH FOR ARTICLES AND VIDEOS */}
+                {count > 0 && (
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                    
+                    {/* SCENARIO A: Row contains a Short */}
+                    {hasShort && (
+                      <>
+                        <div className={`lg:col-span-1 h-full ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}>
+                          <RenderCard item={shortItem} layoutType="short" />
+                        </div>
+                        <div className="lg:col-span-2 flex flex-col gap-6 h-full">
+                          {otherItems.length === 0 && <div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>}
+                          {otherItems.length > 0 && <div className="w-full"><RenderCard item={otherItems[0]} layoutType="horizontal" /></div>}
+                          {otherItems.length > 1 && <div className="w-full"><RenderCard item={otherItems[1]} layoutType="horizontal" /></div>}
+                          {otherItems.length <= 1 && <div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>}
+                        </div>
+                        {otherItems.slice(2).map(item => (
+                          <div key={item.id} className="lg:col-span-1 h-full"><RenderCard item={item} layoutType="vertical" /></div>
+                        ))}
+                        {otherItems.length > 2 && (otherItems.length - 2) % 3 === 1 && <div className="lg:col-span-2 h-full min-h-[150px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>}
+                        {otherItems.length > 2 && (otherItems.length - 2) % 3 === 2 && <div className="lg:col-span-1 h-full min-h-[250px]"><PromoAd type={adTypeForThisDay} shape="square" /></div>}
+                      </>
+                    )}
+
+                    {/* SCENARIO B: 1 Single Item */}
+                    {!hasShort && count === 1 && (
+                      <>
+                        <div className={`lg:col-span-2 h-full ${layoutStyle % 2 !== 0 ? 'order-last lg:order-first' : ''}`}><RenderCard item={items[0]} layoutType="horizontal" /></div>
+                        <div className={`lg:col-span-1 flex flex-col h-full min-h-[250px] ${layoutStyle % 2 !== 0 ? 'order-first lg:order-last' : ''}`}><PromoAd type={adTypeForThisDay} shape="square" /></div>
+                      </>
+                    )}
+
+                    {/* SCENARIO C: 2 Items */}
+                    {!hasShort && count === 2 && (
+                      <>
+                        <div className={`lg:col-span-1 h-full ${layoutStyle % 2 !== 0 ? 'order-last lg:order-last' : ''}`}><RenderCard item={items[0]} layoutType="vertical" /></div>
+                        <div className={`lg:col-span-2 flex flex-col gap-6 h-full ${layoutStyle % 2 !== 0 ? 'order-first lg:order-first' : ''}`}>
+                          <div className="w-full"><RenderCard item={items[1]} layoutType="horizontal" /></div>
+                          <div className="flex-1 w-full flex flex-col min-h-[120px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* SCENARIO D: 3 Items */}
+                    {!hasShort && count === 3 && (
+                      <>
+                        <div className="lg:col-span-1 h-full"><RenderCard item={items[0]} layoutType="vertical" /></div>
+                        <div className="lg:col-span-1 h-full"><RenderCard item={items[1]} layoutType="vertical" /></div>
+                        <div className="lg:col-span-1 h-full"><RenderCard item={items[2]} layoutType="vertical" /></div>
+                      </>
+                    )}
+
+                    {/* SCENARIO E: More than 3 items (Massive Day) */}
+                    {!hasShort && count > 3 && (
+                      <>
+                        <div className="lg:col-span-3 w-full"><RenderCard item={items[0]} layoutType="hero" /></div>
+                        {items.slice(1).map(item => (
+                          <div key={item.id} className="lg:col-span-1 h-full"><RenderCard item={item} layoutType="vertical" /></div>
+                        ))}
+                        {(count - 1) % 3 === 1 && <div className="lg:col-span-2 h-full min-h-[150px] flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div>}
+                        {(count - 1) % 3 === 2 && <div className="lg:col-span-1 h-full min-h-[250px] flex flex-col"><PromoAd type={adTypeForThisDay} shape="square" /></div>}
+                      </>
+                    )}
                   </div>
                 )}
               </div>
