@@ -123,7 +123,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
-  // PURE CINEMATIC VIDEO CARD: Flexes outer container to fill grid heights without cropping 16:9 inner thumbnail!
+  // Pure 16:9 Thumbnail. Flexes container to eliminate gaps while perfectly centering video vertically!
   const VideoCard = ({ item, isHero }) => (
     <div onClick={() => setSelectedItem(item)} className={`group w-full h-full cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col justify-center relative`}>
       <div className="w-full aspect-video relative flex items-center justify-center bg-black overflow-hidden rounded-xl">
@@ -141,9 +141,9 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
-  // PURE IFRAME PODCAST: Title and description stripped. Just beautifully bordered audio player!
+  // Pure Spreaker iframe - Flex centers vertically to eliminate grid gaps!
   const PodcastCard = ({ item }) => (
-    <div className={`w-full bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl transition-all`}>
+    <div className={`w-full h-full bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl transition-all flex flex-col justify-center`}>
       {item.spreakerId ? (
         <iframe 
           src={`https://widget.spreaker.com/player?episode_id=${item.spreakerId}&theme=dark&playlist=false&playlist-continuous=false&chapters-image=true&episode_image_position=right&hide-logo=false&hide-likes=false&hide-comments=false&hide-sharing=false&hide-download=true`} 
@@ -195,9 +195,11 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     </div>
   );
 
+  // The router that intercepts Videos and Podcasts seamlessly into the math grid!
   const RenderCard = ({ item, layoutType }) => {
     if (layoutType === 'short') return <ShortCard item={item} />;
     if (item.type === 'video') return <VideoCard item={item} isHero={layoutType === 'hero'} />;
+    if (item.type === 'podcast') return <PodcastCard item={item} />;
     if (layoutType === 'horizontal') return <HorizontalCard item={item} isHero={false} />;
     if (layoutType === 'hero') return <HorizontalCard item={item} isHero={true} />;
     return <VerticalCard item={item} />;
@@ -205,6 +207,8 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
 
   return (
     <main className="max-w-[1600px] mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-5 gap-8 animate-in fade-in duration-300">
+      
+      {/* SIDEBAR */}
       <div className="hidden lg:flex lg:col-span-1 flex-col gap-6">
         <div className="sticky top-[88px] flex flex-col gap-6">
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
@@ -286,10 +290,8 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
             if (group.date === todayStr) displayDate = 'Today';
             else if (group.date === yesterdayStr) displayDate = 'Yesterday';
 
-            // 1. EXTRACT PODCASTS SO THEY CAN BE FULL WIDTH ROWS
-            const podcasts = group.items.filter(i => i.type === 'podcast');
-            const items = group.items.filter(i => i.type !== 'podcast');
-            
+            // Podcasts are kept inside the items array so they flow into the grid naturally!
+            const items = group.items;
             const count = items.length;
             const hasShort = items.some(i => i.type === 'short');
             const shortItem = hasShort ? items.find(i => i.type === 'short') : null;
@@ -307,18 +309,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                   <div className={`h-px flex-[5] ${theme.bg} opacity-50`}></div>
                 </div>
 
-                {/* 2. RENDER PODCASTS AS MASSIVE HORIZONTAL BANNERS TO GUARANTEE IMAGE WIDTH */}
-                {podcasts.length > 0 && (
-                  <div className="flex flex-col gap-6 w-full mb-2">
-                    {podcasts.map(pod => (
-                      <div key={pod.id} className="w-full">
-                        <PodcastCard item={pod} />
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* 3. THE RESTORED BENTO BOX MATH FOR ARTICLES AND VIDEOS */}
+                {/* THE RESTORED BENTO BOX MATH (Podcasts will flex dynamically based on placement!) */}
                 {count > 0 && (
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
                     
@@ -337,8 +328,8 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                         {otherItems.slice(2).map(item => (
                           <div key={item.id} className="lg:col-span-1 h-full"><RenderCard item={item} layoutType="vertical" /></div>
                         ))}
-                        {otherItems.length > 2 && (otherItems.length - 2) % 3 === 1 && <div className="lg:col-span-2 h-full min-h-[150px]"><PromoAd type={adTypeForThisDay} shape="banner" /></div>}
-                        {otherItems.length > 2 && (otherItems.length - 2) % 3 === 2 && <div className="lg:col-span-1 h-full min-h-[250px]"><PromoAd type={adTypeForThisDay} shape="square" /></div>}
+                        {otherItems.length > 2 && (otherItems.length - 2) % 3 === 1 && <div className="lg:col-span-2 h-full min-h-[150px] flex flex-col"><PromoAd type={adTypeForThisDay} shape="banner" /></div>}
+                        {otherItems.length > 2 && (otherItems.length - 2) % 3 === 2 && <div className="lg:col-span-1 h-full min-h-[250px] flex flex-col"><PromoAd type={adTypeForThisDay} shape="square" /></div>}
                       </>
                     )}
 
