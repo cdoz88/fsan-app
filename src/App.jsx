@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import PlaybookLoader from './components/PlaybookLoader';
 
 import Header from './components/Header';
 import ContentModal from './components/ContentModal';
@@ -190,8 +190,8 @@ export default function App() {
 
       {isInitialLoad && (
         <div className="max-w-[1600px] mx-auto p-12 flex flex-col items-center justify-center text-gray-500 min-h-[50vh]">
-          <Loader2 size={48} className="animate-spin text-red-600 mb-4" />
-          <p className="font-bold uppercase tracking-widest text-sm">Fetching {activeSport === 'All' ? 'Live Data' : `${activeSport} Data`}...</p>
+          <PlaybookLoader className="mb-8 scale-150" />
+          <p className="font-bold uppercase tracking-widest text-sm">Drawing up {activeSport === 'All' ? 'Game Plan' : `${activeSport} Data`}...</p>
         </div>
       )}
 

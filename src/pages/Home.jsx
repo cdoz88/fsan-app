@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { PlayCircle, FileText, Film, Mic, ChevronRight, LayoutList, Users, Calculator, ArrowLeftRight, Shirt, Flag, Smartphone, Loader2 } from 'lucide-react';
+import { PlayCircle, FileText, Film, Mic, ChevronRight, LayoutList, Users, Calculator, ArrowLeftRight, Shirt, HeartHandshake } from 'lucide-react';
 import { Facebook, XIcon, Youtube, Instagram, TikTok, LinkedIn, SelloutCrowds } from '../components/Icons';
 import { themes } from '../utils/theme';
+import PlaybookLoader from '../components/PlaybookLoader';
 
 export default function Home({ wpPosts, activeSport, currentView, setCurrentView, feedFilter, setFeedFilter, setSelectedItem, loadMorePosts, isLoadingMore, hasMore, isLoading }) {
   const theme = themes[activeSport];
@@ -23,13 +24,13 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
           loadMorePosts();
         }
       },
-      { threshold: 0.1, rootMargin: '400px' } // Triggers slightly before they actually hit the bottom!
+      { threshold: 0.1, rootMargin: '400px' }
     );
     if (observerTarget.current) observer.observe(observerTarget.current);
     return () => observer.disconnect();
   }, [isLoadingMore, hasMore, loadMorePosts]);
 
-  // Group the posts (The server already filtered them!)
+  // Group the posts
   const groupedFeed = [];
   wpPosts.forEach(item => {
     let group = groupedFeed.find(g => g.date === item.date);
@@ -171,10 +172,11 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
   };
 
   return (
-    <main className="max-w-[1600px] mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in duration-300">
+    // UPDATED GRID: From 12 columns down to 5 columns so the sidebar takes exactly 20%
+    <main className="max-w-[1600px] mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-5 gap-8 animate-in fade-in duration-300">
       
-      {/* LEFT COLUMN: STICKY DASHBOARD MENU */}
-      <div className="hidden lg:flex lg:col-span-3 flex-col gap-6">
+      {/* LEFT COLUMN: STICKY DASHBOARD MENU (Now takes 1 of 5 columns) */}
+      <div className="hidden lg:flex lg:col-span-1 flex-col gap-6">
         <div className="sticky top-6 flex flex-col gap-6">
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Browse Network</h4>
@@ -189,7 +191,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                   <Film size={18} className={theme.text} /> All Videos
                 </button>
                 <button className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
-                  <Mic size={18} className={theme.text} /> Podcasts
+                  <Mic size={18} className={theme.text} /> All Podcasts
                 </button>
              </div>
           </div>
@@ -211,7 +213,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
              <div className="flex flex-col gap-1">
                 <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><SelloutCrowds size={18} className={theme.text} /> Exclusive Community</a>
                 <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><Shirt size={18} className={theme.text} /> Join A Jersey League</a>
-                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><Flag size={18} className={theme.text} /> Compete in the Napkin League</a>
+                <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><HeartHandshake size={18} className={theme.text} /> Play for Charity</a>
              </div>
           </div>
           <div className="flex flex-col items-center justify-center gap-4 mt-2 mb-8">
@@ -232,8 +234,8 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
         </div>
       </div>
 
-      {/* CENTER & RIGHT: THE UNIFIED TIMELINE BENTO BOX */}
-      <div className="lg:col-span-9 flex flex-col gap-8 w-full max-w-5xl">
+      {/* CENTER & RIGHT: THE UNIFIED TIMELINE BENTO BOX (Now takes 4 of 5 columns) */}
+      <div className="lg:col-span-4 flex flex-col gap-8 w-full max-w-5xl">
         
         <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-1.5 flex gap-2 shadow-xl z-30 overflow-x-auto scrollbar-hide">
           <button onClick={() => setFeedFilter('all')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'all' ? `${theme.bg} text-white shadow-md` : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
@@ -367,7 +369,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
           {/* INFINITE SCROLL LOADER / TRIPWIRE */}
           {hasMore && (
             <div ref={observerTarget} className="w-full py-12 flex justify-center items-center">
-              {isLoadingMore && <Loader2 size={32} className="animate-spin text-red-600" />}
+              {isLoadingMore && <PlaybookLoader className="scale-125" />}
             </div>
           )}
 
