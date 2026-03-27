@@ -37,6 +37,7 @@ export default function App() {
   const [isCategoriesReady, setIsCategoriesReady] = useState(false);
   const [postsCache, setPostsCache] = useState({}); 
 
+  // URL Syncing
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let changed = false;
@@ -61,6 +62,7 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // Fetch Category Map (Only used now to translate the 'activeSport' filter into an ID for the API)
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -79,8 +81,11 @@ export default function App() {
     fetchCategories();
   }, []);
 
+  // --- THE NEW UNIFIED FETCH ENGINE ---
   useEffect(() => {
     if (!isCategoriesReady) return;
+    
+    // Check Cache First! (Optimistic UI)
     if (currentPage === 1 && postsCache[activeSport]) {
       setWpPosts(postsCache[activeSport]);
       setIsLoading(false);
@@ -91,6 +96,7 @@ export default function App() {
       try {
         if (currentPage === 1) setIsLoading(true);
 
+        // Build Category Query if filtering by sport
         let catQuery = '';
         if (activeSport !== 'All' && Object.keys(categoryMap).length > 0) {
           let targetIds = [];
@@ -101,23 +107,24 @@ export default function App() {
           if (targetIds.length > 0) catQuery = `&categories=${targetIds.join(',')}`;
         }
 
-        const [articlesRes, videosRes] = await Promise.all([
-          fetch(`https://fsan.com/wp-json/wp/v2/posts?_embed&per_page=15&page=${currentPage}${catQuery}`).catch(e => null),
-          fetch(`https://fsan.com/wp-json/wp/v2/yt2posts_youtube?_embed&per_page=12&page=${currentPage}${catQuery}`).catch(e => null)
-        ]);
+        // ONE SINGLE FETCH TO OUR CUSTOM ENDPOINT!
+        const res = await fetch(`https://fsan.com/wp-json/fsan/v1/feed?per_page=15&page=${currentPage}${catQuery}`);
+        if (!res.ok) throw new Error("API failed");
+        
+        const rawPosts = await res.json();
 
-        if (!articlesRes && !videosRes) throw new Error("Network connection dropped.");
-
-        const rawArticles = articlesRes?.ok ? await articlesRes.json() : [];
-        const rawVideos = videosRes?.ok ? await videosRes.json() : [];
-
-        const formatPost = (post, defaultType) => {
-          const slugs = (post.categories || []).map(id => categoryMap[id] || '');
+        const formatPost = (post) => {
+          // The PHP snippet now provides the slugs directly!
+          const slugs = post.category_slugs || []; 
+          
           let sport = 'Football'; 
           if (slugs.some(s => s.includes('basketball'))) sport = 'Basketball';
           if (slugs.some(s => s.includes('baseball'))) sport = 'Baseball';
 
-          // --- NEW SHORTS RECOGNITION LOGIC ---
+          // Identify Base Type
+          let defaultType = post.post_type === 'yt2posts_youtube' ? 'video' : 'article';
+          
+          // Identify Shorts
           let type = defaultType;
           if (slugs.some(s => s.includes('shorts'))) {
             type = 'short';
@@ -131,16 +138,17 @@ export default function App() {
           let youtubeId = null;
           let cleanContent = post.content?.rendered || '';
           
-          let customYtDesc = post.youtube_description || post.meta?.youtube_description || post.acf?.youtube_description;
-          if (Array.isArray(customYtDesc)) customYtDesc = customYtDesc[0];
+          let customYtDesc = post.youtube_description;
 
+          // Parse YouTube iFrame
           const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
           const match = cleanContent.match(ytRegex);
           if (match && match[1]) {
             youtubeId = match[1];
-            cleanContent = cleanContent.replace(/<iframe.*?<\/iframe>/i, '');
+            cleanContent = cleanContent.replace(/<iframe.*?<\/iframe>/i, ''); // Strip iframe from description
           }
 
+          // Format custom YouTube Description
           if ((type === 'video' || type === 'short') && customYtDesc && typeof customYtDesc === 'string' && customYtDesc.trim().length > 0) {
             let formattedDesc = customYtDesc.replace(/(?:\r\n|\r|\n)/g, '<br/>');
             const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -156,7 +164,7 @@ export default function App() {
             date,
             rawTimestamp,
             sport,
-            type: type, // Pass the dynamically identified type!
+            type,
             imageUrl,
             author,
             youtubeId,
@@ -164,32 +172,31 @@ export default function App() {
           };
         };
 
-        const formattedArticles = rawArticles.map(post => formatPost(post, 'article'));
-        const formattedVideos = rawVideos.map(post => formatPost(post, 'video'));
-        const newPosts = [...formattedArticles, ...formattedVideos];
+        const newPosts = rawPosts.map(formatPost);
 
         let finalPostsToRender = [];
 
         if (currentPage === 1) {
-          newPosts.sort((a, b) => b.rawTimestamp - a.rawTimestamp);
-          finalPostsToRender = newPosts;
+          finalPostsToRender = newPosts; // No need to sort, WP did it!
           setWpPosts(newPosts);
           setPostsCache(prev => ({ ...prev, [activeSport]: newPosts }));
         } else {
           setWpPosts(prev => {
             const combined = [...prev, ...newPosts];
+            // Deduplicate just in case
             const uniqueIds = new Set();
             finalPostsToRender = combined.filter(p => {
               if (uniqueIds.has(p.id)) return false;
               uniqueIds.add(p.id);
               return true;
-            }).sort((a, b) => b.rawTimestamp - a.rawTimestamp);
+            });
             
             setPostsCache(cache => ({ ...cache, [activeSport]: finalPostsToRender }));
             return finalPostsToRender;
           });
         }
 
+        // Open modal if URL has ID
         const params = new URLSearchParams(window.location.search);
         const urlId = params.get('id');
         if (urlId && !selectedItem) {
@@ -243,7 +250,7 @@ export default function App() {
   };
 
   const filteredPosts = wpPosts.filter(post => activeSport === 'All' || post.sport === activeSport);
-  const videos = filteredPosts.filter(p => p.type === 'video' || p.type === 'short'); // Ensure shorts show up in Video Archive
+  const videos = filteredPosts.filter(p => p.type === 'video' || p.type === 'short');
   const articles = filteredPosts.filter(p => p.type === 'article' || p.type === 'podcast');
 
   return (
