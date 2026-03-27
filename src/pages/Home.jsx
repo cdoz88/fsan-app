@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { PlayCircle, FileText, Film, Mic, ChevronRight, LayoutList, Users, Calculator, ArrowLeftRight, Shirt, HeartHandshake } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { PlayCircle, FileText, Film, Mic, ChevronRight, LayoutList, Users, Calculator, ArrowLeftRight, Shirt, HeartHandshake, ShoppingCart, ChevronUp } from 'lucide-react';
 import { Facebook, XIcon, Youtube, Instagram, TikTok, LinkedIn, SelloutCrowds } from '../components/Icons';
 import { themes } from '../utils/theme';
 import PlaybookLoader from '../components/PlaybookLoader';
@@ -7,6 +7,7 @@ import PlaybookLoader from '../components/PlaybookLoader';
 export default function Home({ wpPosts, activeSport, currentView, setCurrentView, feedFilter, setFeedFilter, setSelectedItem, loadMorePosts, isLoadingMore, hasMore, isLoading }) {
   const theme = themes[activeSport];
   const observerTarget = useRef(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   const socialLinks = {
     All: { facebook: 'https://www.facebook.com/fantasyfootballadvicenetwork', x: 'https://x.com/fsadvicenet', youtube: 'https://www.youtube.com/@FFAdviceNet', tiktok: 'https://www.tiktok.com/@fsadvicenetwork', linkedin: 'https://www.linkedin.com/company/fantasy-sports-advice', sellout: 'https://www.selloutcrowds.com/crowd/fsan', instagram: null },
@@ -29,6 +30,15 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
     if (observerTarget.current) observer.observe(observerTarget.current);
     return () => observer.disconnect();
   }, [isLoadingMore, hasMore, loadMorePosts]);
+
+  // --- SCROLL TO TOP LISTENER ---
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Group the posts
   const groupedFeed = [];
@@ -201,20 +211,21 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
       
       {/* LEFT COLUMN: STICKY DASHBOARD MENU (Now takes 1 of 5 columns) */}
       <div className="hidden lg:flex lg:col-span-1 flex-col gap-6">
-        <div className="sticky top-6 flex flex-col gap-6">
+        {/* Adjusted top offset so it doesn't collide with the new Sticky Header! */}
+        <div className="sticky top-[88px] flex flex-col gap-6">
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-4 px-2">Browse Network</h4>
              <div className="flex flex-col gap-1">
-                <button onClick={() => setCurrentView('home')} className={`flex items-center gap-3 text-sm font-bold transition-colors p-2.5 rounded-xl w-full text-left ${currentView === 'home' ? 'bg-[#252525] text-white shadow-inner border border-gray-700' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'}`}>
+                <button onClick={() => { setCurrentView('home'); window.scrollTo(0, 0); }} className={`flex items-center gap-3 text-sm font-bold transition-colors p-2.5 rounded-xl w-full text-left ${currentView === 'home' ? 'bg-[#252525] text-white shadow-inner border border-gray-700' : 'text-gray-400 hover:text-white hover:bg-gray-800/50'}`}>
                   <LayoutList size={18} className={theme.text} /> Timeline Feed
                 </button>
-                <button onClick={() => setCurrentView('articles')} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
+                <button onClick={() => { setCurrentView('articles'); window.scrollTo(0, 0); }} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
                   <FileText size={18} className={theme.text} /> All Articles
                 </button>
-                <button onClick={() => setCurrentView('videos')} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
+                <button onClick={() => { setCurrentView('videos'); window.scrollTo(0, 0); }} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
                   <Film size={18} className={theme.text} /> All Videos
                 </button>
-                <button className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
+                <button onClick={() => window.scrollTo(0, 0)} className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl w-full text-left">
                   <Mic size={18} className={theme.text} /> All Podcasts
                 </button>
              </div>
@@ -238,6 +249,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                 <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><SelloutCrowds size={18} className={theme.text} /> Exclusive Community</a>
                 <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><Shirt size={18} className={theme.text} /> Join A Jersey League</a>
                 <a href="#" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><HeartHandshake size={18} className={theme.text} /> Play for Charity</a>
+                <a href="https://fsan.shop" target="_blank" rel="noreferrer" className="flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-white transition-colors p-2.5 hover:bg-gray-800/50 rounded-xl"><ShoppingCart size={18} className={theme.text} /> Merch Shop</a>
              </div>
           </div>
           <div className="flex flex-col items-center justify-center gap-4 mt-2 mb-8">
@@ -251,7 +263,7 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
                 {currentLinks.linkedin && <a href={currentLinks.linkedin} target="_blank" rel="noreferrer" className={`transition-colors cursor-pointer ${theme.hoverText}`}><LinkedIn size={20} /></a>}
              </div>
              <div className="text-center mt-2">
-               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">&copy; {new Date().getFullYear()} Fantasy Sports Advice Network</p>
+               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">&copy; {new Date().getFullYear()} FSAN</p>
                <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mt-1">All Rights Reserved</p>
              </div>
           </div>
@@ -262,16 +274,16 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
       <div className="lg:col-span-4 flex flex-col gap-8 w-full max-w-5xl">
         
         <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-1.5 flex gap-2 shadow-xl z-30 overflow-x-auto scrollbar-hide">
-          <button onClick={() => setFeedFilter('all')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'all' ? `${theme.bg} text-white shadow-md` : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
+          <button onClick={() => { setFeedFilter('all'); window.scrollTo(0, 0); }} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'all' ? `${theme.bg} text-white shadow-md` : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <LayoutList size={14} /> All
           </button>
-          <button onClick={() => setFeedFilter('articles')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'articles' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
+          <button onClick={() => { setFeedFilter('articles'); window.scrollTo(0, 0); }} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'articles' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <FileText size={14} /> Articles
           </button>
-          <button onClick={() => setFeedFilter('videos')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'videos' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
+          <button onClick={() => { setFeedFilter('videos'); window.scrollTo(0, 0); }} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'videos' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <Film size={14} /> Videos
           </button>
-          <button onClick={() => setFeedFilter('podcasts')} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'podcasts' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
+          <button onClick={() => { setFeedFilter('podcasts'); window.scrollTo(0, 0); }} className={`flex-1 min-w-[max-content] py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${feedFilter === 'podcasts' ? 'bg-[#252525] text-white shadow-md border border-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-800/50'}`}>
             <Mic size={14} /> Podcasts
           </button>
         </div>
@@ -335,6 +347,18 @@ export default function Home({ wpPosts, activeSport, currentView, setCurrentView
           )}
         </div>
       </div>
+
+      {/* SCROLL TO TOP BUTTON */}
+      {showScrollTop && (
+        <button 
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-6 right-6 z-50 p-3 bg-red-600 text-white rounded-full shadow-[0_0_15px_rgba(220,38,38,0.5)] hover:bg-red-500 hover:scale-110 transition-all duration-300"
+          aria-label="Scroll to top"
+        >
+          <ChevronUp size={24} />
+        </button>
+      )}
+
     </main>
   );
 }
