@@ -65,7 +65,11 @@ export default function App() {
 
   // --- INFINITE FETCH ENGINE ---
   useEffect(() => {
-    const targetType = currentView === 'home' ? feedFilter : currentView;
+    // NEW: Explicitly ask the API for 'shows' when on the Podcasts archive
+    let targetType = currentView;
+    if (currentView === 'home') targetType = feedFilter;
+    if (currentView === 'podcasts') targetType = 'shows';
+
     const cacheKey = `${activeSport}-${targetType}`;
 
     if (currentPage === 1) {
@@ -81,7 +85,6 @@ export default function App() {
 
     const fetchWordPressData = async () => {
       try {
-        // CACHE BUSTER ADDED HERE: &t=${Date.now()} forces the server to give fresh data
         const res = await fetch(`https://fsan.com/wp-json/fsan/v1/feed?per_page=10&page=${currentPage}&sport=${activeSport}&type=${targetType}&t=${Date.now()}`);
         if (!res.ok) throw new Error("API failed");
         
@@ -103,7 +106,6 @@ export default function App() {
           let cleanContent = post.content?.rendered || '';
           let excerpt = post.excerpt?.rendered || '';
 
-          // 1. Decode WPBakery (if present)
           const decodeWP = (text) => {
             return text.replace(/\[vc_raw_html[^\]]*\](.*?)\[\/vc_raw_html\]/gi, (match, b64) => {
               try { return decodeURIComponent(atob(b64.replace(/\s/g, ''))); } catch(e) { return ''; }
@@ -112,25 +114,21 @@ export default function App() {
           cleanContent = decodeWP(cleanContent);
           excerpt = decodeWP(excerpt);
 
-          // 2. Robust ID Extraction
           const showMatch = cleanContent.match(/show_id=([0-9]+)/);
           const epMatch = cleanContent.match(/episode_id=([0-9]+)/);
           
           let spreakerShowId = post.spreaker_show_id || (showMatch ? showMatch[1] : null);
           let spreakerId = post.spreaker_episode_id || (epMatch ? epMatch[1] : null);
 
-          // 3. Category Detection
           const isMasterCategory = slugs.some(s => ['podcast', 'podcast-basketball', 'podcast-baseball'].includes(s));
           const isEpisodeCategory = slugs.some(s => ['football-pod-episode', 'basketball-pod-episode', 'baseball-pod-episode', 'pod-episode'].includes(s));
           
-          // A Master Show is anything with a show_id OR sitting in a master category
           const isMasterShow = !!spreakerShowId || isMasterCategory;
 
           if (spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('spreaker')) {
              type = 'podcast';
           }
 
-          // 4. Content Scrubber
           const stripTags = (html) => html.replace(/\[\/?vc_[^\]]+\]/gi, '').replace(/\[spreaker[^\]]*\]/gi, '').trim();
           cleanContent = stripTags(cleanContent);
           excerpt = stripTags(excerpt);
@@ -220,22 +218,17 @@ export default function App() {
 
   const isInitialLoad = isLoading && wpPosts.length === 0;
   
-  // ==========================================
-  // STRICT ROUTING FILTERS
-  // ==========================================
   const timelinePosts = wpPosts.filter(p => !p.isMasterShow);
-  
   const articlePosts = timelinePosts.filter(p => p.type === 'article');
   const videoPosts = timelinePosts.filter(p => p.type === 'video' || p.type === 'short');
   const podcastEpisodes = timelinePosts.filter(p => p.type === 'podcast');
 
-  // Filter the home feed based on the user's selected sub-tab
   let homeFeed = timelinePosts;
   if (feedFilter === 'articles') homeFeed = articlePosts;
   if (feedFilter === 'videos') homeFeed = videoPosts;
   if (feedFilter === 'podcasts') homeFeed = podcastEpisodes;
 
-  // Master Podcasts ONLY go to the Podcasts Archive
+  // Master Podcasts are now safely isolated!
   const masterPodcasts = wpPosts.filter(p => p.isMasterShow);
 
   return (
@@ -249,7 +242,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Notice how cleanly the filtered feeds map directly to their corresponding views! */}
       {!isInitialLoad && currentView === 'home' && (
         <Home wpPosts={homeFeed} activeSport={activeSport} currentView={currentView} setCurrentView={handleViewChange} feedFilter={feedFilter} setFeedFilter={handleFeedFilterChange} setSelectedItem={setSelectedItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} hasMore={hasMore} isLoading={isLoading} />
       )}

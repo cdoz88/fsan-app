@@ -1,14 +1,13 @@
 import React from 'react';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Headphones } from 'lucide-react';
 import { themes } from '../utils/theme';
 import Sidebar from '../components/Sidebar';
 
-// Simple, dumb component that just renders the data WordPress gives it!
-const PodcastShowCard = ({ podcast, onClick }) => {
+const PodcastShowCard = ({ podcast, onClick, theme }) => {
   return (
     <div 
       onClick={() => onClick(podcast)} 
-      className="cursor-pointer group relative rounded-xl overflow-hidden aspect-square border border-gray-800 hover:border-gray-500 transition-all shadow-xl bg-[#111]"
+      className={`cursor-pointer group relative rounded-xl overflow-hidden aspect-square border border-gray-800 ${theme.hoverBorder} transition-all shadow-xl bg-[#111]`}
     >
       {podcast.imageUrl ? (
         <img 
@@ -21,7 +20,17 @@ const PodcastShowCard = ({ podcast, onClick }) => {
           <span className="font-bold text-gray-500" dangerouslySetInnerHTML={{ __html: podcast.title }} />
         </div>
       )}
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
+      
+      {/* Dark gradient overlay for text readability and hover effect */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+      {/* "Listen" Pill Badge Overlay */}
+      <div className="absolute bottom-4 left-0 right-0 flex justify-center z-20 translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
+        <div className="bg-black/80 backdrop-blur-md border border-gray-600 text-white px-5 py-2 rounded-full flex items-center gap-2 shadow-lg">
+          <Headphones size={16} className={theme.text} />
+          <span className="text-xs font-black uppercase tracking-widest mt-0.5">Listen</span>
+        </div>
+      </div>
     </div>
   );
 };
@@ -57,6 +66,7 @@ export default function PodcastsArchive({ podcasts = [], activeSport = 'All', se
               key={master.id} 
               podcast={master} 
               onClick={setSelectedItem} 
+              theme={themes[master.sport] || theme}
             />
           ))}
           
