@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Loader2, Headphones } from 'lucide-react';
+import { ArrowLeft, Headphones } from 'lucide-react';
 import { themes } from '../utils/theme';
 import Sidebar from '../components/Sidebar';
 
@@ -35,12 +35,22 @@ const PodcastShowCard = ({ podcast, onClick, theme }) => {
   );
 };
 
-export default function PodcastsArchive({ podcasts = [], activeSport = 'All', setCurrentView, setSelectedItem, loadMorePosts, isLoadingMore }) {
+export default function PodcastsArchive({ podcasts = [], activeSport = 'All', setCurrentView, setSelectedItem }) {
   const theme = themes[activeSport] || themes.All;
 
-  // CHANGED HERE: Updated 'podcast' to 'football-podcast'
+  // Filter out the Master Shows from the feed
   const masterSlugs = ['football-podcast', 'podcast-basketball', 'podcast-baseball'];
   const showPodcasts = podcasts.filter(p => p.spreakerShowId || p.category_slugs?.some(slug => masterSlugs.includes(slug)));
+
+  // Group podcasts by Sport
+  const groupedPodcasts = {
+    Football: showPodcasts.filter(p => p.sport === 'Football'),
+    Baseball: showPodcasts.filter(p => p.sport === 'Baseball'),
+    Basketball: showPodcasts.filter(p => p.sport === 'Basketball'),
+  };
+
+  // The explicit order you requested
+  const displayOrder = ['Football', 'Baseball', 'Basketball'];
 
   return (
     <main className="max-w-[1600px] mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -61,31 +71,44 @@ export default function PodcastsArchive({ podcasts = [], activeSport = 'All', se
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {showPodcasts.map(master => (
-            <PodcastShowCard 
-              key={master.id} 
-              podcast={master} 
-              onClick={setSelectedItem} 
-              theme={themes[master.sport] || theme}
-            />
-          ))}
-          
-          {showPodcasts.length === 0 && (
-            <div className="col-span-full py-12 text-center text-gray-500 font-bold uppercase tracking-widest border-2 border-dashed border-gray-800 rounded-2xl">
-              No podcast shows found yet.
-            </div>
-          )}
-        </div>
-        
-        {showPodcasts.length > 0 && (
-          <button 
-            onClick={loadMorePosts}
-            disabled={isLoadingMore}
-            className={`w-full py-4 mt-8 border border-gray-700 rounded-lg text-sm font-bold uppercase tracking-widest transition-colors bg-[#1a1a1a] flex items-center justify-center gap-3 ${isLoadingMore ? 'opacity-50 cursor-not-allowed' : `${theme.hoverText} ${theme.hoverBorder}`}`}
-          >
-            {isLoadingMore ? <><Loader2 size={18} className="animate-spin" /> Fetching Older Podcasts...</> : 'Load More Podcasts'}
-          </button>
+        {/* If no shows exist at all, display a fallback message */}
+        {showPodcasts.length === 0 ? (
+          <div className="col-span-full py-12 text-center text-gray-500 font-bold uppercase tracking-widest border-2 border-dashed border-gray-800 rounded-2xl">
+            No podcast shows found yet.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-10">
+            {/* Iterate through our explicit order and render the sections */}
+            {displayOrder.map(sport => {
+              const sportPods = groupedPodcasts[sport];
+              
+              // If there are no podcasts for this specific sport, skip rendering the row
+              if (sportPods.length === 0) return null;
+              
+              const sportTheme = themes[sport] || themes.All;
+
+              return (
+                <div key={sport} className="flex flex-col">
+                  {/* Sport Header */}
+                  <h2 className={`text-xl font-black uppercase tracking-wider ${sportTheme.text} mb-4 border-b border-gray-800 pb-2`}>
+                    {sport}
+                  </h2>
+                  
+                  {/* Grid of Podcast Cards for this Sport */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                    {sportPods.map(master => (
+                      <PodcastShowCard 
+                        key={master.id} 
+                        podcast={master} 
+                        onClick={setSelectedItem} 
+                        theme={sportTheme}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 
