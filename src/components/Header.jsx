@@ -26,8 +26,6 @@ export default function Header({ activeSport, setActiveSport, setCurrentView }) 
 
   return (
     <>
-      {/* THE UNIFIED SINGLE APP HEADER */}
-      {/* Changed relative to sticky and updated z-index to stay above everything! */}
       <div className="bg-[#1a1a1a] border-b border-gray-800 px-4 py-3 flex justify-between items-center z-[100] sticky top-0 shadow-md">
         
         {/* Left Side: Logo & Dropdown Switcher */}
@@ -59,9 +57,9 @@ export default function Header({ activeSport, setActiveSport, setCurrentView }) 
                     key={sport.name}
                     onClick={() => { 
                       setActiveSport(sport.name); 
-                      setCurrentView('home'); 
+                      // Removed setCurrentView('home') so you stay on your current tab!
                       setIsSportDropdownOpen(false); 
-                      window.scrollTo(0, 0); // Auto-scroll to top on sport change!
+                      window.scrollTo(0, 0); // Auto-scroll to top on sport change
                     }}
                     className={`w-full flex items-center gap-4 px-4 py-3 text-left transition-colors ${
                       activeSport === sport.name ? 'bg-[#252525] text-white shadow-inner' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
