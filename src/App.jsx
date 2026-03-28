@@ -81,7 +81,8 @@ export default function App() {
 
     const fetchWordPressData = async () => {
       try {
-        const res = await fetch(`https://fsan.com/wp-json/fsan/v1/feed?per_page=10&page=${currentPage}&sport=${activeSport}&type=${targetType}`);
+        // CACHE BUSTER ADDED HERE: &t=${Date.now()} forces the server to give fresh data
+        const res = await fetch(`https://fsan.com/wp-json/fsan/v1/feed?per_page=10&page=${currentPage}&sport=${activeSport}&type=${targetType}&t=${Date.now()}`);
         if (!res.ok) throw new Error("API failed");
         
         const totalPages = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);
