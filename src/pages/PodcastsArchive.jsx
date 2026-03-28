@@ -38,7 +38,8 @@ const PodcastShowCard = ({ podcast, onClick, theme }) => {
 export default function PodcastsArchive({ podcasts = [], activeSport = 'All', setCurrentView, setSelectedItem, loadMorePosts, isLoadingMore }) {
   const theme = themes[activeSport] || themes.All;
 
-  const masterSlugs = ['podcast', 'podcast-basketball', 'podcast-baseball'];
+  // CHANGED HERE: Updated 'podcast' to 'football-podcast'
+  const masterSlugs = ['football-podcast', 'podcast-basketball', 'podcast-baseball'];
   const showPodcasts = podcasts.filter(p => p.spreakerShowId || p.category_slugs?.some(slug => masterSlugs.includes(slug)));
 
   return (

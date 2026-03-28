@@ -65,7 +65,6 @@ export default function App() {
 
   // --- INFINITE FETCH ENGINE ---
   useEffect(() => {
-    // NEW: Explicitly ask the API for 'shows' when on the Podcasts archive
     let targetType = currentView;
     if (currentView === 'home') targetType = feedFilter;
     if (currentView === 'podcasts') targetType = 'shows';
@@ -120,7 +119,8 @@ export default function App() {
           let spreakerShowId = post.spreaker_show_id || (showMatch ? showMatch[1] : null);
           let spreakerId = post.spreaker_episode_id || (epMatch ? epMatch[1] : null);
 
-          const isMasterCategory = slugs.some(s => ['podcast', 'podcast-basketball', 'podcast-baseball'].includes(s));
+          // CHANGED HERE: Updated 'podcast' to 'football-podcast'
+          const isMasterCategory = slugs.some(s => ['football-podcast', 'podcast-basketball', 'podcast-baseball'].includes(s));
           const isEpisodeCategory = slugs.some(s => ['football-pod-episode', 'basketball-pod-episode', 'baseball-pod-episode', 'pod-episode'].includes(s));
           
           const isMasterShow = !!spreakerShowId || isMasterCategory;
@@ -228,7 +228,6 @@ export default function App() {
   if (feedFilter === 'videos') homeFeed = videoPosts;
   if (feedFilter === 'podcasts') homeFeed = podcastEpisodes;
 
-  // Master Podcasts are now safely isolated!
   const masterPodcasts = wpPosts.filter(p => p.isMasterShow);
 
   return (
