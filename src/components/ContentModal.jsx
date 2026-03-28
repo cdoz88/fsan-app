@@ -160,10 +160,13 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
 
 // --- 3. PODCAST MODAL LAYOUT ---
 const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) => (
-  <div className="flex flex-col lg:flex-row h-full min-h-0">
-    {/* Left Side: Dynamic Podcast Player Embed (NOW THE WIDE COLUMN) */}
-    <div className="flex-1 bg-[#0a0a0a] flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-800 p-4 sm:p-6 relative min-h-0">
-      <div className="w-full h-full min-h-[400px] bg-[#111] rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800">
+  // ADDED: overflow-y-auto for mobile so the whole view naturally scrolls without getting crushed
+  <div className="flex flex-col lg:flex-row h-full min-h-0 overflow-y-auto lg:overflow-hidden">
+    
+    {/* Left Side: Dynamic Podcast Player Embed */}
+    <div className="flex-none lg:flex-1 bg-[#0a0a0a] flex flex-col items-center justify-center lg:border-r border-gray-800 p-4 sm:p-6 relative min-h-0">
+      {/* We apply a fixed height here on mobile (h-[380px] sm:h-[400px]) so it never gets squeezed by flex! */}
+      <div className="w-full h-[380px] sm:h-[400px] lg:h-full lg:min-h-[400px] bg-[#111] rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800 shrink-0">
         {selectedItem.spreakerShowId ? (
           <iframe 
             src={`https://widget.spreaker.com/player?show_id=${selectedItem.spreakerShowId}&theme=dark&playlist=show&playlist-continuous=true&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-download=true`} 
@@ -171,7 +174,7 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
             height="100%"
             frameBorder="0" 
             allow="autoplay; picture-in-picture"
-            style={{ display: 'block', minHeight: '400px' }}
+            style={{ display: 'block', width: '100%', height: '100%' }}
           ></iframe>
         ) : selectedItem.spreakerId ? (
           <iframe 
@@ -180,28 +183,34 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
             height="100%"
             frameBorder="0" 
             allow="autoplay; picture-in-picture"
-            style={{ display: 'block', minHeight: '400px' }}
+            style={{ display: 'block', width: '100%', height: '100%' }}
           ></iframe>
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-500 font-bold uppercase tracking-widest text-xs">Audio Unavailable</div>
         )}
       </div>
+
+      {/* MOBILE ONLY: Share Buttons immediately below player */}
+      <div className="w-full lg:hidden pt-6 pb-2 flex flex-col items-center">
+        <h4 className="text-gray-500 font-bold text-[10px] uppercase tracking-widest mb-3">Share this podcast</h4>
+        <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} btnSize="w-10 h-10" iconSize={16} />
+      </div>
     </div>
 
-    {/* Right Side: Description and Share (NOW THE NARROW COLUMN) */}
-    <div className="lg:w-[400px] xl:w-[450px] shrink-0 p-6 sm:p-10 bg-[#121212] flex flex-col overflow-y-auto">
+    {/* Right Side: Description and Share */}
+    {/* Added border-t lg:border-t-0 for a clean mobile separation */}
+    <div className="flex-none lg:w-[400px] xl:w-[450px] shrink-0 p-6 sm:p-10 bg-[#121212] flex flex-col lg:overflow-y-auto border-t lg:border-t-0 border-gray-800">
       <div className="flex gap-2 items-center mb-4">
         <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport]?.bg || 'bg-gray-500'}`}></span>
-        {/* Specifically left off the Date here as requested! */}
         <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">{selectedItem.sport} Podcast</span>
       </div>
       
-      {/* Adjusted title size to fit better in the narrow column */}
       <h1 className="text-2xl sm:text-3xl font-black text-white mb-6 leading-tight drop-shadow-lg" dangerouslySetInnerHTML={{ __html: selectedItem.title }} />
       
-      <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-1 mb-8" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
+      <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-1 lg:mb-8" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
 
-      <div className="pt-6 border-t border-gray-800 mt-auto">
+      {/* DESKTOP ONLY: Share Buttons remain locked to the bottom */}
+      <div className="hidden lg:block pt-6 border-t border-gray-800 mt-auto">
         <h4 className="text-gray-500 font-bold text-[10px] uppercase tracking-widest mb-3">Share this podcast</h4>
         <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} btnSize="w-10 h-10" iconSize={16} />
       </div>
