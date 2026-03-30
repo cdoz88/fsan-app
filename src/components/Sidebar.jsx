@@ -34,11 +34,12 @@ export default function Sidebar({ activeSport = 'All' }) {
     }
   }, [isMobileOpen]);
 
+  // Plumped up Nav Styles
   const getNavStyle = (viewName) => {
     const isActive = currentView === viewName;
     return isActive
-      ? "flex items-center gap-2.5 text-[13px] font-bold transition-colors p-2 rounded-xl w-full text-left bg-[#252525] text-white shadow-inner border border-gray-700/50 no-underline"
-      : "flex items-center gap-2.5 text-[13px] font-bold text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline";
+      ? "flex items-center gap-3 text-[13px] font-bold transition-colors px-3 py-2.5 rounded-xl w-full text-left bg-[#252525] text-white shadow-inner border border-gray-700/50 no-underline"
+      : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline";
   };
 
   const socialLinksData = {
@@ -126,7 +127,7 @@ export default function Sidebar({ activeSport = 'All' }) {
       <div className={`
         fixed inset-y-0 left-0 z-[101] w-[280px] bg-[#0a0a0a] border-r border-gray-800 overflow-y-auto px-4 py-8 shadow-2xl
         transform transition-transform duration-300 ease-in-out flex flex-col gap-4
-        lg:static lg:w-auto lg:z-auto lg:transform-none lg:border-none lg:bg-transparent lg:overflow-visible lg:px-0 lg:py-0 lg:shadow-none lg:col-span-3 lg:pt-4 lg:translate-x-0
+        lg:static lg:w-[240px] lg:z-auto lg:transform-none lg:border-none lg:bg-transparent lg:overflow-visible lg:px-0 lg:py-0 lg:shadow-none lg:pt-4 lg:translate-x-0 lg:flex-shrink-0
         ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         
@@ -137,24 +138,24 @@ export default function Sidebar({ activeSport = 'All' }) {
            </button>
         </div>
 
-        {/* Desktop Sticky Container - Restored to exact original pt-4 and top-20 spacing */}
+        {/* Desktop Sticky Container */}
         <div className="lg:sticky lg:top-20 flex flex-col gap-4 pb-24 lg:pb-0">
           
           {/* BROWSE NETWORK */}
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-3 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Browse Network</h4>
-             <div className="flex flex-col gap-0.5">
+             <div className="flex flex-col gap-1">
                 <Link href={`/${activeSport.toLowerCase()}/home`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('home')}>
-                  <Flame size={16} className={currentView === 'home' ? 'text-white' : accentColor} /> The Dashboard
+                  <Flame size={18} className={currentView === 'home' ? 'text-white' : accentColor} /> The Dashboard
                 </Link>
                 <Link href={`/${activeSport.toLowerCase()}/articles`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('articles')}>
-                  <FileText size={16} className={currentView === 'articles' ? 'text-white' : accentColor} /> All Articles
+                  <FileText size={18} className={currentView === 'articles' ? 'text-white' : accentColor} /> All Articles
                 </Link>
                 <Link href={`/${activeSport.toLowerCase()}/videos`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('videos')}>
-                  <Video size={16} className={currentView === 'videos' ? 'text-white' : accentColor} /> All Videos
+                  <Video size={18} className={currentView === 'videos' ? 'text-white' : accentColor} /> All Videos
                 </Link>
                 <Link href={`/${activeSport.toLowerCase()}/podcasts`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('podcasts')}>
-                  <Mic size={16} className={currentView === 'podcasts' ? 'text-white' : accentColor} /> All Podcasts
+                  <Mic size={18} className={currentView === 'podcasts' ? 'text-white' : accentColor} /> All Podcasts
                 </Link>
              </div>
           </div>
@@ -162,12 +163,12 @@ export default function Sidebar({ activeSport = 'All' }) {
           {/* PRO TOOLS */}
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-3 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Pro Tools</h4>
-             <div className="flex flex-col gap-0.5">
+             <div className="flex flex-col gap-1">
                 {currentMenu.proTools.map((tool, idx) => {
                   const Icon = tool.icon;
                   return (
-                    <Link key={idx} href={tool.href} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2.5 text-[13px] font-bold text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/30 rounded-xl no-underline group">
-                      <Icon size={16} className={`${theme.text} group-hover:text-white transition-colors`} /> {tool.name}
+                    <Link key={idx} href={tool.href} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl no-underline group">
+                      <Icon size={18} className={`${theme.text} group-hover:text-white transition-colors`} /> {tool.name}
                     </Link>
                   );
                 })}
@@ -177,7 +178,7 @@ export default function Sidebar({ activeSport = 'All' }) {
           {/* CONNECT */}
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-3 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Connect</h4>
-             <div className="flex flex-col gap-0.5">
+             <div className="flex flex-col gap-1">
                 {currentMenu.connect.map((item, idx) => {
                   const Icon = item.icon;
                   return (
@@ -187,9 +188,9 @@ export default function Sidebar({ activeSport = 'All' }) {
                       onClick={() => setIsMobileMenuOpen(false)}
                       target={item.external ? "_blank" : undefined}
                       rel={item.external ? "noopener noreferrer" : undefined}
-                      className="flex items-center gap-2.5 text-[13px] font-bold text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/30 rounded-xl no-underline group"
+                      className="flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl no-underline group"
                     >
-                      <Icon size={16} className={`${theme.text} group-hover:text-white transition-colors`} /> {item.name}
+                      <Icon size={18} className={`${theme.text} group-hover:text-white transition-colors`} /> {item.name}
                     </Link>
                   );
                 })}
