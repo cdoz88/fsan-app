@@ -137,7 +137,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
   const BoothCard = ({ item }) => (
     <div onClick={() => setSelectedItem(item)} className={`flex items-center gap-4 bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 p-4 rounded-2xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg`}>
       <div className="w-14 h-14 rounded-full bg-gray-800/80 flex items-center justify-center flex-shrink-0 group-hover:bg-gray-700 transition-colors border border-gray-700/50 shadow-inner">
-        <Play size={18} className={`${themes[item.sport]?.text || 'text-gray-400'} group-hover:text-white transition-colors`} fill="currentColor" />
+        <Play size={18} className="text-gray-500 group-hover:text-white transition-colors" fill="currentColor" />
       </div>
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-1">

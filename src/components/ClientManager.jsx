@@ -78,9 +78,10 @@ export default function ClientManager({ initialPosts, activeSport, currentView, 
   return (
     <>
       <Header activeSport={activeSport} />
-      <div className="max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10 grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
+      {/* Changed to Flex layout to support the fixed width sidebar properly */}
+      <div className="max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-8 w-full">
         <Sidebar activeSport={activeSport} />
-        <div className="lg:col-span-9 w-full">
+        <div className="flex-1 w-full min-w-0">
           {currentView === 'home' && (
             <Home wpPosts={timelinePosts} masterPodcasts={masterPodcasts} activeSport={activeSport} setSelectedItem={handleSelectItem} isLoading={false} />
           )}
