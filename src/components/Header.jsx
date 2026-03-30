@@ -19,7 +19,6 @@ export default function Header({ activeSport }) {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isSportDropdownOpen, setIsSportDropdownOpen] = useState(false);
   
-  // Custom Auth Modal State
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalView, setAuthModalView] = useState('login'); 
   
@@ -52,7 +51,6 @@ export default function Header({ activeSport }) {
     window.dispatchEvent(new Event('toggleMobileMenu'));
   };
 
-  // Helper functions to open specific views in the modal
   const openLogin = () => {
     setAuthModalView('login');
     setIsAuthModalOpen(true);
@@ -103,28 +101,37 @@ export default function Header({ activeSport }) {
             <span>Search</span>
           </button>
           
-          <div className="h-5 w-px bg-gray-700"></div>
+          <div className="h-5 w-px bg-gray-700 mr-6"></div>
           
           {status === "loading" ? (
             <div className="px-6 flex items-center"><Loader2 size={16} className="animate-spin text-gray-500" /></div>
           ) : session ? (
             <>
-              <span className="px-6 text-white flex items-center gap-2">
+              <Link href="/account" className="px-6 text-white hover:text-gray-300 transition-colors flex items-center gap-2 no-underline">
                 {session.user?.image ? (
                   <img src={session.user.image} alt="Avatar" className="w-6 h-6 rounded-full border border-gray-600" />
                 ) : (
                   <User size={16} />
                 )}
                 Hi, {session.user?.name?.split(' ')[0] || 'User'}
-              </span>
+              </Link>
               <button onClick={() => signOut()} className="hover:text-red-400 transition-colors no-underline">Log Out</button>
             </>
           ) : (
-            <>
-              {/* Changed these from standard links to buttons that open the modal */}
-              <button onClick={openSubscribe} className="hover:text-white transition-colors px-6 no-underline">Subscribe</button>
-              <button onClick={openLogin} className="hover:text-white transition-colors no-underline">Log In</button>
-            </>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={openSubscribe} 
+                className="bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border border-gray-600 text-white text-[10px] font-black uppercase tracking-widest py-2.5 px-6 rounded-xl transition-all shadow-lg"
+              >
+                Subscribe
+              </button>
+              <button 
+                onClick={openLogin} 
+                className="bg-[#111] hover:bg-gray-800 border border-gray-700 text-gray-300 hover:text-white text-[10px] font-black uppercase tracking-widest py-2.5 px-6 rounded-xl transition-all shadow-inner"
+              >
+                Log In
+              </button>
+            </div>
           )}
         </div>
         
@@ -132,9 +139,9 @@ export default function Header({ activeSport }) {
         <div className="lg:hidden flex items-center gap-1 text-gray-400">
           {session ? (
             <>
-              <button className="hover:text-white p-2 transition-colors">
+              <Link href="/account" className="hover:text-white p-2 transition-colors">
                 {session.user?.image ? <img src={session.user.image} alt="Avatar" className="w-6 h-6 rounded-full border border-gray-600" /> : <User size={22} />}
-              </button>
+              </Link>
               <button onClick={() => signOut()} className="hover:text-red-400 p-2 transition-colors"><LogOut size={22} /></button>
             </>
           ) : (
@@ -144,6 +151,7 @@ export default function Header({ activeSport }) {
 
       </div>
 
+      {/* MOBILE BOTTOM NAVIGATION */}
       <nav className="flex lg:hidden fixed bottom-0 left-0 right-0 z-[100] w-full h-16 bg-[#0a0a0a] border-t border-gray-800 items-center justify-between px-6 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
         <button onClick={toggleMobileSidebar} className="flex flex-col items-center gap-1 text-gray-500 hover:text-white transition-colors">
           <Menu size={20} />

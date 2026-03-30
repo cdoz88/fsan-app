@@ -34,14 +34,15 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
     setIsLoading(true);
     setError('');
 
+    // WordPress accepts emails in the username field, so we just pass the email state!
     const res = await signIn('credentials', {
       redirect: false,
-      username,
+      username: email,
       password,
     });
 
     if (res?.error) {
-      setError('Invalid username or password. Please try again.');
+      setError('Invalid email or password. Please try again.');
       setIsLoading(false);
     } else {
       setIsLoading(false);
@@ -54,7 +55,6 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
     setIsLoading(true);
     setError('');
 
-    // Updated GraphQL mutation to use the native WPGraphQL "user" object
     const query = `
       mutation RegisterUser($username: String!, $email: String!, $password: String!) {
         registerUser(
@@ -80,14 +80,12 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
 
       const json = await res.json();
 
-      // Catch duplicate emails/usernames and display the WordPress error directly
       if (json.errors) {
         setError(json.errors[0].message);
         setIsLoading(false);
         return;
       }
 
-      // If registration is successful, immediately log them in!
       if (json?.data?.registerUser?.user?.databaseId) {
         const loginRes = await signIn('credentials', {
           redirect: false,
@@ -100,7 +98,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
           setIsLoading(false);
         } else {
           setIsLoading(false);
-          onClose(); // Close the modal and let them enjoy the site!
+          onClose(); 
         }
       }
     } catch (err) {
@@ -140,12 +138,12 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
           {view === 'login' ? (
             <form onSubmit={handleLogin} className="flex flex-col gap-4">
               <div className="relative">
-                <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input 
-                  type="text" 
-                  placeholder="Username or Email" 
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  type="email" 
+                  placeholder="Email Address" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   className="w-full bg-[#111] border border-gray-700 text-white rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-gray-400 transition-colors text-sm"
                 />
@@ -227,7 +225,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
               <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">
                 Already have an account?{' '}
                 <button onClick={() => { setView('login'); setError(''); }} className="text-white hover:text-gray-300 font-black transition-colors ml-1">
-                  Log In
+                  LOG IN
                 </button>
               </p>
             )}

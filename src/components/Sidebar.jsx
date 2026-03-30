@@ -19,6 +19,15 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
   const accentColor = theme.text;
   const hoverAccentColor = theme.hoverText;
 
+  // Dynamic Gradients for the GO PRO button based on current sport
+  const sportGradients = {
+    All: 'bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border-gray-500',
+    Football: 'bg-gradient-to-r from-[#e42d38] to-[#8a1a20] hover:from-[#f03a45] hover:to-[#a3222a] border-[#e42d38]',
+    Basketball: 'bg-gradient-to-r from-[#e85d22] to-[#a33308] hover:from-[#f26d35] hover:to-[#bc4010] border-[#e85d22]',
+    Baseball: 'bg-gradient-to-r from-[#1b75bb] to-[#1e3b8a] hover:from-[#2587d0] hover:to-[#2546a1] border-[#1b75bb]',
+  };
+  const currentGradient = sportGradients[activeSport] || sportGradients.All;
+
   useEffect(() => {
     const handleToggle = () => setIsMobileMenuOpen(prev => !prev);
     window.addEventListener('toggleMobileMenu', handleToggle);
@@ -239,6 +248,17 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
                   })
                 )}
              </div>
+          </div>
+
+          {/* GO PRO BUTTON */}
+          <div className="mt-2 mb-2">
+            <Link 
+              href="/subscribe" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`w-full flex justify-center items-center py-3.5 rounded-xl text-white font-black uppercase tracking-widest text-sm shadow-lg border transition-all no-underline ${currentGradient}`}
+            >
+              GO PRO
+            </Link>
           </div>
 
           {/* FOOTER / SOCIALS */}
