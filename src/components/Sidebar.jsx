@@ -146,7 +146,7 @@ export default function Sidebar({ activeSport = 'All' }) {
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Browse Network</h4>
              <div className="flex flex-col gap-1">
                 <Link href={`/${activeSport.toLowerCase()}/home`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('home')}>
-                  <Flame size={18} className={currentView === 'home' ? 'text-white' : accentColor} /> The Dashboard
+                  <Flame size={18} className={currentView === 'home' ? 'text-white' : accentColor} /> The Wire
                 </Link>
                 <Link href={`/${activeSport.toLowerCase()}/articles`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('articles')}>
                   <FileText size={18} className={currentView === 'articles' ? 'text-white' : accentColor} /> All Articles

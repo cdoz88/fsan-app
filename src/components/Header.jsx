@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Menu, X, ChevronsUpDown, User, LogOut, Users } from 'lucide-react';
+import { Search, Menu, X, ChevronsUpDown, User, LogOut, Users, Flame } from 'lucide-react';
 import { themes } from '../utils/theme';
 import { SelloutCrowds } from './Icons';
 
@@ -136,24 +136,12 @@ export default function Header({ activeSport }) {
           <span className="text-[9px] font-bold uppercase tracking-widest">Ranks</span>
         </Link>
 
-        {/* Bento Box Home / HQ Button with Gradient */}
+        {/* Center Floating Button - The Wire */}
         <Link href={`/${(activeSport || 'All').toLowerCase()}/home`} className="flex flex-col items-center group no-underline">
           <div className={`relative -top-5 mb-[-16px] w-14 h-14 rounded-full flex items-center justify-center border-[4px] border-[#0a0a0a] shadow-xl ${currentGradient} text-white transition-transform group-hover:scale-105 group-active:scale-95 no-underline`}>
-            <svg 
-              width="24" 
-              height="24" 
-              viewBox="0 0 512 512" 
-              xmlns="http://www.w3.org/2000/svg"
-              fill="currentColor"
-              className={currentView === 'home' ? 'animate-pulse' : ''}
-            >
-              <path d="m195 0h-160a35 35 0 0 0 -35 35v100a35 35 0 0 0 35 35h160a35 35 0 0 0 35-35v-100a35 35 0 0 0 -35-35zm5 135a5 5 0 0 1 -5 5h-160a5 5 0 0 1 -5-5v-100a5 5 0 0 1 5-5h160a5 5 0 0 1 5 5z"/>
-              <path d="m195 200h-160a35 35 0 0 0 -35 35v238a35 35 0 0 0 35 35h160a35 35 0 0 0 35-35v-238a35 35 0 0 0 -35-35zm5 273a5 5 0 0 1 -5 5h-160a5 5 0 0 1 -5-5v-238a5 5 0 0 1 5-5h160a5 5 0 0 1 5 5z"/>
-              <path d="m477 342h-160a35 35 0 0 0 -35 35v100a35 35 0 0 0 35 35h160a35 35 0 0 0 35-35v-100a35 35 0 0 0 -35-35zm5 135a5 5 0 0 1 -5 5h-160a5 5 0 0 1 -5-5v-100a5 5 0 0 1 5-5h160a5 5 0 0 1 5 5z"/>
-              <path d="m477 4h-160a35 35 0 0 0 -35 35v238a35 35 0 0 0 35 35h160a35 35 0 0 0 35-35v-238a35 35 0 0 0 -35-35zm5 273a5 5 0 0 1 -5 5h-160a5 5 0 0 1 -5-5v-238a5 5 0 0 1 5-5h160a5 5 0 0 1 5 5z"/>
-            </svg>
+            <Flame size={24} className={currentView === 'home' ? 'animate-pulse' : ''} />
           </div>
-          <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 group-hover:text-white transition-colors mt-1">Hub</span>
+          <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 group-hover:text-white transition-colors mt-1 whitespace-nowrap">The Wire</span>
         </Link>
 
         <a href="https://www.selloutcrowds.com/crowd/fsan" target="_blank" rel="noreferrer" className="flex flex-col items-center gap-1 text-gray-500 hover:text-white transition-colors no-underline">
