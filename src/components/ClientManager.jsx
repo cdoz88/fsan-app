@@ -10,7 +10,8 @@ import ArticlesArchive from './ArticlesArchive';
 import PodcastsArchive from './PodcastsArchive';
 import { fetchPosts } from '../utils/api';
 
-export default function ClientManager({ initialPosts, activeSport, currentView, initialHasMore, autoOpenItem }) {
+// ADDED proToolsMenu and connectMenu to the props
+export default function ClientManager({ initialPosts, activeSport, currentView, initialHasMore, autoOpenItem, proToolsMenu, connectMenu }) {
   const router = useRouter();
   const [selectedItem, setSelectedItem] = useState(autoOpenItem || null);
   const [wpPosts, setWpPosts] = useState(initialPosts);
@@ -21,7 +22,6 @@ export default function ClientManager({ initialPosts, activeSport, currentView, 
   const handleSelectItem = (item) => {
     if (item) {
       setSelectedItem(item);
-      // Explicitly define view if it's missing to prevent "undefined" in URL
       const itemView = item.view || (item.type === 'article' ? 'articles' : item.type === 'podcast' ? 'podcasts' : 'videos');
       const newPath = `/${item.sport.toLowerCase()}/${itemView}/${item.slug}`;
       window.history.pushState(null, '', newPath);
@@ -78,9 +78,9 @@ export default function ClientManager({ initialPosts, activeSport, currentView, 
   return (
     <>
       <Header activeSport={activeSport} />
-      {/* Changed to Flex layout to support the fixed width sidebar properly */}
       <div className="max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-8 w-full">
-        <Sidebar activeSport={activeSport} />
+        {/* PASSED MENUS TO SIDEBAR */}
+        <Sidebar activeSport={activeSport} proToolsMenu={proToolsMenu} connectMenu={connectMenu} />
         <div className="flex-1 w-full min-w-0">
           {currentView === 'home' && (
             <Home wpPosts={timelinePosts} masterPodcasts={masterPodcasts} activeSport={activeSport} setSelectedItem={handleSelectItem} isLoading={false} />

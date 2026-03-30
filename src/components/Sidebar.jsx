@@ -6,13 +6,13 @@ import { FileText, Video, Mic, Flame, Users, Calculator, ArrowLeftRight, Shirt, 
 import { Facebook, XIcon, Youtube, Instagram, TikTok, LinkedIn, SelloutCrowds } from './Icons';
 import { themes } from '../utils/theme';
 
-export default function Sidebar({ activeSport = 'All' }) {
+// ADDED proToolsMenu and connectMenu as props
+export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connectMenu = [] }) {
   const theme = themes[activeSport] || themes.All;
   const pathname = usePathname() || '';
   const pathParts = pathname.split('/').filter(Boolean);
   const currentView = pathParts.length > 1 ? pathParts[1] : 'home';
 
-  // Mobile Drawer State
   const [isMobileOpen, setIsMobileMenuOpen] = useState(false);
   const [hoveredSocial, setHoveredSocial] = useState(null);
 
@@ -25,7 +25,6 @@ export default function Sidebar({ activeSport = 'All' }) {
     return () => window.removeEventListener('toggleMobileMenu', handleToggle);
   }, []);
 
-  // Prevent background scrolling when mobile menu is open
   useEffect(() => {
     if (isMobileOpen) {
       document.body.style.overflow = 'hidden';
@@ -34,12 +33,24 @@ export default function Sidebar({ activeSport = 'All' }) {
     }
   }, [isMobileOpen]);
 
-  // Plumped up Nav Styles
   const getNavStyle = (viewName) => {
     const isActive = currentView === viewName;
     return isActive
       ? "flex items-center gap-3 text-[13px] font-bold transition-colors px-3 py-2.5 rounded-xl w-full text-left bg-[#252525] text-white shadow-inner border border-gray-700/50 no-underline"
       : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline";
+  };
+
+  // ICON MATCHER FOR WORDPRESS MENUS
+  const getIconForLabel = (label) => {
+    const lower = label.toLowerCase();
+    if (lower.includes('rank') || lower.includes('player')) return Users;
+    if (lower.includes('calc')) return Calculator;
+    if (lower.includes('value') || lower.includes('trade')) return ArrowLeftRight;
+    if (lower.includes('communit') || lower.includes('crowd')) return SelloutCrowds;
+    if (lower.includes('jersey') || lower.includes('league')) return Shirt;
+    if (lower.includes('charity')) return HeartHandshake;
+    if (lower.includes('merch') || lower.includes('shop')) return ShoppingCart;
+    return FileText; // Generic fallback
   };
 
   const socialLinksData = {
@@ -50,6 +61,7 @@ export default function Sidebar({ activeSport = 'All' }) {
   };
   const currentLinks = socialLinksData[activeSport] || socialLinksData.All;
 
+  // HARDCODED FALLBACK MENUS (In case WP menu is empty)
   const sidebarMenus = {
     All: {
       proTools: [
@@ -117,13 +129,11 @@ export default function Sidebar({ activeSport = 'All' }) {
 
   return (
     <>
-      {/* MOBILE OVERLAY BACKDROP */}
       <div 
         className={`lg:hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] transition-opacity duration-300 ${isMobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMobileMenuOpen(false)}
       />
 
-      {/* SIDEBAR CONTAINER (Responsive Drawer) */}
       <div className={`
         fixed inset-y-0 left-0 z-[101] w-[280px] bg-[#0a0a0a] border-r border-gray-800 overflow-y-auto px-4 py-8 shadow-2xl
         transform transition-transform duration-300 ease-in-out flex flex-col gap-4
@@ -131,14 +141,12 @@ export default function Sidebar({ activeSport = 'All' }) {
         ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         
-        {/* Mobile Close Button */}
         <div className="lg:hidden flex justify-end mb-4">
            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-gray-900 rounded-full border border-gray-700 text-gray-400 hover:text-white">
              <X size={20} />
            </button>
         </div>
 
-        {/* Desktop Sticky Container */}
         <div className="lg:sticky lg:top-20 flex flex-col gap-4 pb-24 lg:pb-0">
           
           {/* BROWSE NETWORK */}
@@ -160,40 +168,76 @@ export default function Sidebar({ activeSport = 'All' }) {
              </div>
           </div>
 
-          {/* PRO TOOLS */}
+          {/* DYNAMIC PRO TOOLS */}
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-3 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Pro Tools</h4>
              <div className="flex flex-col gap-1">
-                {currentMenu.proTools.map((tool, idx) => {
-                  const Icon = tool.icon;
-                  return (
-                    <Link key={idx} href={tool.href} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl no-underline group">
-                      <Icon size={18} className={`${theme.text} group-hover:text-white transition-colors`} /> {tool.name}
-                    </Link>
-                  );
-                })}
+                {proToolsMenu && proToolsMenu.length > 0 ? (
+                  proToolsMenu.map((item) => {
+                    const Icon = getIconForLabel(item.label);
+                    return (
+                      <Link 
+                        key={item.id} 
+                        href={item.url} 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        target={item.url.startsWith('http') ? "_blank" : undefined}
+                        rel={item.url.startsWith('http') ? "noopener noreferrer" : undefined}
+                        className="flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl no-underline group"
+                      >
+                        <Icon size={18} className={`${theme.text} group-hover:text-white transition-colors`} /> {item.label}
+                      </Link>
+                    );
+                  })
+                ) : (
+                  currentMenu.proTools.map((tool, idx) => {
+                    const Icon = tool.icon;
+                    return (
+                      <Link key={idx} href={tool.href} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl no-underline group">
+                        <Icon size={18} className={`${theme.text} group-hover:text-white transition-colors`} /> {tool.name}
+                      </Link>
+                    );
+                  })
+                )}
              </div>
           </div>
           
-          {/* CONNECT */}
+          {/* DYNAMIC CONNECT */}
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-3 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Connect</h4>
              <div className="flex flex-col gap-1">
-                {currentMenu.connect.map((item, idx) => {
-                  const Icon = item.icon;
-                  return (
-                    <Link 
-                      key={idx} 
-                      href={item.href} 
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      target={item.external ? "_blank" : undefined}
-                      rel={item.external ? "noopener noreferrer" : undefined}
-                      className="flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl no-underline group"
-                    >
-                      <Icon size={18} className={`${theme.text} group-hover:text-white transition-colors`} /> {item.name}
-                    </Link>
-                  );
-                })}
+                {connectMenu && connectMenu.length > 0 ? (
+                  connectMenu.map((item) => {
+                    const Icon = getIconForLabel(item.label);
+                    return (
+                      <Link 
+                        key={item.id} 
+                        href={item.url} 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        target={item.url.startsWith('http') ? "_blank" : undefined}
+                        rel={item.url.startsWith('http') ? "noopener noreferrer" : undefined}
+                        className="flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl no-underline group"
+                      >
+                        <Icon size={18} className={`${theme.text} group-hover:text-white transition-colors`} /> {item.label}
+                      </Link>
+                    );
+                  })
+                ) : (
+                  currentMenu.connect.map((item, idx) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link 
+                        key={idx} 
+                        href={item.href} 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        target={item.external ? "_blank" : undefined}
+                        rel={item.external ? "noopener noreferrer" : undefined}
+                        className="flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl no-underline group"
+                      >
+                        <Icon size={18} className={`${theme.text} group-hover:text-white transition-colors`} /> {item.name}
+                      </Link>
+                    );
+                  })
+                )}
              </div>
           </div>
 
