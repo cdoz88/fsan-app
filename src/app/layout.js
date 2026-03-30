@@ -4,7 +4,7 @@ export const metadata = {
   title: "FSAN",
   description: "Win your league with real-time advice.",
   icons: {
-    icon: "https://fsan.com/wp-content/uploads/2025/05/App-Icons-Border.webp",
+    icon: "https://admin.fsan.com/wp-content/uploads/2025/05/App-Icons-Border.webp",
   },
 };
 

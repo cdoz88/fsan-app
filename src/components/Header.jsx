@@ -7,10 +7,10 @@ import { themes } from '../utils/theme';
 import { SelloutCrowds } from './Icons';
 
 const sportsList = [
-  { name: 'All', icon: 'https://fsan.com/wp-content/uploads/2023/11/FSAN-Icon.webp' },
-  { name: 'Football', icon: 'https://fsan.com/wp-content/uploads/2023/11/FFAN-Icon.webp' },
-  { name: 'Basketball', icon: 'https://fsan.com/wp-content/uploads/2023/11/FBBAN-Icon.webp' },
-  { name: 'Baseball', icon: 'https://fsan.com/wp-content/uploads/2023/11/FBAN-Icon.webp' },
+  { name: 'All', icon: 'https://admin.fsan.com/wp-content/uploads/2023/11/FSAN-Icon.webp' },
+  { name: 'Football', icon: 'https://admin.fsan.com/wp-content/uploads/2023/11/FFAN-Icon.webp' },
+  { name: 'Basketball', icon: 'https://admin.fsan.com/wp-content/uploads/2023/11/FBBAN-Icon.webp' },
+  { name: 'Baseball', icon: 'https://admin.fsan.com/wp-content/uploads/2023/11/FBAN-Icon.webp' },
 ];
 
 export default function Header({ activeSport }) {
@@ -24,10 +24,10 @@ export default function Header({ activeSport }) {
   const currentView = pathParts.length > 1 ? pathParts[1] : 'home';
 
   const logos = {
-    All: 'https://fsan.com/wp-content/uploads/2023/12/Horizontal-White.webp',
-    Football: 'https://fsan.com/wp-content/uploads/2023/11/Horizontal-White-2.webp',
-    Basketball: 'https://fsan.com/wp-content/uploads/2023/11/Horizontal-white.webp',
-    Baseball: 'https://fsan.com/wp-content/uploads/2023/11/Horizontal-white-1.webp',
+    All: 'https://admin.fsan.com/wp-content/uploads/2023/12/Horizontal-White.webp',
+    Football: 'https://admin.fsan.com/wp-content/uploads/2023/11/Horizontal-White-2.webp',
+    Basketball: 'https://admin.fsan.com/wp-content/uploads/2023/11/Horizontal-white.webp',
+    Baseball: 'https://admin.fsan.com/wp-content/uploads/2023/11/Horizontal-white-1.webp',
   };
 
   const currentLogo = logos[activeSport] || logos.All;
