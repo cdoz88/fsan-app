@@ -1,0 +1,219 @@
+"use client";
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { FileText, Video, Mic, Flame, Users, Calculator, ArrowLeftRight, Shirt, HeartHandshake, ShoppingCart, X } from 'lucide-react';
+import { Facebook, XIcon, Youtube, Instagram, TikTok, LinkedIn, SelloutCrowds } from './Icons';
+import { themes } from '../utils/theme';
+
+export default function Sidebar({ activeSport = 'All' }) {
+  const theme = themes[activeSport] || themes.All;
+  const pathname = usePathname() || '';
+  const pathParts = pathname.split('/').filter(Boolean);
+  const currentView = pathParts.length > 1 ? pathParts[1] : 'home';
+
+  // Mobile Drawer State
+  const [isMobileOpen, setIsMobileMenuOpen] = useState(false);
+  const [hoveredSocial, setHoveredSocial] = useState(null);
+
+  const accentColor = theme.text;
+  const hoverAccentColor = theme.hoverText;
+
+  useEffect(() => {
+    const handleToggle = () => setIsMobileMenuOpen(prev => !prev);
+    window.addEventListener('toggleMobileMenu', handleToggle);
+    return () => window.removeEventListener('toggleMobileMenu', handleToggle);
+  }, []);
+
+  // Prevent background scrolling when mobile menu is open
+  useEffect(() => {
+    if (isMobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [isMobileOpen]);
+
+  const getNavStyle = (viewName) => {
+    const isActive = currentView === viewName;
+    return isActive
+      ? "flex items-center gap-2.5 text-[13px] font-bold transition-colors p-2 rounded-xl w-full text-left bg-[#252525] text-white shadow-inner border border-gray-700/50 no-underline"
+      : "flex items-center gap-2.5 text-[13px] font-bold text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline";
+  };
+
+  const socialLinksData = {
+    All: { facebook: 'https://www.facebook.com/fantasyfootballadvicenetwork', x: 'https://x.com/fsadvicenet', youtube: 'https://www.youtube.com/@FFAdviceNet', tiktok: 'https://www.tiktok.com/@fsadvicenetwork', linkedin: 'https://www.linkedin.com/company/fantasy-sports-advice', sellout: 'https://www.selloutcrowds.com/crowd/fsan', instagram: null },
+    Football: { facebook: 'https://www.facebook.com/fantasyfootballadvicenetwork', x: 'https://x.com/FFAdviceNet', youtube: 'https://www.youtube.com/@FFAdviceNet', instagram: 'https://www.instagram.com/ffadvicenet/', sellout: '#', tiktok: null, linkedin: null },
+    Basketball: { facebook: null, x: 'https://x.com/FBBAdviceNet', youtube: 'https://www.youtube.com/@FBBAdviceNet', instagram: 'https://www.instagram.com/fbkadvicenet/', sellout: '#', tiktok: null, linkedin: null },
+    Baseball: { facebook: null, x: 'https://x.com/FBAdviceNet', youtube: 'https://www.youtube.com/@FBAdviceNet', instagram: 'https://www.instagram.com/fbadvicenet/', sellout: '#', tiktok: null, linkedin: null },
+  };
+  const currentLinks = socialLinksData[activeSport] || socialLinksData.All;
+
+  const sidebarMenus = {
+    All: {
+      proTools: [
+        { name: 'Player Rankings', icon: Users, href: '#' },
+        { name: 'Trade Calculator', icon: Calculator, href: '#' },
+        { name: 'Trade Value Chart', icon: ArrowLeftRight, href: '#' },
+      ],
+      connect: [
+        { name: 'Exclusive Community', icon: SelloutCrowds, href: '#' },
+        { name: 'Join A Jersey League', icon: Shirt, href: '#' },
+        { name: 'Play for Charity', icon: HeartHandshake, href: '#' },
+        { name: 'Merch Shop', icon: ShoppingCart, href: 'https://fsan.shop', external: true },
+      ]
+    },
+    Football: {
+      proTools: [
+        { name: 'Player Rankings', icon: Users, href: '#' },
+        { name: 'Trade Calculator', icon: Calculator, href: '#' },
+        { name: 'Trade Value Chart', icon: ArrowLeftRight, href: '#' },
+      ],
+      connect: [
+        { name: 'Exclusive Community', icon: SelloutCrowds, href: '#' },
+        { name: 'Join A Jersey League', icon: Shirt, href: '#' },
+        { name: 'Play for Charity', icon: HeartHandshake, href: '#' },
+        { name: 'Merch Shop', icon: ShoppingCart, href: 'https://fsan.shop', external: true },
+      ]
+    },
+    Basketball: {
+      proTools: [
+        { name: 'Player Rankings', icon: Users, href: '#' },
+        { name: 'Trade Calculator', icon: Calculator, href: '#' },
+      ],
+      connect: [
+        { name: 'Exclusive Community', icon: SelloutCrowds, href: '#' },
+        { name: 'Join A Jersey League', icon: Shirt, href: '#' },
+        { name: 'Merch Shop', icon: ShoppingCart, href: 'https://fsan.shop', external: true },
+      ]
+    },
+    Baseball: {
+      proTools: [
+        { name: 'Player Rankings', icon: Users, href: '#' },
+      ],
+      connect: [
+        { name: 'Exclusive Community', icon: SelloutCrowds, href: '#' },
+        { name: 'Merch Shop', icon: ShoppingCart, href: 'https://fsan.shop', external: true },
+      ]
+    }
+  };
+
+  const currentMenu = sidebarMenus[activeSport] || sidebarMenus.All;
+
+  const SocialIcon = ({ id, href, IconComponent }) => (
+    <a 
+      href={href} 
+      target="_blank" 
+      rel="noreferrer" 
+      onMouseEnter={() => setHoveredSocial(id)}
+      onMouseLeave={() => setHoveredSocial(null)}
+      style={{ color: hoveredSocial === id ? theme.hex : '#6b7280' }}
+      className="transition-colors duration-200"
+    >
+      <IconComponent size={18} />
+    </a>
+  );
+
+  return (
+    <>
+      {/* MOBILE OVERLAY BACKDROP */}
+      <div 
+        className={`lg:hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] transition-opacity duration-300 ${isMobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
+
+      {/* SIDEBAR CONTAINER (Responsive Drawer) */}
+      <div className={`
+        fixed inset-y-0 left-0 z-[101] w-[280px] bg-[#0a0a0a] border-r border-gray-800 overflow-y-auto px-4 py-8 shadow-2xl
+        transform transition-transform duration-300 ease-in-out flex flex-col gap-4
+        lg:static lg:w-auto lg:z-auto lg:transform-none lg:border-none lg:bg-transparent lg:overflow-visible lg:px-0 lg:py-0 lg:shadow-none lg:col-span-3 lg:pt-4 lg:translate-x-0
+        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        
+        {/* Mobile Close Button */}
+        <div className="lg:hidden flex justify-end mb-4">
+           <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-gray-900 rounded-full border border-gray-700 text-gray-400 hover:text-white">
+             <X size={20} />
+           </button>
+        </div>
+
+        {/* Desktop Sticky Container - Restored to exact original pt-4 and top-20 spacing */}
+        <div className="lg:sticky lg:top-20 flex flex-col gap-4 pb-24 lg:pb-0">
+          
+          {/* BROWSE NETWORK */}
+          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-3 shadow-xl">
+             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Browse Network</h4>
+             <div className="flex flex-col gap-0.5">
+                <Link href={`/${activeSport.toLowerCase()}/home`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('home')}>
+                  <Flame size={16} className={currentView === 'home' ? 'text-white' : accentColor} /> The Dashboard
+                </Link>
+                <Link href={`/${activeSport.toLowerCase()}/articles`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('articles')}>
+                  <FileText size={16} className={currentView === 'articles' ? 'text-white' : accentColor} /> All Articles
+                </Link>
+                <Link href={`/${activeSport.toLowerCase()}/videos`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('videos')}>
+                  <Video size={16} className={currentView === 'videos' ? 'text-white' : accentColor} /> All Videos
+                </Link>
+                <Link href={`/${activeSport.toLowerCase()}/podcasts`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('podcasts')}>
+                  <Mic size={16} className={currentView === 'podcasts' ? 'text-white' : accentColor} /> All Podcasts
+                </Link>
+             </div>
+          </div>
+
+          {/* PRO TOOLS */}
+          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-3 shadow-xl">
+             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Pro Tools</h4>
+             <div className="flex flex-col gap-0.5">
+                {currentMenu.proTools.map((tool, idx) => {
+                  const Icon = tool.icon;
+                  return (
+                    <Link key={idx} href={tool.href} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2.5 text-[13px] font-bold text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/30 rounded-xl no-underline group">
+                      <Icon size={16} className={`${theme.text} group-hover:text-white transition-colors`} /> {tool.name}
+                    </Link>
+                  );
+                })}
+             </div>
+          </div>
+          
+          {/* CONNECT */}
+          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-3 shadow-xl">
+             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Connect</h4>
+             <div className="flex flex-col gap-0.5">
+                {currentMenu.connect.map((item, idx) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link 
+                      key={idx} 
+                      href={item.href} 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      target={item.external ? "_blank" : undefined}
+                      rel={item.external ? "noopener noreferrer" : undefined}
+                      className="flex items-center gap-2.5 text-[13px] font-bold text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/30 rounded-xl no-underline group"
+                    >
+                      <Icon size={16} className={`${theme.text} group-hover:text-white transition-colors`} /> {item.name}
+                    </Link>
+                  );
+                })}
+             </div>
+          </div>
+
+          {/* FOOTER / SOCIALS */}
+          <div className="flex flex-col items-center justify-center gap-3 mt-1 mb-4">
+             <div className="flex flex-wrap items-center justify-center gap-4 px-2">
+                {currentLinks.sellout && <SocialIcon id="sellout" href={currentLinks.sellout} IconComponent={SelloutCrowds} />}
+                {currentLinks.facebook && <SocialIcon id="fb" href={currentLinks.facebook} IconComponent={Facebook} />}
+                {currentLinks.x && <SocialIcon id="x" href={currentLinks.x} IconComponent={XIcon} />}
+                {currentLinks.youtube && <SocialIcon id="yt" href={currentLinks.youtube} IconComponent={Youtube} />}
+                {currentLinks.instagram && <SocialIcon id="ig" href={currentLinks.instagram} IconComponent={Instagram} />}
+                {currentLinks.tiktok && <SocialIcon id="tt" href={currentLinks.tiktok} IconComponent={TikTok} />}
+                {currentLinks.linkedin && <SocialIcon id="li" href={currentLinks.linkedin} IconComponent={LinkedIn} />}
+             </div>
+             <div className="text-center">
+               <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">&copy; {new Date().getFullYear()} FSAN Network</p>
+               <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest italic">All Rights Reserved</p>
+             </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
