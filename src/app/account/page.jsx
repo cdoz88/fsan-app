@@ -349,7 +349,7 @@ export default function AccountDashboard() {
                   <p className="text-sm text-gray-400 mb-6 relative z-10">You are currently on a free account. Upgrade to unlock all premium rankings, articles, and the trade calculator.</p>
                   
                   <button 
-                    onClick={() => setActiveTab('subscription')}
+                    onClick={() => router.push('/subscribe')}
                     className="w-full bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border border-gray-600 text-white font-black uppercase tracking-widest py-3 rounded-xl transition-all text-sm shadow-lg relative z-10"
                   >
                     View Plans
@@ -372,7 +372,12 @@ export default function AccountDashboard() {
                   <div className="bg-[#111] p-6 rounded-xl border border-gray-800 flex flex-col items-center justify-center text-center h-full min-h-[220px]">
                     <p className="text-gray-200 font-black text-xl mb-2">Free Network Member</p>
                     <p className="text-sm text-gray-500 mb-6">Upgrade to Premium to access all features.</p>
-                    <button onClick={() => alert("Stripe Checkout coming next!")} className="w-full bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border border-gray-600 text-white font-black uppercase tracking-widest py-3.5 rounded-xl transition-all text-sm shadow-lg mt-auto">Upgrade to Premium</button>
+                    <button 
+                      onClick={() => router.push('/subscribe')} 
+                      className="w-full bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border border-gray-600 text-white font-black uppercase tracking-widest py-3.5 rounded-xl transition-all text-sm shadow-lg mt-auto"
+                    >
+                      Upgrade to Premium
+                    </button>
                   </div>
                 </div>
                 <div>

@@ -1,12 +1,14 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
-import { Loader2, CheckCircle2, Flame, Shield, Trophy, Sparkles } from 'lucide-react';
+import { Loader2, CheckCircle2, Flame, Shield, Trophy, Sparkles, ArrowLeft } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 export default function SubscribePage() {
   const { data: session } = useSession();
+  const router = useRouter();
   
   const activeSport = 'All'; 
   
@@ -66,14 +68,30 @@ export default function SubscribePage() {
       <div className="max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-8 w-full pb-24">
         <Sidebar activeSport={activeSport} />
         
-        <div className="flex-1 w-full min-w-0 pt-10 lg:pt-16">
+        <div className="flex-1 w-full min-w-0 pt-6 relative">
           
+          {/* GO BACK BUTTON */}
+          <button 
+            onClick={() => router.back()} 
+            className="hidden md:flex absolute left-0 top-6 items-center gap-2 text-gray-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest z-10"
+          >
+            <ArrowLeft size={14} /> Go Back
+          </button>
+
           {/* HERO SECTION */}
           <div className="text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Mobile Go Back (shows above the badge on small screens) */}
+            <button 
+              onClick={() => router.back()} 
+              className="md:hidden flex items-center justify-center gap-2 text-gray-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest mb-6 w-full"
+            >
+              <ArrowLeft size={14} /> Go Back
+            </button>
+
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800/50 border border-gray-700 text-gray-300 text-xs font-bold uppercase tracking-widest mb-6">
               <Sparkles size={14} className="text-yellow-400" /> Upgrade Your Game
             </div>
-            <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 mb-6 drop-shadow-2xl">
+            <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 mb-2 drop-shadow-2xl">
               Dominate Your League
             </h1>
             <p className="text-gray-400 max-w-2xl mx-auto text-lg md:text-xl leading-relaxed">
