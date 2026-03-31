@@ -16,8 +16,8 @@ export default function SubscribePage() {
   const [billingCycle, setBillingCycle] = useState('yearly');
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingOut, setIsCheckingOut] = useState(null); 
+  const [userTier, setUserTier] = useState('free'); // Track the actual tier here too!
   
-  // Registration Handoff States
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState(null);
   
@@ -31,14 +31,60 @@ export default function SubscribePage() {
     fetchPerks();
   }, []);
 
-  // THE MAGIC HANDOFF: Watch for the user to log in/register, then auto-fire Stripe!
+  // Fetch the user's role on the Subscribe page as well, so it reflects their purchase
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.token) {
+      fetchUserRole();
+    }
+  }, [status, session]);
+
+  const fetchUserRole = async () => {
+    const query = `
+      query GetViewerRole {
+        viewer {
+          roles {
+            nodes {
+              name
+            }
+          }
+        }
+      }
+    `;
+
+    try {
+      const res = await fetch('https://admin.fsan.com/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.user.token}`,
+        },
+        body: JSON.stringify({ query }),
+        cache: 'no-store' // FORCE FRESH DATA
+      });
+
+      const json = await res.json();
+      
+      if (json?.data?.viewer) {
+        const roles = json.data.viewer.roles?.nodes?.map(r => r.name.toLowerCase()) || [];
+        if (roles.some(r => r.includes('pro+') || r.includes('pro+ member') || r.includes('fsan_pro_plus'))) {
+          setUserTier('pro-plus');
+        } else if (roles.some(r => r.includes('pro') || r.includes('pro member') || r.includes('fsan_pro'))) {
+          setUserTier('pro');
+        } else {
+          setUserTier('free');
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch user role on subscribe page.");
+    }
+  };
+
   useEffect(() => {
     if (status === 'authenticated' && session?.user && pendingPlan) {
-      setIsAuthModalOpen(false); // Close the modal
+      setIsAuthModalOpen(false); 
       const planToProcess = pendingPlan;
-      setPendingPlan(null); // Clear the pending state so it doesn't loop
+      setPendingPlan(null); 
       
-      // If they just wanted the free plan, we are done! No Stripe needed.
       if (planToProcess !== 'free') {
         handleCheckout(planToProcess); 
       }
@@ -59,6 +105,7 @@ export default function SubscribePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query }),
+        cache: 'no-store'
       });
 
       const json = await res.json();
@@ -78,14 +125,12 @@ export default function SubscribePage() {
   };
 
   const handleCheckout = async (plan) => {
-    // Intercept unauthenticated users and pop the modal for ALL plans
     if (status === 'unauthenticated' || !session) {
       setPendingPlan(plan);
       setIsAuthModalOpen(true);
       return;
     }
 
-    // If they are already logged in and click Free, just return early
     if (plan === 'free') return; 
 
     setIsCheckingOut(plan);
@@ -202,10 +247,10 @@ export default function SubscribePage() {
 
               <button 
                 onClick={() => handleCheckout('free')}
-                disabled={status === 'authenticated'}
+                disabled={status === 'authenticated' && userTier === 'free'}
                 className="w-full bg-gray-800 hover:bg-gray-700 disabled:hover:bg-gray-800 border border-gray-600 disabled:border-gray-700 text-white disabled:text-gray-500 font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg text-sm"
               >
-                {status === 'authenticated' ? 'Current Plan' : 'Create Free Account'}
+                {status === 'authenticated' && userTier === 'free' ? 'Current Plan' : 'Create Free Account'}
               </button>
             </div>
 
@@ -238,10 +283,10 @@ export default function SubscribePage() {
 
               <button 
                 onClick={() => handleCheckout('pro-plus')}
-                disabled={isCheckingOut === 'pro-plus'}
-                className="w-full bg-gradient-to-r from-orange-500 to-[#f5a623] hover:from-orange-400 hover:to-[#ffb732] text-black font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(245,166,35,0.4)] hover:shadow-[0_0_25px_rgba(245,166,35,0.6)] text-sm flex items-center justify-center gap-2 disabled:opacity-75"
+                disabled={isCheckingOut === 'pro-plus' || userTier === 'pro-plus'}
+                className="w-full bg-gradient-to-r from-orange-500 to-[#f5a623] hover:from-orange-400 hover:to-[#ffb732] text-black font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(245,166,35,0.4)] hover:shadow-[0_0_25px_rgba(245,166,35,0.6)] text-sm flex items-center justify-center gap-2 disabled:opacity-75 disabled:from-gray-700 disabled:to-gray-800 disabled:text-gray-500 disabled:shadow-none"
               >
-                {isCheckingOut === 'pro-plus' ? <Loader2 size={18} className="animate-spin text-black" /> : 'Get Pro+ Now'}
+                {isCheckingOut === 'pro-plus' ? <Loader2 size={18} className="animate-spin text-black" /> : userTier === 'pro-plus' ? 'Current Plan' : 'Get Pro+ Now'}
               </button>
             </div>
 
@@ -270,10 +315,10 @@ export default function SubscribePage() {
 
               <button 
                 onClick={() => handleCheckout('pro')}
-                disabled={isCheckingOut === 'pro'}
-                className="w-full bg-[#111] border border-[#f87171] hover:bg-[#f87171]/10 text-[#f87171] font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                disabled={isCheckingOut === 'pro' || userTier === 'pro' || userTier === 'pro-plus'}
+                className="w-full bg-[#111] border border-[#f87171] hover:bg-[#f87171]/10 text-[#f87171] font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:border-gray-700 disabled:text-gray-500"
               >
-                {isCheckingOut === 'pro' ? <Loader2 size={18} className="animate-spin text-[#f87171]" /> : 'Get Pro'}
+                {isCheckingOut === 'pro' ? <Loader2 size={18} className="animate-spin text-[#f87171]" /> : userTier === 'pro' ? 'Current Plan' : userTier === 'pro-plus' ? 'Included in Pro+' : 'Get Pro'}
               </button>
             </div>
 
@@ -281,12 +326,10 @@ export default function SubscribePage() {
         </div>
       </div>
 
-      {/* AuthModal updated to receive the success parameter! */}
       <AuthModal 
         isOpen={isAuthModalOpen} 
         onClose={(isSuccess) => {
           setIsAuthModalOpen(false);
-          // Only clear the memory if they clicked the 'X' to cancel!
           if (!isSuccess) {
             setPendingPlan(null); 
           }

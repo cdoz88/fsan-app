@@ -6,7 +6,6 @@ import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import { User, Mail, Lock, Loader2, CreditCard, ShieldCheck, CheckCircle2, FileText, ShoppingCart, Tag, AlertTriangle } from 'lucide-react';
 
-// We wrap the main content in a component so we can safely use useSearchParams()
 function AccountDashboardContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -17,12 +16,9 @@ function AccountDashboardContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   
-  // New state to hold the user's actual subscription tier
   const [userTier, setUserTier] = useState('free');
-
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
   const [relayId, setRelayId] = useState('');
   
   const [formData, setFormData] = useState({
@@ -38,12 +34,10 @@ function AccountDashboardContent() {
     }
   }, [status, router]);
 
-  // Auto-switch to subscription tab if coming back from Stripe!
   useEffect(() => {
     if (searchParams?.get('checkout') === 'success') {
       setActiveTab('subscription');
       setMessage({ type: 'success', text: 'Checkout successful! Your account has been upgraded.' });
-      // Clean up the URL so the success message doesn't stick around on refresh
       window.history.replaceState(null, '', '/account');
     }
   }, [searchParams]);
@@ -55,7 +49,6 @@ function AccountDashboardContent() {
   }, [status, session]);
 
   const fetchUserData = async () => {
-    // We added "roles" to this query so WordPress tells us their subscription status
     const query = `
       query GetViewer {
         viewer {
@@ -80,6 +73,7 @@ function AccountDashboardContent() {
           'Authorization': `Bearer ${session.user.token}`,
         },
         body: JSON.stringify({ query }),
+        cache: 'no-store' // FORCE NEXT.JS TO GET FRESH DATA
       });
 
       const json = await res.json();
@@ -94,7 +88,6 @@ function AccountDashboardContent() {
           password: '', 
         });
 
-        // Parse their WordPress roles to figure out their tier
         const roles = user.roles?.nodes?.map(r => r.name.toLowerCase()) || [];
         if (roles.some(r => r.includes('pro+') || r.includes('pro+ member') || r.includes('fsan_pro_plus'))) {
           setUserTier('pro-plus');
@@ -142,6 +135,7 @@ function AccountDashboardContent() {
           'Authorization': `Bearer ${session.user.token}`,
         },
         body: JSON.stringify({ query }),
+        cache: 'no-store'
       });
 
       const json = await res.json();
@@ -219,7 +213,6 @@ function AccountDashboardContent() {
             <p className="text-gray-400 mt-2 text-sm">Manage your profile, security, and billing.</p>
           </div>
 
-          {/* TAB NAVIGATION */}
           <div className="flex gap-6 border-b border-gray-800 mb-8 overflow-x-auto scrollbar-hide">
              <button 
                 onClick={() => { setActiveTab('profile'); setMessage({type:'', text:''}); }} 
@@ -241,7 +234,6 @@ function AccountDashboardContent() {
              </button>
           </div>
 
-          {/* TAB CONTENT: PROFILE */}
           {activeTab === 'profile' && (
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start animate-in fade-in duration-300">
               
@@ -368,7 +360,6 @@ function AccountDashboardContent() {
                 </div>
               </div>
 
-              {/* Dynamic Callout based on Tier */}
               <div className="xl:col-span-1 flex flex-col gap-6">
                 <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl shadow-2xl p-6 relative overflow-hidden group">
                   <div className="absolute top-0 right-0 p-4 opacity-10 text-white group-hover:scale-110 transition-transform">
@@ -405,7 +396,6 @@ function AccountDashboardContent() {
             </div>
           )}
 
-          {/* TAB CONTENT: SUBSCRIPTION */}
           {activeTab === 'subscription' && (
             <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl shadow-xl p-6 md:p-8 animate-in fade-in duration-300">
               <div className="flex items-center justify-between mb-6">
@@ -458,7 +448,6 @@ function AccountDashboardContent() {
             </div>
           )}
 
-          {/* TAB CONTENT: PERKS */}
           {activeTab === 'perks' && (
             <div className="animate-in fade-in duration-300">
                <h3 className="text-xl font-bold flex items-center gap-2 text-white mb-6">
@@ -467,7 +456,6 @@ function AccountDashboardContent() {
                
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  
-                 {/* Rookie Guide: Unlocked for Pro+ only */}
                  <div className={`border rounded-2xl shadow-xl p-6 md:p-8 relative overflow-hidden group transition-all ${userTier === 'pro-plus' ? 'bg-gradient-to-br from-[#2a1c11] to-[#111] border-[#f5a623]/50' : 'bg-gradient-to-br from-[#1a1a1a] to-[#111] border-gray-800'}`}>
                    <div className={`absolute top-0 right-0 p-4 transition-transform duration-500 ${userTier === 'pro-plus' ? 'opacity-20 text-[#f5a623] group-hover:scale-110' : 'opacity-5 text-white'}`}><FileText size={100} /></div>
                    <h3 className={`text-xl font-black uppercase tracking-wider mb-2 relative z-10 ${userTier === 'pro-plus' ? 'text-white drop-shadow-md' : 'text-gray-300'}`}>2026 Rookie Guide</h3>
@@ -480,7 +468,6 @@ function AccountDashboardContent() {
                    )}
                  </div>
                  
-                 {/* Merch Discount: Unlocked for Pro and Pro+ */}
                  <div className={`border rounded-2xl shadow-xl p-6 md:p-8 relative overflow-hidden group transition-all ${(userTier === 'pro-plus' || userTier === 'pro') ? 'bg-gradient-to-br from-[#301012] to-[#111] border-red-900/50' : 'bg-gradient-to-br from-[#1a1a1a] to-[#111] border-gray-800'}`}>
                    <div className={`absolute top-0 right-0 p-4 transition-transform duration-500 ${(userTier === 'pro-plus' || userTier === 'pro') ? 'opacity-20 text-red-500 group-hover:scale-110' : 'opacity-5 text-white'}`}><ShoppingCart size={100} /></div>
                    <h3 className={`text-xl font-black uppercase tracking-wider mb-2 relative z-10 ${(userTier === 'pro-plus' || userTier === 'pro') ? 'text-white' : 'text-gray-300'}`}>Merch Shop Discount</h3>
@@ -505,7 +492,6 @@ function AccountDashboardContent() {
   );
 }
 
-// Wrap the entire export in a Suspense boundary for Next.js to safely process useSearchParams
 export default function AccountDashboard() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-[#121212] flex items-center justify-center"><Loader2 size={48} className="animate-spin text-gray-600" /></div>}>
