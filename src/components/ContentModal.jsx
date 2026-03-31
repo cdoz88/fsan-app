@@ -183,11 +183,36 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
 
 const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) => {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  
+  useEffect(() => {
+    setMounted(true);
+    
+    // Safety timeout to ensure the HTML is fully injected before we parse it
+    const timeoutId = setTimeout(() => {
+      const container = document.getElementById('article-content-container');
+      if (container) {
+        // Find any scripts the WordPress plugin passed over (like Getty Images)
+        const scripts = container.getElementsByTagName('script');
+        // Force the browser to re-execute them by replacing the old tags with fresh ones
+        Array.from(scripts).forEach((oldScript) => {
+          const newScript = document.createElement('script');
+          Array.from(oldScript.attributes).forEach((attr) => {
+            newScript.setAttribute(attr.name, attr.value);
+          });
+          newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+          oldScript.parentNode.replaceChild(newScript, oldScript);
+        });
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [selectedItem]);
+
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="w-full h-64 md:h-96 bg-gray-800 relative overflow-hidden shrink-0">
-        {selectedItem.imageUrl && <img src={selectedItem.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />}
+        {/* ADDED 'object-top' to anchor the hero image correctly */}
+        {selectedItem.imageUrl && <img src={selectedItem.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-top opacity-60" />}
         <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent"></div>
       </div>
       <div className="p-6 md:p-10 -mt-24 relative z-10 max-w-4xl mx-auto w-full">
@@ -209,7 +234,8 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
           <div><p className="font-bold text-sm">{selectedItem.author?.name || "FSAN Staff"}</p></div>
           <div className="ml-auto"><ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} /></div>
         </div>
-        <div className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport]?.text || 'text-white'} hover:prose-a:text-white transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'}`} dangerouslySetInnerHTML={{ __html: mounted ? selectedItem.content : "" }} />
+        {/* Added 'article-content-container' ID so our useEffect can find and execute the Getty script! */}
+        <div id="article-content-container" className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport]?.text || 'text-white'} hover:prose-a:text-white transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'}`} dangerouslySetInnerHTML={{ __html: mounted ? selectedItem.content : "" }} />
         <div className="mt-12 pt-8 border-t border-gray-800">
           <a href={selectedItem.link} target="_blank" rel="noreferrer" className="text-xs text-gray-500 hover:text-white flex items-center gap-2">View Original Post on WordPress <ArrowLeft size={12} className="rotate-135" /></a>
         </div>
