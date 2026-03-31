@@ -211,7 +211,6 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="w-full h-64 md:h-96 bg-gray-800 relative overflow-hidden shrink-0">
-        {/* ADDED 'object-top' to anchor the hero image correctly */}
         {selectedItem.imageUrl && <img src={selectedItem.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-top opacity-60" />}
         <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent"></div>
       </div>
@@ -234,11 +233,7 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
           <div><p className="font-bold text-sm">{selectedItem.author?.name || "FSAN Staff"}</p></div>
           <div className="ml-auto"><ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} /></div>
         </div>
-        {/* Added 'article-content-container' ID so our useEffect can find and execute the Getty script! */}
         <div id="article-content-container" className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport]?.text || 'text-white'} hover:prose-a:text-white transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'}`} dangerouslySetInnerHTML={{ __html: mounted ? selectedItem.content : "" }} />
-        <div className="mt-12 pt-8 border-t border-gray-800">
-          <a href={selectedItem.link} target="_blank" rel="noreferrer" className="text-xs text-gray-500 hover:text-white flex items-center gap-2">View Original Post on WordPress <ArrowLeft size={12} className="rotate-135" /></a>
-        </div>
       </div>
     </div>
   );

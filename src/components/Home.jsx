@@ -121,7 +121,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
   const PressBoxCard = ({ item }) => (
     <div onClick={() => setSelectedItem(item)} className={`bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 rounded-2xl flex flex-col md:flex-row overflow-hidden ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[220px] items-stretch`}>
       <div className="w-full md:w-64 lg:w-80 aspect-video md:aspect-auto bg-gray-900 flex-shrink-0 relative overflow-hidden">
-          {/* Changed object-cover to include object-left-bottom to anchor the image crop */}
           {item.imageUrl && <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover object-left-bottom opacity-90 group-hover:scale-105 transition-transform duration-500"/>}
           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#1e1e1e] to-transparent md:hidden z-10" />
           <div className="hidden md:block absolute inset-y-0 right-0 w-24 bg-gradient-to-r from-transparent to-[#1e1e1e] z-10" />
@@ -134,20 +133,43 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
     </div>
   );
 
-  const BoothCard = ({ item }) => (
-    <div onClick={() => setSelectedItem(item)} className={`flex items-center gap-4 bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 p-4 rounded-2xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg`}>
-      <div className="w-14 h-14 rounded-full bg-gray-800/80 flex items-center justify-center flex-shrink-0 group-hover:bg-gray-700 transition-colors border border-gray-700/50 shadow-inner">
-        <Play size={18} className="text-gray-500 group-hover:text-white transition-colors" fill="currentColor" />
-      </div>
-      <div className="flex-1">
-        <div className="flex items-center gap-2 mb-1">
-           {activeSport === 'All' && <span className={`w-1.5 h-1.5 rounded-full ${themes[item.sport]?.bg || 'bg-gray-500'}`}></span>}
-           <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500">{item.date}</span>
+  // THE NEW PODCAST "BOOTH" CARD!
+  const BoothCard = ({ item }) => {
+    const itemTheme = themes[item.sport] || themes.All;
+    return (
+      <div onClick={() => setSelectedItem(item)} className={`flex items-stretch bg-[#1e1e1e] border ${itemTheme.border} border-opacity-40 rounded-2xl overflow-hidden ${itemTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[100px]`}>
+        
+        {/* Left Side: Artwork behind Play Button (Square, Bleeding) */}
+        <div className="w-24 sm:w-28 shrink-0 relative bg-gray-900 flex items-center justify-center overflow-hidden border-r border-gray-800/50">
+          {item.imageUrl ? (
+            <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+          ) : (
+            <div className="absolute inset-0 bg-gray-800" />
+          )}
+          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
+          <PlayCircle size={36} className="text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-md" />
         </div>
-        <h4 className={`font-bold text-sm leading-snug mb-1 text-gray-200 group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: item.title }} />
+
+        {/* Right Side: Content + Fake Soundwave */}
+        <div className="flex-1 p-4 flex flex-col justify-center">
+          <div className="flex items-center gap-2 mb-1.5">
+             {activeSport === 'All' && <span className={`w-1.5 h-1.5 rounded-full ${itemTheme.bg}`}></span>}
+             <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500">{item.date}</span>
+          </div>
+          
+          <h4 className={`font-bold text-sm leading-snug mb-2 text-gray-200 group-hover:${itemTheme.text} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: item.title }} />
+          
+          {/* Mockup Soundwave */}
+          <div className="flex items-center gap-[3px] mt-auto h-4 opacity-70 group-hover:opacity-100 transition-opacity">
+            {[4, 8, 12, 8, 16, 10, 14, 6, 10, 12, 8, 6, 14, 8, 4].map((h, i) => (
+              <div key={i} className={`w-[2px] sm:w-[3px] rounded-full bg-gray-600 group-hover:${itemTheme.bg} transition-colors`} style={{ height: `${h}px` }} />
+            ))}
+          </div>
+        </div>
+        
       </div>
-    </div>
-  );
+    );
+  };
 
   const LineupCard = ({ item }) => (
     <div onClick={() => setSelectedItem(item)} className={`group h-full w-full min-w-[160px] md:min-w-[200px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative aspect-square`}>
@@ -252,9 +274,9 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
                     <h3 className="text-xl font-bold flex items-center gap-2 text-white italic"><Headphones stroke="url(#grey-grad)" /> The Booth</h3>
                     <Link href={`/${activeSport.toLowerCase()}/podcasts`} className={`text-xs font-bold text-gray-400 ${theme.hoverText} transition-colors no-underline`}>View All Podcasts</Link>
                   </div>
-                  {/* Restored Flex Grow wrapper to stretch the ads correctly */}
                   <div className="flex flex-col gap-6 flex-1">
                     <div className="flex flex-col gap-4">
+                      {/* Updated BoothCards now render here! */}
                       {boothPodcasts.map(pod => <BoothCard key={pod.id} item={pod} />)}
                     </div>
                     <div className="flex flex-col gap-6 flex-1">
