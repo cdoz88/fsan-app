@@ -14,6 +14,7 @@ function AccountDashboardContent() {
   const [activeTab, setActiveTab] = useState('profile');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPortalLoading, setIsPortalLoading] = useState(false); // NEW: Track portal loading state
   const [message, setMessage] = useState({ type: '', text: '' });
   
   const [userTier, setUserTier] = useState('free');
@@ -37,7 +38,7 @@ function AccountDashboardContent() {
   useEffect(() => {
     if (searchParams?.get('checkout') === 'success') {
       setActiveTab('subscription');
-      setMessage({ type: 'success', text: 'Checkout successful! Your account has been upgraded.' });
+      // We removed the success message here so it doesn't pop up when returning from the portal
       window.history.replaceState(null, '', '/account');
     }
   }, [searchParams]);
@@ -73,7 +74,7 @@ function AccountDashboardContent() {
           'Authorization': `Bearer ${session.user.token}`,
         },
         body: JSON.stringify({ query }),
-        cache: 'no-store' // FORCE NEXT.JS TO GET FRESH DATA
+        cache: 'no-store' 
       });
 
       const json = await res.json();
@@ -189,6 +190,32 @@ function AccountDashboardContent() {
       setMessage({ type: 'error', text: 'An unexpected error occurred while deleting.' });
       setIsDeleting(false);
       setShowDeleteConfirm(false);
+    }
+  };
+
+  // NEW: Manage Billing Function
+  const handleManageBilling = async () => {
+    setIsPortalLoading(true);
+    try {
+      const res = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: session.user.email }),
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        // Redirect them to the secure Stripe portal
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Failed to open billing portal.');
+        setIsPortalLoading(false);
+      }
+    } catch (error) {
+      console.error('Portal Error:', error);
+      alert('An unexpected error occurred.');
+      setIsPortalLoading(false);
     }
   };
 
@@ -441,7 +468,14 @@ function AccountDashboardContent() {
                   <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-4 border-b border-gray-800 pb-3">Billing History</h4>
                   <div className="bg-[#111] p-6 rounded-xl border border-gray-800 flex flex-col items-center justify-center text-center h-full min-h-[220px]">
                     <p className="text-sm text-gray-400 mb-6">Manage your payment methods and view past receipts directly in Stripe.</p>
-                    <button disabled className="w-full mt-auto bg-gray-800/30 border border-gray-700 text-gray-500 font-bold uppercase tracking-widest py-3.5 rounded-xl transition-colors text-xs cursor-not-allowed">Customer Portal Coming Soon</button>
+                    {/* NEW: Button triggers the Stripe Portal session */}
+                    <button 
+                      onClick={handleManageBilling}
+                      disabled={isPortalLoading}
+                      className="w-full mt-auto bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-600 hover:to-gray-800 border border-gray-600 text-white font-bold uppercase tracking-widest py-3.5 rounded-xl transition-colors text-xs flex items-center justify-center gap-2"
+                    >
+                      {isPortalLoading ? <Loader2 size={16} className="animate-spin" /> : 'Manage in Stripe'}
+                    </button>
                   </div>
                 </div>
               </div>
