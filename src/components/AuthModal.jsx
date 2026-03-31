@@ -1,14 +1,15 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { X, Loader2, Mail, Lock, User } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 
 export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
-  const [view, setView] = useState(initialView); // 'login' or 'subscribe'
+  const router = useRouter();
+  const [view, setView] = useState(initialView); 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Form fields
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,7 +35,6 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
     setIsLoading(true);
     setError('');
 
-    // WordPress accepts emails in the username field, so we just pass the email state!
     const res = await signIn('credentials', {
       redirect: false,
       username: email,
@@ -46,7 +46,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
       setIsLoading(false);
     } else {
       setIsLoading(false);
-      onClose(); 
+      onClose(true); // Pass true to signal a SUCCESSFUL auth event
     }
   };
 
@@ -98,7 +98,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
           setIsLoading(false);
         } else {
           setIsLoading(false);
-          onClose(); 
+          onClose(true); // Pass true to signal a SUCCESSFUL auth event
         }
       }
     } catch (err) {
@@ -109,13 +109,13 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
 
   return (
     <div className="fixed inset-0 z-[150] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
-      {/* Background Overlay */}
-      <div className="fixed inset-0" onClick={onClose}></div>
+      {/* Pass false to signal a manual cancellation */}
+      <div className="fixed inset-0" onClick={() => onClose(false)}></div>
       
       <div className="relative w-full max-w-md bg-[#1a1a1a] border border-gray-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         
-        {/* Close Button */}
-        <button onClick={onClose} className="absolute top-4 right-4 p-1.5 bg-gray-900 rounded-full text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 transition-colors z-10">
+        {/* Pass false to signal a manual cancellation */}
+        <button onClick={() => onClose(false)} className="absolute top-4 right-4 p-1.5 bg-gray-900 rounded-full text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 transition-colors z-10">
           <X size={18} />
         </button>
 
@@ -217,7 +217,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
             {view === 'login' ? (
               <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">
                 Don't have an account?{' '}
-                <button onClick={() => { setView('subscribe'); setError(''); }} className="text-white hover:text-gray-300 font-black transition-colors ml-1">
+                <button onClick={() => { onClose(false); router.push('/subscribe'); }} className="text-white hover:text-gray-300 font-black transition-colors ml-1">
                   SUBSCRIBE NOW!
                 </button>
               </p>

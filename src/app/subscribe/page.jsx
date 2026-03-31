@@ -3,17 +3,23 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
+import AuthModal from '../../components/AuthModal';
 import { Loader2, CheckCircle2, Flame, Shield, Trophy, Sparkles, ArrowLeft } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 export default function SubscribePage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   
   const activeSport = 'All'; 
   
   const [billingCycle, setBillingCycle] = useState('yearly');
   const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingOut, setIsCheckingOut] = useState(null); 
+  
+  // Registration Handoff States
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState(null);
   
   const [perks, setPerks] = useState({
     free: ["Ad Free Experience", "Unmetered Access to Articles"],
@@ -24,6 +30,20 @@ export default function SubscribePage() {
   useEffect(() => {
     fetchPerks();
   }, []);
+
+  // THE MAGIC HANDOFF: Watch for the user to log in/register, then auto-fire Stripe!
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user && pendingPlan) {
+      setIsAuthModalOpen(false); // Close the modal
+      const planToProcess = pendingPlan;
+      setPendingPlan(null); // Clear the pending state so it doesn't loop
+      
+      // If they just wanted the free plan, we are done! No Stripe needed.
+      if (planToProcess !== 'free') {
+        handleCheckout(planToProcess); 
+      }
+    }
+  }, [status, session, pendingPlan]);
 
   const fetchPerks = async () => {
     const query = `
@@ -57,8 +77,56 @@ export default function SubscribePage() {
     }
   };
 
-  const handleCheckout = (plan) => {
-    alert(`Initiating checkout for ${plan} on ${billingCycle} billing...`);
+  const handleCheckout = async (plan) => {
+    // Intercept unauthenticated users and pop the modal for ALL plans
+    if (status === 'unauthenticated' || !session) {
+      setPendingPlan(plan);
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    // If they are already logged in and click Free, just return early
+    if (plan === 'free') return; 
+
+    setIsCheckingOut(plan);
+
+    const priceIds = {
+      yearly: {
+        pro: 'price_1TH5H5BaSOn1la2fRtfzRPpp',
+        'pro-plus': 'price_1TH5IaBaSOn1la2fS8s0HMPv'
+      },
+      monthly: {
+        pro: 'price_1TH5HsBaSOn1la2fuOcXj2nq',
+        'pro-plus': 'price_1TH5J9BaSOn1la2f861yf4yB'
+      }
+    };
+
+    const priceId = priceIds[billingCycle][plan];
+
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          priceId: priceId,
+          userId: session.user.id,
+          userEmail: session.user.email
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        window.location.href = data.url; 
+      } else {
+        alert('Error connecting to Stripe.');
+        setIsCheckingOut(null);
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert('An unexpected error occurred.');
+      setIsCheckingOut(null);
+    }
   };
 
   return (
@@ -70,7 +138,6 @@ export default function SubscribePage() {
         
         <div className="flex-1 w-full min-w-0 pt-6 relative">
           
-          {/* GO BACK BUTTON */}
           <button 
             onClick={() => router.back()} 
             className="hidden md:flex absolute left-0 top-6 items-center gap-2 text-gray-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest z-10"
@@ -78,9 +145,7 @@ export default function SubscribePage() {
             <ArrowLeft size={14} /> Go Back
           </button>
 
-          {/* HERO SECTION */}
           <div className="text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Mobile Go Back (shows above the badge on small screens) */}
             <button 
               onClick={() => router.back()} 
               className="md:hidden flex items-center justify-center gap-2 text-gray-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest mb-6 w-full"
@@ -99,7 +164,6 @@ export default function SubscribePage() {
             </p>
           </div>
           
-          {/* TOGGLE SWITCH */}
           <div className="flex justify-center items-center gap-4 mb-16 animate-in fade-in duration-700 delay-150">
             <span className={`text-sm font-black uppercase tracking-widest transition-colors ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-600'}`}>Yearly <span className="text-green-500 lowercase tracking-normal font-bold ml-1">(Save 33%)</span></span>
             <button 
@@ -111,7 +175,6 @@ export default function SubscribePage() {
             <span className={`text-sm font-black uppercase tracking-widest transition-colors ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-600'}`}>Monthly</span>
           </div>
 
-          {/* PRICING CARDS */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-6 max-w-6xl mx-auto items-center">
             
             {/* FREE PLAN */}
@@ -139,15 +202,15 @@ export default function SubscribePage() {
 
               <button 
                 onClick={() => handleCheckout('free')}
-                className="w-full bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg text-sm"
+                disabled={status === 'authenticated'}
+                className="w-full bg-gray-800 hover:bg-gray-700 disabled:hover:bg-gray-800 border border-gray-600 disabled:border-gray-700 text-white disabled:text-gray-500 font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg text-sm"
               >
-                Current Plan
+                {status === 'authenticated' ? 'Current Plan' : 'Create Free Account'}
               </button>
             </div>
 
             {/* PRO+ PLAN (FAN FAVORITE HIGHLIGHT) */}
             <div className="relative bg-gradient-to-b from-[#2a1c11] to-[#111] border-2 border-[#f5a623] rounded-3xl p-8 flex flex-col h-full shadow-[0_0_40px_rgba(245,166,35,0.15)] transform lg:-translate-y-6 z-10 animate-in fade-in slide-in-from-bottom-8">
-              {/* Floating Badge */}
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-[#f5a623] text-black text-[11px] font-black uppercase tracking-widest py-1.5 px-6 rounded-full flex items-center gap-1.5 shadow-xl whitespace-nowrap">
                  <Flame size={14} className="fill-black" /> Fan Favorite
               </div>
@@ -175,9 +238,10 @@ export default function SubscribePage() {
 
               <button 
                 onClick={() => handleCheckout('pro-plus')}
-                className="w-full bg-gradient-to-r from-orange-500 to-[#f5a623] hover:from-orange-400 hover:to-[#ffb732] text-black font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(245,166,35,0.4)] hover:shadow-[0_0_25px_rgba(245,166,35,0.6)] text-sm"
+                disabled={isCheckingOut === 'pro-plus'}
+                className="w-full bg-gradient-to-r from-orange-500 to-[#f5a623] hover:from-orange-400 hover:to-[#ffb732] text-black font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(245,166,35,0.4)] hover:shadow-[0_0_25px_rgba(245,166,35,0.6)] text-sm flex items-center justify-center gap-2 disabled:opacity-75"
               >
-                Get Pro+ Now
+                {isCheckingOut === 'pro-plus' ? <Loader2 size={18} className="animate-spin text-black" /> : 'Get Pro+ Now'}
               </button>
             </div>
 
@@ -206,15 +270,29 @@ export default function SubscribePage() {
 
               <button 
                 onClick={() => handleCheckout('pro')}
-                className="w-full bg-[#111] border border-[#f87171] hover:bg-[#f87171]/10 text-[#f87171] font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg text-sm"
+                disabled={isCheckingOut === 'pro'}
+                className="w-full bg-[#111] border border-[#f87171] hover:bg-[#f87171]/10 text-[#f87171] font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg text-sm flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                Get Pro
+                {isCheckingOut === 'pro' ? <Loader2 size={18} className="animate-spin text-[#f87171]" /> : 'Get Pro'}
               </button>
             </div>
 
           </div>
         </div>
       </div>
+
+      {/* AuthModal updated to receive the success parameter! */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={(isSuccess) => {
+          setIsAuthModalOpen(false);
+          // Only clear the memory if they clicked the 'X' to cancel!
+          if (!isSuccess) {
+            setPendingPlan(null); 
+          }
+        }} 
+        initialView="subscribe" 
+      />
     </>
   );
 }

@@ -56,11 +56,6 @@ export default function Header({ activeSport }) {
     setIsAuthModalOpen(true);
   };
 
-  const openSubscribe = () => {
-    setAuthModalView('subscribe');
-    setIsAuthModalOpen(true);
-  };
-
   return (
     <>
       <div className="bg-[#1a1a1a] border-b border-gray-800 px-4 py-3 flex justify-between items-center z-[100] sticky top-0 shadow-md">
@@ -119,12 +114,12 @@ export default function Header({ activeSport }) {
             </>
           ) : (
             <div className="flex items-center gap-3">
-              <button 
-                onClick={openSubscribe} 
-                className="bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border border-gray-600 text-white text-[10px] font-black uppercase tracking-widest py-2.5 px-6 rounded-xl transition-all shadow-lg"
+              <Link 
+                href="/subscribe" 
+                className="bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border border-gray-600 text-white text-[10px] font-black uppercase tracking-widest py-2.5 px-6 rounded-xl transition-all shadow-lg no-underline"
               >
                 Subscribe
-              </button>
+              </Link>
               <button 
                 onClick={openLogin} 
                 className="bg-[#111] hover:bg-gray-800 border border-gray-700 text-gray-300 hover:text-white text-[10px] font-black uppercase tracking-widest py-2.5 px-6 rounded-xl transition-all shadow-inner"
