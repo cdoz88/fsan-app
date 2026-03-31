@@ -43,7 +43,8 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
 
   const allPosts = [...wpPosts];
   const usedIds = new Set();
-  const wireFeed = allPosts.slice(0, 10);
+  
+  const wireFeed = allPosts.filter(p => p.type !== 'podcast').slice(0, 10);
 
   const mainFeature = allPosts.find(p => p.type === 'video' || p.type === 'article');
   if (mainFeature) usedIds.add(mainFeature.id);
@@ -136,13 +137,26 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
   const BoothCard = ({ item }) => {
     const itemTheme = themes[item.sport] || themes.All;
     
-    // SMART FALLBACK: If episode image is missing, try to find its master show's image!
+    // UPDATED SMART FALLBACK: Strip out generic tags to strictly match unique show tags!
     let displayImage = item.imageUrl;
     if (!displayImage && masterPodcasts) {
-       const parentShow = masterPodcasts.find(m => 
-          (m.spreakerShowId && m.spreakerShowId === item.spreakerShowId) || 
-          (m.category_slugs && item.category_slugs && m.category_slugs.some(slug => item.category_slugs.includes(slug)))
-       );
+       const genericSlugs = [
+          'all', 'football', 'basketball', 'baseball', 'podcast', 'podcasts', 
+          'pod-episode', 'football-pod-episode', 'basketball-pod-episode', 
+          'baseball-pod-episode', 'football-podcast', 'podcast-basketball', 'podcast-baseball'
+       ];
+       
+       const parentShow = masterPodcasts.find(m => {
+          if (m.spreakerShowId && item.spreakerShowId && m.spreakerShowId === item.spreakerShowId) {
+            return true;
+          }
+          if (m.category_slugs && item.category_slugs) {
+             const mSpecific = m.category_slugs.filter(s => !genericSlugs.includes(s.toLowerCase()));
+             return mSpecific.some(slug => item.category_slugs.includes(slug));
+          }
+          return false;
+       });
+       
        if (parentShow?.imageUrl) {
           displayImage = parentShow.imageUrl;
        }
@@ -150,8 +164,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
 
     return (
       <div onClick={() => setSelectedItem(item)} className={`flex items-stretch bg-[#1e1e1e] border ${itemTheme.border} border-opacity-40 rounded-2xl overflow-hidden ${itemTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[100px]`}>
-        
-        {/* Left Side: Artwork behind Play Button */}
         <div className="w-24 sm:w-28 shrink-0 relative bg-gray-900 flex items-center justify-center overflow-hidden border-r border-gray-800/50">
           {displayImage ? (
             <img src={displayImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
@@ -162,7 +174,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
           <PlayCircle size={36} className="text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-md" />
         </div>
 
-        {/* Right Side: Content + Extended Fake Soundwave */}
         <div className="flex-1 p-4 flex flex-col justify-center overflow-hidden">
           <div className="flex items-center gap-2 mb-1.5">
              {activeSport === 'All' && <span className={`w-1.5 h-1.5 rounded-full ${itemTheme.bg}`}></span>}
@@ -171,14 +182,12 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
           
           <h4 className={`font-bold text-sm leading-snug mb-2 text-gray-200 group-hover:${itemTheme.text} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: item.title }} />
           
-          {/* Mockup Soundwave - Now Doubled in Length! */}
           <div className="flex items-center gap-[3px] mt-auto h-4 opacity-70 group-hover:opacity-100 transition-opacity">
             {[4, 8, 12, 8, 16, 10, 14, 6, 10, 12, 8, 6, 14, 8, 4, 8, 12, 10, 16, 12, 8, 14, 10, 6, 12, 8, 16, 10, 6, 4].map((h, i) => (
               <div key={i} className={`w-[2px] sm:w-[3px] shrink-0 rounded-full bg-gray-600 group-hover:${itemTheme.bg} transition-colors`} style={{ height: `${h}px` }} />
             ))}
           </div>
         </div>
-        
       </div>
     );
   };
@@ -219,20 +228,19 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
               return (
                 <div key={`wire-${item.id}`} onClick={() => setSelectedItem(item)} className="flex flex-col items-center gap-2 shrink-0 snap-start group cursor-pointer relative pt-2 pr-2">
                   <div className="relative">
-                    <div className={`w-[68px] h-[76px] p-[2px] ${itemTheme.bg} relative transition-transform duration-300 group-hover:scale-105 flex items-center justify-center`} style={shieldMaskStyle}>
+                    <div className={`w-[84px] h-[94px] p-[2px] ${itemTheme.bg} relative transition-transform duration-300 group-hover:scale-105 flex items-center justify-center`} style={shieldMaskStyle}>
                       <div className="w-full h-full relative bg-gray-900" style={shieldMaskStyle}>
                         {item.imageUrl && <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover bg-gray-900" />}
                         <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
                       </div>
                     </div>
-                    <div className="absolute bottom-0 -right-2 bg-[#0A0A0A] rounded-full p-1.5 border border-gray-700 shadow-xl z-20 flex items-center justify-center">
-                      {item.type === 'video' && <Video size={12} stroke="url(#grey-grad)" />}
-                      {item.type === 'article' && <FileText size={12} stroke="url(#grey-grad)" />}
-                      {item.type === 'podcast' && <Mic size={12} stroke="url(#grey-grad)" />}
-                      {item.type === 'short' && <Zap size={12} stroke="url(#grey-grad)" />}
+                    <div className="absolute -bottom-1 -right-2 bg-[#0A0A0A] rounded-full p-2 border border-gray-700 shadow-xl z-20 flex items-center justify-center">
+                      {item.type === 'video' && <Video size={14} stroke="url(#grey-grad)" />}
+                      {item.type === 'article' && <FileText size={14} stroke="url(#grey-grad)" />}
+                      {item.type === 'short' && <Zap size={14} stroke="url(#grey-grad)" />}
                     </div>
                   </div>
-                  <span className="text-[11px] font-medium text-gray-400 group-hover:text-white transition-colors text-center w-[72px] truncate" dangerouslySetInnerHTML={{ __html: item.title }} />
+                  <span className="text-[11px] font-medium text-gray-400 group-hover:text-white transition-colors text-center w-[90px] line-clamp-2 leading-tight" dangerouslySetInnerHTML={{ __html: item.title }} />
                 </div>
               );
             })}
