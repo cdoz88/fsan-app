@@ -11,6 +11,11 @@ export async function POST(req) {
     if (!priceId) {
       return NextResponse.json({ error: 'Price ID is required' }, { status: 400 });
     }
+    
+    // Safety Net: Catch a missing User ID before it even goes to Stripe
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is missing from session' }, { status: 400 });
+    }
 
     // Create a Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
@@ -22,13 +27,12 @@ export async function POST(req) {
         },
       ],
       mode: 'subscription',
-      // Send them back to their account dashboard on success, or back to the subscribe page if they back out
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/account?checkout=success`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/subscribe?checkout=canceled`,
-      customer_email: userEmail, // Pre-fills their email on the Stripe screen!
-      client_reference_id: userId, // This helps us securely identify the WordPress user in the webhook later
+      customer_email: userEmail,
+      client_reference_id: String(userId), // Stripe prefers this as a string
       metadata: {
-        wpUserId: userId, 
+        wpUserId: String(userId), // Stripe strictly requires metadata to be strings
       }
     });
 

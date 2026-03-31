@@ -10,7 +10,6 @@ const authOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        // This is the updated mutation specifically for the Headless Login plugin
         const query = `
           mutation LoginUser($username: String!, $password: String!) {
             login(
@@ -63,11 +62,13 @@ const authOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.wpToken = user.token;
+        token.wpUserId = user.id; // Explicitly save the ID to the JWT token
       }
       return token;
     },
     async session({ session, token }) {
       session.user.token = token.wpToken;
+      session.user.id = token.wpUserId; // Explicitly pass the ID to the frontend session
       return session;
     }
   },
