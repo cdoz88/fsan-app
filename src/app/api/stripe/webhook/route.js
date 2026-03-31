@@ -1,4 +1,3 @@
-import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
@@ -16,7 +15,14 @@ const priceTierMapping = {
 export async function POST(req) {
   try {
     const body = await req.text();
-    const signature = headers().get('stripe-signature');
+    
+    // FIX: Use standard web Request headers instead of the async next/headers API
+    const signature = req.headers.get('stripe-signature');
+
+    if (!signature) {
+      console.error('Missing Stripe signature header');
+      return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
+    }
 
     let event;
 
@@ -32,15 +38,21 @@ export async function POST(req) {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       
+      // Safeguard: Ensure we actually have the metadata
+      if (!session?.metadata?.wpUserId) {
+        console.error("Missing WP User ID in session metadata");
+        return NextResponse.json({ error: 'Missing WP User ID' }, { status: 400 });
+      }
+
       // Get the WordPress User ID we secretly passed during checkout
       const wpUserId = parseInt(session.metadata.wpUserId, 10);
       
       // Retrieve the session line items to figure out exactly what they bought
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
-      const purchasedPriceId = lineItems.data[0].price.id;
+      const purchasedPriceId = lineItems.data[0]?.price?.id;
       const assignedTier = priceTierMapping[purchasedPriceId] || 'subscriber';
 
-      // Tell WordPress to upgrade the user!
+      // Tell WordPress to upgrade the user
       const query = `
         mutation UpgradeUser {
           updateUserTier(
