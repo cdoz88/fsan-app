@@ -16,7 +16,7 @@ export default function SubscribePage() {
   const [billingCycle, setBillingCycle] = useState('yearly');
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingOut, setIsCheckingOut] = useState(null); 
-  const [userTier, setUserTier] = useState('free'); // Track the actual tier here too!
+  const [userTier, setUserTier] = useState('free');
   
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState(null);
@@ -31,7 +31,6 @@ export default function SubscribePage() {
     fetchPerks();
   }, []);
 
-  // Fetch the user's role on the Subscribe page as well, so it reflects their purchase
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.token) {
       fetchUserRole();
@@ -59,7 +58,7 @@ export default function SubscribePage() {
           'Authorization': `Bearer ${session.user.token}`,
         },
         body: JSON.stringify({ query }),
-        cache: 'no-store' // FORCE FRESH DATA
+        cache: 'no-store' 
       });
 
       const json = await res.json();
@@ -245,16 +244,26 @@ export default function SubscribePage() {
                 ))}
               </div>
 
+              {/* UPDATED: Dynamic Button Text & Action */}
               <button 
-                onClick={() => handleCheckout('free')}
+                onClick={() => {
+                  if (status === 'authenticated' && userTier !== 'free') {
+                    // Route them to the account page to manage downgrade
+                    router.push('/account');
+                  } else {
+                    handleCheckout('free');
+                  }
+                }}
                 disabled={status === 'authenticated' && userTier === 'free'}
                 className="w-full bg-gray-800 hover:bg-gray-700 disabled:hover:bg-gray-800 border border-gray-600 disabled:border-gray-700 text-white disabled:text-gray-500 font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg text-sm"
               >
-                {status === 'authenticated' && userTier === 'free' ? 'Current Plan' : 'Create Free Account'}
+                {status === 'authenticated' 
+                  ? (userTier === 'free' ? 'Current Plan' : 'Downgrade') 
+                  : 'Create Free Account'}
               </button>
             </div>
 
-            {/* PRO+ PLAN (FAN FAVORITE HIGHLIGHT) */}
+            {/* PRO+ PLAN */}
             <div className="relative bg-gradient-to-b from-[#2a1c11] to-[#111] border-2 border-[#f5a623] rounded-3xl p-8 flex flex-col h-full shadow-[0_0_40px_rgba(245,166,35,0.15)] transform lg:-translate-y-6 z-10 animate-in fade-in slide-in-from-bottom-8">
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-[#f5a623] text-black text-[11px] font-black uppercase tracking-widest py-1.5 px-6 rounded-full flex items-center gap-1.5 shadow-xl whitespace-nowrap">
                  <Flame size={14} className="fill-black" /> Fan Favorite
