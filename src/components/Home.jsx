@@ -133,16 +133,28 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
     </div>
   );
 
-  // THE NEW PODCAST "BOOTH" CARD!
   const BoothCard = ({ item }) => {
     const itemTheme = themes[item.sport] || themes.All;
+    
+    // SMART FALLBACK: If episode image is missing, try to find its master show's image!
+    let displayImage = item.imageUrl;
+    if (!displayImage && masterPodcasts) {
+       const parentShow = masterPodcasts.find(m => 
+          (m.spreakerShowId && m.spreakerShowId === item.spreakerShowId) || 
+          (m.category_slugs && item.category_slugs && m.category_slugs.some(slug => item.category_slugs.includes(slug)))
+       );
+       if (parentShow?.imageUrl) {
+          displayImage = parentShow.imageUrl;
+       }
+    }
+
     return (
       <div onClick={() => setSelectedItem(item)} className={`flex items-stretch bg-[#1e1e1e] border ${itemTheme.border} border-opacity-40 rounded-2xl overflow-hidden ${itemTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[100px]`}>
         
-        {/* Left Side: Artwork behind Play Button (Square, Bleeding) */}
+        {/* Left Side: Artwork behind Play Button */}
         <div className="w-24 sm:w-28 shrink-0 relative bg-gray-900 flex items-center justify-center overflow-hidden border-r border-gray-800/50">
-          {item.imageUrl ? (
-            <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+          {displayImage ? (
+            <img src={displayImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
           ) : (
             <div className="absolute inset-0 bg-gray-800" />
           )}
@@ -150,8 +162,8 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
           <PlayCircle size={36} className="text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-md" />
         </div>
 
-        {/* Right Side: Content + Fake Soundwave */}
-        <div className="flex-1 p-4 flex flex-col justify-center">
+        {/* Right Side: Content + Extended Fake Soundwave */}
+        <div className="flex-1 p-4 flex flex-col justify-center overflow-hidden">
           <div className="flex items-center gap-2 mb-1.5">
              {activeSport === 'All' && <span className={`w-1.5 h-1.5 rounded-full ${itemTheme.bg}`}></span>}
              <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500">{item.date}</span>
@@ -159,10 +171,10 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
           
           <h4 className={`font-bold text-sm leading-snug mb-2 text-gray-200 group-hover:${itemTheme.text} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: item.title }} />
           
-          {/* Mockup Soundwave */}
+          {/* Mockup Soundwave - Now Doubled in Length! */}
           <div className="flex items-center gap-[3px] mt-auto h-4 opacity-70 group-hover:opacity-100 transition-opacity">
-            {[4, 8, 12, 8, 16, 10, 14, 6, 10, 12, 8, 6, 14, 8, 4].map((h, i) => (
-              <div key={i} className={`w-[2px] sm:w-[3px] rounded-full bg-gray-600 group-hover:${itemTheme.bg} transition-colors`} style={{ height: `${h}px` }} />
+            {[4, 8, 12, 8, 16, 10, 14, 6, 10, 12, 8, 6, 14, 8, 4, 8, 12, 10, 16, 12, 8, 14, 10, 6, 12, 8, 16, 10, 6, 4].map((h, i) => (
+              <div key={i} className={`w-[2px] sm:w-[3px] shrink-0 rounded-full bg-gray-600 group-hover:${itemTheme.bg} transition-colors`} style={{ height: `${h}px` }} />
             ))}
           </div>
         </div>
@@ -276,7 +288,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
                   </div>
                   <div className="flex flex-col gap-6 flex-1">
                     <div className="flex flex-col gap-4">
-                      {/* Updated BoothCards now render here! */}
                       {boothPodcasts.map(pod => <BoothCard key={pod.id} item={pod} />)}
                     </div>
                     <div className="flex flex-col gap-6 flex-1">
