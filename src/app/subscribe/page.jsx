@@ -16,7 +16,8 @@ export default function SubscribePage() {
   const [billingCycle, setBillingCycle] = useState('yearly');
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingOut, setIsCheckingOut] = useState(null); 
-  const [userTier, setUserTier] = useState('free');
+  const [isPortalLoading, setIsPortalLoading] = useState(false); // Track portal loading state
+  const [userTier, setUserTier] = useState('free'); 
   
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [pendingPlan, setPendingPlan] = useState(null);
@@ -173,6 +174,31 @@ export default function SubscribePage() {
     }
   };
 
+  // Launch the Stripe Portal for downgrades
+  const handleManageBilling = async () => {
+    setIsPortalLoading(true);
+    try {
+      const res = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: session.user.email }),
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Failed to open billing portal.');
+        setIsPortalLoading(false);
+      }
+    } catch (error) {
+      console.error('Portal Error:', error);
+      alert('An unexpected error occurred.');
+      setIsPortalLoading(false);
+    }
+  };
+
   return (
     <>
       <Header activeSport={activeSport} />
@@ -244,26 +270,23 @@ export default function SubscribePage() {
                 ))}
               </div>
 
-              {/* UPDATED: Dynamic Button Text & Action */}
+              {/* UPDATED: Launches Portal to cancel/downgrade */}
               <button 
                 onClick={() => {
                   if (status === 'authenticated' && userTier !== 'free') {
-                    // Route them to the account page to manage downgrade
-                    router.push('/account');
+                    handleManageBilling();
                   } else {
                     handleCheckout('free');
                   }
                 }}
-                disabled={status === 'authenticated' && userTier === 'free'}
-                className="w-full bg-gray-800 hover:bg-gray-700 disabled:hover:bg-gray-800 border border-gray-600 disabled:border-gray-700 text-white disabled:text-gray-500 font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg text-sm"
+                disabled={(status === 'authenticated' && userTier === 'free') || isPortalLoading}
+                className="w-full bg-gray-800 hover:bg-gray-700 disabled:hover:bg-gray-800 border border-gray-600 disabled:border-gray-700 text-white disabled:text-gray-500 font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg text-sm flex items-center justify-center gap-2"
               >
-                {status === 'authenticated' 
-                  ? (userTier === 'free' ? 'Current Plan' : 'Downgrade') 
-                  : 'Create Free Account'}
+                {isPortalLoading ? <Loader2 size={18} className="animate-spin text-white" /> : (status === 'authenticated' ? (userTier === 'free' ? 'Current Plan' : 'Downgrade via Stripe') : 'Create Free Account')}
               </button>
             </div>
 
-            {/* PRO+ PLAN */}
+            {/* PRO+ PLAN (FAN FAVORITE HIGHLIGHT) */}
             <div className="relative bg-gradient-to-b from-[#2a1c11] to-[#111] border-2 border-[#f5a623] rounded-3xl p-8 flex flex-col h-full shadow-[0_0_40px_rgba(245,166,35,0.15)] transform lg:-translate-y-6 z-10 animate-in fade-in slide-in-from-bottom-8">
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-[#f5a623] text-black text-[11px] font-black uppercase tracking-widest py-1.5 px-6 rounded-full flex items-center gap-1.5 shadow-xl whitespace-nowrap">
                  <Flame size={14} className="fill-black" /> Fan Favorite
