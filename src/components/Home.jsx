@@ -22,7 +22,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
 
   useEffect(() => {
     const fetchAds = async () => {
-      // NEW: Added btnTextColor to the GraphQL fetch
       const query = `
         query GetGlobalAds {
           globalAds {
@@ -143,7 +142,8 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
          {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="Background" />}
          {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
          
-         <div className="relative z-10 flex flex-col justify-center shrink @3xl:flex-1 pr-2 text-center @4xl:text-left items-center @4xl:items-start min-w-0">
+         {/* LEFT SIDE: By setting flex-1, we demand equal space to perfectly center the middle image */}
+         <div className="relative z-10 flex flex-col justify-center flex-1 pr-2 text-center @4xl:text-left items-center @4xl:items-start min-w-0">
            <h2 className="text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-center @4xl:origin-left line-clamp-2 leading-tight">
              {ad.headline}
            </h2>
@@ -152,14 +152,15 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
            </p>
          </div>
 
+         {/* MIDDLE: Sits dead center as long as left and right are balanced */}
          {ad.fgImage && (
             <div className="relative z-10 hidden @sm:flex justify-center items-center shrink-0">
                <img src={ad.fgImage} className="max-h-16 @2xl:max-h-24 w-auto max-w-[80px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="Foreground" />
             </div>
          )}
 
-         <div className="relative z-10 flex justify-end items-center shrink-0 @3xl:flex-1 min-w-0">
-            {/* NEW: Appling btnTextColor */}
+         {/* RIGHT SIDE: By setting flex-1, we balance out the left side! */}
+         <div className="relative z-10 flex justify-end items-center flex-1 min-w-0">
             <div className="px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap" style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
                {ad.buttonText} <ChevronRight size={14} className="hidden @md:block" />
             </div>
@@ -169,7 +170,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
   };
 
   const VideoCard = ({ item, isHero }) => (
-    <div onClick={() => setSelectedItem(item)} className={`group w-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
+    <div onClick={() => setSelectedItem(item)} className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
       {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
       <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
       <PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
@@ -353,32 +354,33 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
       )}
 
       <div className="space-y-12">
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {mainFeature && (
-            <div className="lg:col-span-2 flex flex-col gap-6 h-full">
-              <div className="w-full shrink-0">
+        <section className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {mainFeature && (
+              <div className="lg:col-span-2 w-full shrink-0 h-full flex flex-col">
                  <VideoCard item={mainFeature} isHero={true} />
               </div>
-              {/* Dynamic Ad Slot 1 */}
-              {activeAds[0] && (
-                 <div className="w-full flex-1 flex flex-col min-h-[120px]">
-                   <DynamicAd ad={activeAds[0]} />
-                 </div>
+            )}
+            <div className="flex flex-col gap-6 h-full">
+              {sideTopFeature && (
+                <div className={sideTopFeature.type === 'video' ? "w-full shrink-0" : "flex-1 w-full min-h-[200px]"}>
+                   {sideTopFeature.type === 'video' ? <VideoCard item={sideTopFeature} isHero={false} /> : <VerticalCard item={sideTopFeature} />}
+                </div>
+              )}
+              {sideBottomFeature && (
+                <div className={sideBottomFeature.type === 'video' ? "w-full shrink-0" : "flex-1 w-full min-h-[200px]"}>
+                   {sideBottomFeature.type === 'video' ? <VideoCard item={sideBottomFeature} isHero={false} /> : <VerticalCard item={sideBottomFeature} />}
+                </div>
               )}
             </div>
-          )}
-          <div className="flex flex-col gap-6 h-full">
-            {sideTopFeature && (
-              <div className={sideTopFeature.type === 'video' ? "w-full shrink-0" : "flex-1 w-full min-h-[200px]"}>
-                 {sideTopFeature.type === 'video' ? <VideoCard item={sideTopFeature} isHero={false} /> : <VerticalCard item={sideTopFeature} />}
-              </div>
-            )}
-            {sideBottomFeature && (
-              <div className={sideBottomFeature.type === 'video' ? "w-full shrink-0" : "flex-1 w-full min-h-[200px]"}>
-                 {sideBottomFeature.type === 'video' ? <VideoCard item={sideBottomFeature} isHero={false} /> : <VerticalCard item={sideBottomFeature} />}
-              </div>
-            )}
           </div>
+          
+          {/* Dynamic Ad Slot 1 - Stretches 100% across the bottom of the grid */}
+          {activeAds[0] && (
+             <div className="w-full min-h-[120px]">
+               <DynamicAd ad={activeAds[0]} />
+             </div>
+          )}
         </section>
 
         {(pressBoxArticles.length > 0 || boothPodcasts.length > 0) && (
