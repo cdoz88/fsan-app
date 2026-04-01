@@ -193,31 +193,31 @@ export default function AdsDashboard() {
     }
 
     return (
-      <div className="@container w-full h-full rounded-2xl p-4 md:p-6 flex flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-4 md:gap-8" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
+      <div className="@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-3 @2xl:gap-6" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
          {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay" alt="Background" />}
          {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
          
-         {/* 1. TEXT (Centers natively on small screens, locks left on large screens) */}
-         <div className="relative z-10 flex flex-col justify-center shrink pr-2 text-center @2xl:text-left items-center @2xl:items-start">
-           <h2 className="text-xl md:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-center @2xl:origin-left line-clamp-2 leading-tight">
+         {/* 1. TEXT (Switches to text-left at the larger @4xl breakpoint so it centers sooner when shrinking) */}
+         <div className="relative z-10 flex flex-col justify-center shrink pr-2 text-center @4xl:text-left items-center @4xl:items-start">
+           <h2 className="text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-center @4xl:origin-left line-clamp-2 leading-tight">
              {ad.headline || 'Headline'}
            </h2>
-           <p className="text-gray-300 font-bold text-[10px] md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
+           <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
              {ad.subtext || 'Subtext goes here'}
            </p>
          </div>
 
          {/* 2. IMAGE */}
          {ad.fgImage && (
-            <div className="relative z-10 hidden md:flex justify-center items-center shrink-0">
-               <img src={ad.fgImage} className="max-h-20 md:max-h-24 w-auto max-w-[100px] md:max-w-[160px] object-contain drop-shadow-2xl hover:scale-110 transition-transform duration-300" alt="Foreground" />
+            <div className="relative z-10 hidden @sm:flex justify-center items-center shrink-0">
+               <img src={ad.fgImage} className="max-h-16 @2xl:max-h-24 w-auto max-w-[80px] @2xl:max-w-[160px] object-contain drop-shadow-2xl hover:scale-110 transition-transform duration-300" alt="Foreground" />
             </div>
          )}
 
          {/* 3. BUTTON */}
-         <div className="relative z-10 flex justify-end items-center shrink-0">
-            <div className="text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 shrink-0 whitespace-nowrap" style={{ backgroundColor: ad.btnColor }}>
-               {ad.buttonText || 'Click Here'} <ChevronRight size={14} />
+         <div className="relative z-10 flex justify-end items-center shrink-0 @3xl:flex-1 min-w-0">
+            <div className="text-white px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap" style={{ backgroundColor: ad.btnColor }}>
+               {ad.buttonText || 'Click Here'} <ChevronRight size={14} className="hidden @md:block" />
             </div>
          </div>
       </div>
