@@ -4,13 +4,27 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
-import { Loader2, ShieldAlert, ChevronRight, Save, LayoutTemplate, Plus, Edit2, Trash2, ArrowLeft, Image as ImageIcon, Shirt, ArrowUp, ArrowDown } from 'lucide-react';
+import { 
+  Loader2, 
+  ShieldAlert, 
+  ChevronRight, 
+  Save, 
+  LayoutTemplate, 
+  Plus, 
+  Edit2, 
+  Trash2, 
+  ArrowLeft, 
+  Image as ImageIcon, 
+  Shirt, 
+  ArrowUp, 
+  ArrowDown 
+} from 'lucide-react';
 
 const defaultAdState = {
   id: '',
   headline: 'Dominate Your Draft',
   subtext: 'Get the ultimate rookie breakdown!',
-  buttonText: 'Get Access',
+  buttonText: 'Get Yours Now!',
   buttonLink: 'https://fsan.shop',
   bgColor: '#7f1d1d', 
   bgColor2: '#000000',
@@ -201,62 +215,51 @@ export default function AdsDashboard() {
     setView('form');
   };
 
+  // SMARTS PREVIEW (Matches Home.jsx logic exactly)
   const LivePreviewAd = ({ ad }) => {
     let patternOverlay = '';
-    if (ad.pattern === 'dots') {
-        patternOverlay = "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20\\' xmlns=\\'http://www.w3.org/2000%2Fsvg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')";
-    } else if (ad.pattern === 'lines') {
-        patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)";
-    } else if (ad.pattern === 'grid') {
-        patternOverlay = "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)";
-    } else if (ad.pattern === 'crosshatch') {
-        patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px), repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px)";
-    }
+    if (ad.pattern === 'dots') patternOverlay = "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20\\' xmlns=\\'http://www.w3.org/2000%2Fsvg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')";
+    else if (ad.pattern === 'lines') patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)";
+    else if (ad.pattern === 'grid') patternOverlay = "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)";
+    else if (ad.pattern === 'crosshatch') patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px), repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px)";
 
-    const bgStyles = {};
-    if (ad.bgGradientType === 'solid') {
-        bgStyles.backgroundColor = ad.bgColor;
-    } else if (ad.bgGradientType === 'linear') {
-        bgStyles.backgroundImage = `linear-gradient(to right, ${ad.bgColor}, ${ad.bgColor2 || '#000000'})`;
-    } else if (ad.bgGradientType === 'radial') {
-        bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
-    }
+    const bgStyles = { borderColor: ad.borderColor || ad.bgColor };
+    if (ad.bgGradientType === 'solid') bgStyles.backgroundColor = ad.bgColor;
+    else if (ad.bgGradientType === 'linear') bgStyles.backgroundImage = `linear-gradient(to right, ${ad.bgColor}, ${ad.bgColor2 || '#000000'})`;
+    else if (ad.bgGradientType === 'radial') bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
 
     const renderButton = (extraClass) => (
       <div className={`px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
-         {ad.buttonText} <ChevronRight size={14} className="hidden @md:block" />
+         {ad.buttonText || 'Click Here'} <ChevronRight size={14} className="hidden @md:block" />
       </div>
     );
 
-    const textAlignment = ad.fgImage
-      ? "text-left items-start" 
-      : "text-center @4xl:text-left items-center @4xl:items-start";
-
     return (
-      <div className="@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-3 @2xl:gap-6" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
+      <div className={`@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-3 @2xl:gap-6 no-underline block ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between'}`} style={bgStyles}>
          {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="Background" />}
          {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
          
-         {/* STRIPPED flex-1 - Text now shrinks gracefully */}
-         <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 ${textAlignment}`}>
-           <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight ${ad.fgImage ? 'origin-left' : 'origin-center @4xl:origin-left'}`}>
-             {ad.headline}
+         {/* TEXT COLUMN */}
+         <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
+           <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>
+             {ad.headline || 'Headline'}
            </h2>
            <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
-             {ad.subtext}
+             {ad.subtext || 'Subtext goes here'}
            </p>
-           
-           {ad.fgImage && renderButton("mt-4 flex @4xl:hidden w-max")}
+           {/* STACKED BUTTON */}
+           {renderButton("mt-4 flex @4xl:hidden w-max")}
          </div>
 
+         {/* IMAGE */}
          {ad.fgImage && (
-            <div className="relative z-10 hidden @xs:flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0">
+            <div className="relative z-10 hidden @xs:flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1">
                <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="Foreground" />
             </div>
          )}
 
-         {/* STRIPPED @5xl:flex-1 - Button now perfectly hugs its content! */}
-         <div className={`relative z-10 justify-end items-center shrink-0 min-w-0 ${ad.fgImage ? 'hidden @4xl:flex' : 'flex'}`}>
+         {/* INLINE BUTTON */}
+         <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
             {renderButton("")}
          </div>
       </div>
@@ -281,7 +284,7 @@ export default function AdsDashboard() {
               <p className="text-gray-400 mt-2 text-sm">Manage global promotional banners across the network.</p>
             </div>
             {view === 'list' && (
-              <button onClick={() => openEditor()} className="bg-red-600 text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest text-sm flex items-center gap-2 hover:bg-red-500 transition-colors shadow-lg">
+              <button onClick={() => { setAdData(defaultAdState); setView('form'); }} className="bg-red-600 text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest text-sm flex items-center gap-2 hover:bg-red-500 transition-colors shadow-lg">
                   <Plus size={18} /> Create New Ad
               </button>
             )}
@@ -300,7 +303,7 @@ export default function AdsDashboard() {
                       <div className="px-6 py-4 bg-[#111] border-t border-gray-800 flex items-center justify-between mt-auto">
                         <div className="flex flex-col">
                            <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">Sport: {Array.isArray(ad.sport) ? ad.sport.join(', ') : (ad.sport || 'None')}</span>
-                           <span className="text-[10px] text-gray-600">Pages: {Array.isArray(ad.pages) ? ad.pages.join(', ') : (ad.pages || 'None')}</span>
+                           <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Pages: {Array.isArray(ad.pages) ? ad.pages.join(', ') : (ad.pages || 'None')}</span>
                         </div>
                         <div className="flex items-center gap-4">
                            {/* REORDER ARROWS */}
@@ -370,7 +373,7 @@ export default function AdsDashboard() {
                            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Color 2</label>
                            <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
                              <input type="color" name="bgColor2" value={adData.bgColor2} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
-                             <input type="text" name="bgColor2" value={adData.bgColor2} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
+                           <input type="text" name="bgColor2" value={adData.bgColor2} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
                            </div>
                          </div>
                        )}
@@ -397,7 +400,7 @@ export default function AdsDashboard() {
                      </div>
                      <div className="flex gap-4">
                        <div className="flex-1">
-                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button Color</label>
+                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button BG</label>
                          <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
                            <input type="color" name="btnColor" value={adData.btnColor} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
                            <input type="text" name="btnColor" value={adData.btnColor} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
