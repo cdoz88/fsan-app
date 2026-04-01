@@ -16,7 +16,7 @@ const defaultAdState = {
   bgColor2: '#000000',
   bgGradientType: 'radial', 
   btnColor: '#dc2626',
-  btnTextColor: '#ffffff', // NEW
+  btnTextColor: '#ffffff',
   borderColor: '#991b1b',
   pattern: 'dots', 
   bgImage: '',
@@ -35,7 +35,7 @@ export default function AdsDashboard() {
   const [isVerifying, setIsVerifying] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isReordering, setIsReordering] = useState(false); // NEW
+  const [isReordering, setIsReordering] = useState(false);
 
   const [view, setView] = useState('list'); 
   const [adsList, setAdsList] = useState([]);
@@ -161,7 +161,6 @@ export default function AdsDashboard() {
     }
   };
 
-  // NEW: Move Ad Up or Down
   const moveAd = async (index, direction) => {
     if (isReordering) return;
     setIsReordering(true);
@@ -171,7 +170,7 @@ export default function AdsDashboard() {
     newAdsList[index] = newAdsList[index + direction];
     newAdsList[index + direction] = temp;
     
-    setAdsList(newAdsList); // Optimistic UI Update
+    setAdsList(newAdsList); 
 
     const newIds = newAdsList.map(ad => ad.id);
     const query = `mutation ReorderAds($ids: [String]) { reorderGlobalAds(input: { ids: $ids }) { success } }`;
@@ -184,7 +183,7 @@ export default function AdsDashboard() {
       });
     } catch(e) {
       alert('Error reordering ads.');
-      fetchAds(); // Revert back to DB state if it fails
+      fetchAds(); 
     } finally {
       setIsReordering(false);
     }
@@ -224,27 +223,29 @@ export default function AdsDashboard() {
     }
 
     return (
-      <div className="@container w-full h-full rounded-2xl p-4 md:p-6 flex flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-3 @2xl:gap-6" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
-         {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay" alt="Background" />}
+      <div className="@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-3 @2xl:gap-6" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
+         {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="Background" />}
          {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
          
-         <div className="relative z-10 flex flex-col justify-center shrink pr-2 text-center @4xl:text-left items-center @4xl:items-start min-w-0">
+         {/* 1. TEXT: Permanent flex-1 to demand exactly equal space to the button container */}
+         <div className="relative z-10 flex flex-col justify-center flex-1 pr-2 text-center @4xl:text-left items-center @4xl:items-start min-w-0">
            <h2 className="text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-center @4xl:origin-left line-clamp-2 leading-tight">
-             {ad.headline || 'Headline'}
+             {ad.headline}
            </h2>
            <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
-             {ad.subtext || 'Subtext goes here'}
+             {ad.subtext}
            </p>
          </div>
 
+         {/* 2. IMAGE: Perfectly centered because the left and right containers push equally */}
          {ad.fgImage && (
             <div className="relative z-10 hidden @sm:flex justify-center items-center shrink-0">
-               <img src={ad.fgImage} className="max-h-16 @2xl:max-h-24 w-auto max-w-[80px] @2xl:max-w-[160px] object-contain drop-shadow-2xl hover:scale-110 transition-transform duration-300" alt="Foreground" />
+               <img src={ad.fgImage} className="max-h-16 @2xl:max-h-24 w-auto max-w-[80px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="Foreground" />
             </div>
          )}
 
-         <div className="relative z-10 flex justify-end items-center shrink-0 @3xl:flex-1 min-w-0">
-            {/* NEW: Appling btnTextColor */}
+         {/* 3. BUTTON: Permanent flex-1 to perfectly balance the text container */}
+         <div className="relative z-10 flex justify-end items-center flex-1 min-w-0">
             <div className="px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap" style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
                {ad.buttonText || 'Click Here'} <ChevronRight size={14} className="hidden @md:block" />
             </div>
@@ -299,7 +300,6 @@ export default function AdsDashboard() {
                              <button onClick={() => moveAd(index, 1)} disabled={index === adsList.length - 1 || isReordering} className="p-1 text-gray-400 hover:text-white disabled:opacity-30 transition-colors"><ArrowDown size={16} /></button>
                            </div>
                            <div className="w-px h-6 bg-gray-800"></div>
-                           {/* EDIT / DELETE */}
                            <button onClick={() => openEditor(ad)} className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"><Edit2 size={16} /></button>
                            <button onClick={() => handleDeleteAd(ad.id)} disabled={isDeleting} className="p-2 bg-red-900/30 hover:bg-red-900/50 text-red-500 rounded-lg transition-colors"><Trash2 size={16} /></button>
                         </div>
@@ -394,7 +394,6 @@ export default function AdsDashboard() {
                            <input type="text" name="btnColor" value={adData.btnColor} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
                          </div>
                        </div>
-                       {/* NEW: Button Text Color */}
                        <div className="flex-1">
                          <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button Text</label>
                          <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
