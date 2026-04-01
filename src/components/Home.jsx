@@ -9,12 +9,43 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
   const shortsRef = useRef(null);
   const lineupRef = useRef(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  
+  // NEW: State to hold our live dynamic ads
+  const [globalAds, setGlobalAds] = useState([]);
+  
   const hideScrollbar = "scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
 
   useEffect(() => {
     const handleScroll = () => setShowScrollTop(window.scrollY > 400);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // NEW: Fetch all global ads from the WP database on load
+  useEffect(() => {
+    const fetchAds = async () => {
+      const query = `
+        query GetGlobalAds {
+          globalAds {
+            id headline subtext buttonText buttonLink bgColor bgColor2 bgGradientType btnColor borderColor pattern bgImage fgImage sport pages startDate endDate
+          }
+        }
+      `;
+      try {
+        const res = await fetch('https://admin.fsan.com/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query }),
+        });
+        const json = await res.json();
+        if (json?.data?.globalAds) {
+          setGlobalAds(json.data.globalAds);
+        }
+      } catch (e) {
+        console.error("Failed to fetch dynamic ads", e);
+      }
+    };
+    fetchAds();
   }, []);
 
   const PostMeta = ({ item }) => (
@@ -66,18 +97,87 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
 
   const highlightShorts = allPosts.filter(p => p.type === 'short' && !usedIds.has(p.id)).slice(0, 8);
 
-  const PromoAd = ({ shape = "banner", title = "Join Sellout Crowds", subtitle = "Win Your League with Real-Time Advice!", cta = "Join Community", link = 'https://www.selloutcrowds.com/crowd/fsan' }) => (
-    <a href={link} target="_blank" rel="noreferrer" className={`w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/40 via-[#111] to-black border border-red-900/50 rounded-2xl p-4 md:p-6 flex ${shape === 'banner' ? 'flex-col sm:flex-row items-center justify-between text-left' : 'flex-col items-center justify-center text-center'} relative overflow-hidden shadow-2xl cursor-pointer hover:border-red-600 transition-colors group min-h-[120px] no-underline`}>
-       <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20\\' xmlns=\\'http://www.w3.org/2000%2Fsvg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')", mixBlendMode: 'overlay' }}></div>
-       <div className={`relative z-10 flex flex-col justify-center ${shape === 'banner' ? 'mb-0' : 'mb-2'}`}>
-         <h2 className="text-xl md:text-2xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-center line-clamp-1">{title}</h2>
-         <p className="text-gray-300 font-bold text-[10px] tracking-wide relative z-10 line-clamp-1 md:line-clamp-2">{subtitle}</p>
-       </div>
-       <div className={`bg-red-600 text-white px-4 py-2 lg:px-5 lg:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 flex items-center justify-center gap-2 shrink-0 whitespace-nowrap ${shape === 'banner' ? 'mt-3 sm:mt-0' : 'mt-2 sm:mt-0'}`}>
-          {cta} <ChevronRight size={14} />
-       </div>
-    </a>
-  );
+  // NEW: Filtering logic to determine which ads should actually be displayed
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Strip out time so we are comparing pure dates
+
+  const activeAds = globalAds.filter(ad => {
+    // 1. Check Page Targeting
+    if (!ad.pages || !ad.pages.includes('home')) return false;
+
+    // 2. Check Sport Targeting
+    if (!ad.sport || (!ad.sport.includes('All') && !ad.sport.includes(activeSport))) return false;
+
+    // 3. Check Start Date
+    if (ad.startDate) {
+      const [year, month, day] = ad.startDate.split('-');
+      const start = new Date(year, month - 1, day);
+      if (today < start) return false;
+    }
+
+    // 4. Check End Date
+    if (ad.endDate) {
+      const [year, month, day] = ad.endDate.split('-');
+      const end = new Date(year, month - 1, day);
+      if (today > end) return false;
+    }
+
+    return true; // Passed all checks! Show the ad.
+  });
+
+  // NEW: The Dynamic Ad Component
+  const DynamicAd = ({ ad }) => {
+    if (!ad) return null;
+
+    let patternOverlay = '';
+    if (ad.pattern === 'dots') {
+        patternOverlay = "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20\\' xmlns=\\'http://www.w3.org/2000%2Fsvg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')";
+    } else if (ad.pattern === 'lines') {
+        patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)";
+    } else if (ad.pattern === 'grid') {
+        patternOverlay = "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)";
+    } else if (ad.pattern === 'crosshatch') {
+        patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px), repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px)";
+    }
+
+    const bgStyles = {};
+    if (ad.bgGradientType === 'solid') {
+        bgStyles.backgroundColor = ad.bgColor;
+    } else if (ad.bgGradientType === 'linear') {
+        bgStyles.backgroundImage = `linear-gradient(to right, ${ad.bgColor}, ${ad.bgColor2 || '#000000'})`;
+    } else if (ad.bgGradientType === 'radial') {
+        bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
+    }
+
+    // Turned the entire element into an <a> tag so it's clickable
+    return (
+      <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className="@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-3 @2xl:gap-6 no-underline block hover:scale-[1.01]" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
+         {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="Background" />}
+         {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
+         
+         <div className="relative z-10 flex flex-col justify-center shrink @3xl:flex-1 pr-2 text-center @4xl:text-left items-center @4xl:items-start min-w-0">
+           <h2 className="text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-center @4xl:origin-left line-clamp-2 leading-tight">
+             {ad.headline}
+           </h2>
+           <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
+             {ad.subtext}
+           </p>
+         </div>
+
+         {ad.fgImage && (
+            <div className="relative z-10 hidden @sm:flex justify-center items-center shrink-0">
+               <img src={ad.fgImage} className="max-h-16 @2xl:max-h-24 w-auto max-w-[80px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="Foreground" />
+            </div>
+         )}
+
+         <div className="relative z-10 flex justify-end items-center shrink-0 @3xl:flex-1 min-w-0">
+            <div className="text-white px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap" style={{ backgroundColor: ad.btnColor }}>
+               {ad.buttonText} <ChevronRight size={14} className="hidden @md:block" />
+            </div>
+         </div>
+      </a>
+    );
+  };
 
   const VideoCard = ({ item, isHero }) => (
     <div onClick={() => setSelectedItem(item)} className={`group w-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
@@ -139,8 +239,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
     const [fetchedImage, setFetchedImage] = useState(null);
     
     let displayImage = item.imageUrl;
-    
-    // Smart Fallback 1: Match by Master Show (ignoring generic categories like "Uncategorized")
     if (!displayImage && masterPodcasts) {
        const genericSlugs = [
           'all', 'football', 'basketball', 'baseball', 'podcast', 'podcasts', 
@@ -164,7 +262,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
        }
     }
 
-    // Smart Fallback 2: If we STILL don't have an image, fetch it directly from Spreaker!
     useEffect(() => {
       if (!displayImage && item.spreakerId) {
         fetch(`https://api.spreaker.com/v2/episodes/${item.spreakerId}`)
@@ -273,9 +370,12 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
               <div className="w-full shrink-0">
                  <VideoCard item={mainFeature} isHero={true} />
               </div>
-              <div className="w-full flex-1 flex flex-col min-h-[120px]">
-                <PromoAd shape="banner" />
-              </div>
+              {/* Dynamic Ad Slot 1 */}
+              {activeAds[0] && (
+                 <div className="w-full flex-1 flex flex-col min-h-[120px]">
+                   <DynamicAd ad={activeAds[0]} />
+                 </div>
+              )}
             </div>
           )}
           <div className="flex flex-col gap-6 h-full">
@@ -316,13 +416,18 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
                     <div className="flex flex-col gap-4">
                       {boothPodcasts.map(pod => <BoothCard key={pod.id} item={pod} />)}
                     </div>
+                    {/* Dynamic Ad Slots 2 & 3 (Automatically collapses if ads are missing) */}
                     <div className="flex flex-col gap-6 flex-1">
-                      <div className="flex-1 min-h-[120px]">
-                        <PromoAd shape="square" title="Dominate Your Draft" subtitle="Get the ultimate rookie breakdown!" cta="Get Access" link="#" />
-                      </div>
-                      <div className="flex-1 min-h-[120px]">
-                        <PromoAd shape="square" title="Real Time Advice" subtitle="Join Sellout Crowds" cta="Join Now" />
-                      </div>
+                      {activeAds[1] && (
+                         <div className="flex-1 min-h-[120px]">
+                           <DynamicAd ad={activeAds[1]} />
+                         </div>
+                      )}
+                      {activeAds[2] && (
+                         <div className="flex-1 min-h-[120px]">
+                           <DynamicAd ad={activeAds[2]} />
+                         </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -340,9 +445,12 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filmRoomVideos.map(video => <VideoCard key={video.id} item={video} isHero={false} />)}
             </div>
-            <div className="w-full">
-              <PromoAd shape="banner" title="Fantasy Apparel Drop" subtitle="Shop the new FSAN collection!" cta="Shop Now" link="https://fsan.shop" />
-            </div>
+            {/* Dynamic Ad Slot 4 */}
+            {activeAds[3] && (
+               <div className="w-full">
+                 <DynamicAd ad={activeAds[3]} />
+               </div>
+            )}
           </section>
         )}
 
