@@ -16,11 +16,11 @@ const defaultAdState = {
   bgColor2: '#000000',
   bgGradientType: 'radial', 
   btnColor: '#dc2626',
-  borderColor: '#991b1b', // NEW
+  borderColor: '#991b1b',
   pattern: 'dots', 
   bgImage: '',
-  fgImage: '', // NEW
-  sport: ['All'], // UPDATED to array
+  fgImage: '',
+  sport: ['All'],
   pages: ['home', 'articles', 'videos', 'podcasts'],
   startDate: '',
   endDate: ''
@@ -160,8 +160,14 @@ export default function AdsDashboard() {
   };
 
   const openEditor = (ad = null) => {
-    // If ad has no sport array (from an old save), default it to ['All']
-    const safeAd = ad ? { ...defaultAdState, ...ad, sport: Array.isArray(ad.sport) ? ad.sport : ['All'] } : { ...defaultAdState };
+    // SAFETY NET: Ensure legacy ad data defaults to arrays for sport and pages to prevent .join() crashes
+    const safeAd = ad ? { 
+      ...defaultAdState, 
+      ...ad, 
+      sport: Array.isArray(ad.sport) ? ad.sport : (ad.sport ? [ad.sport] : ['All']),
+      pages: Array.isArray(ad.pages) ? ad.pages : ['home', 'articles', 'videos', 'podcasts']
+    } : { ...defaultAdState };
+    
     setAdData(safeAd);
     setView('form');
   };
@@ -197,7 +203,6 @@ export default function AdsDashboard() {
            <p className="text-gray-300 font-bold text-[11px] uppercase tracking-widest relative z-10 truncate">{ad.subtext || 'Subtext goes here'}</p>
          </div>
 
-         {/* Foreground / Merch Image (Hides automatically if space is too small) */}
          {ad.fgImage && (
             <div className="relative z-10 hidden sm:flex flex-1 justify-center items-center px-4">
                <img src={ad.fgImage} className="max-h-24 w-auto object-contain drop-shadow-2xl hover:scale-110 transition-transform duration-300" alt="Foreground" />
@@ -247,8 +252,9 @@ export default function AdsDashboard() {
                       </div>
                       <div className="px-6 py-4 bg-[#111] border-t border-gray-800 flex items-center justify-between mt-auto">
                         <div className="flex flex-col">
-                           <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">Sport: {ad.sport.join(', ')}</span>
-                           <span className="text-[10px] text-gray-600">Pages: {ad.pages.join(', ')}</span>
+                           {/* SAFETY NET: Ensure sport and pages are arrays before calling .join() */}
+                           <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">Sport: {Array.isArray(ad.sport) ? ad.sport.join(', ') : (ad.sport || 'None')}</span>
+                           <span className="text-[10px] text-gray-600">Pages: {Array.isArray(ad.pages) ? ad.pages.join(', ') : (ad.pages || 'None')}</span>
                         </div>
                         <div className="flex gap-2">
                            <button onClick={() => openEditor(ad)} className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"><Edit2 size={16} /></button>
