@@ -160,7 +160,6 @@ export default function AdsDashboard() {
   };
 
   const openEditor = (ad = null) => {
-    // SAFETY NET: Ensure legacy ad data defaults to arrays for sport and pages to prevent .join() crashes
     const safeAd = ad ? { 
       ...defaultAdState, 
       ...ad, 
@@ -172,6 +171,7 @@ export default function AdsDashboard() {
     setView('form');
   };
 
+  // LIVE PREVIEW COMPONENT (UPDATED WITH CONTAINER QUERIES)
   const LivePreviewAd = ({ ad }) => {
     let patternOverlay = '';
     if (ad.pattern === 'dots') {
@@ -194,22 +194,29 @@ export default function AdsDashboard() {
     }
 
     return (
-      <div className="w-full h-full rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
+      // Added @container so the ad components adapt dynamically to their given space!
+      <div className="@container w-full h-full rounded-2xl p-4 @md:p-6 flex flex-col @sm:flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
          {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay" alt="Background" />}
          {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
          
-         <div className="relative z-10 flex flex-col justify-center flex-1 min-w-0">
-           <h2 className="text-2xl md:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-left truncate">{ad.headline || 'Headline'}</h2>
-           <p className="text-gray-300 font-bold text-[11px] uppercase tracking-widest relative z-10 truncate">{ad.subtext || 'Subtext goes here'}</p>
+         <div className="relative z-10 flex flex-col justify-center flex-1 pr-2 @md:pr-4">
+           {/* Removed truncate, let the text wrap gracefully with line-clamp-2 */}
+           <h2 className="text-xl @md:text-2xl @lg:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-left line-clamp-2">
+             {ad.headline || 'Headline'}
+           </h2>
+           <p className="text-gray-300 font-bold text-[10px] @md:text-[11px] uppercase tracking-widest relative z-10 line-clamp-2">
+             {ad.subtext || 'Subtext goes here'}
+           </p>
          </div>
 
+         {/* Smart Foreground Image: Only shows when the container is large enough (@2xl), and won't squish text */}
          {ad.fgImage && (
-            <div className="relative z-10 hidden sm:flex flex-1 justify-center items-center px-4">
-               <img src={ad.fgImage} className="max-h-24 w-auto object-contain drop-shadow-2xl hover:scale-110 transition-transform duration-300" alt="Foreground" />
+            <div className="relative z-10 hidden @2xl:flex justify-center items-center shrink-0 px-2 @3xl:px-4 mx-auto">
+               <img src={ad.fgImage} className="max-h-20 @3xl:max-h-24 w-auto max-w-[120px] @3xl:max-w-[160px] object-contain drop-shadow-2xl hover:scale-110 transition-transform duration-300" alt="Foreground" />
             </div>
          )}
 
-         <div className="text-white px-5 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 flex items-center justify-center gap-2 shrink-0 whitespace-nowrap mt-4 sm:mt-0" style={{ backgroundColor: ad.btnColor }}>
+         <div className="text-white px-4 py-2 @md:px-5 @md:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 flex items-center justify-center gap-2 shrink-0 whitespace-nowrap mt-4 @sm:mt-0" style={{ backgroundColor: ad.btnColor }}>
             {ad.buttonText || 'Click Here'} <ChevronRight size={14} />
          </div>
       </div>
@@ -248,11 +255,10 @@ export default function AdsDashboard() {
                  adsList.map(ad => (
                    <div key={ad.id} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl shadow-xl overflow-hidden flex flex-col">
                       <div className="p-4">
-                        <LivePreviewAd ad={ad} />
+                        <LivePreviewAd ad={{...defaultAdState, ...ad}} />
                       </div>
                       <div className="px-6 py-4 bg-[#111] border-t border-gray-800 flex items-center justify-between mt-auto">
                         <div className="flex flex-col">
-                           {/* SAFETY NET: Ensure sport and pages are arrays before calling .join() */}
                            <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">Sport: {Array.isArray(ad.sport) ? ad.sport.join(', ') : (ad.sport || 'None')}</span>
                            <span className="text-[10px] text-gray-600">Pages: {Array.isArray(ad.pages) ? ad.pages.join(', ') : (ad.pages || 'None')}</span>
                         </div>
