@@ -136,14 +136,16 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
 
   const BoothCard = ({ item }) => {
     const itemTheme = themes[item.sport] || themes.All;
+    const [fetchedImage, setFetchedImage] = useState(null);
     
-    // UPDATED SMART FALLBACK: Strip out generic tags to strictly match unique show tags!
     let displayImage = item.imageUrl;
+    
+    // Smart Fallback 1: Match by Master Show (ignoring generic categories like "Uncategorized")
     if (!displayImage && masterPodcasts) {
        const genericSlugs = [
           'all', 'football', 'basketball', 'baseball', 'podcast', 'podcasts', 
           'pod-episode', 'football-pod-episode', 'basketball-pod-episode', 
-          'baseball-pod-episode', 'football-podcast', 'podcast-basketball', 'podcast-baseball'
+          'baseball-pod-episode', 'football-podcast', 'podcast-basketball', 'podcast-baseball', 'uncategorized'
        ];
        
        const parentShow = masterPodcasts.find(m => {
@@ -162,11 +164,27 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
        }
     }
 
+    // Smart Fallback 2: If we STILL don't have an image, fetch it directly from Spreaker!
+    useEffect(() => {
+      if (!displayImage && item.spreakerId) {
+        fetch(`https://api.spreaker.com/v2/episodes/${item.spreakerId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data?.response?.episode?.image_original_url) {
+              setFetchedImage(data.response.episode.image_original_url);
+            }
+          })
+          .catch(e => console.error("Failed to fetch fallback Spreaker image", e));
+      }
+    }, [displayImage, item.spreakerId]);
+
+    const finalImage = displayImage || fetchedImage;
+
     return (
       <div onClick={() => setSelectedItem(item)} className={`flex items-stretch bg-[#1e1e1e] border ${itemTheme.border} border-opacity-40 rounded-2xl overflow-hidden ${itemTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[100px]`}>
         <div className="w-24 sm:w-28 shrink-0 relative bg-gray-900 flex items-center justify-center overflow-hidden border-r border-gray-800/50">
-          {displayImage ? (
-            <img src={displayImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+          {finalImage ? (
+            <img src={finalImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
           ) : (
             <div className="absolute inset-0 bg-gray-800" />
           )}
