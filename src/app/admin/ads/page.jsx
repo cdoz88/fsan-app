@@ -193,30 +193,32 @@ export default function AdsDashboard() {
     }
 
     return (
-      <div className="w-full h-full rounded-2xl p-5 md:p-6 flex flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-4 md:gap-6" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
+      <div className="@container w-full h-full rounded-2xl p-5 @md:p-6 flex flex-col @md:flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-4 @md:gap-6" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
          {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay" alt="Background" />}
          {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
          
-         {/* 1. TEXT (Left, flex-1) */}
-         <div className="relative z-10 flex flex-col justify-center flex-1 min-w-0 pr-2">
-           <h2 className="text-xl md:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-left line-clamp-2 leading-tight">
+         {/* 1. TEXT SECTION (Left-aligned zone) */}
+         <div className="relative z-10 flex flex-col justify-center flex-1 min-w-0">
+           <h2 className="text-xl @md:text-2xl @lg:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-left line-clamp-2 leading-tight">
              {ad.headline || 'Headline'}
            </h2>
-           <p className="text-gray-300 font-bold text-[10px] md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
+           <p className="text-gray-300 font-bold text-[10px] @md:text-[11px] uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
              {ad.subtext || 'Subtext goes here'}
            </p>
          </div>
 
-         {/* 2. IMAGE (Center-Right, static size) */}
-         {ad.fgImage && (
-            <div className="relative z-10 flex justify-center items-center shrink-0">
-               <img src={ad.fgImage} className="max-h-20 md:max-h-24 w-auto max-w-[100px] md:max-w-[160px] object-contain drop-shadow-2xl hover:scale-110 transition-transform duration-300" alt="Foreground" />
-            </div>
-         )}
+         {/* 2. IMAGE SECTION (Dead-center zone) */}
+         <div className="relative z-10 flex-1 flex justify-center items-center">
+            {ad.fgImage && (
+               <img src={ad.fgImage} className="max-h-20 @md:max-h-24 w-auto max-w-[100px] @md:max-w-[160px] object-contain drop-shadow-2xl hover:scale-110 transition-transform duration-300" alt="Foreground" />
+            )}
+         </div>
 
-         {/* 3. BUTTON (Right, static size) */}
-         <div className="text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 flex items-center justify-center gap-2 shrink-0 whitespace-nowrap" style={{ backgroundColor: ad.btnColor }}>
-            {ad.buttonText || 'Click Here'} <ChevronRight size={14} />
+         {/* 3. BUTTON SECTION (Right-aligned zone) */}
+         <div className="relative z-10 flex-1 flex justify-end shrink-0">
+            <div className="text-white px-5 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 whitespace-nowrap" style={{ backgroundColor: ad.btnColor }}>
+               {ad.buttonText || 'Click Here'} <ChevronRight size={14} />
+            </div>
          </div>
       </div>
     );
