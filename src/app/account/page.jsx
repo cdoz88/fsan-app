@@ -4,7 +4,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
-import { User, Mail, Lock, Loader2, CreditCard, ShieldCheck, CheckCircle2, FileText, ShoppingCart, Tag, AlertTriangle } from 'lucide-react';
+import { User, Mail, Lock, Loader2, CreditCard, ShieldCheck, CheckCircle2, FileText, ShoppingCart, Tag, AlertTriangle, ShieldAlert } from 'lucide-react';
 
 function AccountDashboardContent() {
   const { data: session, status } = useSession();
@@ -14,10 +14,11 @@ function AccountDashboardContent() {
   const [activeTab, setActiveTab] = useState('profile');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isPortalLoading, setIsPortalLoading] = useState(false); // NEW: Track portal loading state
+  const [isPortalLoading, setIsPortalLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   
   const [userTier, setUserTier] = useState('free');
+  const [isAdmin, setIsAdmin] = useState(false); // NEW: Track if the user is a WordPress Admin
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [relayId, setRelayId] = useState('');
@@ -38,7 +39,6 @@ function AccountDashboardContent() {
   useEffect(() => {
     if (searchParams?.get('checkout') === 'success') {
       setActiveTab('subscription');
-      // We removed the success message here so it doesn't pop up when returning from the portal
       window.history.replaceState(null, '', '/account');
     }
   }, [searchParams]);
@@ -90,6 +90,12 @@ function AccountDashboardContent() {
         });
 
         const roles = user.roles?.nodes?.map(r => r.name.toLowerCase()) || [];
+        
+        // NEW: Check if they are an admin
+        if (roles.includes('administrator')) {
+          setIsAdmin(true);
+        }
+
         if (roles.some(r => r.includes('pro+') || r.includes('pro+ member') || r.includes('fsan_pro_plus'))) {
           setUserTier('pro-plus');
         } else if (roles.some(r => r.includes('pro') || r.includes('pro member') || r.includes('fsan_pro'))) {
@@ -193,7 +199,6 @@ function AccountDashboardContent() {
     }
   };
 
-  // NEW: Manage Billing Function
   const handleManageBilling = async () => {
     setIsPortalLoading(true);
     try {
@@ -206,7 +211,6 @@ function AccountDashboardContent() {
       const data = await res.json();
 
       if (data.url) {
-        // Redirect them to the secure Stripe portal
         window.location.href = data.url;
       } else {
         alert(data.error || 'Failed to open billing portal.');
@@ -419,6 +423,20 @@ function AccountDashboardContent() {
                      </>
                   )}
                 </div>
+
+                {/* NEW: Admin Tools Box */}
+                {isAdmin && (
+                  <div className="bg-gradient-to-br from-red-900/20 to-[#111] border border-red-900/50 rounded-2xl shadow-2xl p-6 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 text-red-500 group-hover:scale-110 transition-transform">
+                      <ShieldAlert size={64} />
+                    </div>
+                    <h3 className="text-lg font-black text-red-500 uppercase tracking-wider mb-2 relative z-10">Admin Tools</h3>
+                    <p className="text-sm text-gray-400 mb-6 relative z-10">Manage global advertisements and promotional banners across the entire network.</p>
+                    <button onClick={() => router.push('/admin/ads')} className="w-full bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest py-3 rounded-xl transition-all text-sm shadow-lg relative z-10">
+                      Ad Manager
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -468,7 +486,6 @@ function AccountDashboardContent() {
                   <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-4 border-b border-gray-800 pb-3">Billing History</h4>
                   <div className="bg-[#111] p-6 rounded-xl border border-gray-800 flex flex-col items-center justify-center text-center h-full min-h-[220px]">
                     <p className="text-sm text-gray-400 mb-6">Manage your payment methods and view past receipts directly in Stripe.</p>
-                    {/* NEW: Button triggers the Stripe Portal session */}
                     <button 
                       onClick={handleManageBilling}
                       disabled={isPortalLoading}
