@@ -171,7 +171,6 @@ export default function AdsDashboard() {
     setView('form');
   };
 
-  // LIVE PREVIEW COMPONENT (UPDATED WITH CONTAINER QUERIES)
   const LivePreviewAd = ({ ad }) => {
     let patternOverlay = '';
     if (ad.pattern === 'dots') {
@@ -194,29 +193,28 @@ export default function AdsDashboard() {
     }
 
     return (
-      // Added @container so the ad components adapt dynamically to their given space!
-      <div className="@container w-full h-full rounded-2xl p-4 @md:p-6 flex flex-col @sm:flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
+      // The @container class establishes this element as a responsive container
+      <div className="@container w-full h-full rounded-2xl p-5 @md:p-6 flex flex-col @md:flex-row items-center justify-center @md:justify-between text-center @md:text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-4 @md:gap-6" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
          {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay" alt="Background" />}
          {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
          
-         <div className="relative z-10 flex flex-col justify-center flex-1 pr-2 @md:pr-4">
-           {/* Removed truncate, let the text wrap gracefully with line-clamp-2 */}
-           <h2 className="text-xl @md:text-2xl @lg:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-left line-clamp-2">
+         <div className="relative z-10 flex flex-col justify-center flex-1 min-w-0 w-full">
+           <h2 className="text-2xl @md:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-center @md:origin-left whitespace-normal break-words leading-tight">
              {ad.headline || 'Headline'}
            </h2>
-           <p className="text-gray-300 font-bold text-[10px] @md:text-[11px] uppercase tracking-widest relative z-10 line-clamp-2">
+           <p className="text-gray-300 font-bold text-[11px] @md:text-xs uppercase tracking-widest relative z-10 whitespace-normal break-words mt-1">
              {ad.subtext || 'Subtext goes here'}
            </p>
          </div>
 
-         {/* Smart Foreground Image: Only shows when the container is large enough (@2xl), and won't squish text */}
+         {/* Smart Hide/Show Logic based on available container width */}
          {ad.fgImage && (
-            <div className="relative z-10 hidden @2xl:flex justify-center items-center shrink-0 px-2 @3xl:px-4 mx-auto">
-               <img src={ad.fgImage} className="max-h-20 @3xl:max-h-24 w-auto max-w-[120px] @3xl:max-w-[160px] object-contain drop-shadow-2xl hover:scale-110 transition-transform duration-300" alt="Foreground" />
+            <div className="relative z-10 hidden @sm:flex @md:hidden @xl:flex justify-center items-center shrink-0 mx-auto @md:mx-0">
+               <img src={ad.fgImage} className="max-h-24 w-auto max-w-[120px] @xl:max-w-[160px] object-contain drop-shadow-2xl hover:scale-110 transition-transform duration-300" alt="Foreground" />
             </div>
          )}
 
-         <div className="text-white px-4 py-2 @md:px-5 @md:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 flex items-center justify-center gap-2 shrink-0 whitespace-nowrap mt-4 @sm:mt-0" style={{ backgroundColor: ad.btnColor }}>
+         <div className="text-white px-5 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 flex items-center justify-center gap-2 shrink-0 whitespace-nowrap mt-2 @md:mt-0" style={{ backgroundColor: ad.btnColor }}>
             {ad.buttonText || 'Click Here'} <ChevronRight size={14} />
          </div>
       </div>
