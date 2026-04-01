@@ -4,7 +4,25 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
-import { Loader2, ShieldAlert, ChevronRight, Save, LayoutTemplate } from 'lucide-react';
+import { Loader2, ShieldAlert, ChevronRight, Save, LayoutTemplate, Plus, Edit2, Trash2, ArrowLeft, Image as ImageIcon } from 'lucide-react';
+
+const defaultAdState = {
+  id: '',
+  headline: 'Dominate Your Draft',
+  subtext: 'Get the ultimate rookie breakdown!',
+  buttonText: 'Get Access',
+  buttonLink: 'https://fsan.shop',
+  bgColor: '#7f1d1d', 
+  bgColor2: '#000000',
+  bgGradientType: 'radial', // solid, linear, radial
+  btnColor: '#dc2626', 
+  pattern: 'dots', // none, dots, lines, grid, crosshatch
+  bgImage: '',
+  sport: 'All',
+  pages: ['home', 'articles', 'videos', 'podcasts'],
+  startDate: '',
+  endDate: ''
+};
 
 export default function AdsDashboard() {
   const { data: session, status } = useSession();
@@ -13,88 +31,66 @@ export default function AdsDashboard() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isVerifying, setIsVerifying] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Form State
-  const [adData, setAdData] = useState({
-    headline: 'Dominate Your Draft',
-    subtext: 'Get the ultimate rookie breakdown!',
-    buttonText: 'Get Access',
-    buttonLink: 'https://fsan.shop',
-    bgColor: '#7f1d1d', 
-    btnColor: '#dc2626', 
-    pattern: 'dots', 
-    bgImage: '',
-    sport: 'All',
-    pages: ['home', 'articles', 'videos', 'podcasts'],
-    startDate: '',
-    endDate: ''
-  });
+  // App State
+  const [view, setView] = useState('list'); // 'list' | 'form'
+  const [adsList, setAdsList] = useState([]);
+  const [adData, setAdData] = useState(defaultAdState);
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/all/home');
-      return;
-    }
-
+    if (status === 'unauthenticated') router.push('/all/home');
     if (status === 'authenticated' && session?.user?.token) {
-      const verifyAdminAndFetchAd = async () => {
-        try {
-          // 1. Verify they are an admin
-          const roleQuery = `
-            query GetViewerRole {
-              viewer {
-                roles { nodes { name } }
-              }
-            }
-          `;
-          const roleRes = await fetch('https://admin.fsan.com/graphql', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.user.token}`,
-            },
-            body: JSON.stringify({ query: roleQuery }),
-          });
-          const roleJson = await roleRes.json();
-          const roles = roleJson?.data?.viewer?.roles?.nodes?.map(r => r.name.toLowerCase()) || [];
-          
-          if (!roles.includes('administrator')) {
-            router.push('/account'); 
-            return;
-          }
-          
-          setIsAdmin(true);
-
-          // 2. Since they are an admin, fetch the currently saved Ad Data from WordPress
-          const adQuery = `
-            query GetGlobalAd {
-              globalAd {
-                headline subtext buttonText buttonLink bgColor btnColor 
-                pattern bgImage sport pages startDate endDate
-              }
-            }
-          `;
-          const adRes = await fetch('https://admin.fsan.com/graphql', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: adQuery }),
-          });
-          const adJson = await adRes.json();
-          
-          if (adJson?.data?.globalAd) {
-            // Merge the saved data with our defaults to prevent null errors
-            setAdData(prev => ({ ...prev, ...adJson.data.globalAd }));
-          }
-
-        } catch (error) {
-          console.error('Failed to verify role or fetch ad', error);
-        } finally {
-          setIsVerifying(false);
-        }
-      };
-      verifyAdminAndFetchAd();
+      verifyAdminAndFetchAds();
     }
   }, [status, session, router]);
+
+  const verifyAdminAndFetchAds = async () => {
+    try {
+      // 1. Verify Admin
+      const roleQuery = `query GetViewerRole { viewer { roles { nodes { name } } } }`;
+      const roleRes = await fetch('https://admin.fsan.com/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.user.token}` },
+        body: JSON.stringify({ query: roleQuery }),
+      });
+      const roleJson = await roleRes.json();
+      const roles = roleJson?.data?.viewer?.roles?.nodes?.map(r => r.name.toLowerCase()) || [];
+      
+      if (!roles.includes('administrator')) {
+        router.push('/account'); 
+        return;
+      }
+      setIsAdmin(true);
+
+      // 2. Fetch All Ads
+      await fetchAds();
+    } catch (error) {
+      console.error('Failed verification', error);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const fetchAds = async () => {
+    const adQuery = `
+      query GetGlobalAds {
+        globalAds {
+          id headline subtext buttonText buttonLink bgColor bgColor2 bgGradientType btnColor pattern bgImage sport pages startDate endDate
+        }
+      }
+    `;
+    const adRes = await fetch('https://admin.fsan.com/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: adQuery }),
+      cache: 'no-store'
+    });
+    const adJson = await adRes.json();
+    if (adJson?.data?.globalAds) {
+      setAdsList(adJson.data.globalAds);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -104,9 +100,7 @@ export default function AdsDashboard() {
   const handlePageToggle = (page) => {
     setAdData(prev => ({
       ...prev,
-      pages: prev.pages.includes(page) 
-        ? prev.pages.filter(p => p !== page) 
-        : [...prev.pages, page]
+      pages: prev.pages.includes(page) ? prev.pages.filter(p => p !== page) : [...prev.pages, page]
     }));
   };
 
@@ -116,98 +110,95 @@ export default function AdsDashboard() {
     
     const query = `
       mutation SaveGlobalAd(
-        $headline: String, $subtext: String, $buttonText: String, 
-        $buttonLink: String, $bgColor: String, $btnColor: String, 
-        $pattern: String, $bgImage: String, $sport: String, 
+        $id: String, $headline: String, $subtext: String, $buttonText: String, 
+        $buttonLink: String, $bgColor: String, $bgColor2: String, $bgGradientType: String,
+        $btnColor: String, $pattern: String, $bgImage: String, $sport: String, 
         $pages: [String], $startDate: String, $endDate: String
       ) {
-        updateGlobalAd(input: {
-          headline: $headline,
-          subtext: $subtext,
-          buttonText: $buttonText,
-          buttonLink: $buttonLink,
-          bgColor: $bgColor,
-          btnColor: $btnColor,
-          pattern: $pattern,
-          bgImage: $bgImage,
-          sport: $sport,
-          pages: $pages,
-          startDate: $startDate,
-          endDate: $endDate
-        }) {
-          success
-        }
+        saveGlobalAd(input: {
+          id: $id, headline: $headline, subtext: $subtext, buttonText: $buttonText, buttonLink: $buttonLink, bgColor: $bgColor, bgColor2: $bgColor2, bgGradientType: $bgGradientType, btnColor: $btnColor, pattern: $pattern, bgImage: $bgImage, sport: $sport, pages: $pages, startDate: $startDate, endDate: $endDate
+        }) { success }
       }
     `;
 
     try {
-      const res = await fetch('https://admin.fsan.com/graphql', {
+      await fetch('https://admin.fsan.com/graphql', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.user.token}`, // Must pass token to prove admin status
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.user.token}` },
         body: JSON.stringify({ query, variables: adData }),
       });
-      
-      const json = await res.json();
-      if (json.errors) {
-          alert('Error saving ad: ' + json.errors[0].message);
-      } else {
-          alert("Success! The Ad is now live.");
-      }
+      await fetchAds();
+      setView('list');
     } catch(e) {
-        console.error(e);
-        alert('A network error occurred while trying to save.');
+        alert('Network error saving ad.');
     } finally {
         setIsSaving(false);
     }
   };
 
+  const handleDeleteAd = async (id) => {
+    if (!confirm("Are you sure you want to permanently delete this ad?")) return;
+    setIsDeleting(true);
+    const query = `mutation DeleteAd($id: String!) { deleteGlobalAd(input: { id: $id }) { success } }`;
+    try {
+      await fetch('https://admin.fsan.com/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.user.token}` },
+        body: JSON.stringify({ query, variables: { id } }),
+      });
+      await fetchAds();
+    } catch(e) {
+      alert('Error deleting ad.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const openEditor = (ad = null) => {
+    setAdData(ad ? { ...defaultAdState, ...ad } : { ...defaultAdState });
+    setView('form');
+  };
+
   // LIVE PREVIEW COMPONENT
-  const LivePreviewAd = () => {
+  const LivePreviewAd = ({ ad }) => {
     let patternOverlay = '';
-    if (adData.pattern === 'dots') {
+    if (ad.pattern === 'dots') {
         patternOverlay = "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20\\' xmlns=\\'http://www.w3.org/2000%2Fsvg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')";
-    } else if (adData.pattern === 'lines') {
-        patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)";
+    } else if (ad.pattern === 'lines') {
+        patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)";
+    } else if (ad.pattern === 'grid') {
+        patternOverlay = "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)";
+    } else if (ad.pattern === 'crosshatch') {
+        patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px), repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px)";
+    }
+
+    const bgStyles = {};
+    if (ad.bgGradientType === 'solid') {
+        bgStyles.backgroundColor = ad.bgColor;
+    } else if (ad.bgGradientType === 'linear') {
+        bgStyles.backgroundImage = `linear-gradient(to right, ${ad.bgColor}, ${ad.bgColor2 || '#000000'})`;
+    } else if (ad.bgGradientType === 'radial') {
+        bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
     }
 
     return (
-      <div 
-        className="w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] to-black border rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl cursor-pointer group min-h-[120px] transition-all"
-        style={{ 
-            '--tw-gradient-from': `${adData.bgColor}80`,
-            '--tw-gradient-stops': `var(--tw-gradient-from), #111, to-black`,
-            borderColor: adData.bgColor 
-        }}
-      >
-         {adData.bgImage && (
-            <img src={adData.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay" alt="Background" />
-         )}
-         {adData.pattern !== 'none' && (
-            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay' }}></div>
-         )}
+      <div className="w-full h-full rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border" style={{ ...bgStyles, borderColor: ad.bgColor }}>
+         {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay" alt="Background" />}
+         {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
          
          <div className="relative z-10 flex flex-col justify-center">
-           <h2 className="text-2xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-center">{adData.headline || 'Headline'}</h2>
-           <p className="text-gray-300 font-bold text-xs tracking-wide relative z-10">{adData.subtext || 'Subtext goes here'}</p>
+           <h2 className="text-2xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-center">{ad.headline || 'Headline'}</h2>
+           <p className="text-gray-300 font-bold text-[11px] uppercase tracking-widest relative z-10">{ad.subtext || 'Subtext goes here'}</p>
          </div>
-         <div 
-            className="text-white px-5 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 flex items-center justify-center gap-2 shrink-0 whitespace-nowrap mt-3 sm:mt-0"
-            style={{ backgroundColor: adData.btnColor }}
-         >
-            {adData.buttonText || 'Click Here'} <ChevronRight size={14} />
+         <div className="text-white px-5 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 flex items-center justify-center gap-2 shrink-0 whitespace-nowrap mt-3 sm:mt-0" style={{ backgroundColor: ad.btnColor }}>
+            {ad.buttonText || 'Click Here'} <ChevronRight size={14} />
          </div>
       </div>
     );
   };
 
-  if (isVerifying) {
-    return <div className="min-h-screen bg-[#121212] flex items-center justify-center"><Loader2 size={48} className="animate-spin text-gray-600" /></div>;
-  }
-
-  if (!isAdmin) return null; // Failsafe
+  if (isVerifying) return <div className="min-h-screen flex items-center justify-center"><Loader2 size={48} className="animate-spin text-gray-600" /></div>;
+  if (!isAdmin) return null;
 
   return (
     <>
@@ -221,115 +212,182 @@ export default function AdsDashboard() {
               <h1 className="text-4xl font-black uppercase tracking-wider text-white flex items-center gap-3">
                 <ShieldAlert className="text-red-500" size={36} /> Ad Manager
               </h1>
-              <p className="text-gray-400 mt-2 text-sm">Create and deploy global promo ads across the network.</p>
+              <p className="text-gray-400 mt-2 text-sm">Manage global promotional banners across the network.</p>
             </div>
-            <button onClick={handleSaveAd} disabled={isSaving} className="bg-white text-black px-6 py-3 rounded-xl font-black uppercase tracking-widest text-sm flex items-center gap-2 hover:bg-gray-200 transition-colors shadow-lg">
-                {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} Save & Deploy
-            </button>
+            {view === 'list' && (
+              <button onClick={() => openEditor()} className="bg-red-600 text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest text-sm flex items-center gap-2 hover:bg-red-500 transition-colors shadow-lg">
+                  <Plus size={18} /> Create New Ad
+              </button>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            
-            {/* LEFT COLUMN: THE FORM */}
-            <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-6 shadow-xl space-y-6">
-               <h3 className="font-bold text-lg border-b border-gray-800 pb-3 flex items-center gap-2"><LayoutTemplate size={20}/> Ad Content</h3>
-               
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <div>
-                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Headline</label>
-                   <input type="text" name="headline" value={adData.headline} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
-                 </div>
-                 <div>
-                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Subtext</label>
-                   <input type="text" name="subtext" value={adData.subtext} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
-                 </div>
-                 <div>
-                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button Text</label>
-                   <input type="text" name="buttonText" value={adData.buttonText} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
-                 </div>
-                 <div>
-                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button Link URL</label>
-                   <input type="text" name="buttonLink" value={adData.buttonLink} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
-                 </div>
-               </div>
-
-               <h3 className="font-bold text-lg border-b border-gray-800 pb-3 pt-4">Design & Media</h3>
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                 <div>
-                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Background Color</label>
-                   <div className="flex items-center gap-3">
-                     <input type="color" name="bgColor" value={adData.bgColor} onChange={handleChange} className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0" />
-                     <input type="text" name="bgColor" value={adData.bgColor} onChange={handleChange} className="flex-1 bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-3 text-sm outline-none" />
+          {view === 'list' ? (
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-300">
+               {adsList.length === 0 ? (
+                 <div className="col-span-2 py-12 text-center text-gray-500 font-bold uppercase tracking-widest bg-[#1a1a1a] rounded-2xl border border-gray-800">No ads created yet.</div>
+               ) : (
+                 adsList.map(ad => (
+                   <div key={ad.id} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl shadow-xl overflow-hidden flex flex-col">
+                      <div className="p-4">
+                        <LivePreviewAd ad={ad} />
+                      </div>
+                      <div className="px-6 py-4 bg-[#111] border-t border-gray-800 flex items-center justify-between mt-auto">
+                        <div className="flex flex-col">
+                           <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">Sport: {ad.sport}</span>
+                           <span className="text-[10px] text-gray-600">Pages: {ad.pages.join(', ')}</span>
+                        </div>
+                        <div className="flex gap-2">
+                           <button onClick={() => openEditor(ad)} className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"><Edit2 size={16} /></button>
+                           <button onClick={() => handleDeleteAd(ad.id)} disabled={isDeleting} className="p-2 bg-red-900/30 hover:bg-red-900/50 text-red-500 rounded-lg transition-colors"><Trash2 size={16} /></button>
+                        </div>
+                      </div>
                    </div>
+                 ))
+               )}
+             </div>
+          ) : (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 animate-in slide-in-from-right-8 duration-300">
+              
+              {/* FORM EDITOR */}
+              <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-6 shadow-xl space-y-6">
+                 <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+                   <h3 className="font-bold text-lg flex items-center gap-2"><LayoutTemplate size={20}/> Edit Ad Content</h3>
+                   <button onClick={() => setView('list')} className="text-gray-500 hover:text-white flex items-center gap-1 text-xs uppercase tracking-widest font-bold"><ArrowLeft size={14}/> Back to List</button>
                  </div>
-                 <div>
-                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button Color</label>
-                   <div className="flex items-center gap-3">
-                     <input type="color" name="btnColor" value={adData.btnColor} onChange={handleChange} className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0" />
-                     <input type="text" name="btnColor" value={adData.btnColor} onChange={handleChange} className="flex-1 bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-3 text-sm outline-none" />
-                   </div>
-                 </div>
-                 <div>
-                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Pattern Overlay</label>
-                   <select name="pattern" value={adData.pattern} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none">
-                     <option value="none">None</option>
-                     <option value="dots">Dots</option>
-                     <option value="lines">Diagonal Lines</option>
-                   </select>
-                 </div>
-               </div>
-               <div>
-                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Background Image URL (Optional)</label>
-                 <input type="text" name="bgImage" value={adData.bgImage} onChange={handleChange} placeholder="https://..." className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
-               </div>
-
-               <h3 className="font-bold text-lg border-b border-gray-800 pb-3 pt-4">Targeting & Schedule</h3>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <div>
-                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Display Sport</label>
-                   <select name="sport" value={adData.sport} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none mb-4">
-                     <option value="All">All Networks</option>
-                     <option value="Football">Football</option>
-                     <option value="Basketball">Basketball</option>
-                     <option value="Baseball">Baseball</option>
-                   </select>
-
-                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Display Pages</label>
-                   <div className="flex flex-wrap gap-2">
-                     {['home', 'articles', 'videos', 'podcasts'].map(page => (
-                       <button 
-                         key={page} 
-                         onClick={() => handlePageToggle(page)}
-                         className={`px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider border transition-colors ${adData.pages.includes(page) ? 'bg-gray-200 text-black border-gray-200' : 'bg-[#111] text-gray-500 border-gray-700 hover:border-gray-500'}`}
-                       >
-                         {page}
-                       </button>
-                     ))}
-                   </div>
-                 </div>
-
-                 <div className="flex flex-col gap-4">
+                 
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                    <div>
-                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Start Date</label>
-                     <input type="date" name="startDate" value={adData.startDate} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none" style={{ colorScheme: 'dark' }} />
+                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Headline</label>
+                     <input type="text" name="headline" value={adData.headline} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
                    </div>
                    <div>
-                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">End Date</label>
-                     <input type="date" name="endDate" value={adData.endDate} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none" style={{ colorScheme: 'dark' }} />
+                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Subtext</label>
+                     <input type="text" name="subtext" value={adData.subtext} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
+                   </div>
+                   <div>
+                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button Text</label>
+                     <input type="text" name="buttonText" value={adData.buttonText} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
+                   </div>
+                   <div>
+                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button Link URL</label>
+                     <input type="text" name="buttonLink" value={adData.buttonLink} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
                    </div>
                  </div>
-               </div>
-            </div>
 
-            {/* RIGHT COLUMN: LIVE PREVIEW */}
-            <div className="flex flex-col gap-6">
-              <div className="sticky top-24">
-                <h3 className="font-bold text-sm uppercase tracking-widest text-gray-500 mb-4">Live Preview</h3>
-                <LivePreviewAd />
+                 <h3 className="font-bold text-lg border-b border-gray-800 pb-3 pt-4">Design & Media</h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div className="space-y-4">
+                     <div>
+                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Gradient Type</label>
+                       <select name="bgGradientType" value={adData.bgGradientType} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none">
+                         <option value="solid">Solid Color</option>
+                         <option value="linear">Linear Gradient (Left to Right)</option>
+                         <option value="radial">Radial Gradient (Glow)</option>
+                       </select>
+                     </div>
+                     <div className="flex gap-4">
+                       <div className="flex-1">
+                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Color 1</label>
+                         <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
+                           <input type="color" name="bgColor" value={adData.bgColor} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
+                           <input type="text" name="bgColor" value={adData.bgColor} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
+                         </div>
+                       </div>
+                       {adData.bgGradientType !== 'solid' && (
+                         <div className="flex-1">
+                           <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Color 2</label>
+                           <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
+                             <input type="color" name="bgColor2" value={adData.bgColor2} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
+                             <input type="text" name="bgColor2" value={adData.bgColor2} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
+                           </div>
+                         </div>
+                       )}
+                     </div>
+                   </div>
+
+                   <div className="space-y-4">
+                     <div>
+                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Pattern Overlay</label>
+                       <select name="pattern" value={adData.pattern} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none">
+                         <option value="none">None</option>
+                         <option value="dots">Dots</option>
+                         <option value="lines">Diagonal Lines</option>
+                         <option value="grid">Grid Pattern</option>
+                         <option value="crosshatch">Crosshatch</option>
+                       </select>
+                     </div>
+                     <div>
+                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button Color</label>
+                       <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
+                         <input type="color" name="btnColor" value={adData.btnColor} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
+                         <input type="text" name="btnColor" value={adData.btnColor} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+
+                 <div>
+                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-2">Background Image URL <ImageIcon size={12}/></label>
+                   <input type="text" name="bgImage" value={adData.bgImage} onChange={handleChange} placeholder="Paste WP Media Library URL (https://...)" className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
+                   <p className="text-[9px] text-gray-500 mt-1 italic">Upload images directly to your WordPress Media Library, click "Copy URL", and paste it here.</p>
+                 </div>
+
+                 <h3 className="font-bold text-lg border-b border-gray-800 pb-3 pt-4">Targeting & Schedule</h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div>
+                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Display Sport</label>
+                     <select name="sport" value={adData.sport} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none mb-6">
+                       <option value="All">All Networks</option>
+                       <option value="Football">Football</option>
+                       <option value="Basketball">Basketball</option>
+                       <option value="Baseball">Baseball</option>
+                     </select>
+
+                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Display Pages</label>
+                     <div className="flex flex-col gap-3">
+                       {['home', 'articles', 'videos', 'podcasts'].map(page => (
+                         <label key={page} className="flex items-center gap-3 cursor-pointer">
+                           <input 
+                              type="checkbox" 
+                              checked={adData.pages.includes(page)} 
+                              onChange={() => handlePageToggle(page)}
+                              className="w-4 h-4 rounded bg-[#111] border-gray-700 text-red-500 focus:ring-red-500 focus:ring-offset-gray-900"
+                           />
+                           <span className="text-sm font-bold uppercase tracking-widest text-gray-300">{page}</span>
+                         </label>
+                       ))}
+                     </div>
+                   </div>
+
+                   <div className="flex flex-col gap-4">
+                     <div>
+                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Start Date</label>
+                       <input type="date" name="startDate" value={adData.startDate} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none" style={{ colorScheme: 'dark' }} />
+                     </div>
+                     <div>
+                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">End Date</label>
+                       <input type="date" name="endDate" value={adData.endDate} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none" style={{ colorScheme: 'dark' }} />
+                     </div>
+                   </div>
+                 </div>
+                 
+                 <div className="pt-6 border-t border-gray-800">
+                    <button onClick={handleSaveAd} disabled={isSaving} className="w-full bg-white text-black px-6 py-4 rounded-xl font-black uppercase tracking-widest text-sm flex justify-center items-center gap-2 hover:bg-gray-200 transition-colors shadow-lg">
+                        {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} Save & Deploy Ad
+                    </button>
+                 </div>
               </div>
-            </div>
 
-          </div>
+              {/* LIVE PREVIEW COLUMN */}
+              <div className="flex flex-col gap-6">
+                <div className="sticky top-24">
+                  <h3 className="font-bold text-sm uppercase tracking-widest text-gray-500 mb-4">Live Preview</h3>
+                  <LivePreviewAd ad={adData} />
+                </div>
+              </div>
+
+            </div>
+          )}
         </div>
       </div>
     </>
