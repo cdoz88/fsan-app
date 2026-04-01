@@ -222,35 +222,48 @@ export default function AdsDashboard() {
         bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
     }
 
+    // Reusable Button Element so we can render it in two different structural places
+    const renderButton = (extraClass) => (
+      <div className={`px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
+         {ad.buttonText} <ChevronRight size={14} className="hidden @md:block" />
+      </div>
+    );
+
+    // Differentiate text alignment based on if we have an image
+    const textAlignment = ad.fgImage
+      ? "text-left items-start" // Always left align if we have an image so it hugs the stacked button nicely
+      : "text-center @4xl:text-left items-center @4xl:items-start"; // Center when wrapping if NO image
+
     return (
-      <div className="@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-3 @2xl:gap-6" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
+      <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className="@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-3 @2xl:gap-6 no-underline block hover:scale-[1.01]" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
          {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="Background" />}
          {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
          
-         {/* 1. TEXT: Just shrinks naturally, no flex-1 forcing it to wrap early */}
-         <div className="relative z-10 flex flex-col justify-center shrink pr-2 text-center @4xl:text-left items-center @4xl:items-start min-w-0">
-           <h2 className="text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-center @4xl:origin-left line-clamp-2 leading-tight">
-             {ad.headline || 'Headline'}
+         {/* 1. TEXT COLUMN */}
+         <div className={`relative z-10 flex flex-col justify-center flex-1 min-w-0 pr-2 ${textAlignment}`}>
+           <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight ${ad.fgImage ? 'origin-left' : 'origin-center @4xl:origin-left'}`}>
+             {ad.headline}
            </h2>
            <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
-             {ad.subtext || 'Subtext goes here'}
+             {ad.subtext}
            </p>
+           
+           {/* STACKED BUTTON (Only appears on Narrow Box Ads WITH an image) */}
+           {ad.fgImage && renderButton("mt-4 flex @4xl:hidden w-max")}
          </div>
 
-         {/* 2. IMAGE: Perfectly centered between the text and button thanks to justify-between */}
+         {/* 2. IMAGE (Only shows when there's room. Pushes to right on narrow boxes, centers on wide banners) */}
          {ad.fgImage && (
-            <div className="relative z-10 hidden @sm:flex justify-center items-center shrink-0">
-               <img src={ad.fgImage} className="max-h-16 @2xl:max-h-24 w-auto max-w-[80px] @2xl:max-w-[160px] object-contain drop-shadow-2xl hover:scale-110 transition-transform duration-300" alt="Foreground" />
+            <div className="relative z-10 hidden @xs:flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0">
+               <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="Foreground" />
             </div>
          )}
 
-         {/* 3. BUTTON: Takes only the space it needs, no flex-1 ghost padding! */}
-         <div className="relative z-10 flex justify-end items-center shrink-0">
-            <div className="px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap" style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
-               {ad.buttonText || 'Click Here'} <ChevronRight size={14} className="hidden @md:block" />
-            </div>
+         {/* 3. INLINE BUTTON (Hides on Narrow Box Ads WITH an image because the Stacked Button takes over. Renders normally otherwise) */}
+         <div className={`relative z-10 justify-end items-center shrink-0 @5xl:flex-1 min-w-0 ${ad.fgImage ? 'hidden @4xl:flex' : 'flex'}`}>
+            {renderButton("")}
          </div>
-      </div>
+      </a>
     );
   };
 
