@@ -46,6 +46,66 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
     fetchAds();
   }, []);
 
+  const DynamicAd = ({ ad }) => {
+    if (!ad) return null;
+
+    let patternOverlay = '';
+    if (ad.pattern === 'dots') {
+        patternOverlay = "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20\\' xmlns=\\'http://www.w3.org/2000%2Fsvg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')";
+    } else if (ad.pattern === 'lines') {
+        patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)";
+    } else if (ad.pattern === 'grid') {
+        patternOverlay = "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)";
+    } else if (ad.pattern === 'crosshatch') {
+        patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px), repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px)";
+    }
+
+    const bgStyles = {};
+    if (ad.bgGradientType === 'solid') {
+        bgStyles.backgroundColor = ad.bgColor;
+    } else if (ad.bgGradientType === 'linear') {
+        bgStyles.backgroundImage = `linear-gradient(to right, ${ad.bgColor}, ${ad.bgColor2 || '#000000'})`;
+    } else if (ad.bgGradientType === 'radial') {
+        bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
+    }
+
+    // Button is now a standard child of the vertical stack
+    const AdButton = () => (
+      <div className="mt-4 px-5 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 shrink-0 whitespace-nowrap w-max" style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
+         {ad.buttonText} <ChevronRight size={14} />
+      </div>
+    );
+
+    return (
+      <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className="@container w-full h-full rounded-2xl p-6 flex items-center justify-center text-center relative overflow-hidden shadow-2xl group min-h-[140px] transition-all border-2 no-underline block hover:scale-[1.01]" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
+         {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="Background" />}
+         {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
+         
+         <div className={`relative z-10 flex items-center w-full h-full gap-6 ${ad.fgImage ? 'flex-row justify-between text-left' : 'flex-col justify-center text-center'}`}>
+            
+            {/* TEXT + BUTTON BLOCK (Now always center-justified within its own flow) */}
+            <div className={`flex flex-col items-center justify-center flex-1 min-w-0 ${ad.fgImage ? 'text-center' : 'text-center'}`}>
+               <h2 className="text-xl @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center">
+                 {ad.headline}
+               </h2>
+               <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
+                 {ad.subtext}
+               </p>
+               <AdButton />
+            </div>
+
+            {/* IMAGE BLOCK (Only appears if image exists) */}
+            {ad.fgImage && (
+               <div className="hidden @sm:flex justify-center items-center shrink-0 pr-4">
+                  <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[180px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="Foreground" />
+               </div>
+            )}
+         </div>
+      </a>
+    );
+  };
+
+  // ... (Rest of component remains exactly the same)
   const PostMeta = ({ item }) => (
     <div className="flex items-center gap-2 mb-3 z-20 relative">
       {activeSport === 'All' && (
@@ -113,70 +173,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
     }
     return true; 
   });
-
-  const DynamicAd = ({ ad }) => {
-    if (!ad) return null;
-
-    let patternOverlay = '';
-    if (ad.pattern === 'dots') {
-        patternOverlay = "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20\\' xmlns=\\'http://www.w3.org/2000%2Fsvg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')";
-    } else if (ad.pattern === 'lines') {
-        patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)";
-    } else if (ad.pattern === 'grid') {
-        patternOverlay = "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)";
-    } else if (ad.pattern === 'crosshatch') {
-        patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px), repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px)";
-    }
-
-    const bgStyles = {};
-    if (ad.bgGradientType === 'solid') {
-        bgStyles.backgroundColor = ad.bgColor;
-    } else if (ad.bgGradientType === 'linear') {
-        bgStyles.backgroundImage = `linear-gradient(to right, ${ad.bgColor}, ${ad.bgColor2 || '#000000'})`;
-    } else if (ad.bgGradientType === 'radial') {
-        bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
-    }
-
-    const renderButton = (extraClass) => (
-      <div className={`px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
-         {ad.buttonText} <ChevronRight size={14} className="hidden @md:block" />
-      </div>
-    );
-
-    const textAlignment = ad.fgImage
-      ? "text-left items-start" 
-      : "text-center @4xl:text-left items-center @4xl:items-start";
-
-    return (
-      <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className="@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-3 @2xl:gap-6 no-underline block hover:scale-[1.01]" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
-         {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="Background" />}
-         {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
-         
-         {/* STRIPPED flex-1 - Text now shrinks gracefully */}
-         <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 ${textAlignment}`}>
-           <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight ${ad.fgImage ? 'origin-left' : 'origin-center @4xl:origin-left'}`}>
-             {ad.headline}
-           </h2>
-           <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
-             {ad.subtext}
-           </p>
-           
-           {ad.fgImage && renderButton("mt-4 flex @4xl:hidden w-max")}
-         </div>
-
-         {ad.fgImage && (
-            <div className="relative z-10 hidden @xs:flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0">
-               <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="Foreground" />
-            </div>
-         )}
-
-         {/* STRIPPED @5xl:flex-1 - Button now perfectly hugs its content! */}
-         <div className={`relative z-10 justify-end items-center shrink-0 min-w-0 ${ad.fgImage ? 'hidden @4xl:flex' : 'flex'}`}>
-            {renderButton("")}
-         </div>
-      </a>
-    );
-  };
 
   const VideoCard = ({ item, isHero }) => (
     <div onClick={() => setSelectedItem(item)} className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
@@ -384,9 +380,8 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
             </div>
           </div>
           
-          {/* Dynamic Ad Slot 1 - Stretches 100% across the bottom of the grid */}
           {activeAds[0] && (
-             <div className="w-full min-h-[120px]">
+             <div className="w-full min-h-[140px]">
                <DynamicAd ad={activeAds[0]} />
              </div>
           )}
@@ -416,15 +411,14 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
                     <div className="flex flex-col gap-4">
                       {boothPodcasts.map(pod => <BoothCard key={pod.id} item={pod} />)}
                     </div>
-                    {/* Dynamic Ad Slots 2 & 3 */}
                     <div className="flex flex-col gap-6 flex-1">
                       {activeAds[1] && (
-                         <div className="flex-1 min-h-[120px]">
+                         <div className="flex-1 min-h-[140px]">
                            <DynamicAd ad={activeAds[1]} />
                          </div>
                       )}
                       {activeAds[2] && (
-                         <div className="flex-1 min-h-[120px]">
+                         <div className="flex-1 min-h-[140px]">
                            <DynamicAd ad={activeAds[2]} />
                          </div>
                       )}
@@ -445,7 +439,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filmRoomVideos.map(video => <VideoCard key={video.id} item={video} isHero={false} />)}
             </div>
-            {/* Dynamic Ad Slot 4 */}
             {activeAds[3] && (
                <div className="w-full">
                  <DynamicAd ad={activeAds[3]} />
