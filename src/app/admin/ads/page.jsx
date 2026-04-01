@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
-import { Loader2, ShieldAlert, ChevronRight, Save, LayoutTemplate, Plus, Edit2, Trash2, ArrowLeft, Image as ImageIcon } from 'lucide-react';
+import { Loader2, ShieldAlert, ChevronRight, Save, LayoutTemplate, Plus, Edit2, Trash2, ArrowLeft, Image as ImageIcon, Shirt } from 'lucide-react';
 
 const defaultAdState = {
   id: '',
@@ -14,11 +14,13 @@ const defaultAdState = {
   buttonLink: 'https://fsan.shop',
   bgColor: '#7f1d1d', 
   bgColor2: '#000000',
-  bgGradientType: 'radial', // solid, linear, radial
-  btnColor: '#dc2626', 
-  pattern: 'dots', // none, dots, lines, grid, crosshatch
+  bgGradientType: 'radial', 
+  btnColor: '#dc2626',
+  borderColor: '#991b1b', // NEW
+  pattern: 'dots', 
   bgImage: '',
-  sport: 'All',
+  fgImage: '', // NEW
+  sport: ['All'], // UPDATED to array
   pages: ['home', 'articles', 'videos', 'podcasts'],
   startDate: '',
   endDate: ''
@@ -33,8 +35,7 @@ export default function AdsDashboard() {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // App State
-  const [view, setView] = useState('list'); // 'list' | 'form'
+  const [view, setView] = useState('list'); 
   const [adsList, setAdsList] = useState([]);
   const [adData, setAdData] = useState(defaultAdState);
 
@@ -47,7 +48,6 @@ export default function AdsDashboard() {
 
   const verifyAdminAndFetchAds = async () => {
     try {
-      // 1. Verify Admin
       const roleQuery = `query GetViewerRole { viewer { roles { nodes { name } } } }`;
       const roleRes = await fetch('https://admin.fsan.com/graphql', {
         method: 'POST',
@@ -62,8 +62,6 @@ export default function AdsDashboard() {
         return;
       }
       setIsAdmin(true);
-
-      // 2. Fetch All Ads
       await fetchAds();
     } catch (error) {
       console.error('Failed verification', error);
@@ -76,7 +74,7 @@ export default function AdsDashboard() {
     const adQuery = `
       query GetGlobalAds {
         globalAds {
-          id headline subtext buttonText buttonLink bgColor bgColor2 bgGradientType btnColor pattern bgImage sport pages startDate endDate
+          id headline subtext buttonText buttonLink bgColor bgColor2 bgGradientType btnColor borderColor pattern bgImage fgImage sport pages startDate endDate
         }
       }
     `;
@@ -104,6 +102,13 @@ export default function AdsDashboard() {
     }));
   };
 
+  const handleSportToggle = (sport) => {
+    setAdData(prev => ({
+      ...prev,
+      sport: prev.sport.includes(sport) ? prev.sport.filter(s => s !== sport) : [...prev.sport, sport]
+    }));
+  };
+
   const handleSaveAd = async (e) => {
     e.preventDefault();
     setIsSaving(true);
@@ -112,11 +117,11 @@ export default function AdsDashboard() {
       mutation SaveGlobalAd(
         $id: String, $headline: String, $subtext: String, $buttonText: String, 
         $buttonLink: String, $bgColor: String, $bgColor2: String, $bgGradientType: String,
-        $btnColor: String, $pattern: String, $bgImage: String, $sport: String, 
-        $pages: [String], $startDate: String, $endDate: String
+        $btnColor: String, $borderColor: String, $pattern: String, $bgImage: String, 
+        $fgImage: String, $sport: [String], $pages: [String], $startDate: String, $endDate: String
       ) {
         saveGlobalAd(input: {
-          id: $id, headline: $headline, subtext: $subtext, buttonText: $buttonText, buttonLink: $buttonLink, bgColor: $bgColor, bgColor2: $bgColor2, bgGradientType: $bgGradientType, btnColor: $btnColor, pattern: $pattern, bgImage: $bgImage, sport: $sport, pages: $pages, startDate: $startDate, endDate: $endDate
+          id: $id, headline: $headline, subtext: $subtext, buttonText: $buttonText, buttonLink: $buttonLink, bgColor: $bgColor, bgColor2: $bgColor2, bgGradientType: $bgGradientType, btnColor: $btnColor, borderColor: $borderColor, pattern: $pattern, bgImage: $bgImage, fgImage: $fgImage, sport: $sport, pages: $pages, startDate: $startDate, endDate: $endDate
         }) { success }
       }
     `;
@@ -155,11 +160,12 @@ export default function AdsDashboard() {
   };
 
   const openEditor = (ad = null) => {
-    setAdData(ad ? { ...defaultAdState, ...ad } : { ...defaultAdState });
+    // If ad has no sport array (from an old save), default it to ['All']
+    const safeAd = ad ? { ...defaultAdState, ...ad, sport: Array.isArray(ad.sport) ? ad.sport : ['All'] } : { ...defaultAdState };
+    setAdData(safeAd);
     setView('form');
   };
 
-  // LIVE PREVIEW COMPONENT
   const LivePreviewAd = ({ ad }) => {
     let patternOverlay = '';
     if (ad.pattern === 'dots') {
@@ -182,22 +188,30 @@ export default function AdsDashboard() {
     }
 
     return (
-      <div className="w-full h-full rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border" style={{ ...bgStyles, borderColor: ad.bgColor }}>
+      <div className="w-full h-full rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
          {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay" alt="Background" />}
          {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
          
-         <div className="relative z-10 flex flex-col justify-center">
-           <h2 className="text-2xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-center">{ad.headline || 'Headline'}</h2>
-           <p className="text-gray-300 font-bold text-[11px] uppercase tracking-widest relative z-10">{ad.subtext || 'Subtext goes here'}</p>
+         <div className="relative z-10 flex flex-col justify-center flex-1 min-w-0">
+           <h2 className="text-2xl md:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-left truncate">{ad.headline || 'Headline'}</h2>
+           <p className="text-gray-300 font-bold text-[11px] uppercase tracking-widest relative z-10 truncate">{ad.subtext || 'Subtext goes here'}</p>
          </div>
-         <div className="text-white px-5 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 flex items-center justify-center gap-2 shrink-0 whitespace-nowrap mt-3 sm:mt-0" style={{ backgroundColor: ad.btnColor }}>
+
+         {/* Foreground / Merch Image (Hides automatically if space is too small) */}
+         {ad.fgImage && (
+            <div className="relative z-10 hidden sm:flex flex-1 justify-center items-center px-4">
+               <img src={ad.fgImage} className="max-h-24 w-auto object-contain drop-shadow-2xl hover:scale-110 transition-transform duration-300" alt="Foreground" />
+            </div>
+         )}
+
+         <div className="text-white px-5 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 flex items-center justify-center gap-2 shrink-0 whitespace-nowrap mt-4 sm:mt-0" style={{ backgroundColor: ad.btnColor }}>
             {ad.buttonText || 'Click Here'} <ChevronRight size={14} />
          </div>
       </div>
     );
   };
 
-  if (isVerifying) return <div className="min-h-screen flex items-center justify-center"><Loader2 size={48} className="animate-spin text-gray-600" /></div>;
+  if (isVerifying) return <div className="min-h-screen bg-[#121212] flex items-center justify-center"><Loader2 size={48} className="animate-spin text-gray-600" /></div>;
   if (!isAdmin) return null;
 
   return (
@@ -222,9 +236,9 @@ export default function AdsDashboard() {
           </div>
 
           {view === 'list' ? (
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-300">
+             <div className="grid grid-cols-1 gap-6 animate-in fade-in duration-300">
                {adsList.length === 0 ? (
-                 <div className="col-span-2 py-12 text-center text-gray-500 font-bold uppercase tracking-widest bg-[#1a1a1a] rounded-2xl border border-gray-800">No ads created yet.</div>
+                 <div className="py-12 text-center text-gray-500 font-bold uppercase tracking-widest bg-[#1a1a1a] rounded-2xl border border-gray-800">No ads created yet.</div>
                ) : (
                  adsList.map(ad => (
                    <div key={ad.id} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl shadow-xl overflow-hidden flex flex-col">
@@ -233,7 +247,7 @@ export default function AdsDashboard() {
                       </div>
                       <div className="px-6 py-4 bg-[#111] border-t border-gray-800 flex items-center justify-between mt-auto">
                         <div className="flex flex-col">
-                           <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">Sport: {ad.sport}</span>
+                           <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">Sport: {ad.sport.join(', ')}</span>
                            <span className="text-[10px] text-gray-600">Pages: {ad.pages.join(', ')}</span>
                         </div>
                         <div className="flex gap-2">
@@ -303,6 +317,13 @@ export default function AdsDashboard() {
                          </div>
                        )}
                      </div>
+                     <div>
+                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Outer Border Color</label>
+                       <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
+                         <input type="color" name="borderColor" value={adData.borderColor} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
+                         <input type="text" name="borderColor" value={adData.borderColor} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
+                       </div>
+                     </div>
                    </div>
 
                    <div className="space-y-4">
@@ -326,22 +347,34 @@ export default function AdsDashboard() {
                    </div>
                  </div>
 
-                 <div>
-                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-2">Background Image URL <ImageIcon size={12}/></label>
-                   <input type="text" name="bgImage" value={adData.bgImage} onChange={handleChange} placeholder="Paste WP Media Library URL (https://...)" className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
-                   <p className="text-[9px] text-gray-500 mt-1 italic">Upload images directly to your WordPress Media Library, click "Copy URL", and paste it here.</p>
+                 <div className="space-y-4 pt-2">
+                   <div>
+                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-2">Background Image URL (Optional) <ImageIcon size={12}/></label>
+                     <input type="text" name="bgImage" value={adData.bgImage} onChange={handleChange} placeholder="Paste WP Media Library URL (https://...)" className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
+                   </div>
+                   <div>
+                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-2">Center Foreground / Merch Image URL (Optional) <Shirt size={12}/></label>
+                     <input type="text" name="fgImage" value={adData.fgImage} onChange={handleChange} placeholder="Paste WP Media Library URL (https://...)" className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
+                   </div>
                  </div>
 
                  <h3 className="font-bold text-lg border-b border-gray-800 pb-3 pt-4">Targeting & Schedule</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div>
-                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Display Sport</label>
-                     <select name="sport" value={adData.sport} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none mb-6">
-                       <option value="All">All Networks</option>
-                       <option value="Football">Football</option>
-                       <option value="Basketball">Basketball</option>
-                       <option value="Baseball">Baseball</option>
-                     </select>
+                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Display Sport</label>
+                     <div className="flex flex-col gap-3 mb-6">
+                       {['All', 'Football', 'Basketball', 'Baseball'].map(s => (
+                         <label key={s} className="flex items-center gap-3 cursor-pointer">
+                           <input 
+                              type="checkbox" 
+                              checked={adData.sport.includes(s)} 
+                              onChange={() => handleSportToggle(s)}
+                              className="w-4 h-4 rounded bg-[#111] border-gray-700 text-red-500 focus:ring-red-500 focus:ring-offset-gray-900"
+                           />
+                           <span className="text-sm font-bold uppercase tracking-widest text-gray-300">{s}</span>
+                         </label>
+                       ))}
+                     </div>
 
                      <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Display Pages</label>
                      <div className="flex flex-col gap-3">
