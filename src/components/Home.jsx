@@ -142,7 +142,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
          {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="Background" />}
          {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
          
-         {/* LEFT SIDE: By setting flex-1, we demand equal space to perfectly center the middle image */}
+         {/* 1. TEXT: Always takes up available space */}
          <div className="relative z-10 flex flex-col justify-center flex-1 pr-2 text-center @4xl:text-left items-center @4xl:items-start min-w-0">
            <h2 className="text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-center @4xl:origin-left line-clamp-2 leading-tight">
              {ad.headline}
@@ -152,15 +152,15 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
            </p>
          </div>
 
-         {/* MIDDLE: Sits dead center as long as left and right are balanced */}
+         {/* 2. IMAGE: Slides right as the gap closes */}
          {ad.fgImage && (
             <div className="relative z-10 hidden @sm:flex justify-center items-center shrink-0">
                <img src={ad.fgImage} className="max-h-16 @2xl:max-h-24 w-auto max-w-[80px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="Foreground" />
             </div>
          )}
 
-         {/* RIGHT SIDE: By setting flex-1, we balance out the left side! */}
-         <div className="relative z-10 flex justify-end items-center flex-1 min-w-0">
+         {/* 3. BUTTON: Drops flex-1 constraint completely when the screen starts to squeeze so the text gets all the extra space */}
+         <div className="relative z-10 flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0">
             <div className="px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap" style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
                {ad.buttonText} <ChevronRight size={14} className="hidden @md:block" />
             </div>
