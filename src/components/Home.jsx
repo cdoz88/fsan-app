@@ -19,6 +19,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Fetch Ads from WordPress
   useEffect(() => {
     const fetchAds = async () => {
       const query = `
@@ -45,6 +46,34 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
     fetchAds();
   }, []);
 
+  // --- POST FILTERING LOGIC (The part that was missing!) ---
+  const allPosts = [...wpPosts];
+  const usedIds = new Set();
+  
+  const wireFeed = allPosts.filter(p => p.type !== 'podcast').slice(0, 10);
+
+  const mainFeature = allPosts.find(p => p.type === 'video' || p.type === 'article');
+  if (mainFeature) usedIds.add(mainFeature.id);
+
+  const sideTopFeature = allPosts.find(p => (p.type === 'article' || p.type === 'video') && !usedIds.has(p.id));
+  if (sideTopFeature) usedIds.add(sideTopFeature.id);
+
+  const sideBottomFeature = allPosts.find(p => (p.type === 'article' || p.type === 'video') && !usedIds.has(p.id));
+  if (sideBottomFeature) usedIds.add(sideBottomFeature.id);
+
+  const pressBoxArticles = allPosts.filter(p => p.type === 'article' && !usedIds.has(p.id)).slice(0, 4);
+  pressBoxArticles.forEach(p => usedIds.add(p.id));
+
+  const boothPodcasts = allPosts.filter(p => p.type === 'podcast' && !p.isMasterShow && !usedIds.has(p.id)).slice(0, 4);
+  boothPodcasts.forEach(p => usedIds.add(p.id));
+
+  const filmRoomVideos = allPosts.filter(p => p.type === 'video' && !usedIds.has(p.id)).slice(0, 6);
+  filmRoomVideos.forEach(p => usedIds.add(p.id));
+
+  const highlightShorts = allPosts.filter(p => p.type === 'short' && !usedIds.has(p.id)).slice(0, 8);
+  // --- END POST FILTERING ---
+
+  // AD FILTERING BY DATE & SPORT
   const today = new Date();
   today.setHours(0, 0, 0, 0); 
 
@@ -68,24 +97,15 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
     if (!ad) return null;
 
     let patternOverlay = '';
-    if (ad.pattern === 'dots') {
-        patternOverlay = "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20\\' xmlns=\\'http://www.w3.org/2000%2Fsvg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')";
-    } else if (ad.pattern === 'lines') {
-        patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)";
-    } else if (ad.pattern === 'grid') {
-        patternOverlay = "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)";
-    } else if (ad.pattern === 'crosshatch') {
-        patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px), repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px)";
-    }
+    if (ad.pattern === 'dots') patternOverlay = "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20\\' xmlns=\\'http://www.w3.org/2000%2Fsvg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')";
+    else if (ad.pattern === 'lines') patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)";
+    else if (ad.pattern === 'grid') patternOverlay = "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)";
+    else if (ad.pattern === 'crosshatch') patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px), repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px)";
 
     const bgStyles = { borderColor: ad.borderColor || ad.bgColor };
-    if (ad.bgGradientType === 'solid') {
-        bgStyles.backgroundColor = ad.bgColor;
-    } else if (ad.bgGradientType === 'linear') {
-        bgStyles.backgroundImage = `linear-gradient(to right, ${ad.bgColor}, ${ad.bgColor2 || '#000000'})`;
-    } else if (ad.bgGradientType === 'radial') {
-        bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
-    }
+    if (ad.bgGradientType === 'solid') bgStyles.backgroundColor = ad.bgColor;
+    else if (ad.bgGradientType === 'linear') bgStyles.backgroundImage = `linear-gradient(to right, ${ad.bgColor}, ${ad.bgColor2 || '#000000'})`;
+    else if (ad.bgGradientType === 'radial') bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
 
     const renderButton = (extraClass) => (
       <div className={`px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
@@ -105,7 +125,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
            <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
              {ad.subtext}
            </p>
-           {ad.fgImage && renderButton("mt-4 flex @4xl:hidden w-max")}
+           {renderButton("mt-4 flex @4xl:hidden w-max")}
          </div>
 
          {ad.fgImage && (
@@ -121,7 +141,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
     );
   };
 
-  // Helper Components
   const PostMeta = ({ item }) => (
     <div className="flex items-center gap-2 mb-3 z-20 relative">
       {activeSport === 'All' && (
@@ -130,6 +149,21 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
       <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 drop-shadow-md">{item.date}</span>
     </div>
   );
+
+  const scrollShorts = (direction) => {
+    if (shortsRef.current) shortsRef.current.scrollBy({ left: direction === 'left' ? -350 : 350, behavior: 'smooth' });
+  };
+
+  const scrollLineup = (direction) => {
+    if (lineupRef.current) lineupRef.current.scrollBy({ left: direction === 'left' ? -350 : 350, behavior: 'smooth' });
+  };
+
+  const shieldMaskStyle = {
+    WebkitMaskImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg%20viewBox%3D%220%200%20706.29%20800%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M404.07%2C303.86c.61%2C0%2C1.22-.04%2C1.83-.04%2C1%2C0%2C1.98.06%2C2.98.07-1.26-.02-2.52-.03-3.78-.03-.34%2C0-.68%2C0-1.02%2C0%22%2F%3E%3Cpath%20d%3D%22M624.47%2C522.59c-59.75%2C113.25-148.42%2C205.88-256.42%2C267.9l-10.35%2C5.95-6.21%2C3.57-6.31-3.38-10.51-5.63c-112.29-60.12-203.01-153.79-262.36-270.88C13%2C403.11-10.51%2C271.58%2C4.32%2C139.75l1.34-11.89.8-7.14%2C5.92-3.54%2C9.87-5.91C147.41%2C36.4%2C258.58%2C0%2C362.11%2C0c109.19%2C0%2C213.33%2C38.89%2C327.73%2C122.4l9.02%2C6.58%2C5.41%2C3.95.37%2C6.93.61%2C11.56c6.89%2C129.58-21.04%2C257.92-80.79%2C371.16Z%22%2F%3E%3C%2Fsvg%3E")',
+    maskImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg%20viewBox%3D%220%200%20706.29%20800%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M404.07%2C303.86c.61%2C0%2C1.22-.04%2C1.83-.04%2C1%2C0%2C1.98.06%2C2.98.07-1.26-.02-2.52-.03-3.78-.03-.34%2C0-.68%2C0-1.02%2C0%22%2F%3E%3Cpath%20d%3D%22M624.47%2C522.59c-59.75%2C113.25-148.42%2C205.88-256.42%2C267.9l-10.35%2C5.95-6.21%2C3.57-6.31-3.38-10.51-5.63c-112.29-60.12-203.01-153.79-262.36-270.88C13%2C403.11-10.51%2C271.58%2C4.32%2C139.75l1.34-11.89.8-7.14%2C5.92-3.54%2C9.87-5.91C147.41%2C36.4%2C258.58%2C0%2C362.11%2C0c109.19%2C0%2C213.33%2C38.89%2C327.73%2C122.4l9.02%2C6.58%2C5.41%2C3.95.37%2C6.93.61%2C11.56c6.89%2C129.58-21.04%2C257.92-80.79%2C371.16Z%22%2F%3E%3C%2Fsvg%3E")',
+    WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center',
+    maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center'
+  };
 
   const VideoCard = ({ item, isHero }) => (
     <div onClick={() => setSelectedItem(item)} className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
@@ -248,6 +282,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
 
   return (
     <div className={`flex flex-col w-full pt-6 pb-16 animate-in fade-in duration-300 ${isLoading ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+      
       <svg style={{ width: 0, height: 0, position: 'absolute' }} aria-hidden="true" focusable="false">
         <defs>
           <linearGradient id="grey-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop stopColor="#d1d5db" offset="0%" /><stop stopColor="#6b7280" offset="100%" /></linearGradient>
@@ -255,6 +290,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
         </defs>
       </svg>
 
+      {/* THE WIRE */}
       {wireFeed.length > 0 && (
         <div className="w-full flex items-center pb-6 border-b border-gray-800/80 mb-8">
           <div className="flex flex-col items-center justify-center shrink-0 pr-4 md:pr-6 border-r border-gray-800/60">
@@ -287,6 +323,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
         </div>
       )}
 
+      {/* FEATURED SECTION */}
       <div className="space-y-12">
         <section className="flex flex-col gap-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -299,6 +336,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
           {activeAds[0] && <div className="w-full min-h-[120px]"><DynamicAd ad={activeAds[0]} /></div>}
         </section>
 
+        {/* PRESS BOX & BOOTH */}
         {(pressBoxArticles.length > 0 || boothPodcasts.length > 0) && (
           <section className="pt-6 border-t border-gray-800/50">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -306,7 +344,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
                 <div className="lg:col-span-8 space-y-6">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-bold flex items-center gap-2 text-white italic"><FileText stroke="url(#grey-grad)" /> The Press Box</h3>
-                    <Link href={`/${activeSport.toLowerCase()}/articles`} className="text-xs font-bold text-gray-400 no-underline">View All Articles</Link>
+                    <Link href={`/${activeSport.toLowerCase()}/articles`} className="text-xs font-bold text-gray-400 no-underline hover:text-white transition-colors">View All Articles</Link>
                   </div>
                   <div className="flex flex-col gap-4">{pressBoxArticles.map(article => <PressBoxCard key={article.id} item={article} />)}</div>
                 </div>
@@ -315,7 +353,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
                 <div className="lg:col-span-4 flex flex-col h-full">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-bold flex items-center gap-2 text-white italic"><Headphones stroke="url(#grey-grad)" /> The Booth</h3>
-                    <Link href={`/${activeSport.toLowerCase()}/podcasts`} className="text-xs font-bold text-gray-400 no-underline">View All Podcasts</Link>
+                    <Link href={`/${activeSport.toLowerCase()}/podcasts`} className="text-xs font-bold text-gray-400 no-underline hover:text-white transition-colors">View All Podcasts</Link>
                   </div>
                   <div className="flex flex-col gap-6 flex-1">
                     <div className="flex flex-col gap-4">{boothPodcasts.map(pod => <BoothCard key={pod.id} item={pod} />)}</div>
@@ -328,17 +366,19 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
           </section>
         )}
 
+        {/* FILM ROOM */}
         {filmRoomVideos.length > 0 && (
           <section className="pt-6 border-t border-gray-800/50 flex flex-col gap-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold flex items-center gap-2 text-white italic"><Video stroke="url(#grey-grad)" /> The Film Room</h3>
-              <Link href={`/${activeSport.toLowerCase()}/videos`} className="text-xs font-bold text-gray-400 no-underline">View All Videos</Link>
+              <Link href={`/${activeSport.toLowerCase()}/videos`} className="text-xs font-bold text-gray-400 no-underline hover:text-white transition-colors">View All Videos</Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{filmRoomVideos.map(video => <VideoCard key={video.id} item={video} isHero={false} />)}</div>
             {activeAds[3] && <div className="w-full"><DynamicAd ad={activeAds[3]} /></div>}
           </section>
         )}
 
+        {/* HIGHLIGHT REEL */}
         {highlightShorts.length > 0 && (
           <section className="relative pt-6 border-t border-gray-800/50">
             <div className="flex items-center justify-between mb-6">
@@ -358,6 +398,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
           </section>
         )}
 
+        {/* THE LINEUP */}
         {masterPodcasts.length > 0 && (
           <section className="relative pt-6 border-t border-gray-800/50">
             <div className="flex items-center justify-between mb-6">
