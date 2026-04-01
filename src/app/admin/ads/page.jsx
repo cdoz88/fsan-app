@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
-import { Loader2, ShieldAlert, ChevronRight, Save, LayoutTemplate, Plus, Edit2, Trash2, ArrowLeft, Image as ImageIcon, Shirt } from 'lucide-react';
+import { Loader2, ShieldAlert, ChevronRight, Save, LayoutTemplate, Plus, Edit2, Trash2, ArrowLeft, Image as ImageIcon, Shirt, ArrowUp, ArrowDown } from 'lucide-react';
 
 const defaultAdState = {
   id: '',
@@ -16,6 +16,7 @@ const defaultAdState = {
   bgColor2: '#000000',
   bgGradientType: 'radial', 
   btnColor: '#dc2626',
+  btnTextColor: '#ffffff', // NEW
   borderColor: '#991b1b',
   pattern: 'dots', 
   bgImage: '',
@@ -34,6 +35,7 @@ export default function AdsDashboard() {
   const [isVerifying, setIsVerifying] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isReordering, setIsReordering] = useState(false); // NEW
 
   const [view, setView] = useState('list'); 
   const [adsList, setAdsList] = useState([]);
@@ -74,7 +76,7 @@ export default function AdsDashboard() {
     const adQuery = `
       query GetGlobalAds {
         globalAds {
-          id headline subtext buttonText buttonLink bgColor bgColor2 bgGradientType btnColor borderColor pattern bgImage fgImage sport pages startDate endDate
+          id headline subtext buttonText buttonLink bgColor bgColor2 bgGradientType btnColor btnTextColor borderColor pattern bgImage fgImage sport pages startDate endDate
         }
       }
     `;
@@ -117,11 +119,11 @@ export default function AdsDashboard() {
       mutation SaveGlobalAd(
         $id: String, $headline: String, $subtext: String, $buttonText: String, 
         $buttonLink: String, $bgColor: String, $bgColor2: String, $bgGradientType: String,
-        $btnColor: String, $borderColor: String, $pattern: String, $bgImage: String, 
+        $btnColor: String, $btnTextColor: String, $borderColor: String, $pattern: String, $bgImage: String, 
         $fgImage: String, $sport: [String], $pages: [String], $startDate: String, $endDate: String
       ) {
         saveGlobalAd(input: {
-          id: $id, headline: $headline, subtext: $subtext, buttonText: $buttonText, buttonLink: $buttonLink, bgColor: $bgColor, bgColor2: $bgColor2, bgGradientType: $bgGradientType, btnColor: $btnColor, borderColor: $borderColor, pattern: $pattern, bgImage: $bgImage, fgImage: $fgImage, sport: $sport, pages: $pages, startDate: $startDate, endDate: $endDate
+          id: $id, headline: $headline, subtext: $subtext, buttonText: $buttonText, buttonLink: $buttonLink, bgColor: $bgColor, bgColor2: $bgColor2, bgGradientType: $bgGradientType, btnColor: $btnColor, btnTextColor: $btnTextColor, borderColor: $borderColor, pattern: $pattern, bgImage: $bgImage, fgImage: $fgImage, sport: $sport, pages: $pages, startDate: $startDate, endDate: $endDate
         }) { success }
       }
     `;
@@ -156,6 +158,35 @@ export default function AdsDashboard() {
       alert('Error deleting ad.');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // NEW: Move Ad Up or Down
+  const moveAd = async (index, direction) => {
+    if (isReordering) return;
+    setIsReordering(true);
+
+    const newAdsList = [...adsList];
+    const temp = newAdsList[index];
+    newAdsList[index] = newAdsList[index + direction];
+    newAdsList[index + direction] = temp;
+    
+    setAdsList(newAdsList); // Optimistic UI Update
+
+    const newIds = newAdsList.map(ad => ad.id);
+    const query = `mutation ReorderAds($ids: [String]) { reorderGlobalAds(input: { ids: $ids }) { success } }`;
+    
+    try {
+      await fetch('https://admin.fsan.com/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.user.token}` },
+        body: JSON.stringify({ query, variables: { ids: newIds } }),
+      });
+    } catch(e) {
+      alert('Error reordering ads.');
+      fetchAds(); // Revert back to DB state if it fails
+    } finally {
+      setIsReordering(false);
     }
   };
 
@@ -197,8 +228,7 @@ export default function AdsDashboard() {
          {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay" alt="Background" />}
          {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
          
-         {/* 1. TEXT (Added @3xl:flex-1 to match the button, centering the image on large screens) */}
-         <div className="relative z-10 flex flex-col justify-center shrink @3xl:flex-1 pr-2 text-center @4xl:text-left items-center @4xl:items-start min-w-0">
+         <div className="relative z-10 flex flex-col justify-center shrink pr-2 text-center @4xl:text-left items-center @4xl:items-start min-w-0">
            <h2 className="text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform origin-center @4xl:origin-left line-clamp-2 leading-tight">
              {ad.headline || 'Headline'}
            </h2>
@@ -207,16 +237,15 @@ export default function AdsDashboard() {
            </p>
          </div>
 
-         {/* 2. IMAGE */}
          {ad.fgImage && (
             <div className="relative z-10 hidden @sm:flex justify-center items-center shrink-0">
                <img src={ad.fgImage} className="max-h-16 @2xl:max-h-24 w-auto max-w-[80px] @2xl:max-w-[160px] object-contain drop-shadow-2xl hover:scale-110 transition-transform duration-300" alt="Foreground" />
             </div>
          )}
 
-         {/* 3. BUTTON */}
          <div className="relative z-10 flex justify-end items-center shrink-0 @3xl:flex-1 min-w-0">
-            <div className="text-white px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap" style={{ backgroundColor: ad.btnColor }}>
+            {/* NEW: Appling btnTextColor */}
+            <div className="px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap" style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
                {ad.buttonText || 'Click Here'} <ChevronRight size={14} className="hidden @md:block" />
             </div>
          </div>
@@ -253,7 +282,7 @@ export default function AdsDashboard() {
                {adsList.length === 0 ? (
                  <div className="py-12 text-center text-gray-500 font-bold uppercase tracking-widest bg-[#1a1a1a] rounded-2xl border border-gray-800">No ads created yet.</div>
                ) : (
-                 adsList.map(ad => (
+                 adsList.map((ad, index) => (
                    <div key={ad.id} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl shadow-xl overflow-hidden flex flex-col">
                       <div className="p-4">
                         <LivePreviewAd ad={{...defaultAdState, ...ad}} />
@@ -263,7 +292,14 @@ export default function AdsDashboard() {
                            <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">Sport: {Array.isArray(ad.sport) ? ad.sport.join(', ') : (ad.sport || 'None')}</span>
                            <span className="text-[10px] text-gray-600">Pages: {Array.isArray(ad.pages) ? ad.pages.join(', ') : (ad.pages || 'None')}</span>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-4">
+                           {/* REORDER ARROWS */}
+                           <div className="flex gap-1 bg-gray-900 border border-gray-700 rounded-lg p-1">
+                             <button onClick={() => moveAd(index, -1)} disabled={index === 0 || isReordering} className="p-1 text-gray-400 hover:text-white disabled:opacity-30 transition-colors"><ArrowUp size={16} /></button>
+                             <button onClick={() => moveAd(index, 1)} disabled={index === adsList.length - 1 || isReordering} className="p-1 text-gray-400 hover:text-white disabled:opacity-30 transition-colors"><ArrowDown size={16} /></button>
+                           </div>
+                           <div className="w-px h-6 bg-gray-800"></div>
+                           {/* EDIT / DELETE */}
                            <button onClick={() => openEditor(ad)} className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"><Edit2 size={16} /></button>
                            <button onClick={() => handleDeleteAd(ad.id)} disabled={isDeleting} className="p-2 bg-red-900/30 hover:bg-red-900/50 text-red-500 rounded-lg transition-colors"><Trash2 size={16} /></button>
                         </div>
@@ -350,11 +386,21 @@ export default function AdsDashboard() {
                          <option value="crosshatch">Crosshatch</option>
                        </select>
                      </div>
-                     <div>
-                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button Color</label>
-                       <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
-                         <input type="color" name="btnColor" value={adData.btnColor} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
-                         <input type="text" name="btnColor" value={adData.btnColor} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
+                     <div className="flex gap-4">
+                       <div className="flex-1">
+                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button Color</label>
+                         <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
+                           <input type="color" name="btnColor" value={adData.btnColor} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
+                           <input type="text" name="btnColor" value={adData.btnColor} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
+                         </div>
+                       </div>
+                       {/* NEW: Button Text Color */}
+                       <div className="flex-1">
+                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button Text</label>
+                         <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
+                           <input type="color" name="btnTextColor" value={adData.btnTextColor} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
+                           <input type="text" name="btnTextColor" value={adData.btnTextColor} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
+                         </div>
                        </div>
                      </div>
                    </div>

@@ -10,7 +10,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
   const lineupRef = useRef(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   
-  // NEW: State to hold our live dynamic ads
   const [globalAds, setGlobalAds] = useState([]);
   
   const hideScrollbar = "scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
@@ -21,13 +20,13 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // NEW: Fetch all global ads from the WP database on load
   useEffect(() => {
     const fetchAds = async () => {
+      // NEW: Added btnTextColor to the GraphQL fetch
       const query = `
         query GetGlobalAds {
           globalAds {
-            id headline subtext buttonText buttonLink bgColor bgColor2 bgGradientType btnColor borderColor pattern bgImage fgImage sport pages startDate endDate
+            id headline subtext buttonText buttonLink bgColor bgColor2 bgGradientType btnColor btnTextColor borderColor pattern bgImage fgImage sport pages startDate endDate
           }
         }
       `;
@@ -97,35 +96,25 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
 
   const highlightShorts = allPosts.filter(p => p.type === 'short' && !usedIds.has(p.id)).slice(0, 8);
 
-  // NEW: Filtering logic to determine which ads should actually be displayed
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // Strip out time so we are comparing pure dates
+  today.setHours(0, 0, 0, 0); 
 
   const activeAds = globalAds.filter(ad => {
-    // 1. Check Page Targeting
     if (!ad.pages || !ad.pages.includes('home')) return false;
-
-    // 2. Check Sport Targeting
     if (!ad.sport || (!ad.sport.includes('All') && !ad.sport.includes(activeSport))) return false;
-
-    // 3. Check Start Date
     if (ad.startDate) {
       const [year, month, day] = ad.startDate.split('-');
       const start = new Date(year, month - 1, day);
       if (today < start) return false;
     }
-
-    // 4. Check End Date
     if (ad.endDate) {
       const [year, month, day] = ad.endDate.split('-');
       const end = new Date(year, month - 1, day);
       if (today > end) return false;
     }
-
-    return true; // Passed all checks! Show the ad.
+    return true; 
   });
 
-  // NEW: The Dynamic Ad Component
   const DynamicAd = ({ ad }) => {
     if (!ad) return null;
 
@@ -149,7 +138,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
         bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
     }
 
-    // Turned the entire element into an <a> tag so it's clickable
     return (
       <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className="@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-3 @2xl:gap-6 no-underline block hover:scale-[1.01]" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
          {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="Background" />}
@@ -171,7 +159,8 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
          )}
 
          <div className="relative z-10 flex justify-end items-center shrink-0 @3xl:flex-1 min-w-0">
-            <div className="text-white px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap" style={{ backgroundColor: ad.btnColor }}>
+            {/* NEW: Appling btnTextColor */}
+            <div className="px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap" style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
                {ad.buttonText} <ChevronRight size={14} className="hidden @md:block" />
             </div>
          </div>
@@ -416,7 +405,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
                     <div className="flex flex-col gap-4">
                       {boothPodcasts.map(pod => <BoothCard key={pod.id} item={pod} />)}
                     </div>
-                    {/* Dynamic Ad Slots 2 & 3 (Automatically collapses if ads are missing) */}
+                    {/* Dynamic Ad Slots 2 & 3 */}
                     <div className="flex flex-col gap-6 flex-1">
                       {activeAds[1] && (
                          <div className="flex-1 min-h-[120px]">
