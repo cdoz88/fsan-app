@@ -66,7 +66,8 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
              </div>
            )}
 
-           <div className={`relative z-10 ${isHeader ? 'hidden @sm:flex @sm:flex-1' : 'hidden @2xl:flex'} justify-end items-center shrink-0 min-w-0`}>
+           {/* FIX: Removed flex-1 when there is no image so the text takes all available space! */}
+           <div className={`relative z-10 ${isHeader ? `hidden @sm:flex ${ad.fgImage ? '@sm:flex-1' : ''}` : 'hidden @2xl:flex'} justify-end items-center shrink-0 min-w-0`}>
              {renderButton("")}
            </div>
          </>
@@ -100,7 +101,6 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
   const theme = themes[activeSport] || themes.All;
   const [globalAds, setGlobalAds] = useState([]);
 
-  // Fetch Global Ads from WP
   useEffect(() => {
     const fetchAds = async () => {
       const query = `
@@ -146,7 +146,6 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
     return true; 
   });
 
-  // Categorize by Placement
   const headerAds = activeAds.filter(ad => ad.placements?.includes('header'));
   const sidebarAds = activeAds.filter(ad => ad.placements?.includes('inline'));
 
@@ -156,13 +155,11 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
       {/* HEADER SECTION */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-4 border-b border-gray-800">
         
-        {/* The Title block uses shrink-0 and whitespace-nowrap to prevent it from collapsing early */}
         <div className="shrink-0 mr-4">
           <h1 className={`text-4xl font-black uppercase tracking-wider ${theme.text} drop-shadow-lg whitespace-nowrap`}>{activeSport === 'All' ? 'Network' : activeSport} Podcasts</h1>
           <p className="text-gray-400 mt-2 text-sm whitespace-nowrap">Listen to the top fantasy sports audio shows in the industry.</p>
         </div>
 
-        {/* DYNAMIC HEADER AD SLOT - the flex-1 and shrink classes force the ad to absorb the responsive squeezing before the title wraps! */}
         {headerAds.length > 0 && (
           <div className="hidden lg:block flex-1 max-w-[675px] min-w-[250px] shrink overflow-hidden">
             <DynamicAd ad={headerAds[0]} variant="header" />
@@ -172,12 +169,10 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* PODCAST GRID */}
         <div className="lg:col-span-9 grid grid-cols-2 md:grid-cols-3 gap-6">
           {podcasts.map(pod => <LineupCard key={pod.id} item={pod} setSelectedItem={setSelectedItem} />)}
         </div>
 
-        {/* AD SIDEBAR COLUMN */}
         <div className="lg:col-span-3 flex flex-col gap-6 sticky top-24">
           {sidebarAds.length > 0 ? (
             sidebarAds.map((ad) => (
