@@ -24,7 +24,7 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
 
   const renderButton = (extraClass) => (
     <div className={`px-3 py-2 ${isHeader ? '@md:px-4 @md:py-2.5' : '@2xl:px-5 @2xl:py-2.5'} rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 ${isHeader ? '@md:gap-1.5' : '@2xl:gap-2'} shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
-      {ad.buttonText} <ChevronRight size={14} className={isHeader ? 'hidden @xs:block' : 'hidden @md:block'} />
+      {ad.buttonText} <ChevronRight size={14} className={isHeader ? 'hidden @sm:block' : 'hidden @md:block'} />
     </div>
   );
 
@@ -61,12 +61,14 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
            </div>
            
            {ad.fgImage && isHeader && (
-             <div className="relative z-10 flex justify-center items-center shrink-0">
+             // By adding @xs:flex-1 here, the image takes up an equal 1/3 of the space, centering it perfectly!
+             <div className="relative z-10 flex justify-center items-center shrink-0 @xs:flex-1">
                <img src={ad.fgImage} className="max-h-12 w-auto max-w-[80px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
              </div>
            )}
 
-           <div className={`relative z-10 ${isHeader ? 'hidden @sm:flex' : 'hidden @2xl:flex'} justify-end items-center shrink-0 min-w-0`}>
+           {/* By adding @sm:flex-1 here, the button takes up the final 1/3 of the space and aligns to the right */}
+           <div className={`relative z-10 ${isHeader ? 'hidden @sm:flex @sm:flex-1' : 'hidden @2xl:flex'} justify-end items-center shrink-0 min-w-0`}>
              {renderButton("")}
            </div>
          </>
@@ -153,16 +155,18 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
   return (
     <div className="flex flex-col w-full pt-6 pb-16 animate-in fade-in duration-300">
       
-      {/* HEADER SECTION - Wider 675px container */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-8 pb-4 border-b border-gray-800">
+      {/* HEADER SECTION */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-4 border-b border-gray-800">
+        
+        {/* The Title block retains flex-1 and shrink-0 to prevent it from collapsing early */}
         <div className="flex-1 shrink-0">
           <h1 className={`text-4xl font-black uppercase tracking-wider ${theme.text} drop-shadow-lg`}>{activeSport === 'All' ? 'Network' : activeSport} Podcasts</h1>
           <p className="text-gray-400 mt-2 text-sm">Listen to the top fantasy sports audio shows in the industry.</p>
         </div>
 
-        {/* DYNAMIC HEADER AD SLOT */}
+        {/* DYNAMIC HEADER AD SLOT - the `shrink` class forces the ad to absorb the responsive squeezing before the title wraps! */}
         {headerAds.length > 0 && (
-          <div className="hidden lg:block w-full max-w-[675px]">
+          <div className="hidden lg:block w-full max-w-[675px] min-w-[300px] shrink">
             <DynamicAd ad={headerAds[0]} variant="header" />
           </div>
         )}
