@@ -6,7 +6,7 @@ import { themes } from '../utils/theme';
 
 const hideScrollbar = "scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
 
-// --- GLOBAL SUB-COMPONENTS (Hoisted to prevent ReferenceErrors) ---
+// --- GLOBAL SUB-COMPONENTS ---
 
 const PostMeta = ({ item, activeSport }) => {
   const itemSport = item.sport || 'All';
@@ -21,7 +21,6 @@ const PostMeta = ({ item, activeSport }) => {
   );
 };
 
-// ADDED a "variant" prop to customize styles based on placement
 const DynamicAd = ({ ad, variant = "inline" }) => {
   if (!ad) return null;
 
@@ -45,12 +44,11 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   );
 
   return (
-    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${isHeader ? 'p-3 @md:p-4 min-h-[80px]' : 'p-4 @2xl:p-6 min-h-[120px]'} ${ad.fgImage && !isHeader ? 'flex-col items-center justify-center text-center gap-4 min-h-[200px]' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between gap-3 @2xl:gap-6'}`} style={bgStyles}>
+    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${isHeader ? 'p-3 @md:p-4 min-h-[80px]' : 'p-4 @2xl:p-6 min-h-[120px]'} ${ad.fgImage && !isHeader ? 'flex-col items-center justify-center text-center gap-4 min-h-[200px]' : 'flex-col @2xl:flex-row items-center justify-center @2xl:justify-between gap-3 @2xl:gap-6'}`} style={bgStyles}>
        {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
        {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
        
        {ad.fgImage && !isHeader ? (
-         // STACKED LAYOUT (Headline -> Image -> Button) FOR TALL SIDEBAR ADS
          <>
            <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 items-center text-center flex-1`}>
              <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center`}>
@@ -66,26 +64,24 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
            {renderButton("")}
          </>
        ) : (
-         // RESPONSIVE LAYOUT FOR NO-IMAGE ADS OR HEADER ADS
          <>
-           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left flex-1`}>
-             <h2 className={`${isHeader ? 'text-base @md:text-lg @xl:text-xl' : 'text-lg @md:text-2xl @2xl:text-3xl'} font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center @4xl:origin-left`}>
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @2xl:items-start @2xl:text-left flex-1`}>
+             <h2 className={`${isHeader ? 'text-base @md:text-lg @xl:text-xl' : 'text-lg @md:text-2xl @2xl:text-3xl'} font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center @2xl:origin-left`}>
                {ad.headline}
              </h2>
              <p className={`text-gray-300 font-bold ${isHeader ? 'text-[9px] @md:text-[10px]' : 'text-[10px] @md:text-xs'} uppercase tracking-widest relative z-10 line-clamp-1 mt-0.5`}>
                {ad.subtext}
              </p>
-             {renderButton("mt-3 flex @4xl:hidden w-max")}
+             {renderButton("mt-3 flex @2xl:hidden w-max")}
            </div>
            
-           {/* If there's an image and it's a header ad, put it in the middle */}
            {ad.fgImage && isHeader && (
-             <div className="relative z-10 hidden @md:flex justify-center items-center shrink-0 @4xl:flex-1">
+             <div className="relative z-10 hidden @md:flex justify-center items-center shrink-0 @2xl:flex-1">
                <img src={ad.fgImage} className="max-h-12 w-auto max-w-[80px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
              </div>
            )}
 
-           <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
+           <div className={`relative z-10 hidden @2xl:flex justify-end items-center shrink-0 @3xl:flex-1 min-w-0`}>
              {renderButton("")}
            </div>
          </>
@@ -153,7 +149,7 @@ const ShortCard = ({ item, setSelectedItem, activeSport }) => (
   </div>
 );
 
-// --- MAIN COMPONENT EXPORT ---
+// --- MAIN ARCHIVE COMPONENT ---
 
 export default function VideosArchive({ videos, activeSport, setSelectedItem, loadMorePosts, isLoadingMore }) {
   const theme = themes[activeSport] || themes.All;
@@ -167,7 +163,6 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Fetch Global Ads from WP
   useEffect(() => {
     const fetchAds = async () => {
       const query = `
@@ -213,15 +208,11 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
     return true; 
   });
 
-  // Categorize by Placement
   const headerAds = pageAds.filter(ad => ad.placements?.includes('header'));
   const inlineAds = pageAds.filter(ad => ad.placements?.includes('inline'));
 
-  // DATA FILTERING
   const standardVideos = videos.filter(v => v.type === 'video');
   const shorts = videos.filter(v => v.type === 'short');
-
-  // GRID MAPPING
   const heroVideo = standardVideos.length > 0 ? standardVideos[0] : null;
   const sideVideos = standardVideos.length > 1 ? standardVideos.slice(1, 6) : [];
   const rowOfTwo = standardVideos.length > 6 ? standardVideos.slice(6, 8) : [];
@@ -235,16 +226,15 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
   return (
     <div className="flex flex-col w-full pt-6 pb-16 animate-in fade-in duration-300">
       
-      {/* HEADER SECTION (Removed fixed height on wrapper, let ad size itself) */}
+      {/* HEADER SECTION - Wider 675px container */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-8 pb-4 border-b border-gray-800">
         <div className="flex-1 shrink-0">
           <h1 className={`text-4xl font-black uppercase tracking-wider ${theme.text} drop-shadow-lg`}>{activeSport === 'All' ? 'Network' : activeSport} Videos</h1>
           <p className="text-gray-400 mt-2 text-sm">The latest film room breakdowns and highlights.</p>
         </div>
 
-        {/* DYNAMIC HEADER AD SLOT (Variant injected here) */}
         {headerAds.length > 0 && (
-          <div className="hidden lg:block w-full max-w-[450px]">
+          <div className="hidden lg:block w-full max-w-[675px]">
             <DynamicAd ad={headerAds[0]} variant="header" />
           </div>
         )}
@@ -254,13 +244,10 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
         <div className="py-12 text-center text-gray-500 font-bold uppercase tracking-widest">No content found.</div>
       ) : (
         <div className="flex flex-col gap-8">
-          {/* SECTION 1: HERO + 5 SIDE VIDEOS + BANNER AD */}
           {(heroVideo || sideVideos.length > 0) && (
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
               <div className="xl:col-span-8 flex flex-col gap-6">
                 {heroVideo && <WideVideoCard item={heroVideo} setSelectedItem={setSelectedItem} activeSport={activeSport} />}
-                
-                {/* DYNAMIC INLINE AD SLOT 1 */}
                 {inlineAds.length > 0 && (
                   <div className="w-full">
                     <DynamicAd ad={inlineAds[0]} />
@@ -273,21 +260,18 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
             </div>
           )}
 
-          {/* SECTION 2: 2 VIDEOS 50/50 */}
           {rowOfTwo.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {rowOfTwo.map(v => <WideVideoCard key={v.id} item={v} setSelectedItem={setSelectedItem} activeSport={activeSport} />)}
             </div>
           )}
 
-          {/* SECTION 3: 3x3 GRID WITH ADS IN 3RD COLUMN */}
           {gridVideos.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               <div className="xl:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                 {gridVideos.map(v => <GridVideoCard key={v.id} item={v} setSelectedItem={setSelectedItem} activeSport={activeSport} />)}
               </div>
               <div className="xl:col-span-1 flex flex-col gap-6">
-                 {/* DYNAMIC INLINE AD SLOTS 2 & 3 */}
                  {inlineAds.length > 1 && (
                    <div className="flex-1 w-full min-h-[200px]">
                      <DynamicAd ad={inlineAds[1]} />
@@ -302,7 +286,6 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
             </div>
           )}
 
-          {/* SECTION 4: SHORTS CAROUSEL */}
           {shorts.length > 0 && (
             <section className="relative py-8 border-y border-gray-800/50 my-4">
               <div className="flex items-center justify-between mb-6">
@@ -326,7 +309,6 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
             </section>
           )}
 
-          {/* SECTION 5: REMAINING GRID CONTENT WITH CYCLING ADS */}
           {remainingVideos.length > 0 && (
             <div className="flex flex-col gap-8">
               {Array.from({ length: Math.ceil(remainingVideos.length / 6) }).map((_, i) => {

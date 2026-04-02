@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Loader2, ChevronRight, ChevronUp } from 'lucide-react';
 import { themes } from '../utils/theme';
 
-// --- GLOBAL SUB-COMPONENTS (Hoisted outside main component) ---
+// --- GLOBAL SUB-COMPONENTS ---
 
 const PostMeta = ({ item, activeSport }) => {
   const itemSport = item.sport || 'All';
@@ -19,7 +19,7 @@ const PostMeta = ({ item, activeSport }) => {
   );
 };
 
-const DynamicAd = ({ ad }) => {
+const DynamicAd = ({ ad, variant = "inline" }) => {
   if (!ad) return null;
 
   let patternOverlay = '';
@@ -33,19 +33,20 @@ const DynamicAd = ({ ad }) => {
   else if (ad.bgGradientType === 'linear') bgStyles.backgroundImage = `linear-gradient(to right, ${ad.bgColor}, ${ad.bgColor2 || '#000000'})`;
   else if (ad.bgGradientType === 'radial') bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
 
+  const isHeader = variant === 'header';
+
   const renderButton = (extraClass) => (
-    <div className={`px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
+    <div className={`px-3 py-2 ${isHeader ? '@md:px-4 @md:py-2' : '@2xl:px-5 @2xl:py-2.5'} rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 ${isHeader ? '@md:gap-1.5' : '@2xl:gap-2'} shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
        {ad.buttonText} <ChevronRight size={14} className="hidden @md:block" />
     </div>
   );
 
   return (
-    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${ad.fgImage ? 'flex-col items-center justify-center text-center gap-4 min-h-[200px]' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between gap-3 @2xl:gap-6 min-h-[120px]'}`} style={bgStyles}>
+    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${isHeader ? 'p-3 @md:p-4 min-h-[80px]' : 'p-4 @2xl:p-6 min-h-[120px]'} ${ad.fgImage && !isHeader ? 'flex-col items-center justify-center text-center gap-4 min-h-[200px]' : 'flex-col @2xl:flex-row items-center justify-center @2xl:justify-between gap-3 @2xl:gap-6'}`} style={bgStyles}>
        {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
        {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
        
-       {ad.fgImage ? (
-         // STACKED LAYOUT (Headline -> Image -> Button)
+       {ad.fgImage && !isHeader ? (
          <>
            <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 items-center text-center flex-1`}>
              <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center`}>
@@ -61,18 +62,24 @@ const DynamicAd = ({ ad }) => {
            {renderButton("")}
          </>
        ) : (
-         // RESPONSIVE LAYOUT FOR NO-IMAGE ADS
          <>
-           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left flex-1`}>
-             <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @2xl:items-start @2xl:text-left flex-1`}>
+             <h2 className={`${isHeader ? 'text-base @md:text-lg @xl:text-xl' : 'text-lg @md:text-2xl @2xl:text-3xl'} font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center @2xl:origin-left`}>
                {ad.headline}
              </h2>
-             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
+             <p className={`text-gray-300 font-bold ${isHeader ? 'text-[9px] @md:text-[10px]' : 'text-[10px] @md:text-xs'} uppercase tracking-widest relative z-10 line-clamp-1 mt-0.5`}>
                {ad.subtext}
              </p>
-             {renderButton("mt-4 flex @4xl:hidden w-max")}
+             {renderButton("mt-3 flex @2xl:hidden w-max")}
            </div>
-           <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
+           
+           {ad.fgImage && isHeader && (
+             <div className="relative z-10 hidden @md:flex justify-center items-center shrink-0 @2xl:flex-1">
+               <img src={ad.fgImage} className="max-h-12 w-auto max-w-[80px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+             </div>
+           )}
+
+           <div className={`relative z-10 hidden @2xl:flex justify-end items-center shrink-0 @3xl:flex-1 min-w-0`}>
              {renderButton("")}
            </div>
          </>
@@ -146,7 +153,7 @@ const StackedCard = ({ item, setSelectedItem, activeSport }) => {
   );
 };
 
-// --- MAIN COMPONENT EXPORT ---
+// --- MAIN EXPORT COMPONENT ---
 
 export default function ArticlesArchive({ articles, activeSport, setSelectedItem, loadMorePosts, isLoadingMore }) {
   const theme = themes[activeSport] || themes.All;
@@ -190,8 +197,8 @@ export default function ArticlesArchive({ articles, activeSport, setSelectedItem
   today.setHours(0, 0, 0, 0); 
 
   const pageAds = globalAds.filter(ad => {
-    if (!ad.pages?.includes('articles')) return false;
-    if (!ad.sport?.includes('All') && !ad.sport?.includes(activeSport)) return false;
+    if (!ad.pages || !ad.pages.includes('articles')) return false;
+    if (!ad.sport || (!ad.sport.includes('All') && !ad.sport.includes(activeSport))) return false;
     if (ad.startDate) {
       const start = new Date(ad.startDate.split('-')[0], ad.startDate.split('-')[1] - 1, ad.startDate.split('-')[2]);
       if (today < start) return false;
@@ -216,16 +223,17 @@ export default function ArticlesArchive({ articles, activeSport, setSelectedItem
   return (
     <div className="flex flex-col w-full pt-6 pb-16 animate-in fade-in duration-300">
       
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 pb-4 border-b border-gray-800">
-        <div className="flex-1">
+      {/* HEADER SECTION - Wider 675px container */}
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-8 pb-4 border-b border-gray-800">
+        <div className="flex-1 shrink-0">
           <h1 className={`text-4xl font-black uppercase tracking-wider ${theme.text} drop-shadow-lg`}>{activeSport === 'All' ? 'Network' : activeSport} Articles</h1>
           <p className="text-gray-400 mt-2 text-sm">Read the latest analysis, rankings updates, and news.</p>
         </div>
 
         {/* DYNAMIC HEADER AD SLOT */}
         {headerAds.length > 0 && (
-          <div className="hidden lg:block w-full max-w-[500px] h-[100px]">
-            <DynamicAd ad={headerAds[0]} />
+          <div className="hidden lg:block w-full max-w-[675px]">
+            <DynamicAd ad={headerAds[0]} variant="header" />
           </div>
         )}
       </div>
