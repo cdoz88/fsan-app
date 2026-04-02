@@ -248,16 +248,15 @@ export default function ArticlesArchive({ articles, activeSport, setSelectedItem
   return (
     <div className="flex flex-col w-full pt-6 pb-16 animate-in fade-in duration-300">
       
-      {/* HEADER SECTION - Wider 675px container */}
+      {/* HEADER SECTION */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-4 border-b border-gray-800">
         
-        {/* The Title block uses shrink-0 and whitespace-nowrap to prevent it from collapsing early */}
         <div className="shrink-0 mr-4">
           <h1 className={`text-4xl font-black uppercase tracking-wider ${theme.text} drop-shadow-lg whitespace-nowrap`}>{activeSport === 'All' ? 'Network' : activeSport} Articles</h1>
           <p className="text-gray-400 mt-2 text-sm whitespace-nowrap">Read the latest analysis, rankings updates, and news.</p>
         </div>
 
-        {/* DYNAMIC HEADER AD SLOT - the flex-1 and shrink classes force the ad to absorb the responsive squeezing before the title wraps! */}
+        {/* DYNAMIC HEADER AD SLOT */}
         {headerAds.length > 0 && (
           <div className="hidden lg:block flex-1 max-w-[675px] min-w-[250px] shrink overflow-hidden">
             <DynamicAd ad={headerAds[0]} variant="header" />
