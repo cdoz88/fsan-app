@@ -229,6 +229,7 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
   useEffect(() => {
     setMounted(true);
     
+    // Safely execute embedded scripts (like Getty Images) once the HTML is safely placed in the DOM
     const timeoutId = setTimeout(() => {
       const container = document.getElementById('article-content-container');
       if (container) {
@@ -245,26 +246,7 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
     }, 100);
 
     return () => clearTimeout(timeoutId);
-  }, [selectedItem, isAuthed]); // Re-run if auth state changes
-
-  // HTML Truncation Logic for unauthenticated users
-  let isGated = false;
-  let gatedHtml = selectedItem.content;
-
-  if (!isAuthed && selectedItem.content) {
-    let index = -1;
-    // Find the end of the 3rd paragraph
-    for (let i = 0; i < 3; i++) {
-      index = selectedItem.content.indexOf('</p>', index + 1);
-      if (index === -1) break;
-    }
-    
-    // Only gate if we actually found 3 paragraphs AND there is substantial content remaining
-    if (index !== -1 && index < selectedItem.content.length - 20) {
-      gatedHtml = selectedItem.content.substring(0, index + 4);
-      isGated = true;
-    }
-  }
+  }, [selectedItem, isAuthed]); 
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
@@ -292,34 +274,41 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
           <div className="ml-auto"><ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} /></div>
         </div>
         
-        {/* Render Gated or Full HTML */}
+        {/* Render HTML Safely */}
         <div className="relative">
-          <div id="article-content-container" className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport]?.text || 'text-white'} hover:prose-a:text-white transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'}`} dangerouslySetInnerHTML={{ __html: mounted ? gatedHtml : "" }} />
+          <div 
+            id="article-content-container" 
+            className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport]?.text || 'text-white'} hover:prose-a:text-white transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'} ${!isAuthed ? 'max-h-[600px] overflow-hidden' : ''}`} 
+            dangerouslySetInnerHTML={{ __html: mounted ? selectedItem.content : "" }} 
+          />
           
-          {/* Fade-out gradient placed over the last visible paragraph */}
-          {!isAuthed && isGated && (
-            <div className="absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-[#121212] to-transparent z-10 pointer-events-none" />
+          {/* Fade-out gradient overlay (Only shows for non-authenticated users) */}
+          {!isAuthed && (
+            <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-[#121212] via-[#121212]/80 to-transparent z-10 pointer-events-none" />
           )}
         </div>
 
         {/* ROADBLOCK UI */}
-        {!isAuthed && isGated && (
+        {!isAuthed && (
           <div className="mt-8 flex flex-col items-center justify-center relative z-20 animate-in fade-in slide-in-from-bottom-8 duration-500">
-            <div className="bg-[#1a1a1a] border border-gray-800 p-8 rounded-3xl shadow-2xl text-center max-w-md w-full">
-              <div className="w-12 h-12 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Lock size={24} className="text-red-500" />
+            {/* Awesome gradient border using padding technique */}
+            <div className="p-[2px] rounded-[24px] bg-gradient-to-r from-[#1b75bb] via-[#e42d38] to-[#f5a623] max-w-md w-full shadow-2xl">
+              <div className="bg-[#1a1a1a] p-8 rounded-[22px] text-center w-full h-full">
+                <div className="w-12 h-12 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Lock size={24} className="text-red-500" />
+                </div>
+                <h3 className="text-2xl font-black text-white uppercase tracking-wider mb-2">Keep Reading</h3>
+                <p className="text-gray-400 text-sm mb-6 leading-relaxed">Create a free account to read the rest of this article and get the advice you need to win your league.</p>
+                <button 
+                  onClick={() => openAuth('subscribe')} 
+                  className="w-full bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all transform hover:scale-[1.02] mb-4 text-sm"
+                >
+                  Create Free Account
+                </button>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">
+                  Already have an account? <button onClick={() => openAuth('login')} className="text-white hover:text-gray-300 transition-colors ml-1">Log In</button>
+                </p>
               </div>
-              <h3 className="text-2xl font-black text-white uppercase tracking-wider mb-2">Keep Reading</h3>
-              <p className="text-gray-400 text-sm mb-6 leading-relaxed">Create a free account to read the rest of this article and join the FSAN community.</p>
-              <button 
-                onClick={() => openAuth('subscribe')} 
-                className="w-full bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all transform hover:scale-105 mb-4 text-sm"
-              >
-                Create Free Account
-              </button>
-              <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">
-                Already have an account? <button onClick={() => openAuth('login')} className="text-white hover:text-gray-300 transition-colors ml-1">Log In</button>
-              </p>
             </div>
           </div>
         )}
