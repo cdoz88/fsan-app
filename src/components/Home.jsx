@@ -26,6 +26,7 @@ const PostMeta = ({ item, activeSport }) => (
   </div>
 );
 
+// THE TRUE UNIVERSAL AD COMPONENT
 const DynamicAd = ({ ad, variant = "inline" }) => {
   if (!ad) return null;
 
@@ -41,6 +42,7 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   else if (ad.bgGradientType === 'radial') bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
 
   const isHeader = variant === 'header';
+  const isSidebar = variant === 'sidebar'; // Triggers the vertical stack for narrow columns
 
   const renderButton = (extraClass) => (
     <div className={`px-3 py-2 ${isHeader ? '@md:px-4 @md:py-2.5' : '@2xl:px-5 @2xl:py-2.5'} rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 ${isHeader ? '@md:gap-1.5' : '@2xl:gap-2'} shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
@@ -48,20 +50,44 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
     </div>
   );
 
+  let wrapperClasses = `@container w-full h-full rounded-2xl flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] `;
+  
+  if (isHeader) {
+    wrapperClasses += `p-3 @md:p-4 min-h-[80px] flex-row items-center justify-between gap-3 @2xl:gap-6`;
+  } else if (isSidebar && ad.fgImage) {
+    wrapperClasses += `p-4 @2xl:p-6 min-h-[200px] flex-col items-center justify-center text-center gap-4`;
+  } else {
+    wrapperClasses += `p-4 @2xl:p-6 min-h-[120px] ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between'} gap-3 @2xl:gap-6`;
+  }
+
   return (
-    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${isHeader ? 'p-3 @md:p-4 min-h-[80px]' : 'p-4 @2xl:p-6 min-h-[120px]'} ${ad.fgImage && !isHeader ? 'flex-col items-center justify-center text-center gap-4 min-h-[200px]' : 'flex-row items-center justify-between gap-3 @2xl:gap-6'}`} style={bgStyles}>
+    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={wrapperClasses} style={bgStyles}>
        {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
        {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
        
-       {ad.fgImage && !isHeader ? (
+       {isHeader ? (
+         // HEADER VARIANT
          <>
-           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 items-center text-center flex-1`}>
-             <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center`}>
-               {ad.headline}
-             </h2>
-             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
-               {ad.subtext}
-             </p>
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @xs:items-start @xs:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
+             <h2 className={`text-base @xs:text-lg @md:text-xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center @xs:origin-left`}>{ad.headline}</h2>
+             <p className={`text-gray-300 font-bold text-[9px] @md:text-[10px] uppercase tracking-widest relative z-10 line-clamp-1 mt-0.5`}>{ad.subtext}</p>
+             {renderButton("mt-2 flex @sm:hidden w-max")}
+           </div>
+           {ad.fgImage && (
+             <div className="relative z-10 flex justify-center items-center shrink-0 mx-auto px-2">
+               <img src={ad.fgImage} className="max-h-12 w-auto max-w-[80px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+             </div>
+           )}
+           <div className={`relative z-10 hidden @sm:flex justify-end items-center shrink-0 min-w-0`}>
+             {renderButton("")}
+           </div>
+         </>
+       ) : isSidebar && ad.fgImage ? (
+         // SIDEBAR VARIANT (Stacked)
+         <>
+           <div className="relative z-10 flex flex-col justify-center shrink min-w-0 items-center text-center flex-1">
+             <h2 className="text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center">{ad.headline}</h2>
+             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">{ad.subtext}</p>
            </div>
            <div className="relative z-10 flex items-center justify-center shrink-0">
              <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
@@ -69,28 +95,20 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
            {renderButton("")}
          </>
        ) : (
+         // DEFAULT INLINE VARIANT (Wide, Side-by-side)
          <>
-           {/* Text container is allowed to grow as much as it needs without 33% restrictions */}
-           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center ${isHeader ? '@xs:items-start @xs:text-left' : '@2xl:items-start @2xl:text-left flex-1'}`}>
-             <h2 className={`${isHeader ? 'text-base @xs:text-lg @md:text-xl' : 'text-lg @md:text-2xl @2xl:text-3xl'} font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center ${isHeader ? '@xs:origin-left' : '@2xl:origin-left'}`}>
-               {ad.headline}
-             </h2>
-             <p className={`text-gray-300 font-bold ${isHeader ? 'text-[9px] @md:text-[10px]' : 'text-[10px] @md:text-xs'} uppercase tracking-widest relative z-10 line-clamp-1 mt-0.5`}>
-               {ad.subtext}
-             </p>
-             {isHeader ? renderButton("mt-2 flex @sm:hidden w-max") : renderButton("mt-3 flex @2xl:hidden w-max")}
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
+             <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>{ad.headline}</h2>
+             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">{ad.subtext}</p>
+             {renderButton("mt-4 flex @4xl:hidden w-max")}
            </div>
-           
-           {/* Image container floats perfectly in the center of available space via mx-auto */}
-           {ad.fgImage && isHeader && (
-             <div className="relative z-10 flex justify-center items-center shrink-0 mx-auto px-2">
-               <img src={ad.fgImage} className="max-h-12 w-auto max-w-[80px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
-             </div>
+           {ad.fgImage && (
+              <div className="relative z-10 hidden @xs:flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1">
+                 <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+              </div>
            )}
-
-           {/* Button is strictly pushed to the end without forcing width restrictions */}
-           <div className={`relative z-10 ${isHeader ? 'hidden @sm:flex' : 'hidden @2xl:flex'} justify-end items-center shrink-0 min-w-0`}>
-             {renderButton("")}
+           <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
+              {renderButton("")}
            </div>
          </>
        )}
@@ -98,20 +116,19 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   );
 };
 
-const VideoCard = ({ item, isHero, setSelectedItem, activeSport }) => {
-  const cardTheme = themes[item.sport] || themes.All;
-  return (
-    <div onClick={() => setSelectedItem(item)} className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${cardTheme.border} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl transition-all flex flex-col relative`}>
-      {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
-      <PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10" />
-      <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-5 z-20 flex flex-col justify-end opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
-        <PostMeta item={item} activeSport={activeSport} />
-        <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'} text-white leading-tight transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
-      </div>
+// --- CONTENT CARD COMPONENTS ---
+
+const VideoCard = ({ item, isHero, setSelectedItem, activeSport }) => (
+  <div onClick={() => setSelectedItem(item)} className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
+    {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
+    <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
+    <PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
+    <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-5 z-20 flex flex-col justify-end opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+      <PostMeta item={item} activeSport={activeSport} />
+      <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'} text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
     </div>
-  );
-};
+  </div>
+);
 
 const ShortCard = ({ item, setSelectedItem, activeSport }) => (
   <div onClick={() => setSelectedItem(item)} className={`group h-full w-full min-h-[300px] md:min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
@@ -255,7 +272,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
 
   const highlightShorts = allPosts.filter(p => p.type === 'short' && !usedIds.has(p.id)).slice(0, 8);
 
-  // --- DYNAMIC PATH LOGIC ---
   const basePath = activeSport === 'All' || !activeSport ? '' : `/${activeSport.toLowerCase()}`;
 
   // --- AD FETCHING ---
@@ -382,7 +398,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
           {/* Ad Slot 1 - Full Width */}
           {inlineAds[0] && (
             <div className="w-full min-h-[120px]">
-              <DynamicAd ad={inlineAds[0]} />
+              <DynamicAd ad={inlineAds[0]} variant="inline" />
             </div>
           )}
         </section>
@@ -413,8 +429,8 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
                       {boothPodcasts.map(pod => <BoothCard key={pod.id} item={pod} setSelectedItem={setSelectedItem} activeSport={activeSport} masterPodcasts={masterPodcasts} />)}
                     </div>
                     {/* Ad Slots 2 & 3 */}
-                    {inlineAds[1] && <div className="flex-1 min-h-[120px]"><DynamicAd ad={inlineAds[1]} /></div>}
-                    {inlineAds[2] && <div className="flex-1 min-h-[120px]"><DynamicAd ad={inlineAds[2]} /></div>}
+                    {inlineAds[1] && <div className="flex-1 min-h-[120px]"><DynamicAd ad={inlineAds[1]} variant="inline" /></div>}
+                    {inlineAds[2] && <div className="flex-1 min-h-[120px]"><DynamicAd ad={inlineAds[2]} variant="inline" /></div>}
                   </div>
                 </div>
               )}
@@ -433,7 +449,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
               {filmRoomVideos.map(video => <VideoCard key={video.id} item={video} isHero={false} setSelectedItem={setSelectedItem} activeSport={activeSport} />)}
             </div>
             {/* Ad Slot 4 */}
-            {inlineAds[3] && <div className="w-full"><DynamicAd ad={inlineAds[3]} /></div>}
+            {inlineAds[3] && <div className="w-full"><DynamicAd ad={inlineAds[3]} variant="inline" /></div>}
           </section>
         )}
 
