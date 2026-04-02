@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Headphones, ChevronRight } from 'lucide-react';
 import { themes } from '../utils/theme';
 
@@ -22,13 +23,13 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   const isHeader = variant === 'header';
 
   const renderButton = (extraClass) => (
-    <div className={`px-3 py-2 ${isHeader ? '@md:px-4 @md:py-2' : '@2xl:px-5 @2xl:py-2.5'} rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 ${isHeader ? '@md:gap-1.5' : '@2xl:gap-2'} shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
-      {ad.buttonText} <ChevronRight size={14} className="hidden @md:block" />
+    <div className={`px-3 py-2 ${isHeader ? '@md:px-4 @md:py-2.5' : '@2xl:px-5 @2xl:py-2.5'} rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 ${isHeader ? '@md:gap-1.5' : '@2xl:gap-2'} shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
+      {ad.buttonText} <ChevronRight size={14} className={isHeader ? 'hidden @xs:block' : 'hidden @md:block'} />
     </div>
   );
 
   return (
-    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${isHeader ? 'p-3 @sm:p-4 min-h-[80px]' : 'p-4 @2xl:p-6 min-h-[120px]'} ${ad.fgImage && !isHeader ? 'flex-col items-center justify-center text-center gap-4 min-h-[200px]' : 'flex-col @2xl:flex-row items-center justify-center @2xl:justify-between gap-3 @2xl:gap-6'}`} style={bgStyles}>
+    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${isHeader ? 'p-3 @md:p-4 min-h-[80px]' : 'p-4 @2xl:p-6 min-h-[120px]'} ${ad.fgImage && !isHeader ? 'flex-col items-center justify-center text-center gap-4 min-h-[200px]' : 'flex-row items-center justify-between gap-3 @2xl:gap-6'}`} style={bgStyles}>
        {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
        {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
        
@@ -49,23 +50,23 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
          </>
        ) : (
          <>
-           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @2xl:items-start @2xl:text-left flex-1`}>
-             <h2 className={`${isHeader ? 'text-base @sm:text-lg @xl:text-xl' : 'text-lg @md:text-2xl @2xl:text-3xl'} font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center @2xl:origin-left`}>
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center ${isHeader ? '@xs:items-start @xs:text-left flex-1' : '@2xl:items-start @2xl:text-left flex-1'}`}>
+             <h2 className={`${isHeader ? 'text-base @xs:text-lg @md:text-xl' : 'text-lg @md:text-2xl @2xl:text-3xl'} font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center ${isHeader ? '@xs:origin-left' : '@2xl:origin-left'}`}>
                {ad.headline}
              </h2>
              <p className={`text-gray-300 font-bold ${isHeader ? 'text-[9px] @md:text-[10px]' : 'text-[10px] @md:text-xs'} uppercase tracking-widest relative z-10 line-clamp-1 mt-0.5`}>
                {ad.subtext}
              </p>
-             {renderButton("mt-3 flex @2xl:hidden w-max")}
+             {isHeader ? renderButton("mt-2 flex @sm:hidden w-max") : renderButton("mt-3 flex @2xl:hidden w-max")}
            </div>
            
            {ad.fgImage && isHeader && (
-             <div className="relative z-10 hidden @sm:flex justify-center items-center shrink-0 @2xl:flex-1">
-               <img src={ad.fgImage} className="max-h-16 w-auto max-w-[100px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+             <div className="relative z-10 flex justify-center items-center shrink-0">
+               <img src={ad.fgImage} className="max-h-12 w-auto max-w-[80px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
              </div>
            )}
 
-           <div className={`relative z-10 hidden @2xl:flex justify-end items-center shrink-0 @3xl:flex-1 min-w-0`}>
+           <div className={`relative z-10 ${isHeader ? 'hidden @sm:flex' : 'hidden @2xl:flex'} justify-end items-center shrink-0 min-w-0`}>
              {renderButton("")}
            </div>
          </>
