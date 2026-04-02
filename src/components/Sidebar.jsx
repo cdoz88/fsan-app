@@ -6,12 +6,13 @@ import { FileText, Video, Mic, Flame, Users, Calculator, ArrowLeftRight, Shirt, 
 import { Facebook, XIcon, Youtube, Instagram, TikTok, LinkedIn, SelloutCrowds } from './Icons';
 import { themes } from '../utils/theme';
 
-// ADDED proToolsMenu and connectMenu as props
 export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connectMenu = [] }) {
   const theme = themes[activeSport] || themes.All;
   const pathname = usePathname() || '';
   const pathParts = pathname.split('/').filter(Boolean);
-  const currentView = pathParts.length > 1 ? pathParts[1] : 'home';
+  
+  // FIX: Dynamically determine the view regardless of path depth since '/home' is shorter than '/football/home'
+  const currentView = pathParts.includes('home') ? 'home' : pathParts.includes('articles') ? 'articles' : pathParts.includes('videos') ? 'videos' : pathParts.includes('podcasts') ? 'podcasts' : 'home';
 
   const [isMobileOpen, setIsMobileMenuOpen] = useState(false);
   const [hoveredSocial, setHoveredSocial] = useState(null);
@@ -27,6 +28,9 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
     Baseball: 'bg-gradient-to-r from-[#1b75bb] to-[#1e3b8a] hover:from-[#2587d0] hover:to-[#2546a1] border-[#1b75bb]',
   };
   const currentGradient = sportGradients[activeSport] || sportGradients.All;
+
+  // FIX: Dynamic Base Path to omit '/all' from root pages
+  const basePath = activeSport === 'All' ? '' : `/${activeSport.toLowerCase()}`;
 
   useEffect(() => {
     const handleToggle = () => setIsMobileMenuOpen(prev => !prev);
@@ -162,16 +166,16 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-3 shadow-xl">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Browse Network</h4>
              <div className="flex flex-col gap-1">
-                <Link href={`/${activeSport.toLowerCase()}/home`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('home')}>
+                <Link href={`${basePath}/home`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('home')}>
                   <Flame size={18} className={currentView === 'home' ? 'text-white' : accentColor} /> The Wire
                 </Link>
-                <Link href={`/${activeSport.toLowerCase()}/articles`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('articles')}>
+                <Link href={`${basePath}/articles`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('articles')}>
                   <FileText size={18} className={currentView === 'articles' ? 'text-white' : accentColor} /> All Articles
                 </Link>
-                <Link href={`/${activeSport.toLowerCase()}/videos`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('videos')}>
+                <Link href={`${basePath}/videos`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('videos')}>
                   <Video size={18} className={currentView === 'videos' ? 'text-white' : accentColor} /> All Videos
                 </Link>
-                <Link href={`/${activeSport.toLowerCase()}/podcasts`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('podcasts')}>
+                <Link href={`${basePath}/podcasts`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('podcasts')}>
                   <Mic size={18} className={currentView === 'podcasts' ? 'text-white' : accentColor} /> All Podcasts
                 </Link>
              </div>

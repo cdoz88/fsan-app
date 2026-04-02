@@ -28,7 +28,9 @@ export default function Header({ activeSport }) {
   const theme = themes[activeSport] || themes.All;
   const pathname = usePathname() || '';
   const pathParts = pathname.split('/').filter(Boolean);
-  const currentView = pathParts.length > 1 ? pathParts[1] : 'home';
+  
+  // FIX: Because the sport segment is now missing on /home, we dynamically figure out the view
+  const currentView = pathParts.includes('home') ? 'home' : pathParts.includes('articles') ? 'articles' : pathParts.includes('videos') ? 'videos' : pathParts.includes('podcasts') ? 'podcasts' : 'home';
 
   const logos = {
     All: 'https://admin.fsan.com/wp-content/uploads/2023/12/Horizontal-White.webp',
@@ -47,6 +49,9 @@ export default function Header({ activeSport }) {
   };
   
   const currentGradient = sportGradients[activeSport] || sportGradients.All;
+
+  // FIX: Dynamic Path Helper
+  const basePath = activeSport === 'All' || !activeSport ? '' : `/${activeSport.toLowerCase()}`;
 
   // FETCH WORDPRESS MOBILE MENU
   useEffect(() => {
@@ -106,7 +111,8 @@ export default function Header({ activeSport }) {
       <div className="bg-[#1a1a1a] border-b border-gray-800 px-4 py-3 flex justify-between items-center z-[100] sticky top-0 shadow-md">
         
         <div className="relative flex items-center">
-          <Link href={`/${(activeSport || 'All').toLowerCase()}/home`} className="flex items-center hover:opacity-80 transition-opacity">
+          {/* FIX: Dynamic Logo Link */}
+          <Link href={`${basePath}/home`} className="flex items-center hover:opacity-80 transition-opacity">
             <img src={currentLogo} alt={`${activeSport} Logo`} className="h-8 md:h-10 object-contain transition-all duration-300" />
           </Link>
 
@@ -120,7 +126,8 @@ export default function Header({ activeSport }) {
               <div className="absolute top-full left-0 mt-3 w-64 bg-[#1a1a1a] border border-gray-800 rounded-xl shadow-2xl z-[100] overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
                 <div className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 border-b border-gray-800/50">Select Network</div>
                 {sportsList.map((sport) => {
-                  const targetPath = `/${sport.name.toLowerCase()}/${currentView}`;
+                  {/* FIX: Omit /all prefix for the 'All' sport selection */}
+                  const targetPath = sport.name === 'All' ? `/${currentView}` : `/${sport.name.toLowerCase()}/${currentView}`;
                   return (
                     <Link key={sport.name} href={targetPath} onClick={() => setIsSportDropdownOpen(false)} className={`w-full flex items-center gap-4 px-4 py-3 text-left transition-colors no-underline ${activeSport === sport.name ? 'bg-[#252525] text-white shadow-inner' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
                       <img src={sport.icon} alt={sport.name} className="w-6 h-6 object-contain" />
@@ -154,7 +161,7 @@ export default function Header({ activeSport }) {
                 )}
                 Hi, {session.user?.name?.split(' ')[0] || 'User'}
               </Link>
-              <button onClick={() => signOut()} className="hover:text-red-400 transition-colors no-underline">Log Out</button>
+              <button onClick={() => signOut({ callbackUrl: '/home' })} className="hover:text-red-400 transition-colors no-underline">Log Out</button>
             </>
           ) : (
             <div className="flex items-center gap-3">
@@ -180,7 +187,7 @@ export default function Header({ activeSport }) {
               <Link href="/account" className="hover:text-white p-2 transition-colors">
                 {session.user?.image ? <img src={session.user.image} alt="Avatar" className="w-6 h-6 rounded-full border border-gray-600" /> : <User size={22} />}
               </Link>
-              <button onClick={() => signOut()} className="hover:text-red-400 p-2 transition-colors"><LogOut size={22} /></button>
+              <button onClick={() => signOut({ callbackUrl: '/home' })} className="hover:text-red-400 p-2 transition-colors"><LogOut size={22} /></button>
             </>
           ) : (
             <button onClick={openLogin} className="hover:text-white p-2 transition-colors"><User size={22} /></button>
@@ -240,11 +247,12 @@ export default function Header({ activeSport }) {
               <Menu size={20} />
               <span className="text-[9px] font-bold uppercase tracking-widest">Menu</span>
             </button>
-            <Link href={`/${(activeSport || 'All').toLowerCase()}/rankings`} className="flex flex-col items-center gap-1 text-gray-500 hover:text-white transition-colors no-underline">
+            {/* FIX: Dynamic fallbacks */}
+            <Link href={`${basePath}/rankings`} className="flex flex-col items-center gap-1 text-gray-500 hover:text-white transition-colors no-underline">
               <Users size={20} />
               <span className="text-[9px] font-bold uppercase tracking-widest">Ranks</span>
             </Link>
-            <Link href={`/${(activeSport || 'All').toLowerCase()}/home`} className="flex flex-col items-center group no-underline">
+            <Link href={`${basePath}/home`} className="flex flex-col items-center group no-underline">
               <div className={`relative -top-5 mb-[-16px] w-14 h-14 rounded-full flex items-center justify-center border-[4px] border-[#0a0a0a] shadow-xl ${currentGradient} text-white transition-transform group-hover:scale-105 group-active:scale-95 no-underline`}>
                 <Flame size={24} className={currentView === 'home' ? 'animate-pulse' : ''} />
               </div>

@@ -57,7 +57,8 @@ export default function AdsDashboard() {
   const [adData, setAdData] = useState(defaultAdState);
 
   useEffect(() => {
-    if (status === 'unauthenticated') router.push('/all/home');
+    // FIX: Updated redirect to clean /home URL
+    if (status === 'unauthenticated') router.push('/home');
     if (status === 'authenticated' && session?.user?.token) {
       verifyAdminAndFetchAds();
     }
@@ -301,7 +302,7 @@ export default function AdsDashboard() {
               <p className="text-gray-400 mt-2 text-sm">Manage global promotional banners across the network.</p>
             </div>
             {view === 'list' && (
-              <button onClick={() => openEditor()} className="bg-red-600 text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest text-sm flex items-center gap-2 hover:bg-red-500 transition-colors shadow-lg">
+              <button onClick={() => { setAdData(defaultAdState); setView('form'); }} className="bg-red-600 text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest text-sm flex items-center gap-2 hover:bg-red-500 transition-colors shadow-lg">
                   <Plus size={18} /> Create New Ad
               </button>
             )}
@@ -319,9 +320,8 @@ export default function AdsDashboard() {
                       </div>
                       <div className="px-6 py-4 bg-[#111] border-t border-gray-800 flex items-center justify-between mt-auto">
                         <div className="flex flex-col">
-                           <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Sport: <span className="text-gray-300">{Array.isArray(ad.sport) ? ad.sport.join(', ') : (ad.sport || 'None')}</span></span>
-                           <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Pages: <span className="text-gray-300">{Array.isArray(ad.pages) ? ad.pages.join(', ') : (ad.pages || 'None')}</span></span>
-                           <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Placements: <span className="text-gray-300">{Array.isArray(ad.placements) ? ad.placements.join(', ') : 'None'}</span></span>
+                           <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">Sport: {Array.isArray(ad.sport) ? ad.sport.join(', ') : (ad.sport || 'None')}</span>
+                           <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Pages: {Array.isArray(ad.pages) ? ad.pages.join(', ') : (ad.pages || 'None')}</span>
                         </div>
                         <div className="flex items-center gap-4">
                            {/* REORDER ARROWS */}
@@ -391,7 +391,7 @@ export default function AdsDashboard() {
                            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Color 2</label>
                            <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
                              <input type="color" name="bgColor2" value={adData.bgColor2} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
-                             <input type="text" name="bgColor2" value={adData.bgColor2} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
+                           <input type="text" name="bgColor2" value={adData.bgColor2} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
                            </div>
                          </div>
                        )}
@@ -418,7 +418,7 @@ export default function AdsDashboard() {
                      </div>
                      <div className="flex gap-4">
                        <div className="flex-1">
-                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button Color</label>
+                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button BG</label>
                          <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
                            <input type="color" name="btnColor" value={adData.btnColor} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
                            <input type="text" name="btnColor" value={adData.btnColor} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
@@ -449,42 +449,8 @@ export default function AdsDashboard() {
                  <h3 className="font-bold text-lg border-b border-gray-800 pb-3 pt-4">Targeting & Schedule</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div>
-                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Display Placements</label>
-                     <div className="flex flex-col gap-3 mb-6">
-                       {['inline', 'header', 'content-popup'].map(p => (
-                         <label key={p} className="flex items-center gap-3 cursor-pointer">
-                           <input 
-                              type="checkbox" 
-                              checked={adData.placements?.includes(p)} 
-                              onChange={() => handlePlacementToggle(p)}
-                              className="w-4 h-4 rounded bg-[#111] border-gray-700 text-red-500 focus:ring-red-500 focus:ring-offset-gray-900"
-                           />
-                           <span className="text-sm font-bold uppercase tracking-widest text-gray-300">
-                             {p === 'content-popup' ? 'Content Popup' : p.charAt(0).toUpperCase() + p.slice(1)}
-                           </span>
-                         </label>
-                       ))}
-                     </div>
-                   </div>
-
-                   <div>
-                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Display Pages</label>
-                     <div className="flex flex-col gap-3 mb-6">
-                       {['home', 'articles', 'videos', 'podcasts'].map(page => (
-                         <label key={page} className="flex items-center gap-3 cursor-pointer">
-                           <input 
-                              type="checkbox" 
-                              checked={adData.pages.includes(page)} 
-                              onChange={() => handlePageToggle(page)}
-                              className="w-4 h-4 rounded bg-[#111] border-gray-700 text-red-500 focus:ring-red-500 focus:ring-offset-gray-900"
-                           />
-                           <span className="text-sm font-bold uppercase tracking-widest text-gray-300">{page}</span>
-                         </label>
-                       ))}
-                     </div>
-
                      <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Display Sport</label>
-                     <div className="flex flex-col gap-3">
+                     <div className="flex flex-col gap-3 mb-6">
                        {['All', 'Football', 'Basketball', 'Baseball'].map(s => (
                          <label key={s} className="flex items-center gap-3 cursor-pointer">
                            <input 
@@ -497,18 +463,49 @@ export default function AdsDashboard() {
                          </label>
                        ))}
                      </div>
+
+                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Display Pages</label>
+                     <div className="flex flex-col gap-3">
+                       {['home', 'articles', 'videos', 'podcasts'].map(page => (
+                         <label key={page} className="flex items-center gap-3 cursor-pointer">
+                           <input 
+                              type="checkbox" 
+                              checked={adData.pages.includes(page)} 
+                              onChange={() => handlePageToggle(page)}
+                              className="w-4 h-4 rounded bg-[#111] border-gray-700 text-red-500 focus:ring-red-500 focus:ring-offset-gray-900"
+                           />
+                           <span className="text-sm font-bold uppercase tracking-widest text-gray-300">{page}</span>
+                         </label>
+                       ))}
+                     </div>
                    </div>
 
-                   <div className="flex flex-col gap-4 md:col-span-2">
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                       <div>
-                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Start Date</label>
-                         <input type="date" name="startDate" value={adData.startDate} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none" style={{ colorScheme: 'dark' }} />
+                   <div className="flex flex-col gap-4">
+                     <div>
+                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Placements</label>
+                       <div className="flex flex-col gap-3 mb-6">
+                         {['inline', 'header', 'content-popup'].map(p => (
+                           <label key={p} className="flex items-center gap-3 cursor-pointer">
+                             <input 
+                                type="checkbox" 
+                                checked={adData.placements?.includes(p)} 
+                                onChange={() => handlePlacementToggle(p)}
+                                className="w-4 h-4 rounded bg-[#111] border-gray-700 text-red-500 focus:ring-red-500 focus:ring-offset-gray-900"
+                             />
+                             <span className="text-sm font-bold uppercase tracking-widest text-gray-300">
+                               {p === 'content-popup' ? 'Content Popup' : p.charAt(0).toUpperCase() + p.slice(1)}
+                             </span>
+                           </label>
+                         ))}
                        </div>
-                       <div>
-                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">End Date</label>
-                         <input type="date" name="endDate" value={adData.endDate} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none" style={{ colorScheme: 'dark' }} />
-                       </div>
+                     </div>
+                     <div>
+                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Start Date</label>
+                       <input type="date" name="startDate" value={adData.startDate} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none" style={{ colorScheme: 'dark' }} />
+                     </div>
+                     <div>
+                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">End Date</label>
+                       <input type="date" name="endDate" value={adData.endDate} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none" style={{ colorScheme: 'dark' }} />
                      </div>
                    </div>
                  </div>

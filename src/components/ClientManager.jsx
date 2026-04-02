@@ -10,7 +10,6 @@ import ArticlesArchive from './ArticlesArchive';
 import PodcastsArchive from './PodcastsArchive';
 import { fetchPosts } from '../utils/api';
 
-// ADDED proToolsMenu and connectMenu to the props
 export default function ClientManager({ initialPosts, activeSport, currentView, initialHasMore, autoOpenItem, proToolsMenu, connectMenu }) {
   const router = useRouter();
   const [selectedItem, setSelectedItem] = useState(autoOpenItem || null);
@@ -23,11 +22,17 @@ export default function ClientManager({ initialPosts, activeSport, currentView, 
     if (item) {
       setSelectedItem(item);
       const itemView = item.view || (item.type === 'article' ? 'articles' : item.type === 'podcast' ? 'podcasts' : 'videos');
-      const newPath = `/${item.sport.toLowerCase()}/${itemView}/${item.slug}`;
+      
+      // FIX: Check if sport is All to omit the prefix
+      const sportPrefix = item.sport === 'All' ? '' : `/${item.sport.toLowerCase()}`;
+      const newPath = `${sportPrefix}/${itemView}/${item.slug}`;
       window.history.pushState(null, '', newPath);
     } else {
       setSelectedItem(null);
-      const basePath = `/${activeSport.toLowerCase()}/${currentView}`;
+      
+      // FIX: Check if active sport is All to omit the prefix
+      const sportPrefix = activeSport === 'All' ? '' : `/${activeSport.toLowerCase()}`;
+      const basePath = `${sportPrefix}/${currentView}`;
       window.history.pushState(null, '', basePath);
     }
   };
@@ -79,7 +84,6 @@ export default function ClientManager({ initialPosts, activeSport, currentView, 
     <>
       <Header activeSport={activeSport} />
       <div className="max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-8 w-full">
-        {/* PASSED MENUS TO SIDEBAR */}
         <Sidebar activeSport={activeSport} proToolsMenu={proToolsMenu} connectMenu={connectMenu} />
         <div className="flex-1 w-full min-w-0">
           {currentView === 'home' && (

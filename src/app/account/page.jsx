@@ -18,7 +18,7 @@ function AccountDashboardContent() {
   const [message, setMessage] = useState({ type: '', text: '' });
   
   const [userTier, setUserTier] = useState('free');
-  const [isAdmin, setIsAdmin] = useState(false); // NEW: Track if the user is a WordPress Admin
+  const [isAdmin, setIsAdmin] = useState(false); 
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [relayId, setRelayId] = useState('');
@@ -31,8 +31,9 @@ function AccountDashboardContent() {
   });
 
   useEffect(() => {
+    // FIX: Updated redirect to clean /home URL
     if (status === 'unauthenticated') {
-      router.push('/all/home');
+      router.push('/home');
     }
   }, [status, router]);
 
@@ -91,7 +92,6 @@ function AccountDashboardContent() {
 
         const roles = user.roles?.nodes?.map(r => r.name.toLowerCase()) || [];
         
-        // NEW: Check if they are an admin
         if (roles.includes('administrator')) {
           setIsAdmin(true);
         }
@@ -190,7 +190,8 @@ function AccountDashboardContent() {
         setIsDeleting(false);
         setShowDeleteConfirm(false);
       } else {
-        signOut({ callbackUrl: '/all/home' });
+        // FIX: Updated redirect to clean /home URL
+        signOut({ callbackUrl: '/home' });
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'An unexpected error occurred while deleting.' });
@@ -424,7 +425,6 @@ function AccountDashboardContent() {
                   )}
                 </div>
 
-                {/* NEW: Admin Tools Box */}
                 {isAdmin && (
                   <div className="bg-gradient-to-br from-red-900/20 to-[#111] border border-red-900/50 rounded-2xl shadow-2xl p-6 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-10 text-red-500 group-hover:scale-110 transition-transform">
