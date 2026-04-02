@@ -51,7 +51,8 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   } else if (isSidebar && ad.fgImage) {
     wrapperClasses += `p-4 @2xl:p-6 min-h-[200px] flex-col items-center justify-center text-center gap-4`;
   } else {
-    wrapperClasses += `p-4 @2xl:p-6 min-h-[120px] ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between'} gap-3 @2xl:gap-6`;
+    // Exact wrapper logic from your working code
+    wrapperClasses += `p-4 @2xl:p-6 min-h-[120px] gap-3 @2xl:gap-6 ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between'}`;
   }
 
   return (
@@ -91,16 +92,21 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
        ) : (
          // DEFAULT INLINE VARIANT (Wide, Side-by-side)
          <>
-           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
+           {/* TEXT BLOCK: Center-aligned by default (base tailwind classes), shifts to left-aligned only for very wide containers (@4xl) */}
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left flex-1`}>
              <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>{ad.headline}</h2>
              <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">{ad.subtext}</p>
              {renderButton("mt-4 flex @4xl:hidden w-max")}
            </div>
+           
+           {/* IMAGE CONTAINER: We removed `@xs:flex` and forced `flex`, so it *never* hides, even when squeezed. The margin (mx-auto) handles centering. */}
            {ad.fgImage && (
-              <div className="relative z-10 hidden @xs:flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1">
-                 <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+              <div className="relative z-10 flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1 mx-auto">
+                 <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[90px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
               </div>
            )}
+           
+           {/* This main button ONLY appears on wide containers (@4xl), so the centered button above handles the narrow views */}
            <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
               {renderButton("")}
            </div>
@@ -161,7 +167,7 @@ const ShortCard = ({ item, setSelectedItem, activeSport }) => (
     {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
-      <div className="bg-black/50 backdrop-blur-sm rounded-full p-3 border border-white/10"><Play size={24} className="text-white ml-1" fill="currentColor"/></div>
+      <div className="bg-black/50 backdrop-blur-sm rounded-full p-3 md:p-4 border border-white/10"><Play size={24} className="text-white ml-1" fill="currentColor"/></div>
     </div>
     <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
       <h3 className={`font-black text-sm text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
@@ -278,7 +284,7 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
               <div className="xl:col-span-8 flex flex-col gap-6">
                 {heroVideo && <WideVideoCard item={heroVideo} setSelectedItem={setSelectedItem} activeSport={activeSport} />}
                 
-                {/* DYNAMIC INLINE AD SLOT 1 (Wide Component) */}
+                {/* DYNAMIC INLINE AD SLOT 1 */}
                 {inlineAds.length > 0 && (
                   <div className="w-full">
                     <DynamicAd ad={inlineAds[0]} variant="inline" />
@@ -305,7 +311,7 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
                 {gridVideos.map(v => <GridVideoCard key={v.id} item={v} setSelectedItem={setSelectedItem} activeSport={activeSport} />)}
               </div>
               <div className="xl:col-span-1 flex flex-col gap-6">
-                 {/* DYNAMIC INLINE AD SLOTS 2 & 3 - Passed as "sidebar" so they stack properly in the narrow right column! */}
+                 {/* DYNAMIC INLINE AD SLOTS 2 & 3 - Set to sidebar variant to stack properly in this narrow column */}
                  {inlineAds.length > 1 && (
                    <div className="flex-1 w-full min-h-[200px]">
                      <DynamicAd ad={inlineAds[1]} variant="sidebar" />
@@ -357,7 +363,6 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
                         <GridVideoCard key={v.id} item={v} setSelectedItem={setSelectedItem} activeSport={activeSport} />
                       ))}
                     </div>
-                    {/* Full Width Cycling Ad - Wide Component */}
                     {cycleAdIndex !== -1 && (
                       <div className="py-4">
                         <DynamicAd ad={inlineAds[cycleAdIndex]} variant="inline" />
