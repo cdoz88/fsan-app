@@ -37,6 +37,7 @@ const defaultAdState = {
   fgImage: '',
   sport: ['All'],
   pages: ['home', 'articles', 'videos', 'podcasts'],
+  placements: ['inline'], // Added placements array
   startDate: '',
   endDate: ''
 };
@@ -90,7 +91,7 @@ export default function AdsDashboard() {
     const adQuery = `
       query GetGlobalAds {
         globalAds {
-          id headline subtext buttonText buttonLink bgColor bgColor2 bgGradientType btnColor btnTextColor borderColor pattern bgImage fgImage sport pages startDate endDate
+          id headline subtext buttonText buttonLink bgColor bgColor2 bgGradientType btnColor btnTextColor borderColor pattern bgImage fgImage sport pages placements startDate endDate
         }
       }
     `;
@@ -125,6 +126,13 @@ export default function AdsDashboard() {
     }));
   };
 
+  const handlePlacementToggle = (placement) => {
+    setAdData(prev => ({
+      ...prev,
+      placements: prev.placements?.includes(placement) ? prev.placements.filter(p => p !== placement) : [...(prev.placements || []), placement]
+    }));
+  };
+
   const handleSaveAd = async (e) => {
     e.preventDefault();
     setIsSaving(true);
@@ -134,10 +142,10 @@ export default function AdsDashboard() {
         $id: String, $headline: String, $subtext: String, $buttonText: String, 
         $buttonLink: String, $bgColor: String, $bgColor2: String, $bgGradientType: String,
         $btnColor: String, $btnTextColor: String, $borderColor: String, $pattern: String, $bgImage: String, 
-        $fgImage: String, $sport: [String], $pages: [String], $startDate: String, $endDate: String
+        $fgImage: String, $sport: [String], $pages: [String], $placements: [String], $startDate: String, $endDate: String
       ) {
         saveGlobalAd(input: {
-          id: $id, headline: $headline, subtext: $subtext, buttonText: $buttonText, buttonLink: $buttonLink, bgColor: $bgColor, bgColor2: $bgColor2, bgGradientType: $bgGradientType, btnColor: $btnColor, btnTextColor: $btnTextColor, borderColor: $borderColor, pattern: $pattern, bgImage: $bgImage, fgImage: $fgImage, sport: $sport, pages: $pages, startDate: $startDate, endDate: $endDate
+          id: $id, headline: $headline, subtext: $subtext, buttonText: $buttonText, buttonLink: $buttonLink, bgColor: $bgColor, bgColor2: $bgColor2, bgGradientType: $bgGradientType, btnColor: $btnColor, btnTextColor: $btnTextColor, borderColor: $borderColor, pattern: $pattern, bgImage: $bgImage, fgImage: $fgImage, sport: $sport, pages: $pages, placements: $placements, startDate: $startDate, endDate: $endDate
         }) { success }
       }
     `;
@@ -208,25 +216,34 @@ export default function AdsDashboard() {
       ...defaultAdState, 
       ...ad, 
       sport: Array.isArray(ad.sport) ? ad.sport : (ad.sport ? [ad.sport] : ['All']),
-      pages: Array.isArray(ad.pages) ? ad.pages : ['home', 'articles', 'videos', 'podcasts']
+      pages: Array.isArray(ad.pages) ? ad.pages : ['home', 'articles', 'videos', 'podcasts'],
+      placements: Array.isArray(ad.placements) ? ad.placements : ['inline']
     } : { ...defaultAdState };
     
     setAdData(safeAd);
     setView('form');
   };
 
-  // SMARTS PREVIEW (Matches Home.jsx logic exactly)
   const LivePreviewAd = ({ ad }) => {
     let patternOverlay = '';
-    if (ad.pattern === 'dots') patternOverlay = "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20\\' xmlns=\\'http://www.w3.org/2000%2Fsvg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')";
-    else if (ad.pattern === 'lines') patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)";
-    else if (ad.pattern === 'grid') patternOverlay = "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)";
-    else if (ad.pattern === 'crosshatch') patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px), repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px)";
+    if (ad.pattern === 'dots') {
+        patternOverlay = "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20\\' xmlns=\\'http://www.w3.org/2000%2Fsvg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')";
+    } else if (ad.pattern === 'lines') {
+        patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)";
+    } else if (ad.pattern === 'grid') {
+        patternOverlay = "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)";
+    } else if (ad.pattern === 'crosshatch') {
+        patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px), repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px)";
+    }
 
-    const bgStyles = { borderColor: ad.borderColor || ad.bgColor };
-    if (ad.bgGradientType === 'solid') bgStyles.backgroundColor = ad.bgColor;
-    else if (ad.bgGradientType === 'linear') bgStyles.backgroundImage = `linear-gradient(to right, ${ad.bgColor}, ${ad.bgColor2 || '#000000'})`;
-    else if (ad.bgGradientType === 'radial') bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
+    const bgStyles = {};
+    if (ad.bgGradientType === 'solid') {
+        bgStyles.backgroundColor = ad.bgColor;
+    } else if (ad.bgGradientType === 'linear') {
+        bgStyles.backgroundImage = `linear-gradient(to right, ${ad.bgColor}, ${ad.bgColor2 || '#000000'})`;
+    } else if (ad.bgGradientType === 'radial') {
+        bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
+    }
 
     const renderButton = (extraClass) => (
       <div className={`px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
@@ -234,32 +251,32 @@ export default function AdsDashboard() {
       </div>
     );
 
+    const textAlignment = ad.fgImage
+      ? "text-left items-start" 
+      : "text-center @4xl:text-left items-center @4xl:items-start";
+
     return (
-      <div className={`@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-3 @2xl:gap-6 no-underline block ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between'}`} style={bgStyles}>
+      <div className={`@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-3 @2xl:gap-6 ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between'}`} style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
          {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="Background" />}
          {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
          
-         {/* TEXT COLUMN */}
-         <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
-           <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>
+         <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 ${textAlignment} ${!ad.fgImage ? 'flex-1' : ''}`}>
+           <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight ${ad.fgImage ? 'origin-left' : 'origin-center @4xl:origin-left'}`}>
              {ad.headline || 'Headline'}
            </h2>
            <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
              {ad.subtext || 'Subtext goes here'}
            </p>
-           {/* STACKED BUTTON */}
-           {renderButton("mt-4 flex @4xl:hidden w-max")}
+           {ad.fgImage && renderButton("mt-4 flex @4xl:hidden w-max")}
          </div>
 
-         {/* IMAGE */}
          {ad.fgImage && (
             <div className="relative z-10 hidden @xs:flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1">
-               <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="Foreground" />
+               <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl hover:scale-110 transition-transform duration-300" alt="Foreground" />
             </div>
          )}
 
-         {/* INLINE BUTTON */}
-         <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
+         <div className={`relative z-10 justify-end items-center shrink-0 @5xl:flex-1 min-w-0 ${ad.fgImage ? 'hidden @4xl:flex' : 'flex'}`}>
             {renderButton("")}
          </div>
       </div>
@@ -284,7 +301,7 @@ export default function AdsDashboard() {
               <p className="text-gray-400 mt-2 text-sm">Manage global promotional banners across the network.</p>
             </div>
             {view === 'list' && (
-              <button onClick={() => { setAdData(defaultAdState); setView('form'); }} className="bg-red-600 text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest text-sm flex items-center gap-2 hover:bg-red-500 transition-colors shadow-lg">
+              <button onClick={() => openEditor()} className="bg-red-600 text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest text-sm flex items-center gap-2 hover:bg-red-500 transition-colors shadow-lg">
                   <Plus size={18} /> Create New Ad
               </button>
             )}
@@ -302,8 +319,9 @@ export default function AdsDashboard() {
                       </div>
                       <div className="px-6 py-4 bg-[#111] border-t border-gray-800 flex items-center justify-between mt-auto">
                         <div className="flex flex-col">
-                           <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">Sport: {Array.isArray(ad.sport) ? ad.sport.join(', ') : (ad.sport || 'None')}</span>
-                           <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Pages: {Array.isArray(ad.pages) ? ad.pages.join(', ') : (ad.pages || 'None')}</span>
+                           <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Sport: <span className="text-gray-300">{Array.isArray(ad.sport) ? ad.sport.join(', ') : (ad.sport || 'None')}</span></span>
+                           <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Pages: <span className="text-gray-300">{Array.isArray(ad.pages) ? ad.pages.join(', ') : (ad.pages || 'None')}</span></span>
+                           <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Placements: <span className="text-gray-300">{Array.isArray(ad.placements) ? ad.placements.join(', ') : 'None'}</span></span>
                         </div>
                         <div className="flex items-center gap-4">
                            {/* REORDER ARROWS */}
@@ -373,7 +391,7 @@ export default function AdsDashboard() {
                            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Color 2</label>
                            <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
                              <input type="color" name="bgColor2" value={adData.bgColor2} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
-                           <input type="text" name="bgColor2" value={adData.bgColor2} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
+                             <input type="text" name="bgColor2" value={adData.bgColor2} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
                            </div>
                          </div>
                        )}
@@ -400,7 +418,7 @@ export default function AdsDashboard() {
                      </div>
                      <div className="flex gap-4">
                        <div className="flex-1">
-                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button BG</label>
+                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button Color</label>
                          <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
                            <input type="color" name="btnColor" value={adData.btnColor} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
                            <input type="text" name="btnColor" value={adData.btnColor} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
@@ -431,23 +449,27 @@ export default function AdsDashboard() {
                  <h3 className="font-bold text-lg border-b border-gray-800 pb-3 pt-4">Targeting & Schedule</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div>
-                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Display Sport</label>
+                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Display Placements</label>
                      <div className="flex flex-col gap-3 mb-6">
-                       {['All', 'Football', 'Basketball', 'Baseball'].map(s => (
-                         <label key={s} className="flex items-center gap-3 cursor-pointer">
+                       {['inline', 'header', 'content-popup'].map(p => (
+                         <label key={p} className="flex items-center gap-3 cursor-pointer">
                            <input 
                               type="checkbox" 
-                              checked={adData.sport.includes(s)} 
-                              onChange={() => handleSportToggle(s)}
+                              checked={adData.placements?.includes(p)} 
+                              onChange={() => handlePlacementToggle(p)}
                               className="w-4 h-4 rounded bg-[#111] border-gray-700 text-red-500 focus:ring-red-500 focus:ring-offset-gray-900"
                            />
-                           <span className="text-sm font-bold uppercase tracking-widest text-gray-300">{s}</span>
+                           <span className="text-sm font-bold uppercase tracking-widest text-gray-300">
+                             {p === 'content-popup' ? 'Content Popup' : p.charAt(0).toUpperCase() + p.slice(1)}
+                           </span>
                          </label>
                        ))}
                      </div>
+                   </div>
 
+                   <div>
                      <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Display Pages</label>
-                     <div className="flex flex-col gap-3">
+                     <div className="flex flex-col gap-3 mb-6">
                        {['home', 'articles', 'videos', 'podcasts'].map(page => (
                          <label key={page} className="flex items-center gap-3 cursor-pointer">
                            <input 
@@ -460,16 +482,33 @@ export default function AdsDashboard() {
                          </label>
                        ))}
                      </div>
+
+                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Display Sport</label>
+                     <div className="flex flex-col gap-3">
+                       {['All', 'Football', 'Basketball', 'Baseball'].map(s => (
+                         <label key={s} className="flex items-center gap-3 cursor-pointer">
+                           <input 
+                              type="checkbox" 
+                              checked={adData.sport.includes(s)} 
+                              onChange={() => handleSportToggle(s)}
+                              className="w-4 h-4 rounded bg-[#111] border-gray-700 text-red-500 focus:ring-red-500 focus:ring-offset-gray-900"
+                           />
+                           <span className="text-sm font-bold uppercase tracking-widest text-gray-300">{s}</span>
+                         </label>
+                       ))}
+                     </div>
                    </div>
 
-                   <div className="flex flex-col gap-4">
-                     <div>
-                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Start Date</label>
-                       <input type="date" name="startDate" value={adData.startDate} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none" style={{ colorScheme: 'dark' }} />
-                     </div>
-                     <div>
-                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">End Date</label>
-                       <input type="date" name="endDate" value={adData.endDate} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none" style={{ colorScheme: 'dark' }} />
+                   <div className="flex flex-col gap-4 md:col-span-2">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                       <div>
+                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Start Date</label>
+                         <input type="date" name="startDate" value={adData.startDate} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none" style={{ colorScheme: 'dark' }} />
+                       </div>
+                       <div>
+                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">End Date</label>
+                         <input type="date" name="endDate" value={adData.endDate} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none" style={{ colorScheme: 'dark' }} />
+                       </div>
                      </div>
                    </div>
                  </div>
