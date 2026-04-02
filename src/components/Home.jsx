@@ -42,7 +42,6 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   else if (ad.bgGradientType === 'radial') bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
 
   const isHeader = variant === 'header';
-  const isSidebar = variant === 'sidebar'; // Triggers the vertical stack for narrow columns
 
   const renderButton = (extraClass) => (
     <div className={`px-3 py-2 ${isHeader ? '@md:px-4 @md:py-2.5' : '@2xl:px-5 @2xl:py-2.5'} rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 ${isHeader ? '@md:gap-1.5' : '@2xl:gap-2'} shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
@@ -50,14 +49,16 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
     </div>
   );
 
-  let wrapperClasses = `@container w-full h-full rounded-2xl flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] `;
+  let wrapperClasses = `@container w-full h-full rounded-2xl relative overflow-hidden shadow-2xl group transition-all border-2 no-underline hover:scale-[1.01] `;
   
   if (isHeader) {
-    wrapperClasses += `p-3 @md:p-4 min-h-[80px] flex-row items-center justify-between gap-3 @2xl:gap-6`;
-  } else if (isSidebar && ad.fgImage) {
-    wrapperClasses += `p-4 @2xl:p-6 min-h-[200px] flex-col items-center justify-center text-center gap-4`;
+    wrapperClasses += `flex p-3 @md:p-4 min-h-[80px] flex-row items-center justify-between gap-3 @2xl:gap-6`;
+  } else if (ad.fgImage) {
+    // FIX: Using Grid! Single column on narrow layouts (squeezed). Auto-splits into 2 columns on wide layouts.
+    wrapperClasses += `grid p-4 @2xl:p-6 min-h-[120px] grid-cols-1 @4xl:grid-cols-[1fr_auto] gap-4 @2xl:gap-x-8 @2xl:gap-y-4 items-center justify-items-center`;
   } else {
-    wrapperClasses += `p-4 @2xl:p-6 min-h-[120px] ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between'} gap-3 @2xl:gap-6`;
+    // Text-only flexbox
+    wrapperClasses += `flex p-4 @2xl:p-6 min-h-[120px] flex-col @4xl:flex-row items-center justify-center @4xl:justify-between gap-4 @2xl:gap-6`;
   }
 
   return (
@@ -82,39 +83,36 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
              {renderButton("")}
            </div>
          </>
-       ) : isSidebar && ad.fgImage ? (
-         // SIDEBAR VARIANT (Stacked)
+       ) : ad.fgImage ? (
+         // DEFAULT INLINE VARIANT WITH IMAGE (CSS Grid)
          <>
-           <div className="relative z-10 flex flex-col justify-center shrink min-w-0 items-center text-center flex-1">
-             <h2 className="text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center">{ad.headline}</h2>
-             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">{ad.subtext}</p>
-           </div>
-           <div className="relative z-10 flex items-center justify-center shrink-0">
-             <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
-           </div>
-           {renderButton("")}
+            {/* TEXT (Row 1 on Narrow | Row 1 Col 1 on Wide) */}
+            <div className="relative z-10 flex flex-col justify-center min-w-0 items-center text-center w-full">
+              <h2 className="text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 group-hover:scale-105 transition-transform line-clamp-2 leading-tight">{ad.headline}</h2>
+              <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest line-clamp-2 mt-1">{ad.subtext}</p>
+            </div>
+            
+            {/* IMAGE (Row 2 on Narrow | Row 1 & 2 Col 2 on Wide) */}
+            {/* row-span-2 magically makes it span the right side perfectly alongside the text and button */}
+            <div className="relative z-10 @4xl:row-span-2 flex justify-center items-center shrink-0 w-full h-full">
+              <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[120px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+            </div>
+
+            {/* BUTTON (Row 3 on Narrow | Row 2 Col 1 on Wide) */}
+            <div className="relative z-10 flex justify-center items-center shrink-0 w-full mt-1 @4xl:mt-0">
+              {renderButton("")}
+            </div>
          </>
        ) : (
-         // DEFAULT INLINE VARIANT (Wide, Side-by-side)
+         // DEFAULT INLINE VARIANT NO IMAGE (Flex)
          <>
-           {/* TEXT BLOCK: Center-aligned by default (base tailwind classes), shifts to left-aligned only for very wide containers (@4xl) */}
-           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left flex-1`}>
-             <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>{ad.headline}</h2>
-             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">{ad.subtext}</p>
-             {renderButton("mt-4 flex @4xl:hidden w-max")}
-           </div>
-           
-           {/* IMAGE CONTAINER: We removed `@xs:flex` and forced `flex`, so it *never* hides, even when squeezed. The margin (mx-auto) handles centering. */}
-           {ad.fgImage && (
-              <div className="relative z-10 flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1 mx-auto">
-                 <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[90px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
-              </div>
-           )}
-           
-           {/* This main button ONLY appears on wide containers (@4xl), so the centered button above handles the narrow views */}
-           <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
+            <div className="relative z-10 flex flex-col justify-center min-w-0 items-center text-center @4xl:items-start @4xl:text-left flex-1 w-full">
+              <h2 className="text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 group-hover:scale-105 transition-transform line-clamp-2 leading-tight">{ad.headline}</h2>
+              <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest line-clamp-2 mt-1">{ad.subtext}</p>
+            </div>
+            <div className="relative z-10 flex justify-center items-center shrink-0 mt-4 @4xl:mt-0">
               {renderButton("")}
-           </div>
+            </div>
          </>
        )}
     </a>
@@ -166,7 +164,7 @@ const VerticalCard = ({ item, setSelectedItem, activeSport }) => (
 const PressBoxCard = ({ item, setSelectedItem, activeSport }) => (
   <div onClick={() => setSelectedItem(item)} className={`bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 rounded-2xl flex flex-col md:flex-row overflow-hidden ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[220px] items-stretch`}>
     <div className="w-full md:w-64 lg:w-80 aspect-video md:aspect-auto bg-gray-900 flex-shrink-0 relative overflow-hidden">
-        {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-left-bottom opacity-90 group-hover:scale-105 transition-transform duration-500" alt="" />}
+        {item.imageUrl && <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover object-left-bottom opacity-90 group-hover:scale-105 transition-transform duration-500" alt="" />}
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#1e1e1e] to-transparent md:hidden z-10" />
         <div className="hidden md:block absolute inset-y-0 right-0 w-24 bg-gradient-to-r from-transparent to-[#1e1e1e] z-10" />
     </div>
