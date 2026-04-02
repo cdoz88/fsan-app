@@ -1,30 +1,129 @@
 "use client";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Headphones } from 'lucide-react';
+import { ArrowLeft, Headphones, ChevronRight } from 'lucide-react';
 import { themes } from '../utils/theme';
+
+// --- GLOBAL SUB-COMPONENTS ---
+
+const DynamicAd = ({ ad }) => {
+  if (!ad) return null;
+
+  let patternOverlay = '';
+  if (ad.pattern === 'dots') patternOverlay = "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20\\' xmlns=\\'http://www.w3.org/2000%2Fsvg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')";
+  else if (ad.pattern === 'lines') patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)";
+  else if (ad.pattern === 'grid') patternOverlay = "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)";
+  else if (ad.pattern === 'crosshatch') patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px), repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px)";
+
+  const bgStyles = { borderColor: ad.borderColor || ad.bgColor };
+  if (ad.bgGradientType === 'solid') bgStyles.backgroundColor = ad.bgColor;
+  else if (ad.bgGradientType === 'linear') bgStyles.backgroundImage = `linear-gradient(to right, ${ad.bgColor}, ${ad.bgColor2 || '#000000'})`;
+  else if (ad.bgGradientType === 'radial') bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
+
+  const renderButton = (extraClass) => (
+    <div className={`px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
+      {ad.buttonText} <ChevronRight size={14} className="hidden @md:block" />
+    </div>
+  );
+
+  return (
+    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-3 @2xl:gap-6 no-underline block hover:scale-[1.01] ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between'}`} style={bgStyles}>
+      {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
+      {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
+      
+      <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
+        <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>
+          {ad.headline}
+        </h2>
+        <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
+          {ad.subtext}
+        </p>
+        {renderButton("mt-4 flex @4xl:hidden w-max")}
+      </div>
+
+      {ad.fgImage && (
+        <div className="relative z-10 hidden @xs:flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1">
+          <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+        </div>
+      )}
+
+      <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
+        {renderButton("")}
+      </div>
+    </a>
+  );
+};
+
+const LineupCard = ({ item, setSelectedItem }) => (
+  <div onClick={() => setSelectedItem(item)} className={`group w-full cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative aspect-square`}>
+    {item.imageUrl ? (
+       <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
+    ) : (
+       <div className="absolute inset-0 bg-gray-800" />
+    )}
+    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
+    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
+      <div className="bg-black/50 backdrop-blur-sm rounded-full p-3 border border-white/10">
+        <Headphones size={24} className="text-white" />
+      </div>
+    </div>
+    <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 z-20">
+      <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+    </div>
+  </div>
+);
+
+// --- MAIN COMPONENT ---
 
 export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem }) {
   const theme = themes[activeSport] || themes.All;
+  const [globalAds, setGlobalAds] = useState([]);
 
-  const LineupCard = ({ item }) => (
-    <div onClick={() => setSelectedItem(item)} className={`group w-full cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative aspect-square`}>
-      {item.imageUrl ? (
-         <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
-      ) : (
-         <div className="absolute inset-0 bg-gray-800" />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
-      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
-        <div className="bg-black/50 backdrop-blur-sm rounded-full p-3 border border-white/10">
-          <Headphones size={24} className="text-white" />
-        </div>
-      </div>
-      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 z-20">
-        <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
-      </div>
-    </div>
-  );
+  // Fetch Global Ads from WP
+  useEffect(() => {
+    const fetchAds = async () => {
+      const query = `
+        query GetGlobalAds {
+          globalAds {
+            id headline subtext buttonText buttonLink bgColor bgColor2 bgGradientType btnColor btnTextColor borderColor pattern bgImage fgImage sport pages startDate endDate
+          }
+        }
+      `;
+      try {
+        const res = await fetch('https://admin.fsan.com/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query }),
+        });
+        const json = await res.json();
+        if (json?.data?.globalAds) {
+          setGlobalAds(json.data.globalAds);
+        }
+      } catch (e) {
+        console.error("Failed to fetch dynamic ads", e);
+      }
+    };
+    fetchAds();
+  }, []);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); 
+
+  const activeAds = globalAds.filter(ad => {
+    if (!ad.pages || !ad.pages.includes('podcasts')) return false;
+    if (!ad.sport || (!ad.sport.includes('All') && !ad.sport.includes(activeSport))) return false;
+    if (ad.startDate) {
+      const [year, month, day] = ad.startDate.split('-');
+      const start = new Date(year, month - 1, day);
+      if (today < start) return false;
+    }
+    if (ad.endDate) {
+      const [year, month, day] = ad.endDate.split('-');
+      const end = new Date(year, month - 1, day);
+      if (today > end) return false;
+    }
+    return true; 
+  });
 
   return (
     <div className="flex flex-col w-full pt-6 pb-16">
@@ -41,8 +140,26 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {podcasts.map(pod => <LineupCard key={pod.id} item={pod} />)}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* PODCAST GRID (Reduced to 3 columns on desktop to make room for ad column) */}
+        <div className="lg:col-span-9 grid grid-cols-2 md:grid-cols-3 gap-6">
+          {podcasts.map(pod => <LineupCard key={pod.id} item={pod} setSelectedItem={setSelectedItem} />)}
+        </div>
+
+        {/* AD SIDEBAR COLUMN */}
+        <div className="lg:col-span-3 flex flex-col gap-6 sticky top-24">
+          {activeAds.length > 0 ? (
+            activeAds.map((ad, index) => (
+              <div key={ad.id} className="w-full">
+                <DynamicAd ad={ad} />
+              </div>
+            ))
+          ) : (
+            <div className="w-full h-64 bg-gray-900/20 border border-gray-800 rounded-2xl flex items-center justify-center text-[10px] uppercase font-bold text-gray-600">
+              Advertisement
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
