@@ -50,7 +50,8 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   } else if (isSidebar && ad.fgImage) {
     wrapperClasses += `p-4 @2xl:p-6 min-h-[200px] flex-col items-center justify-center text-center gap-4`;
   } else {
-    wrapperClasses += `p-4 @2xl:p-6 min-h-[120px] ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between'} gap-3 @2xl:gap-6`;
+    // Exact wrapper logic from your working code
+    wrapperClasses += `p-4 @2xl:p-6 min-h-[120px] gap-3 @2xl:gap-6 ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between'}`;
   }
 
   return (
@@ -90,16 +91,21 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
        ) : (
          // DEFAULT INLINE VARIANT (Wide, Side-by-side)
          <>
-           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
+           {/* TEXT BLOCK: Center-aligned by default (base tailwind classes), shifts to left-aligned only for very wide containers (@4xl) */}
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left flex-1`}>
              <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>{ad.headline}</h2>
              <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">{ad.subtext}</p>
              {renderButton("mt-4 flex @4xl:hidden w-max")}
            </div>
+           
+           {/* IMAGE CONTAINER: We removed `@xs:flex` and forced `flex`, so it *never* hides, even when squeezed. The margin (mx-auto) handles centering. */}
            {ad.fgImage && (
-              <div className="relative z-10 hidden @xs:flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1">
-                 <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+              <div className="relative z-10 flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1 mx-auto">
+                 <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[90px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
               </div>
            )}
+           
+           {/* This main button ONLY appears on wide containers (@4xl), so the centered button above handles the narrow views */}
            <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
               {renderButton("")}
            </div>
@@ -242,14 +248,16 @@ export default function ArticlesArchive({ articles, activeSport, setSelectedItem
   return (
     <div className="flex flex-col w-full pt-6 pb-16 animate-in fade-in duration-300">
       
-      {/* HEADER SECTION */}
+      {/* HEADER SECTION - Wider 675px container */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-4 border-b border-gray-800">
         
+        {/* The Title block uses shrink-0 and whitespace-nowrap to prevent it from collapsing early */}
         <div className="shrink-0 mr-4">
           <h1 className={`text-4xl font-black uppercase tracking-wider ${theme.text} drop-shadow-lg whitespace-nowrap`}>{activeSport === 'All' ? 'Network' : activeSport} Articles</h1>
           <p className="text-gray-400 mt-2 text-sm whitespace-nowrap">Read the latest analysis, rankings updates, and news.</p>
         </div>
 
+        {/* DYNAMIC HEADER AD SLOT - the flex-1 and shrink classes force the ad to absorb the responsive squeezing before the title wraps! */}
         {headerAds.length > 0 && (
           <div className="hidden lg:block flex-1 max-w-[675px] min-w-[250px] shrink overflow-hidden">
             <DynamicAd ad={headerAds[0]} variant="header" />
