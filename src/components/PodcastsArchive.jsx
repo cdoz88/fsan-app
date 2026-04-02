@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, Headphones, ChevronRight } from 'lucide-react';
+import { Headphones, ChevronRight } from 'lucide-react';
 import { themes } from '../utils/theme';
 
 // --- GLOBAL SUB-COMPONENTS ---
@@ -29,7 +28,7 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   );
 
   return (
-    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${isHeader ? 'p-3 @md:p-4 min-h-[80px]' : 'p-4 @2xl:p-6 min-h-[120px]'} ${ad.fgImage && !isHeader ? 'flex-col items-center justify-center text-center gap-4 min-h-[200px]' : 'flex-col @2xl:flex-row items-center justify-center @2xl:justify-between gap-3 @2xl:gap-6'}`} style={bgStyles}>
+    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${isHeader ? 'p-3 @sm:p-4 min-h-[80px]' : 'p-4 @2xl:p-6 min-h-[120px]'} ${ad.fgImage && !isHeader ? 'flex-col items-center justify-center text-center gap-4 min-h-[200px]' : 'flex-col @2xl:flex-row items-center justify-center @2xl:justify-between gap-3 @2xl:gap-6'}`} style={bgStyles}>
        {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
        {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
        
@@ -51,7 +50,7 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
        ) : (
          <>
            <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @2xl:items-start @2xl:text-left flex-1`}>
-             <h2 className={`${isHeader ? 'text-base @md:text-lg @xl:text-xl' : 'text-lg @md:text-2xl @2xl:text-3xl'} font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center @2xl:origin-left`}>
+             <h2 className={`${isHeader ? 'text-base @sm:text-lg @xl:text-xl' : 'text-lg @md:text-2xl @2xl:text-3xl'} font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center @2xl:origin-left`}>
                {ad.headline}
              </h2>
              <p className={`text-gray-300 font-bold ${isHeader ? 'text-[9px] @md:text-[10px]' : 'text-[10px] @md:text-xs'} uppercase tracking-widest relative z-10 line-clamp-1 mt-0.5`}>
@@ -61,8 +60,8 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
            </div>
            
            {ad.fgImage && isHeader && (
-             <div className="relative z-10 hidden @md:flex justify-center items-center shrink-0 @2xl:flex-1">
-               <img src={ad.fgImage} className="max-h-12 w-auto max-w-[80px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+             <div className="relative z-10 hidden @sm:flex justify-center items-center shrink-0 @2xl:flex-1">
+               <img src={ad.fgImage} className="max-h-16 w-auto max-w-[100px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
              </div>
            )}
 
@@ -152,11 +151,6 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
 
   return (
     <div className="flex flex-col w-full pt-6 pb-16 animate-in fade-in duration-300">
-      <div className="flex items-center gap-4 mb-6">
-         <Link href={`/${activeSport.toLowerCase()}/home`} className="hover:text-white flex items-center gap-2 text-gray-400 font-bold uppercase text-xs tracking-wider transition-colors no-underline">
-           <ArrowLeft size={16}/> Back to Dashboard
-         </Link>
-      </div>
       
       {/* HEADER SECTION - Wider 675px container */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-8 pb-4 border-b border-gray-800">
