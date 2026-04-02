@@ -252,12 +252,16 @@ export default function ArticlesArchive({ articles, activeSport, setSelectedItem
               </div>
               <div className="xl:col-span-4 flex flex-col gap-4">
                 {/* DYNAMIC AD SLOTS 2 & 3 */}
-                <div className="flex-1 w-full min-h-[200px]">
-                  {activeAds[1] ? <DynamicAd ad={activeAds[1]} /> : <div className="w-full h-full bg-gray-900/20 border border-gray-800 rounded-2xl flex items-center justify-center text-[10px] uppercase font-bold text-gray-600">Placeholder</div>}
-                </div>
-                <div className="flex-1 w-full min-h-[200px]">
-                  {activeAds[2] ? <DynamicAd ad={activeAds[2]} /> : <div className="w-full h-full bg-gray-900/20 border border-gray-800 rounded-2xl flex items-center justify-center text-[10px] uppercase font-bold text-gray-600">Placeholder</div>}
-                </div>
+                {activeAds.length > 1 && (
+                  <div className="flex-1 w-full min-h-[200px]">
+                    <DynamicAd ad={activeAds[1]} />
+                  </div>
+                )}
+                {activeAds.length > 2 && (
+                  <div className="flex-1 w-full min-h-[200px]">
+                    <DynamicAd ad={activeAds[2]} />
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -267,12 +271,15 @@ export default function ArticlesArchive({ articles, activeSport, setSelectedItem
               {listArticles.map((article, index) => {
                 const cardTheme = themes[article.sport] || themes.All;
                 const showAd = (index + 1) % 5 === 0; // Drops a new ad after every 5 articles
-                const adIndex = 3 + Math.floor(index / 5); // Picks ads starting from index 3
+                
+                // NEW CYCLING LOGIC: Math.floor(index / 5) % activeAds.length
+                // This ensures we loop through all your available general ads in order
+                const adIndex = activeAds.length > 0 ? (Math.floor(index / 5) % activeAds.length) : -1;
 
                 return (
                   <React.Fragment key={article.id}>
-                    <div onClick={() => setSelectedItem(article)} className={`bg-[#1e1e1e] border ${cardTheme.border} border-opacity-40 rounded-2xl flex flex-col md:flex-row overflow-hidden ${cardTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[200px] items-stretch`}>
-                      <div className="w-full md:w-72 lg:w-80 shrink-0 relative bg-gray-900 overflow-hidden min-h-[200px]">
+                    <div onClick={() => setSelectedItem(article)} className={`bg-[#1e1e1e] border ${cardTheme.border} border-opacity-40 rounded-2xl flex flex-col md:flex-row overflow-hidden ${cardTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[220px] items-stretch`}>
+                      <div className="w-full md:w-72 lg:w-80 shrink-0 relative bg-gray-900 overflow-hidden min-h-[220px]">
                           {article.imageUrl && <img src={article.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500"/>}
                           <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#1e1e1e] to-transparent md:hidden z-10" />
                           <div className="hidden md:block absolute inset-y-0 right-0 w-24 bg-gradient-to-r from-transparent to-[#1e1e1e] z-10" />
@@ -283,7 +290,7 @@ export default function ArticlesArchive({ articles, activeSport, setSelectedItem
                         <div className="text-sm text-gray-400 line-clamp-2 leading-relaxed drop-shadow" dangerouslySetInnerHTML={{ __html: article.excerpt }} />
                       </div>
                     </div>
-                    {showAd && activeAds[adIndex] && (
+                    {showAd && adIndex !== -1 && (
                       <div className="py-4">
                         <DynamicAd ad={activeAds[adIndex]} />
                       </div>
