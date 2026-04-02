@@ -61,13 +61,11 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
            </div>
            
            {ad.fgImage && isHeader && (
-             // By adding @xs:flex-1 here, the image takes up an equal 1/3 of the space, centering it perfectly!
              <div className="relative z-10 flex justify-center items-center shrink-0 @xs:flex-1">
                <img src={ad.fgImage} className="max-h-12 w-auto max-w-[80px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
              </div>
            )}
 
-           {/* By adding @sm:flex-1 here, the button takes up the final 1/3 of the space and aligns to the right */}
            <div className={`relative z-10 ${isHeader ? 'hidden @sm:flex @sm:flex-1' : 'hidden @2xl:flex'} justify-end items-center shrink-0 min-w-0`}>
              {renderButton("")}
            </div>
@@ -158,15 +156,15 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
       {/* HEADER SECTION */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-4 border-b border-gray-800">
         
-        {/* The Title block retains flex-1 and shrink-0 to prevent it from collapsing early */}
-        <div className="flex-1 shrink-0">
-          <h1 className={`text-4xl font-black uppercase tracking-wider ${theme.text} drop-shadow-lg`}>{activeSport === 'All' ? 'Network' : activeSport} Podcasts</h1>
-          <p className="text-gray-400 mt-2 text-sm">Listen to the top fantasy sports audio shows in the industry.</p>
+        {/* The Title block uses shrink-0 and whitespace-nowrap to prevent it from collapsing early */}
+        <div className="shrink-0 mr-4">
+          <h1 className={`text-4xl font-black uppercase tracking-wider ${theme.text} drop-shadow-lg whitespace-nowrap`}>{activeSport === 'All' ? 'Network' : activeSport} Podcasts</h1>
+          <p className="text-gray-400 mt-2 text-sm whitespace-nowrap">Listen to the top fantasy sports audio shows in the industry.</p>
         </div>
 
-        {/* DYNAMIC HEADER AD SLOT - the `shrink` class forces the ad to absorb the responsive squeezing before the title wraps! */}
+        {/* DYNAMIC HEADER AD SLOT - the flex-1 and shrink classes force the ad to absorb the responsive squeezing before the title wraps! */}
         {headerAds.length > 0 && (
-          <div className="hidden lg:block w-full max-w-[675px] min-w-[300px] shrink">
+          <div className="hidden lg:block flex-1 max-w-[675px] min-w-[250px] shrink overflow-hidden">
             <DynamicAd ad={headerAds[0]} variant="header" />
           </div>
         )}
