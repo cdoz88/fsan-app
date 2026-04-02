@@ -97,20 +97,21 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
        ) : (
          // DEFAULT INLINE VARIANT (Wide, Side-by-side)
          <>
-           {/* Text container is explicitly left-aligned if an image is present, otherwise centered on small containers */}
-           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 ${ad.fgImage ? 'items-start text-left flex-1' : 'items-center text-center @4xl:items-start @4xl:text-left flex-1'}`}>
-             <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight ${ad.fgImage ? 'origin-left' : 'origin-center @4xl:origin-left'}`}>{ad.headline}</h2>
+           {/* TEXT BLOCK: Center-aligned by default (base tailwind classes), shifts to left-aligned only for very wide containers (@4xl) */}
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left flex-1`}>
+             <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>{ad.headline}</h2>
              <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">{ad.subtext}</p>
              {renderButton("mt-4 flex @4xl:hidden w-max")}
            </div>
            
-           {/* Image container is forced to flex (not hidden) so it always appears, even in narrow columns! */}
+           {/* IMAGE CONTAINER: We removed `@xs:flex` and forced `flex`, so it *never* hides, even when squeezed. The margin (mx-auto) handles centering. */}
            {ad.fgImage && (
-              <div className="relative z-10 flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1">
+              <div className="relative z-10 flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1 mx-auto">
                  <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[90px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
               </div>
            )}
            
+           {/* This main button ONLY appears on wide containers (@4xl), so the centered button above handles the narrow views */}
            <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
               {renderButton("")}
            </div>
@@ -165,7 +166,7 @@ const VerticalCard = ({ item, setSelectedItem, activeSport }) => (
 const PressBoxCard = ({ item, setSelectedItem, activeSport }) => (
   <div onClick={() => setSelectedItem(item)} className={`bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 rounded-2xl flex flex-col md:flex-row overflow-hidden ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[220px] items-stretch`}>
     <div className="w-full md:w-64 lg:w-80 aspect-video md:aspect-auto bg-gray-900 flex-shrink-0 relative overflow-hidden">
-        {item.imageUrl && <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover object-left-bottom opacity-90 group-hover:scale-105 transition-transform duration-500" alt="" />}
+        {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-left-bottom opacity-90 group-hover:scale-105 transition-transform duration-500" alt="" />}
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#1e1e1e] to-transparent md:hidden z-10" />
         <div className="hidden md:block absolute inset-y-0 right-0 w-24 bg-gradient-to-r from-transparent to-[#1e1e1e] z-10" />
     </div>
