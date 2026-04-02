@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { Loader2, ChevronRight, ChevronUp, PlayCircle, ChevronLeft, ArrowRight, Zap, Play } from 'lucide-react';
 import { themes } from '../utils/theme';
 
@@ -20,7 +21,8 @@ const PostMeta = ({ item, activeSport }) => {
   );
 };
 
-const DynamicAd = ({ ad }) => {
+// ADDED a "variant" prop to customize styles based on placement
+const DynamicAd = ({ ad, variant = "inline" }) => {
   if (!ad) return null;
 
   let patternOverlay = '';
@@ -34,19 +36,21 @@ const DynamicAd = ({ ad }) => {
   else if (ad.bgGradientType === 'linear') bgStyles.backgroundImage = `linear-gradient(to right, ${ad.bgColor}, ${ad.bgColor2 || '#000000'})`;
   else if (ad.bgGradientType === 'radial') bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
 
+  const isHeader = variant === 'header';
+
   const renderButton = (extraClass) => (
-    <div className={`px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
+    <div className={`px-3 py-2 ${isHeader ? '@md:px-4 @md:py-2' : '@2xl:px-5 @2xl:py-2.5'} rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 ${isHeader ? '@md:gap-1.5' : '@2xl:gap-2'} shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
        {ad.buttonText} <ChevronRight size={14} className="hidden @md:block" />
     </div>
   );
 
   return (
-    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${ad.fgImage ? 'flex-col items-center justify-center text-center gap-4 min-h-[200px]' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between gap-3 @2xl:gap-6 min-h-[120px]'}`} style={bgStyles}>
+    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${isHeader ? 'p-3 @md:p-4 min-h-[80px]' : 'p-4 @2xl:p-6 min-h-[120px]'} ${ad.fgImage && !isHeader ? 'flex-col items-center justify-center text-center gap-4 min-h-[200px]' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between gap-3 @2xl:gap-6'}`} style={bgStyles}>
        {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
        {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
        
-       {ad.fgImage ? (
-         // STACKED LAYOUT (Headline -> Image -> Button)
+       {ad.fgImage && !isHeader ? (
+         // STACKED LAYOUT (Headline -> Image -> Button) FOR TALL SIDEBAR ADS
          <>
            <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 items-center text-center flex-1`}>
              <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center`}>
@@ -62,17 +66,25 @@ const DynamicAd = ({ ad }) => {
            {renderButton("")}
          </>
        ) : (
-         // RESPONSIVE LAYOUT FOR NO-IMAGE ADS
+         // RESPONSIVE LAYOUT FOR NO-IMAGE ADS OR HEADER ADS
          <>
            <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left flex-1`}>
-             <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>
+             <h2 className={`${isHeader ? 'text-base @md:text-lg @xl:text-xl' : 'text-lg @md:text-2xl @2xl:text-3xl'} font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center @4xl:origin-left`}>
                {ad.headline}
              </h2>
-             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
+             <p className={`text-gray-300 font-bold ${isHeader ? 'text-[9px] @md:text-[10px]' : 'text-[10px] @md:text-xs'} uppercase tracking-widest relative z-10 line-clamp-1 mt-0.5`}>
                {ad.subtext}
              </p>
-             {renderButton("mt-4 flex @4xl:hidden w-max")}
+             {renderButton("mt-3 flex @4xl:hidden w-max")}
            </div>
+           
+           {/* If there's an image and it's a header ad, put it in the middle */}
+           {ad.fgImage && isHeader && (
+             <div className="relative z-10 hidden @md:flex justify-center items-center shrink-0 @4xl:flex-1">
+               <img src={ad.fgImage} className="max-h-12 w-auto max-w-[80px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+             </div>
+           )}
+
            <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
              {renderButton("")}
            </div>
@@ -128,7 +140,7 @@ const GridVideoCard = ({ item, setSelectedItem, activeSport }) => {
   );
 };
 
-const ShortCard = ({ item, setSelectedItem }) => (
+const ShortCard = ({ item, setSelectedItem, activeSport }) => (
   <div onClick={() => setSelectedItem(item)} className={`group h-full w-full min-h-[300px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
     {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
@@ -141,7 +153,7 @@ const ShortCard = ({ item, setSelectedItem }) => (
   </div>
 );
 
-// --- MAIN ARCHIVE COMPONENT ---
+// --- MAIN COMPONENT EXPORT ---
 
 export default function VideosArchive({ videos, activeSport, setSelectedItem, loadMorePosts, isLoadingMore }) {
   const theme = themes[activeSport] || themes.All;
@@ -222,16 +234,18 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
 
   return (
     <div className="flex flex-col w-full pt-6 pb-16 animate-in fade-in duration-300">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 pb-4 border-b border-gray-800">
-        <div className="flex-1">
+      
+      {/* HEADER SECTION (Removed fixed height on wrapper, let ad size itself) */}
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-8 pb-4 border-b border-gray-800">
+        <div className="flex-1 shrink-0">
           <h1 className={`text-4xl font-black uppercase tracking-wider ${theme.text} drop-shadow-lg`}>{activeSport === 'All' ? 'Network' : activeSport} Videos</h1>
           <p className="text-gray-400 mt-2 text-sm">The latest film room breakdowns and highlights.</p>
         </div>
 
-        {/* DYNAMIC HEADER AD SLOT */}
+        {/* DYNAMIC HEADER AD SLOT (Variant injected here) */}
         {headerAds.length > 0 && (
-          <div className="hidden lg:block w-full max-w-[500px] h-[100px]">
-            <DynamicAd ad={headerAds[0]} />
+          <div className="hidden lg:block w-full max-w-[450px]">
+            <DynamicAd ad={headerAds[0]} variant="header" />
           </div>
         )}
       </div>
@@ -301,7 +315,7 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
               <div ref={shortsRef} className={`flex gap-4 md:gap-6 overflow-x-auto pb-4 snap-x ${hideScrollbar}`}>
                 {shorts.slice(0, 10).map(short => (
                   <div key={short.id} className="relative w-36 md:w-44 flex-shrink-0 snap-start">
-                    <ShortCard item={short} setSelectedItem={setSelectedItem} />
+                    <ShortCard item={short} setSelectedItem={setSelectedItem} activeSport={activeSport} />
                   </div>
                 ))}
                 <div className="relative w-36 md:w-44 flex-shrink-0 snap-start aspect-[9/16] rounded-2xl overflow-hidden bg-[#111] border border-gray-800 hover:border-gray-500 transition-colors flex flex-col items-center justify-center group cursor-pointer shadow-lg text-gray-400 hover:text-white">
@@ -316,9 +330,7 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
           {remainingVideos.length > 0 && (
             <div className="flex flex-col gap-8">
               {Array.from({ length: Math.ceil(remainingVideos.length / 6) }).map((_, i) => {
-                // Cycles through all inline ads infinitely
                 const cycleAdIndex = inlineAds.length > 0 ? (i % inlineAds.length) : -1;
-                
                 return (
                   <React.Fragment key={i}>
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
