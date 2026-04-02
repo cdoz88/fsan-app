@@ -26,85 +26,116 @@ const PostMeta = ({ item, activeSport }) => (
   </div>
 );
 
-// RESTORED PERFECT WORKING AD COMPONENT
-const DynamicAd = ({ ad }) => {
+// THE TRUE UNIVERSAL AD COMPONENT
+const DynamicAd = ({ ad, variant = "inline" }) => {
   if (!ad) return null;
 
   let patternOverlay = '';
-  if (ad.pattern === 'dots') {
-      patternOverlay = "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20\\' xmlns=\\'http://www.w3.org/2000%2Fsvg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')";
-  } else if (ad.pattern === 'lines') {
-      patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)";
-  } else if (ad.pattern === 'grid') {
-      patternOverlay = "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)";
-  } else if (ad.pattern === 'crosshatch') {
-      patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px), repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px)";
-  }
+  if (ad.pattern === 'dots') patternOverlay = "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20\\' xmlns=\\'http://www.w3.org/2000%2Fsvg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')";
+  else if (ad.pattern === 'lines') patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)";
+  else if (ad.pattern === 'grid') patternOverlay = "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)";
+  else if (ad.pattern === 'crosshatch') patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px), repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px)";
 
-  const bgStyles = {};
-  if (ad.bgGradientType === 'solid') {
-      bgStyles.backgroundColor = ad.bgColor;
-  } else if (ad.bgGradientType === 'linear') {
-      bgStyles.backgroundImage = `linear-gradient(to right, ${ad.bgColor}, ${ad.bgColor2 || '#000000'})`;
-  } else if (ad.bgGradientType === 'radial') {
-      bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
-  }
+  const bgStyles = { borderColor: ad.borderColor || ad.bgColor };
+  if (ad.bgGradientType === 'solid') bgStyles.backgroundColor = ad.bgColor;
+  else if (ad.bgGradientType === 'linear') bgStyles.backgroundImage = `linear-gradient(to right, ${ad.bgColor}, ${ad.bgColor2 || '#000000'})`;
+  else if (ad.bgGradientType === 'radial') bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
+
+  const isHeader = variant === 'header';
+  const isSidebar = variant === 'sidebar'; // Triggers the vertical stack for narrow columns
 
   const renderButton = (extraClass) => (
-    <div className={`px-3 py-2 @2xl:px-5 @2xl:py-2.5 rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 @2xl:gap-2 shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
-       {ad.buttonText} <ChevronRight size={14} className="hidden @md:block" />
+    <div className={`px-3 py-2 ${isHeader ? '@md:px-4 @md:py-2.5' : '@2xl:px-5 @2xl:py-2.5'} rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 ${isHeader ? '@md:gap-1.5' : '@2xl:gap-2'} shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
+      {ad.buttonText} <ChevronRight size={14} className={isHeader ? 'hidden @sm:block' : 'hidden @md:block'} />
     </div>
   );
 
-  const textAlignment = ad.fgImage
-    ? "text-left items-start" 
-    : "text-center @4xl:text-left items-center @4xl:items-start";
+  let wrapperClasses = `@container w-full h-full rounded-2xl flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] `;
+  
+  if (isHeader) {
+    wrapperClasses += `p-3 @md:p-4 min-h-[80px] flex-row items-center justify-between gap-3 @2xl:gap-6`;
+  } else if (isSidebar && ad.fgImage) {
+    wrapperClasses += `p-4 @2xl:p-6 min-h-[200px] flex-col items-center justify-center text-center gap-4`;
+  } else {
+    // Exact wrapper logic from your working code
+    wrapperClasses += `p-4 @2xl:p-6 min-h-[120px] gap-3 @2xl:gap-6 ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between'}`;
+  }
 
   return (
-    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className="@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex flex-row items-center justify-between text-left relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-3 @2xl:gap-6 no-underline block hover:scale-[1.01]" style={{ ...bgStyles, borderColor: ad.borderColor || ad.bgColor }}>
-       {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="Background" />}
+    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={wrapperClasses} style={bgStyles}>
+       {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
        {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
        
-       {/* STRIPPED flex-1 - Text now shrinks gracefully */}
-       <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 ${textAlignment}`}>
-         <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight ${ad.fgImage ? 'origin-left' : 'origin-center @4xl:origin-left'}`}>
-           {ad.headline}
-         </h2>
-         <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
-           {ad.subtext}
-         </p>
-         
-         {ad.fgImage && renderButton("mt-4 flex @4xl:hidden w-max")}
-       </div>
+       {isHeader ? (
+         // HEADER VARIANT
+         <>
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @xs:items-start @xs:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
+             <h2 className={`text-base @xs:text-lg @md:text-xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center @xs:origin-left`}>{ad.headline}</h2>
+             <p className={`text-gray-300 font-bold text-[9px] @md:text-[10px] uppercase tracking-widest relative z-10 line-clamp-1 mt-0.5`}>{ad.subtext}</p>
+             {renderButton("mt-2 flex @sm:hidden w-max")}
+           </div>
+           {ad.fgImage && (
+             <div className="relative z-10 flex justify-center items-center shrink-0 mx-auto px-2">
+               <img src={ad.fgImage} className="max-h-12 w-auto max-w-[80px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+             </div>
+           )}
+           <div className={`relative z-10 hidden @sm:flex justify-end items-center shrink-0 min-w-0`}>
+             {renderButton("")}
+           </div>
+         </>
+       ) : isSidebar && ad.fgImage ? (
+         // SIDEBAR VARIANT (Stacked)
+         <>
+           <div className="relative z-10 flex flex-col justify-center shrink min-w-0 items-center text-center flex-1">
+             <h2 className="text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center">{ad.headline}</h2>
+             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">{ad.subtext}</p>
+           </div>
+           <div className="relative z-10 flex items-center justify-center shrink-0">
+             <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+           </div>
+           {renderButton("")}
+         </>
+       ) : (
+         // EXACT INLINE LOGIC FROM YOUR LAST WORKING VERSION
+         <>
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
+             <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>
+               {ad.headline}
+             </h2>
+             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
+               {ad.subtext}
+             </p>
+             {renderButton("mt-4 flex @4xl:hidden w-max")}
+           </div>
 
-       {ad.fgImage && (
-          <div className="relative z-10 hidden @xs:flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0">
-             <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="Foreground" />
-          </div>
+           {ad.fgImage && (
+             <div className="relative z-10 hidden @xs:flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1">
+               <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+             </div>
+           )}
+
+           <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
+             {renderButton("")}
+           </div>
+         </>
        )}
-
-       {/* STRIPPED @5xl:flex-1 - Button now perfectly hugs its content! */}
-       <div className={`relative z-10 justify-end items-center shrink-0 min-w-0 ${ad.fgImage ? 'hidden @4xl:flex' : 'flex'}`}>
-          {renderButton("")}
-       </div>
     </a>
   );
 };
 
-const VideoCard = ({ item, isHero, setSelectedItem, activeSport }) => {
-  const cardTheme = themes[item.sport] || themes.All;
-  return (
-    <div onClick={() => setSelectedItem(item)} className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${cardTheme.border} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl transition-all flex flex-col relative`}>
-      {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
-      <PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10" />
-      <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-5 z-20 flex flex-col justify-end opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
-        <PostMeta item={item} activeSport={activeSport} />
-        <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'} text-white leading-tight transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
-      </div>
+// --- CONTENT CARD COMPONENTS ---
+
+const VideoCard = ({ item, isHero, setSelectedItem, activeSport }) => (
+  <div onClick={() => setSelectedItem(item)} className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
+    {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
+    <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
+    <PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
+    <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-5 z-20 flex flex-col justify-end opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+      <PostMeta item={item} activeSport={activeSport} />
+      <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'} text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
     </div>
-  );
-};
+  </div>
+);
 
 const ShortCard = ({ item, setSelectedItem, activeSport }) => (
   <div onClick={() => setSelectedItem(item)} className={`group h-full w-full min-h-[300px] md:min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
@@ -137,7 +168,7 @@ const VerticalCard = ({ item, setSelectedItem, activeSport }) => (
 const PressBoxCard = ({ item, setSelectedItem, activeSport }) => (
   <div onClick={() => setSelectedItem(item)} className={`bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 rounded-2xl flex flex-col md:flex-row overflow-hidden ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[220px] items-stretch`}>
     <div className="w-full md:w-64 lg:w-80 aspect-video md:aspect-auto bg-gray-900 flex-shrink-0 relative overflow-hidden">
-        {item.imageUrl && <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover object-left-bottom opacity-90 group-hover:scale-105 transition-transform duration-500" alt=""/>}
+        {item.imageUrl && <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover object-left-bottom opacity-90 group-hover:scale-105 transition-transform duration-500" alt="" />}
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#1e1e1e] to-transparent md:hidden z-10" />
         <div className="hidden md:block absolute inset-y-0 right-0 w-24 bg-gradient-to-r from-transparent to-[#1e1e1e] z-10" />
     </div>
@@ -250,12 +281,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
 
   const basePath = activeSport === 'All' || !activeSport ? '' : `/${activeSport.toLowerCase()}`;
 
-  useEffect(() => {
-    const handleScroll = () => setShowScrollTop(window.scrollY > 400);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   // --- AD FETCHING ---
   useEffect(() => {
     const fetchAds = async () => {
@@ -365,13 +390,13 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
             )}
             <div className="flex flex-col gap-6 h-full">
               {sideTopFeature && (
-                <div className={sideTopFeature.type === 'video' ? "w-full shrink-0" : "flex-1 w-full min-h-[200px]"}>
-                   {sideTopFeature.type === 'video' ? <VideoCard item={sideTopFeature} isHero={false} setSelectedItem={setSelectedItem} activeSport={activeSport} /> : <VerticalCard item={sideTopFeature} setSelectedItem={setSelectedItem} activeSport={activeSport} />}
+                <div className="flex-1 w-full">
+                  {sideTopFeature.type === 'video' ? <VideoCard item={sideTopFeature} isHero={false} setSelectedItem={setSelectedItem} activeSport={activeSport} /> : <VerticalCard item={sideTopFeature} setSelectedItem={setSelectedItem} activeSport={activeSport} />}
                 </div>
               )}
               {sideBottomFeature && (
-                <div className={sideBottomFeature.type === 'video' ? "w-full shrink-0" : "flex-1 w-full min-h-[200px]"}>
-                   {sideBottomFeature.type === 'video' ? <VideoCard item={sideBottomFeature} isHero={false} setSelectedItem={setSelectedItem} activeSport={activeSport} /> : <VerticalCard item={sideBottomFeature} setSelectedItem={setSelectedItem} activeSport={activeSport} />}
+                <div className="flex-1 w-full">
+                  {sideBottomFeature.type === 'video' ? <VideoCard item={sideBottomFeature} isHero={false} setSelectedItem={setSelectedItem} activeSport={activeSport} /> : <VerticalCard item={sideBottomFeature} setSelectedItem={setSelectedItem} activeSport={activeSport} />}
                 </div>
               )}
             </div>
@@ -380,7 +405,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
           {/* Ad Slot 1 - Full Width */}
           {inlineAds[0] && (
             <div className="w-full min-h-[120px]">
-              <DynamicAd ad={inlineAds[0]} />
+              <DynamicAd ad={inlineAds[0]} variant="inline" />
             </div>
           )}
         </section>
@@ -411,8 +436,8 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
                       {boothPodcasts.map(pod => <BoothCard key={pod.id} item={pod} setSelectedItem={setSelectedItem} activeSport={activeSport} masterPodcasts={masterPodcasts} />)}
                     </div>
                     {/* Ad Slots 2 & 3 */}
-                    {inlineAds[1] && <div className="flex-1 min-h-[120px]"><DynamicAd ad={inlineAds[1]} /></div>}
-                    {inlineAds[2] && <div className="flex-1 min-h-[120px]"><DynamicAd ad={inlineAds[2]} /></div>}
+                    {inlineAds[1] && <div className="flex-1 min-h-[120px]"><DynamicAd ad={inlineAds[1]} variant="inline" /></div>}
+                    {inlineAds[2] && <div className="flex-1 min-h-[120px]"><DynamicAd ad={inlineAds[2]} variant="inline" /></div>}
                   </div>
                 </div>
               )}
@@ -431,7 +456,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
               {filmRoomVideos.map(video => <VideoCard key={video.id} item={video} isHero={false} setSelectedItem={setSelectedItem} activeSport={activeSport} />)}
             </div>
             {/* Ad Slot 4 */}
-            {inlineAds[3] && <div className="w-full"><DynamicAd ad={inlineAds[3]} /></div>}
+            {inlineAds[3] && <div className="w-full"><DynamicAd ad={inlineAds[3]} variant="inline" /></div>}
           </section>
         )}
 
