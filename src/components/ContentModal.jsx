@@ -229,19 +229,30 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
   useEffect(() => {
     setMounted(true);
     
-    // Safely execute embedded scripts (like Getty Images) once the HTML is safely placed in the DOM
+    // Attempt to force execution of any scripts embedded in the content
     const timeoutId = setTimeout(() => {
       const container = document.getElementById('article-content-container');
       if (container) {
+        // Find any Getty script tags or others and recreate them so the browser executes them
         const scripts = container.getElementsByTagName('script');
         Array.from(scripts).forEach((oldScript) => {
           const newScript = document.createElement('script');
           Array.from(oldScript.attributes).forEach((attr) => {
             newScript.setAttribute(attr.name, attr.value);
           });
-          newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+          if (oldScript.innerHTML) {
+            newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+          }
           oldScript.parentNode.replaceChild(newScript, oldScript);
         });
+
+        // Specific fallback for Getty Images if the script didn't load
+        if (container.querySelector('.gettyimages-embed') && !window.getty) {
+          const gettyScript = document.createElement('script');
+          gettyScript.src = "https://embed.gettyimages.com/embed/5/2";
+          gettyScript.async = true;
+          document.body.appendChild(gettyScript);
+        }
       }
     }, 100);
 
@@ -254,7 +265,7 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
         {selectedItem.imageUrl && <img src={selectedItem.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-top opacity-60" />}
         <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent"></div>
       </div>
-      <div className="p-6 md:p-10 -mt-24 relative z-10 max-w-4xl mx-auto w-full">
+      <div className="p-6 md:p-10 -mt-24 relative z-10 max-w-4xl mx-auto w-full flex-1 flex flex-col">
         <div className="flex gap-2 items-center mb-3">
           <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport]?.bg || 'bg-gray-500'}`}></span>
           <span className="text-gray-400 font-bold text-xs uppercase tracking-wider">
@@ -275,24 +286,24 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
         </div>
         
         {/* Render HTML Safely */}
-        <div className="relative">
+        <div className="relative flex-1">
           <div 
             id="article-content-container" 
-            className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport]?.text || 'text-white'} hover:prose-a:text-white transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'} ${!isAuthed ? 'max-h-[600px] overflow-hidden' : ''}`} 
+            className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport]?.text || 'text-white'} hover:prose-a:text-white transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'} ${!isAuthed ? 'max-h-[500px] overflow-hidden' : ''}`} 
             dangerouslySetInnerHTML={{ __html: mounted ? selectedItem.content : "" }} 
           />
           
-          {/* Fade-out gradient overlay (Only shows for non-authenticated users) */}
+          {/* Fade-out gradient overlay placed closer to the cut-off */}
           {!isAuthed && (
-            <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-[#121212] via-[#121212]/80 to-transparent z-10 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#121212] via-[#121212]/90 to-transparent z-10 pointer-events-none" />
           )}
         </div>
 
         {/* ROADBLOCK UI */}
         {!isAuthed && (
-          <div className="mt-8 flex flex-col items-center justify-center relative z-20 animate-in fade-in slide-in-from-bottom-8 duration-500">
-            {/* Awesome gradient border using padding technique */}
-            <div className="p-[2px] rounded-[24px] bg-gradient-to-r from-[#1b75bb] via-[#e42d38] to-[#f5a623] max-w-md w-full shadow-2xl">
+          <div className="mt-4 pb-8 flex flex-col items-center justify-center relative z-20 animate-in fade-in slide-in-from-bottom-8 duration-500">
+            {/* Awesome gradient border using padding technique with linear gradient */}
+            <div className="p-[2px] rounded-[24px] bg-[linear-gradient(to_right,#1b75bb,#e42d38,#f5a623,#1b75bb)] max-w-md w-full shadow-2xl">
               <div className="bg-[#1a1a1a] p-8 rounded-[22px] text-center w-full h-full">
                 <div className="w-12 h-12 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Lock size={24} className="text-red-500" />
