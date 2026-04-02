@@ -13,13 +13,21 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
   
   const hideScrollbar = "scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
 
+  // --- HELPER STYLES ---
+  const shieldMaskStyle = {
+    WebkitMaskImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg%20viewBox%3D%220%200%20706.29%20800%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M404.07%2C303.86c.61%2C0%2C1.22-.04%2C1.83-.04%2C1%2C0%2C1.98.06%2C2.98.07-1.26-.02-2.52-.03-3.78-.03-.34%2C0-.68%2C0-1.02%2C0%22%2F%3E%3Cpath%20d%3D%22M624.47%2C522.59c-59.75%2C113.25-148.42%2C205.88-256.42%2C267.9l-10.35%2C5.95-6.21%2C3.57-6.31-3.38-10.51-5.63c-112.29-60.12-203.01-153.79-262.36-270.88C13%2C403.11-10.51%2C271.58%2C4.32%2C139.75l1.34-11.89.8-7.14%2C5.92-3.54%2C9.87-5.91C147.41%2C36.4%2C258.58%2C0%2C362.11%2C0c109.19%2C0%2C213.33%2C38.89%2C327.73%2C122.4l9.02%2C6.58%2C5.41%2C3.95.37%2C6.93.61%2C11.56c6.89%2C129.58-21.04%2C257.92-80.79%2C371.16Z%22%2F%3E%3C%2Fsvg%3E")',
+    maskImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg%20viewBox%3D%220%200%20706.29%20800%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M404.07%2C303.86c.61%2C0%2C1.22-.04%2C1.83-.04%2C1%2C0%2C1.98.06%2C2.98.07-1.26-.02-2.52-.03-3.78-.03-.34%2C0-.68%2C0-1.02%2C0%22%2F%3E%3Cpath%20d%3D%22M624.47%2C522.59c-59.75%2C113.25-148.42%2C205.88-256.42%2C267.9l-10.35%2C5.95-6.21%2C3.57-6.31-3.38-10.51-5.63c-112.29-60.12-203.01-153.79-262.36-270.88C13%2C403.11-10.51%2C271.58%2C4.32%2C139.75l1.34-11.89.8-7.14%2C5.92-3.54%2C9.87-5.91C147.41%2C36.4%2C258.58%2C0%2C362.11%2C0c109.19%2C0%2C213.33%2C38.89%2C327.73%2C122.4l9.02%2C6.58%2C5.41%2C3.95.37%2C6.93.61%2C11.56c6.89%2C129.58-21.04%2C257.92-80.79%2C371.16Z%22%2F%3E%3C%2Fsvg%3E")',
+    WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center',
+    maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center'
+  };
+
+  // --- COMPONENT LEVEL HOOKS ---
   useEffect(() => {
     const handleScroll = () => setShowScrollTop(window.scrollY > 400);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Fetch Global Ads from WP
   useEffect(() => {
     const fetchAds = async () => {
       const query = `
@@ -46,66 +54,16 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
     fetchAds();
   }, []);
 
-  // --- POST FILTERING & DEDUPLICATION LOGIC ---
-  const allPosts = [...wpPosts];
-  const usedIds = new Set();
-  
-  // 1. The Wire (Always top 10 non-podcasts)
-  const wireFeed = allPosts.filter(p => p.type !== 'podcast').slice(0, 10);
+  // --- SUB-COMPONENTS (Defined BEFORE usage) ---
 
-  // 2. Main Hero Feature
-  const mainFeature = allPosts.find(p => p.type === 'video' || p.type === 'article');
-  if (mainFeature) usedIds.add(mainFeature.id);
-
-  // 3. Side Features (Top and Bottom)
-  const sideTopFeature = allPosts.find(p => (p.type === 'article' || p.type === 'video') && !usedIds.has(p.id));
-  if (sideTopFeature) usedIds.add(sideTopFeature.id);
-
-  const sideBottomFeature = allPosts.find(p => (p.type === 'article' || p.type === 'video') && !usedIds.has(p.id));
-  if (sideBottomFeature) usedIds.add(sideBottomFeature.id);
-
-  // 4. Press Box (Articles)
-  const pressBoxArticles = allPosts.filter(p => p.type === 'article' && !usedIds.has(p.id)).slice(0, 4);
-  pressBoxArticles.forEach(p => usedIds.add(p.id));
-
-  // 5. The Booth (Podcasts)
-  const boothPodcasts = allPosts.filter(p => p.type === 'podcast' && !p.isMasterShow && !usedIds.has(p.id)).slice(0, 4);
-  boothPodcasts.forEach(p => usedIds.add(p.id));
-
-  // 6. Film Room (Videos)
-  const filmRoomVideos = allPosts.filter(p => p.type === 'video' && !usedIds.has(p.id)).slice(0, 6);
-  filmRoomVideos.forEach(p => usedIds.add(p.id));
-
-  // 7. Highlight Shorts
-  const highlightShorts = allPosts.filter(p => p.type === 'short' && !usedIds.has(p.id)).slice(0, 8);
-  // --- END FILTERING ---
-
-  // --- AD FILTERING ---
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); 
-
-  const activeAds = globalAds.filter(ad => {
-    if (!ad.pages || !ad.pages.includes('home')) return false;
-    if (!ad.sport || (!ad.sport.includes('All') && !ad.sport.includes(activeSport))) return false;
-    if (ad.startDate) {
-      const [year, month, day] = ad.startDate.split('-');
-      const start = new Date(year, month - 1, day);
-      if (today < start) return false;
-    }
-    if (ad.endDate) {
-      const [year, month, day] = ad.endDate.split('-');
-      const end = new Date(year, month - 1, day);
-      if (today > end) return false;
-    }
-    return true; 
-  });
-
-  const shieldMaskStyle = {
-    WebkitMaskImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg%20viewBox%3D%220%200%20706.29%20800%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M404.07%2C303.86c.61%2C0%2C1.22-.04%2C1.83-.04%2C1%2C0%2C1.98.06%2C2.98.07-1.26-.02-2.52-.03-3.78-.03-.34%2C0-.68%2C0-1.02%2C0%22%2F%3E%3Cpath%20d%3D%22M624.47%2C522.59c-59.75%2C113.25-148.42%2C205.88-256.42%2C267.9l-10.35%2C5.95-6.21%2C3.57-6.31-3.38-10.51-5.63c-112.29-60.12-203.01-153.79-262.36-270.88C13%2C403.11-10.51%2C271.58%2C4.32%2C139.75l1.34-11.89.8-7.14%2C5.92-3.54%2C9.87-5.91C147.41%2C36.4%2C258.58%2C0%2C362.11%2C0c109.19%2C0%2C213.33%2C38.89%2C327.73%2C122.4l9.02%2C6.58%2C5.41%2C3.95.37%2C6.93.61%2C11.56c6.89%2C129.58-21.04%2C257.92-80.79%2C371.16Z%22%2F%3E%3C%2Fsvg%3E")',
-    maskImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg%20viewBox%3D%220%200%20706.29%20800%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M404.07%2C303.86c.61%2C0%2C1.22-.04%2C1.83-.04%2C1%2C0%2C1.98.06%2C2.98.07-1.26-.02-2.52-.03-3.78-.03-.34%2C0-.68%2C0-1.02%2C0%22%2F%3E%3Cpath%20d%3D%22M624.47%2C522.59c-59.75%2C113.25-148.42%2C205.88-256.42%2C267.9l-10.35%2C5.95-6.21%2C3.57-6.31-3.38-10.51-5.63c-112.29-60.12-203.01-153.79-262.36-270.88C13%2C403.11-10.51%2C271.58%2C4.32%2C139.75l1.34-11.89.8-7.14%2C5.92-3.54%2C9.87-5.91C147.41%2C36.4%2C258.58%2C0%2C362.11%2C0c109.19%2C0%2C213.33%2C38.89%2C327.73%2C122.4l9.02%2C6.58%2C5.41%2C3.95.37%2C6.93.61%2C11.56c6.89%2C129.58-21.04%2C257.92-80.79%2C371.16Z%22%2F%3E%3C%2Fsvg%3E")',
-    WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center',
-    maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center'
-  };
+  const PostMeta = ({ item }) => (
+    <div className="flex items-center gap-2 mb-3 z-20 relative">
+      {activeSport === 'All' && (
+        <span className={`w-2 h-2 rounded-full ${themes[item.sport]?.bg || 'bg-gray-500'} shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.8)]`}></span>
+      )}
+      <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 drop-shadow-md">{item.date}</span>
+    </div>
+  );
 
   const DynamicAd = ({ ad }) => {
     if (!ad) return null;
@@ -155,7 +113,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
     );
   };
 
-  // --- CARD COMPONENTS ---
   const VideoCard = ({ item, isHero }) => (
     <div onClick={() => setSelectedItem(item)} className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
       {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
@@ -201,7 +158,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
       <div className="w-full md:w-64 lg:w-80 aspect-video md:aspect-auto bg-gray-900 flex-shrink-0 relative overflow-hidden">
           {item.imageUrl && <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover object-left-bottom opacity-90 group-hover:scale-105 transition-transform duration-500"/>}
           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#1e1e1e] to-transparent md:hidden z-10" />
-          <div className="hidden md:block absolute inset-y-0 right-0 w-24 bg-gradient-r from-transparent to-[#1e1e1e] z-10" />
+          <div className="hidden md:block absolute inset-y-0 right-0 w-24 bg-gradient-to-r from-transparent to-[#1e1e1e] z-10" />
       </div>
       <div className="relative z-10 px-5 pb-5 md:p-6 md:pl-2 flex flex-col justify-center h-full flex-1 -mt-8 md:mt-0 bg-[#1e1e1e] md:bg-transparent">
         <PostMeta item={item} />
@@ -215,6 +172,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
     const itemTheme = themes[item.sport] || themes.All;
     const [fetchedImage, setFetchedImage] = useState(null);
     let displayImage = item.imageUrl;
+    
     if (!displayImage && masterPodcasts) {
        const genericSlugs = ['all', 'football', 'basketball', 'baseball', 'podcast', 'podcasts', 'pod-episode', 'football-pod-episode', 'basketball-pod-episode', 'baseball-pod-episode', 'football-podcast', 'podcast-basketball', 'podcast-baseball', 'uncategorized'];
        const parentShow = masterPodcasts.find(m => {
@@ -227,6 +185,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
        });
        if (parentShow?.imageUrl) displayImage = parentShow.imageUrl;
     }
+
     useEffect(() => {
       if (!displayImage && item.spreakerId) {
         fetch(`https://api.spreaker.com/v2/episodes/${item.spreakerId}`).then(res => res.json()).then(data => {
@@ -234,7 +193,9 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
         }).catch(e => console.error("Spreaker error:", e));
       }
     }, [displayImage, item.spreakerId]);
+
     const finalImage = displayImage || fetchedImage;
+
     return (
       <div onClick={() => setSelectedItem(item)} className={`flex items-stretch bg-[#1e1e1e] border ${itemTheme.border} border-opacity-40 rounded-2xl overflow-hidden ${itemTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[100px]`}>
         <div className="w-24 sm:w-28 shrink-0 relative bg-gray-900 flex items-center justify-center overflow-hidden border-r border-gray-800/50">
@@ -271,6 +232,15 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
     </div>
   );
 
+  const scrollShorts = (direction) => {
+    if (shortsRef.current) shortsRef.current.scrollBy({ left: direction === 'left' ? -350 : 350, behavior: 'smooth' });
+  };
+
+  const scrollLineup = (direction) => {
+    if (lineupRef.current) lineupRef.current.scrollBy({ left: direction === 'left' ? -350 : 350, behavior: 'smooth' });
+  };
+
+  // --- FINAL RENDER ---
   return (
     <div className={`flex flex-col w-full pt-6 pb-16 animate-in fade-in duration-300 ${isLoading ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
       
