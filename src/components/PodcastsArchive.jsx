@@ -50,7 +50,8 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
          </>
        ) : (
          <>
-           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center ${isHeader ? '@xs:items-start @xs:text-left flex-1' : '@2xl:items-start @2xl:text-left flex-1'}`}>
+           {/* Text container is allowed to grow as much as it needs without 33% restrictions */}
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center ${isHeader ? '@xs:items-start @xs:text-left' : '@2xl:items-start @2xl:text-left flex-1'}`}>
              <h2 className={`${isHeader ? 'text-base @xs:text-lg @md:text-xl' : 'text-lg @md:text-2xl @2xl:text-3xl'} font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center ${isHeader ? '@xs:origin-left' : '@2xl:origin-left'}`}>
                {ad.headline}
              </h2>
@@ -60,14 +61,15 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
              {isHeader ? renderButton("mt-2 flex @sm:hidden w-max") : renderButton("mt-3 flex @2xl:hidden w-max")}
            </div>
            
+           {/* Image container floats perfectly in the center of available space via mx-auto */}
            {ad.fgImage && isHeader && (
-             <div className="relative z-10 flex justify-center items-center shrink-0 @xs:flex-1">
+             <div className="relative z-10 flex justify-center items-center shrink-0 mx-auto px-2">
                <img src={ad.fgImage} className="max-h-12 w-auto max-w-[80px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
              </div>
            )}
 
-           {/* FIX: Removed flex-1 when there is no image so the text takes all available space! */}
-           <div className={`relative z-10 ${isHeader ? `hidden @sm:flex ${ad.fgImage ? '@sm:flex-1' : ''}` : 'hidden @2xl:flex'} justify-end items-center shrink-0 min-w-0`}>
+           {/* Button is strictly pushed to the end without forcing width restrictions */}
+           <div className={`relative z-10 ${isHeader ? 'hidden @sm:flex' : 'hidden @2xl:flex'} justify-end items-center shrink-0 min-w-0`}>
              {renderButton("")}
            </div>
          </>
@@ -101,6 +103,7 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
   const theme = themes[activeSport] || themes.All;
   const [globalAds, setGlobalAds] = useState([]);
 
+  // Fetch Global Ads from WP
   useEffect(() => {
     const fetchAds = async () => {
       const query = `
@@ -146,6 +149,7 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
     return true; 
   });
 
+  // Categorize by Placement
   const headerAds = activeAds.filter(ad => ad.placements?.includes('header'));
   const sidebarAds = activeAds.filter(ad => ad.placements?.includes('inline'));
 
@@ -169,10 +173,12 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
+        {/* PODCAST GRID */}
         <div className="lg:col-span-9 grid grid-cols-2 md:grid-cols-3 gap-6">
           {podcasts.map(pod => <LineupCard key={pod.id} item={pod} setSelectedItem={setSelectedItem} />)}
         </div>
 
+        {/* AD SIDEBAR COLUMN */}
         <div className="lg:col-span-3 flex flex-col gap-6 sticky top-24">
           {sidebarAds.length > 0 ? (
             sidebarAds.map((ad) => (
