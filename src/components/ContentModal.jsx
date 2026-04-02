@@ -226,21 +226,24 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
 const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isAuthed, authStatus, openAuth }) => {
   
   useEffect(() => {
-    // Safe, non-destructive Getty Images script loading
-    if (selectedItem?.content?.includes('gettyimages-embed') && !document.getElementById('getty-embed-script')) {
-      const script = document.createElement('script');
-      script.id = 'getty-embed-script';
-      script.src = 'https://embed.gettyimages.com/embed/5/2';
-      script.async = true;
-      document.body.appendChild(script);
-    } else if (window.getty) {
-      // If getty is already loaded, sometimes it needs to be told to re-scan the DOM for new embeds
-      try { window.getty.Init(); } catch(e) {}
-    }
-  }, [selectedItem]);
+    // Force a re-mount of Getty Embeds specifically when article loads or auth changes
+    const timeoutId = setTimeout(() => {
+       if (selectedItem?.content?.includes('gettyimages-embed')) {
+          const existingScript = document.getElementById('getty-embed-script');
+          if (existingScript) existingScript.remove();
+          
+          const script = document.createElement('script');
+          script.id = 'getty-embed-script';
+          script.src = 'https://embed.gettyimages.com/embed/5/2';
+          script.async = true;
+          document.body.appendChild(script);
+       }
+    }, 50);
+    return () => clearTimeout(timeoutId);
+  }, [selectedItem, isAuthed, authStatus]);
 
-  // Ensure gating logic does not trigger prematurely while the session is still loading
-  const showGating = !isAuthed && authStatus !== 'loading';
+  // FIX: Explicitly wait for session loading to prevent flashing for logged in users!
+  const showGating = !isAuthed && authStatus === 'unauthenticated';
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
@@ -268,24 +271,22 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
           <div className="ml-auto"><ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} /></div>
         </div>
         
-        {/* Render HTML Safely (No aggressive re-mounting to protect iframes) */}
-        <div className="relative flex-1">
+        {/* KEY-BASED STABILITY: Changing the key forces a hard reset of this div, which lets Getty scripts work correctly */}
+        <div className="relative flex-1" key={`article-auth-${isAuthed}`}>
           <div 
             id="article-content-container" 
             className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport]?.text || 'text-white'} hover:prose-a:text-white transition-opacity duration-300 ${showGating ? 'max-h-[500px] overflow-hidden' : ''}`} 
             dangerouslySetInnerHTML={{ __html: selectedItem.content }} 
           />
           
-          {/* Fade-out gradient overlay (Only shows for non-authenticated users) */}
           {showGating && (
             <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#121212] via-[#121212]/90 to-transparent z-10 pointer-events-none" />
           )}
         </div>
 
-        {/* ROADBLOCK UI */}
         {showGating && (
           <div className="mt-4 pb-8 flex flex-col items-center justify-center relative z-20 animate-in fade-in slide-in-from-bottom-8 duration-500">
-            {/* Conic gradient border to match the app icon exactly: Blue -> Red -> Orange -> Blue */}
+            {/* CONIC GRADIENT BORDER: Blue -> Red (#c30b16) -> Orange -> Blue */}
             <div className="p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_33%,#f5a623_66%,#1b75bb_100%)] max-w-md w-full shadow-2xl">
               <div className="bg-[#1a1a1a] p-8 rounded-[22px] text-center w-full h-full">
                 <div className="w-12 h-12 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -317,7 +318,6 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
   const [copied, setCopied] = useState(false);
   const [globalAds, setGlobalAds] = useState([]);
   
-  // Auth state for gating
   const { data: session, status } = useSession();
   const isAuthed = status === 'authenticated';
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -328,17 +328,14 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
     setIsAuthOpen(true);
   };
 
-  // Lock body scroll safely alongside AuthModal interactions
   useEffect(() => {
     if (selectedItem && !isAuthOpen) { 
       document.body.style.overflow = 'hidden'; 
     } else if (!selectedItem) { 
       document.body.style.overflow = 'unset'; 
     }
-    // Cleanup handled by the dependency array
   }, [selectedItem, isAuthOpen]);
 
-  // Fetch Ads
   useEffect(() => {
     const fetchAds = async () => {
       const query = `
@@ -367,7 +364,6 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
 
   if (!selectedItem) return null;
 
-  // Filter for popup ads specifically
   const today = new Date();
   today.setHours(0, 0, 0, 0); 
   
@@ -408,7 +404,6 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
       <div className="fixed inset-0" onClick={() => setSelectedItem(null)}></div>
       <div className={`relative z-10 w-full animate-in fade-in zoom-in-95 duration-200 ${selectedItem.type === 'article' ? 'max-w-4xl' : 'max-w-6xl'} h-[95vh] flex flex-col`}>
         
-        {/* DYNAMIC POPUP AD SLOT */}
         {popupAds.length > 0 && (
           <div className="w-full shrink-0 mb-3 sm:mb-4">
             <DynamicAd ad={popupAds[0]} />
@@ -424,7 +419,6 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
             {selectedItem.type === 'short' && <ShortModalLayout selectedItem={selectedItem} videos={videos} setSelectedItem={setSelectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
             {selectedItem.type === 'podcast' && <PodcastModalLayout selectedItem={selectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
             
-            {/* Passed auth props specifically to the Article Layout */}
             {selectedItem.type === 'article' && (
               <ArticleModalLayout 
                 selectedItem={selectedItem} 
@@ -440,7 +434,6 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
         </div>
       </div>
 
-      {/* Render the robust AuthModal directly within the ContentModal */}
       <AuthModal 
         isOpen={isAuthOpen} 
         onClose={() => setIsAuthOpen(false)} 
