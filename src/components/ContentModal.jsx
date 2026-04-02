@@ -1,8 +1,10 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { X, ArrowLeft, PlayCircle, Link as LinkIcon, Check } from 'lucide-react';
+import { X, ArrowLeft, PlayCircle, Link as LinkIcon, Check, ChevronRight } from 'lucide-react';
 import { Facebook, XIcon, Reddit } from './Icons.jsx';
 import { themes } from '../utils/theme.js';
+
+// --- GLOBAL SUB-COMPONENTS ---
 
 const ShareButtons = ({ handleShare, handleCopy, copied, btnSize = "w-8 h-8", iconSize = 14 }) => (
   <div className="flex gap-2">
@@ -15,18 +17,55 @@ const ShareButtons = ({ handleShare, handleCopy, copied, btnSize = "w-8 h-8", ic
   </div>
 );
 
-const ModalBannerAd = () => (
-  <div className="w-full shrink-0 mb-3 sm:mb-4 bg-gradient-to-r from-red-900 to-black border border-red-800 rounded-xl p-3 sm:p-4 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 group cursor-pointer hover:border-red-500 transition-colors relative overflow-hidden">
-    <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#fff_10px,#fff_20px)]"></div>
-    <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-4 flex-1">
-      <h3 className="text-red-500 font-black text-xl lg:text-2xl italic uppercase drop-shadow-md group-hover:scale-105 transition-transform origin-left leading-none shrink-0">Dominate</h3>
-      <p className="text-white text-[10px] sm:text-xs font-bold uppercase tracking-widest text-left">Get The Ultimate Rookie Breakdown!</p>
+const DynamicAd = ({ ad }) => {
+  if (!ad) return null;
+
+  let patternOverlay = '';
+  if (ad.pattern === 'dots') patternOverlay = "url('data:image/svg+xml,%3Csvg width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 20\\' xmlns=\\'http://www.w3.org/2000%2Fsvg\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\' fill-rule=\\'evenodd\\'%3E%3Ccircle cx=\\'3\\' cy=\\'3\\' r=\\'3\\'/%3E%3Ccircle cx=\\'13\\' cy=\\'13\\' r=\\'3\\'/%3E%3C/g%3E%3C/svg%3E')";
+  else if (ad.pattern === 'lines') patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)";
+  else if (ad.pattern === 'grid') patternOverlay = "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)";
+  else if (ad.pattern === 'crosshatch') patternOverlay = "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px), repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 11px)";
+
+  const bgStyles = { borderColor: ad.borderColor || ad.bgColor };
+  if (ad.bgGradientType === 'solid') bgStyles.backgroundColor = ad.bgColor;
+  else if (ad.bgGradientType === 'linear') bgStyles.backgroundImage = `linear-gradient(to right, ${ad.bgColor}, ${ad.bgColor2 || '#000000'})`;
+  else if (ad.bgGradientType === 'radial') bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
+
+  const renderButton = (extraClass) => (
+    <div className={`px-3 py-2 sm:px-5 sm:py-2.5 rounded-full sm:rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
+       {ad.buttonText} <ChevronRight size={14} className="hidden sm:block" />
     </div>
-    <button className="bg-green-600 text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-full font-black text-[10px] uppercase tracking-wider shadow-lg relative z-10 shrink-0 whitespace-nowrap w-full sm:w-auto">
-      Only $10 - Get Access
-    </button>
-  </div>
-);
+  );
+
+  return (
+    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full rounded-xl p-3 sm:p-4 flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col sm:flex-row items-center justify-center sm:justify-between gap-2 sm:gap-4'}`} style={bgStyles}>
+       {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
+       {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
+       
+       <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 items-center text-center sm:items-start sm:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
+         <h2 className={`text-base sm:text-xl lg:text-2xl font-black text-white italic tracking-tight mb-0.5 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center sm:origin-left`}>
+           {ad.headline}
+         </h2>
+         <p className="text-gray-300 font-bold text-[9px] sm:text-[10px] uppercase tracking-widest relative z-10 line-clamp-1 mt-0.5">
+           {ad.subtext}
+         </p>
+         {!ad.fgImage && renderButton("mt-2 flex sm:hidden w-max")}
+       </div>
+
+       {ad.fgImage && (
+          <div className="relative z-10 hidden sm:flex justify-center items-center shrink-0 pr-4 sm:flex-1">
+             <img src={ad.fgImage} className="max-h-12 lg:max-h-16 w-auto object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+          </div>
+       )}
+
+       <div className={`relative z-10 hidden sm:flex justify-end items-center shrink-0 min-w-0 ${!ad.fgImage && 'sm:flex-1'}`}>
+          {renderButton("")}
+       </div>
+    </a>
+  );
+};
+
+// --- MODAL LAYOUTS ---
 
 const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, handleCopy, copied }) => (
   <div className="flex flex-col lg:flex-row h-full min-h-0">
@@ -187,13 +226,10 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
   useEffect(() => {
     setMounted(true);
     
-    // Safety timeout to ensure the HTML is fully injected before we parse it
     const timeoutId = setTimeout(() => {
       const container = document.getElementById('article-content-container');
       if (container) {
-        // Find any scripts the WordPress plugin passed over (like Getty Images)
         const scripts = container.getElementsByTagName('script');
-        // Force the browser to re-execute them by replacing the old tags with fresh ones
         Array.from(scripts).forEach((oldScript) => {
           const newScript = document.createElement('script');
           Array.from(oldScript.attributes).forEach((attr) => {
@@ -239,14 +275,68 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
   );
 };
 
+// --- MAIN EXPORT COMPONENT ---
+
 export default function ContentModal({ selectedItem, setSelectedItem, videos }) {
   const [copied, setCopied] = useState(false);
+  const [globalAds, setGlobalAds] = useState([]);
+
+  // Lock body scroll
   useEffect(() => {
     if (selectedItem) { document.body.style.overflow = 'hidden'; } 
     else { document.body.style.overflow = 'unset'; }
     return () => { document.body.style.overflow = 'unset'; };
   }, [selectedItem]);
+
+  // Fetch Ads
+  useEffect(() => {
+    const fetchAds = async () => {
+      const query = `
+        query GetGlobalAds {
+          globalAds {
+            id headline subtext buttonText buttonLink bgColor bgColor2 bgGradientType btnColor btnTextColor borderColor pattern bgImage fgImage sport pages placements startDate endDate
+          }
+        }
+      `;
+      try {
+        const res = await fetch('https://admin.fsan.com/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query }),
+        });
+        const json = await res.json();
+        if (json?.data?.globalAds) {
+          setGlobalAds(json.data.globalAds);
+        }
+      } catch (e) {
+        console.error("Failed to fetch ads", e);
+      }
+    };
+    fetchAds();
+  }, []);
+
   if (!selectedItem) return null;
+
+  // Filter for popup ads specifically
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); 
+  
+  const popupAds = globalAds.filter(ad => {
+    if (!ad.placements || !ad.placements.includes('content-popup')) return false;
+    if (!ad.sport || (!ad.sport.includes('All') && !ad.sport.includes(selectedItem.sport))) return false;
+    if (ad.startDate) {
+      const [year, month, day] = ad.startDate.split('-');
+      const start = new Date(year, month - 1, day);
+      if (today < start) return false;
+    }
+    if (ad.endDate) {
+      const [year, month, day] = ad.endDate.split('-');
+      const end = new Date(year, month - 1, day);
+      if (today > end) return false;
+    }
+    return true; 
+  });
+
   const handleShare = (platform) => {
     const url = window.location.href;
     const title = selectedItem.title;
@@ -256,16 +346,25 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
     if (platform === 'reddit') shareUrl = `https://reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`;
     window.open(shareUrl, '_blank', 'width=600,height=400');
   };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
   return (
     <div className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-sm flex justify-center items-center p-4 sm:p-6 overflow-hidden">
       <div className="fixed inset-0" onClick={() => setSelectedItem(null)}></div>
       <div className={`relative z-10 w-full animate-in fade-in zoom-in-95 duration-200 ${selectedItem.type === 'article' ? 'max-w-4xl' : 'max-w-6xl'} h-[95vh] flex flex-col`}>
-        <ModalBannerAd />
+        
+        {/* DYNAMIC POPUP AD SLOT */}
+        {popupAds.length > 0 && (
+          <div className="w-full shrink-0 mb-3 sm:mb-4">
+            <DynamicAd ad={popupAds[0]} />
+          </div>
+        )}
+
         <div className="relative w-full flex-1 flex flex-col min-h-0">
           <button onClick={() => setSelectedItem(null)} className="absolute -top-3 -right-3 z-[150] p-2.5 bg-[#1a1a1a] border border-gray-600 hover:border-gray-500 rounded-full text-white transition-all shadow-2xl group">
             <X size={20} className="text-white opacity-80 group-hover:opacity-100" />
