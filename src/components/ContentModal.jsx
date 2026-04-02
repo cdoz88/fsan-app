@@ -229,29 +229,18 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
   useEffect(() => {
     setMounted(true);
     
-    // Attempt to force execution of any scripts embedded in the content
     const timeoutId = setTimeout(() => {
       const container = document.getElementById('article-content-container');
       if (container) {
-        // Find any Getty script tags or others and recreate them so the browser executes them
-        const scripts = container.getElementsByTagName('script');
-        Array.from(scripts).forEach((oldScript) => {
-          const newScript = document.createElement('script');
-          Array.from(oldScript.attributes).forEach((attr) => {
-            newScript.setAttribute(attr.name, attr.value);
-          });
-          if (oldScript.innerHTML) {
-            newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-          }
-          oldScript.parentNode.replaceChild(newScript, oldScript);
-        });
-
-        // Specific fallback for Getty Images if the script didn't load
-        if (container.querySelector('.gettyimages-embed') && !window.getty) {
-          const gettyScript = document.createElement('script');
-          gettyScript.src = "https://embed.gettyimages.com/embed/5/2";
-          gettyScript.async = true;
-          document.body.appendChild(gettyScript);
+        // Find Getty embeds and manually trigger them if the script hasn't fired yet
+        const gettyEmbeds = container.querySelectorAll('.gettyimages-embed');
+        if (gettyEmbeds.length > 0) {
+           // We inject the script to ensure Getty processes the embeds
+           const script = document.createElement('script');
+           script.src = "https://embed.gettyimages.com/embed/5/2";
+           script.async = true;
+           // Important: Add it to the body so it executes cleanly in the global scope
+           document.body.appendChild(script);
         }
       }
     }, 100);
@@ -302,8 +291,8 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
         {/* ROADBLOCK UI */}
         {!isAuthed && (
           <div className="mt-4 pb-8 flex flex-col items-center justify-center relative z-20 animate-in fade-in slide-in-from-bottom-8 duration-500">
-            {/* Awesome gradient border using padding technique with linear gradient */}
-            <div className="p-[2px] rounded-[24px] bg-[linear-gradient(to_right,#1b75bb,#e42d38,#f5a623,#1b75bb)] max-w-md w-full shadow-2xl">
+            {/* Conic gradient border to match the app icon exactly: Blue -> Red -> Orange */}
+            <div className="p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#e42d38_25%,#e42d38_75%,#f5a623_100%)] max-w-md w-full shadow-2xl">
               <div className="bg-[#1a1a1a] p-8 rounded-[22px] text-center w-full h-full">
                 <div className="w-12 h-12 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Lock size={24} className="text-red-500" />
