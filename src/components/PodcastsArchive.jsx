@@ -27,29 +27,52 @@ const DynamicAd = ({ ad }) => {
   );
 
   return (
-    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-3 @2xl:gap-6 no-underline block hover:scale-[1.01] ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between'}`} style={bgStyles}>
-      {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
-      {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
-      
-      <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
-        <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>
-          {ad.headline}
-        </h2>
-        <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
-          {ad.subtext}
-        </p>
-        {renderButton("mt-4 flex @4xl:hidden w-max")}
-      </div>
+    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${ad.fgImage ? 'flex-col items-center justify-center text-center gap-4 min-h-[200px]' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between gap-3 @2xl:gap-6 min-h-[120px]'}`} style={bgStyles}>
+       {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
+       {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
+       
+       {ad.fgImage ? (
+         // STACKED LAYOUT (Headline -> Image -> Button)
+         <>
+           {/* 1. TEXT COLUMN (Centered, No Squeezed Button) */}
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 items-center text-center flex-1`}>
+             <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center`}>
+               {ad.headline}
+             </h2>
+             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
+               {ad.subtext}
+             </p>
+           </div>
 
-      {ad.fgImage && (
-        <div className="relative z-10 hidden @xs:flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1">
-          <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
-        </div>
-      )}
+           {/* 2. IMAGE COLUMN (Centered, Shrinks gracefully) */}
+           <div className="relative z-10 flex items-center justify-center shrink-0">
+             <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+           </div>
 
-      <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
-        {renderButton("")}
-      </div>
+           {/* 3. BUTTON COLUMN (Explicitly rendered) */}
+           {renderButton("")}
+         </>
+       ) : (
+         // PREVIOUS RESPONSIVE LAYOUT (Side-by-side or Centered) - This is for ads WITHOUT image.
+         <>
+           {/* 1. TEXT COLUMN (Responsive Centering, Conditional Mobile Button) */}
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left flex-1`}>
+             <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>
+               {ad.headline}
+             </h2>
+             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
+               {ad.subtext}
+             </p>
+             {/* Squeezed/Mobile Button (only for no-image ads, conditional on view) */}
+             {renderButton("mt-4 flex @4xl:hidden w-max")}
+           </div>
+
+           {/* 3. WIDE VIEW BUTTON COLUMN (Conditional based on view, only for no-image ads) */}
+           <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
+             {renderButton("")}
+           </div>
+         </>
+       )}
     </a>
   );
 };
@@ -141,7 +164,7 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* PODCAST GRID (Reduced to 3 columns on desktop to make room for ad column) */}
+        {/* PODCAST GRID */}
         <div className="lg:col-span-9 grid grid-cols-2 md:grid-cols-3 gap-6">
           {podcasts.map(pod => <LineupCard key={pod.id} item={pod} setSelectedItem={setSelectedItem} />)}
         </div>
