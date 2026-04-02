@@ -1,8 +1,10 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { X, ArrowLeft, PlayCircle, Link as LinkIcon, Check, ChevronRight } from 'lucide-react';
+import { X, ArrowLeft, PlayCircle, Link as LinkIcon, Check, ChevronRight, Lock } from 'lucide-react';
 import { Facebook, XIcon, Reddit } from './Icons.jsx';
 import { themes } from '../utils/theme.js';
+import { useSession } from 'next-auth/react';
+import AuthModal from './AuthModal';
 
 // --- GLOBAL SUB-COMPONENTS ---
 
@@ -220,7 +222,8 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
   </div>
 );
 
-const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) => {
+// --- ARTICLE GATING IMPLEMENTATION ---
+const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isAuthed, openAuth }) => {
   const [mounted, setMounted] = useState(false);
   
   useEffect(() => {
@@ -242,7 +245,26 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
     }, 100);
 
     return () => clearTimeout(timeoutId);
-  }, [selectedItem]);
+  }, [selectedItem, isAuthed]); // Re-run if auth state changes
+
+  // HTML Truncation Logic for unauthenticated users
+  let isGated = false;
+  let gatedHtml = selectedItem.content;
+
+  if (!isAuthed && selectedItem.content) {
+    let index = -1;
+    // Find the end of the 3rd paragraph
+    for (let i = 0; i < 3; i++) {
+      index = selectedItem.content.indexOf('</p>', index + 1);
+      if (index === -1) break;
+    }
+    
+    // Only gate if we actually found 3 paragraphs AND there is substantial content remaining
+    if (index !== -1 && index < selectedItem.content.length - 20) {
+      gatedHtml = selectedItem.content.substring(0, index + 4);
+      isGated = true;
+    }
+  }
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
@@ -269,7 +291,38 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
           <div><p className="font-bold text-sm">{selectedItem.author?.name || "FSAN Staff"}</p></div>
           <div className="ml-auto"><ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} /></div>
         </div>
-        <div id="article-content-container" className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport]?.text || 'text-white'} hover:prose-a:text-white transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'}`} dangerouslySetInnerHTML={{ __html: mounted ? selectedItem.content : "" }} />
+        
+        {/* Render Gated or Full HTML */}
+        <div className="relative">
+          <div id="article-content-container" className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport]?.text || 'text-white'} hover:prose-a:text-white transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'}`} dangerouslySetInnerHTML={{ __html: mounted ? gatedHtml : "" }} />
+          
+          {/* Fade-out gradient placed over the last visible paragraph */}
+          {!isAuthed && isGated && (
+            <div className="absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-[#121212] to-transparent z-10 pointer-events-none" />
+          )}
+        </div>
+
+        {/* ROADBLOCK UI */}
+        {!isAuthed && isGated && (
+          <div className="mt-8 flex flex-col items-center justify-center relative z-20 animate-in fade-in slide-in-from-bottom-8 duration-500">
+            <div className="bg-[#1a1a1a] border border-gray-800 p-8 rounded-3xl shadow-2xl text-center max-w-md w-full">
+              <div className="w-12 h-12 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Lock size={24} className="text-red-500" />
+              </div>
+              <h3 className="text-2xl font-black text-white uppercase tracking-wider mb-2">Keep Reading</h3>
+              <p className="text-gray-400 text-sm mb-6 leading-relaxed">Create a free account to read the rest of this article and join the FSAN community.</p>
+              <button 
+                onClick={() => openAuth('subscribe')} 
+                className="w-full bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all transform hover:scale-105 mb-4 text-sm"
+              >
+                Create Free Account
+              </button>
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">
+                Already have an account? <button onClick={() => openAuth('login')} className="text-white hover:text-gray-300 transition-colors ml-1">Log In</button>
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -280,13 +333,27 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
 export default function ContentModal({ selectedItem, setSelectedItem, videos }) {
   const [copied, setCopied] = useState(false);
   const [globalAds, setGlobalAds] = useState([]);
+  
+  // Auth state for gating
+  const { data: session, status } = useSession();
+  const isAuthed = status === 'authenticated';
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authView, setAuthView] = useState('subscribe');
 
-  // Lock body scroll
+  const openAuth = (view) => {
+    setAuthView(view);
+    setIsAuthOpen(true);
+  };
+
+  // Lock body scroll safely alongside AuthModal interactions
   useEffect(() => {
-    if (selectedItem) { document.body.style.overflow = 'hidden'; } 
-    else { document.body.style.overflow = 'unset'; }
-    return () => { document.body.style.overflow = 'unset'; };
-  }, [selectedItem]);
+    if (selectedItem && !isAuthOpen) { 
+      document.body.style.overflow = 'hidden'; 
+    } else if (!selectedItem) { 
+      document.body.style.overflow = 'unset'; 
+    }
+    // Cleanup handled by the dependency array
+  }, [selectedItem, isAuthOpen]);
 
   // Fetch Ads
   useEffect(() => {
@@ -373,10 +440,28 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
             {selectedItem.type === 'video' && <VideoModalLayout selectedItem={selectedItem} videos={videos} setSelectedItem={setSelectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
             {selectedItem.type === 'short' && <ShortModalLayout selectedItem={selectedItem} videos={videos} setSelectedItem={setSelectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
             {selectedItem.type === 'podcast' && <PodcastModalLayout selectedItem={selectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
-            {selectedItem.type === 'article' && <ArticleModalLayout selectedItem={selectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
+            
+            {/* Passed auth props specifically to the Article Layout */}
+            {selectedItem.type === 'article' && (
+              <ArticleModalLayout 
+                selectedItem={selectedItem} 
+                handleShare={handleShare} 
+                handleCopy={handleCopy} 
+                copied={copied} 
+                isAuthed={isAuthed}
+                openAuth={openAuth}
+              />
+            )}
           </div>
         </div>
       </div>
+
+      {/* Render the robust AuthModal directly within the ContentModal */}
+      <AuthModal 
+        isOpen={isAuthOpen} 
+        onClose={() => setIsAuthOpen(false)} 
+        initialView={authView} 
+      />
     </div>
   );
 }
