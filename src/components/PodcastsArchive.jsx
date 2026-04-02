@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { ArrowLeft, Headphones, ChevronRight } from 'lucide-react';
 import { themes } from '../utils/theme';
 
-// --- GLOBAL SUB-COMPONENTS ---
+// --- GLOBAL SUB-COMPONENTS (Hoisted to prevent ReferenceErrors) ---
 
 const DynamicAd = ({ ad }) => {
   if (!ad) return null;
@@ -34,7 +34,6 @@ const DynamicAd = ({ ad }) => {
        {ad.fgImage ? (
          // STACKED LAYOUT (Headline -> Image -> Button)
          <>
-           {/* 1. TEXT COLUMN (Centered, No Squeezed Button) */}
            <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 items-center text-center flex-1`}>
              <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center`}>
                {ad.headline}
@@ -43,19 +42,14 @@ const DynamicAd = ({ ad }) => {
                {ad.subtext}
              </p>
            </div>
-
-           {/* 2. IMAGE COLUMN (Centered, Shrinks gracefully) */}
            <div className="relative z-10 flex items-center justify-center shrink-0">
              <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
            </div>
-
-           {/* 3. BUTTON COLUMN (Explicitly rendered) */}
            {renderButton("")}
          </>
        ) : (
-         // PREVIOUS RESPONSIVE LAYOUT (Side-by-side or Centered) - This is for ads WITHOUT image.
+         // RESPONSIVE LAYOUT FOR NO-IMAGE ADS
          <>
-           {/* 1. TEXT COLUMN (Responsive Centering, Conditional Mobile Button) */}
            <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left flex-1`}>
              <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>
                {ad.headline}
@@ -63,11 +57,8 @@ const DynamicAd = ({ ad }) => {
              <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
                {ad.subtext}
              </p>
-             {/* Squeezed/Mobile Button (only for no-image ads, conditional on view) */}
              {renderButton("mt-4 flex @4xl:hidden w-max")}
            </div>
-
-           {/* 3. WIDE VIEW BUTTON COLUMN (Conditional based on view, only for no-image ads) */}
            <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
              {renderButton("")}
            </div>
@@ -108,7 +99,7 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
       const query = `
         query GetGlobalAds {
           globalAds {
-            id headline subtext buttonText buttonLink bgColor bgColor2 bgGradientType btnColor btnTextColor borderColor pattern bgImage fgImage sport pages startDate endDate
+            id headline subtext buttonText buttonLink bgColor bgColor2 bgGradientType btnColor btnTextColor borderColor pattern bgImage fgImage sport pages placements startDate endDate
           }
         }
       `;
@@ -132,7 +123,7 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
   const today = new Date();
   today.setHours(0, 0, 0, 0); 
 
-  const activeAds = globalAds.filter(ad => {
+  const pageAds = globalAds.filter(ad => {
     if (!ad.pages || !ad.pages.includes('podcasts')) return false;
     if (!ad.sport || (!ad.sport.includes('All') && !ad.sport.includes(activeSport))) return false;
     if (ad.startDate) {
@@ -148,8 +139,12 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
     return true; 
   });
 
+  // Categorize by Placement
+  const headerAds = pageAds.filter(ad => ad.placements?.includes('header'));
+  const sidebarAds = pageAds.filter(ad => ad.placements?.includes('inline'));
+
   return (
-    <div className="flex flex-col w-full pt-6 pb-16">
+    <div className="flex flex-col w-full pt-6 pb-16 animate-in fade-in duration-300">
       <div className="flex items-center gap-4 mb-6">
          <Link href={`/${activeSport.toLowerCase()}/home`} className="hover:text-white flex items-center gap-2 text-gray-400 font-bold uppercase text-xs tracking-wider transition-colors no-underline">
            <ArrowLeft size={16}/> Back to Dashboard
@@ -157,22 +152,30 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
       </div>
       
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 pb-4 border-b border-gray-800">
-        <div>
+        <div className="flex-1">
           <h1 className={`text-4xl font-black uppercase tracking-wider ${theme.text} drop-shadow-lg`}>{activeSport === 'All' ? 'Network' : activeSport} Podcasts</h1>
           <p className="text-gray-400 mt-2 text-sm">Listen to the top fantasy sports audio shows in the industry.</p>
         </div>
+
+        {/* DYNAMIC HEADER AD SLOT */}
+        {headerAds.length > 0 && (
+          <div className="hidden lg:block w-full max-w-[500px] h-[100px]">
+            <DynamicAd ad={headerAds[0]} />
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* PODCAST GRID */}
+        
+        {/* PODCAST GRID (Now takes up 9 columns to leave 3 for the sidebar) */}
         <div className="lg:col-span-9 grid grid-cols-2 md:grid-cols-3 gap-6">
           {podcasts.map(pod => <LineupCard key={pod.id} item={pod} setSelectedItem={setSelectedItem} />)}
         </div>
 
         {/* AD SIDEBAR COLUMN */}
         <div className="lg:col-span-3 flex flex-col gap-6 sticky top-24">
-          {activeAds.length > 0 ? (
-            activeAds.map((ad, index) => (
+          {sidebarAds.length > 0 ? (
+            sidebarAds.map((ad) => (
               <div key={ad.id} className="w-full">
                 <DynamicAd ad={ad} />
               </div>
@@ -183,6 +186,7 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
             </div>
           )}
         </div>
+
       </div>
     </div>
   );

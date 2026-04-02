@@ -3,10 +3,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Loader2, ChevronRight, ChevronUp, PlayCircle, ChevronLeft, ArrowRight, Zap, Play } from 'lucide-react';
 import { themes } from '../utils/theme';
 
-// --- GLOBAL CONSTANTS ---
 const hideScrollbar = "scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
 
-// --- GLOBAL SUB-COMPONENTS (Defined outside to prevent ReferenceErrors) ---
+// --- GLOBAL SUB-COMPONENTS (Hoisted to prevent ReferenceErrors) ---
 
 const PostMeta = ({ item, activeSport }) => {
   const itemSport = item.sport || 'All';
@@ -42,29 +41,43 @@ const DynamicAd = ({ ad }) => {
   );
 
   return (
-    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex relative overflow-hidden shadow-2xl group min-h-[120px] transition-all border-2 gap-3 @2xl:gap-6 no-underline block hover:scale-[1.01] ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between'}`} style={bgStyles}>
+    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl p-4 @2xl:p-6 flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${ad.fgImage ? 'flex-col items-center justify-center text-center gap-4 min-h-[200px]' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between gap-3 @2xl:gap-6 min-h-[120px]'}`} style={bgStyles}>
        {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
        {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
        
-       <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
-         <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>
-           {ad.headline}
-         </h2>
-         <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
-           {ad.subtext}
-         </p>
-         {renderButton("mt-4 flex @4xl:hidden w-max")}
-       </div>
-
-       {ad.fgImage && (
-          <div className="relative z-10 hidden @xs:flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1">
+       {ad.fgImage ? (
+         // STACKED LAYOUT (Headline -> Image -> Button)
+         <>
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 items-center text-center flex-1`}>
+             <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center`}>
+               {ad.headline}
+             </h2>
+             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
+               {ad.subtext}
+             </p>
+           </div>
+           <div className="relative z-10 flex items-center justify-center shrink-0">
              <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
-          </div>
+           </div>
+           {renderButton("")}
+         </>
+       ) : (
+         // RESPONSIVE LAYOUT FOR NO-IMAGE ADS
+         <>
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left flex-1`}>
+             <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>
+               {ad.headline}
+             </h2>
+             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
+               {ad.subtext}
+             </p>
+             {renderButton("mt-4 flex @4xl:hidden w-max")}
+           </div>
+           <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
+             {renderButton("")}
+           </div>
+         </>
        )}
-
-       <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
-          {renderButton("")}
-       </div>
     </a>
   );
 };
@@ -115,12 +128,12 @@ const GridVideoCard = ({ item, setSelectedItem, activeSport }) => {
   );
 };
 
-const ShortCard = ({ item, setSelectedItem, activeSport }) => (
+const ShortCard = ({ item, setSelectedItem }) => (
   <div onClick={() => setSelectedItem(item)} className={`group h-full w-full min-h-[300px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
     {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
-      <div className="bg-black/50 backdrop-blur-sm rounded-full p-3 md:p-4 border border-white/10"><Play size={24} className="text-white ml-1" fill="currentColor"/></div>
+      <div className="bg-black/50 backdrop-blur-sm rounded-full p-3 border border-white/10"><Play size={24} className="text-white ml-1" fill="currentColor"/></div>
     </div>
     <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
       <h3 className={`font-black text-sm text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
@@ -128,7 +141,7 @@ const ShortCard = ({ item, setSelectedItem, activeSport }) => (
   </div>
 );
 
-// --- MAIN COMPONENT EXPORT ---
+// --- MAIN ARCHIVE COMPONENT ---
 
 export default function VideosArchive({ videos, activeSport, setSelectedItem, loadMorePosts, isLoadingMore }) {
   const theme = themes[activeSport] || themes.All;
@@ -148,7 +161,7 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
       const query = `
         query GetGlobalAds {
           globalAds {
-            id headline subtext buttonText buttonLink bgColor bgColor2 bgGradientType btnColor btnTextColor borderColor pattern bgImage fgImage sport pages startDate endDate
+            id headline subtext buttonText buttonLink bgColor bgColor2 bgGradientType btnColor btnTextColor borderColor pattern bgImage fgImage sport pages placements startDate endDate
           }
         }
       `;
@@ -172,7 +185,7 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
   const today = new Date();
   today.setHours(0, 0, 0, 0); 
 
-  const activeAds = globalAds.filter(ad => {
+  const pageAds = globalAds.filter(ad => {
     if (!ad.pages || !ad.pages.includes('videos')) return false;
     if (!ad.sport || (!ad.sport.includes('All') && !ad.sport.includes(activeSport))) return false;
     if (ad.startDate) {
@@ -188,11 +201,11 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
     return true; 
   });
 
-  const scrollShorts = (direction) => {
-    if (shortsRef.current) shortsRef.current.scrollBy({ left: direction === 'left' ? -350 : 350, behavior: 'smooth' });
-  };
+  // Categorize by Placement
+  const headerAds = pageAds.filter(ad => ad.placements?.includes('header'));
+  const inlineAds = pageAds.filter(ad => ad.placements?.includes('inline'));
 
-  // DATA FILTERING: Standard long-form videos vs Shorts
+  // DATA FILTERING
   const standardVideos = videos.filter(v => v.type === 'video');
   const shorts = videos.filter(v => v.type === 'short');
 
@@ -203,13 +216,24 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
   const gridVideos = standardVideos.length > 8 ? standardVideos.slice(8, 14) : [];
   const remainingVideos = standardVideos.length > 14 ? standardVideos.slice(14) : [];
 
+  const scrollShorts = (direction) => {
+    if (shortsRef.current) shortsRef.current.scrollBy({ left: direction === 'left' ? -350 : 350, behavior: 'smooth' });
+  };
+
   return (
     <div className="flex flex-col w-full pt-6 pb-16 animate-in fade-in duration-300">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 pb-4 border-b border-gray-800">
-        <div>
+        <div className="flex-1">
           <h1 className={`text-4xl font-black uppercase tracking-wider ${theme.text} drop-shadow-lg`}>{activeSport === 'All' ? 'Network' : activeSport} Videos</h1>
           <p className="text-gray-400 mt-2 text-sm">The latest film room breakdowns and highlights.</p>
         </div>
+
+        {/* DYNAMIC HEADER AD SLOT */}
+        {headerAds.length > 0 && (
+          <div className="hidden lg:block w-full max-w-[500px] h-[100px]">
+            <DynamicAd ad={headerAds[0]} />
+          </div>
+        )}
       </div>
 
       {standardVideos.length === 0 && shorts.length === 0 ? (
@@ -221,10 +245,11 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
               <div className="xl:col-span-8 flex flex-col gap-6">
                 {heroVideo && <WideVideoCard item={heroVideo} setSelectedItem={setSelectedItem} activeSport={activeSport} />}
-                {/* DYNAMIC AD SLOT 1 */}
-                {activeAds[0] && (
+                
+                {/* DYNAMIC INLINE AD SLOT 1 */}
+                {inlineAds.length > 0 && (
                   <div className="w-full">
-                    <DynamicAd ad={activeAds[0]} />
+                    <DynamicAd ad={inlineAds[0]} />
                   </div>
                 )}
               </div>
@@ -248,9 +273,17 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
                 {gridVideos.map(v => <GridVideoCard key={v.id} item={v} setSelectedItem={setSelectedItem} activeSport={activeSport} />)}
               </div>
               <div className="xl:col-span-1 flex flex-col gap-6">
-                 {/* DYNAMIC AD SLOTS 2 & 3 */}
-                 {activeAds.length > 1 && <div className="flex-1"><DynamicAd ad={activeAds[1]} /></div>}
-                 {activeAds.length > 2 && <div className="flex-1"><DynamicAd ad={activeAds[2]} /></div>}
+                 {/* DYNAMIC INLINE AD SLOTS 2 & 3 */}
+                 {inlineAds.length > 1 && (
+                   <div className="flex-1 w-full min-h-[200px]">
+                     <DynamicAd ad={inlineAds[1]} />
+                   </div>
+                 )}
+                 {inlineAds.length > 2 && (
+                   <div className="flex-1 w-full min-h-[200px]">
+                     <DynamicAd ad={inlineAds[2]} />
+                   </div>
+                 )}
               </div>
             </div>
           )}
@@ -268,7 +301,7 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
               <div ref={shortsRef} className={`flex gap-4 md:gap-6 overflow-x-auto pb-4 snap-x ${hideScrollbar}`}>
                 {shorts.slice(0, 10).map(short => (
                   <div key={short.id} className="relative w-36 md:w-44 flex-shrink-0 snap-start">
-                    <ShortCard item={short} setSelectedItem={setSelectedItem} activeSport={activeSport} />
+                    <ShortCard item={short} setSelectedItem={setSelectedItem} />
                   </div>
                 ))}
                 <div className="relative w-36 md:w-44 flex-shrink-0 snap-start aspect-[9/16] rounded-2xl overflow-hidden bg-[#111] border border-gray-800 hover:border-gray-500 transition-colors flex flex-col items-center justify-center group cursor-pointer shadow-lg text-gray-400 hover:text-white">
@@ -283,7 +316,9 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
           {remainingVideos.length > 0 && (
             <div className="flex flex-col gap-8">
               {Array.from({ length: Math.ceil(remainingVideos.length / 6) }).map((_, i) => {
-                const cycleAdIndex = activeAds.length > 0 ? (i % activeAds.length) : -1;
+                // Cycles through all inline ads infinitely
+                const cycleAdIndex = inlineAds.length > 0 ? (i % inlineAds.length) : -1;
+                
                 return (
                   <React.Fragment key={i}>
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -293,7 +328,7 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
                     </div>
                     {cycleAdIndex !== -1 && (
                       <div className="py-4">
-                        <DynamicAd ad={activeAds[cycleAdIndex]} />
+                        <DynamicAd ad={inlineAds[cycleAdIndex]} />
                       </div>
                     )}
                   </React.Fragment>
