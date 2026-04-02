@@ -223,30 +223,24 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
 );
 
 // --- ARTICLE GATING IMPLEMENTATION ---
-const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isAuthed, openAuth }) => {
-  const [mounted, setMounted] = useState(false);
+const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isAuthed, authStatus, openAuth }) => {
   
   useEffect(() => {
-    setMounted(true);
-    
-    const timeoutId = setTimeout(() => {
-      const container = document.getElementById('article-content-container');
-      if (container) {
-        // Find Getty embeds and manually trigger them if the script hasn't fired yet
-        const gettyEmbeds = container.querySelectorAll('.gettyimages-embed');
-        if (gettyEmbeds.length > 0) {
-           // We inject the script to ensure Getty processes the embeds
-           const script = document.createElement('script');
-           script.src = "https://embed.gettyimages.com/embed/5/2";
-           script.async = true;
-           // Important: Add it to the body so it executes cleanly in the global scope
-           document.body.appendChild(script);
-        }
-      }
-    }, 100);
+    // Safe, non-destructive Getty Images script loading
+    if (selectedItem?.content?.includes('gettyimages-embed') && !document.getElementById('getty-embed-script')) {
+      const script = document.createElement('script');
+      script.id = 'getty-embed-script';
+      script.src = 'https://embed.gettyimages.com/embed/5/2';
+      script.async = true;
+      document.body.appendChild(script);
+    } else if (window.getty) {
+      // If getty is already loaded, sometimes it needs to be told to re-scan the DOM for new embeds
+      try { window.getty.Init(); } catch(e) {}
+    }
+  }, [selectedItem]);
 
-    return () => clearTimeout(timeoutId);
-  }, [selectedItem, isAuthed]); 
+  // Ensure gating logic does not trigger prematurely while the session is still loading
+  const showGating = !isAuthed && authStatus !== 'loading';
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
@@ -274,25 +268,25 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
           <div className="ml-auto"><ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} /></div>
         </div>
         
-        {/* Render HTML Safely */}
+        {/* Render HTML Safely (No aggressive re-mounting to protect iframes) */}
         <div className="relative flex-1">
           <div 
             id="article-content-container" 
-            className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport]?.text || 'text-white'} hover:prose-a:text-white transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'} ${!isAuthed ? 'max-h-[500px] overflow-hidden' : ''}`} 
-            dangerouslySetInnerHTML={{ __html: mounted ? selectedItem.content : "" }} 
+            className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport]?.text || 'text-white'} hover:prose-a:text-white transition-opacity duration-300 ${showGating ? 'max-h-[500px] overflow-hidden' : ''}`} 
+            dangerouslySetInnerHTML={{ __html: selectedItem.content }} 
           />
           
-          {/* Fade-out gradient overlay placed closer to the cut-off */}
-          {!isAuthed && (
+          {/* Fade-out gradient overlay (Only shows for non-authenticated users) */}
+          {showGating && (
             <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#121212] via-[#121212]/90 to-transparent z-10 pointer-events-none" />
           )}
         </div>
 
         {/* ROADBLOCK UI */}
-        {!isAuthed && (
+        {showGating && (
           <div className="mt-4 pb-8 flex flex-col items-center justify-center relative z-20 animate-in fade-in slide-in-from-bottom-8 duration-500">
-            {/* Conic gradient border to match the app icon exactly: Blue -> Red -> Orange */}
-            <div className="p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#e42d38_25%,#e42d38_75%,#f5a623_100%)] max-w-md w-full shadow-2xl">
+            {/* Conic gradient border to match the app icon exactly: Blue -> Red -> Orange -> Blue */}
+            <div className="p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_33%,#f5a623_66%,#1b75bb_100%)] max-w-md w-full shadow-2xl">
               <div className="bg-[#1a1a1a] p-8 rounded-[22px] text-center w-full h-full">
                 <div className="w-12 h-12 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Lock size={24} className="text-red-500" />
@@ -438,6 +432,7 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
                 handleCopy={handleCopy} 
                 copied={copied} 
                 isAuthed={isAuthed}
+                authStatus={status}
                 openAuth={openAuth}
               />
             )}
