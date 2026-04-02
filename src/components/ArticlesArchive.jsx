@@ -19,6 +19,7 @@ const PostMeta = ({ item, activeSport }) => {
   );
 };
 
+// THE TRUE UNIVERSAL AD COMPONENT
 const DynamicAd = ({ ad, variant = "inline" }) => {
   if (!ad) return null;
 
@@ -34,6 +35,7 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   else if (ad.bgGradientType === 'radial') bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
 
   const isHeader = variant === 'header';
+  const isSidebar = variant === 'sidebar'; // Triggers the vertical stack for narrow columns
 
   const renderButton = (extraClass) => (
     <div className={`px-3 py-2 ${isHeader ? '@md:px-4 @md:py-2.5' : '@2xl:px-5 @2xl:py-2.5'} rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 ${isHeader ? '@md:gap-1.5' : '@2xl:gap-2'} shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
@@ -41,20 +43,44 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
     </div>
   );
 
+  let wrapperClasses = `@container w-full h-full rounded-2xl flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] `;
+  
+  if (isHeader) {
+    wrapperClasses += `p-3 @md:p-4 min-h-[80px] flex-row items-center justify-between gap-3 @2xl:gap-6`;
+  } else if (isSidebar && ad.fgImage) {
+    wrapperClasses += `p-4 @2xl:p-6 min-h-[200px] flex-col items-center justify-center text-center gap-4`;
+  } else {
+    wrapperClasses += `p-4 @2xl:p-6 min-h-[120px] ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between'} gap-3 @2xl:gap-6`;
+  }
+
   return (
-    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${isHeader ? 'p-3 @md:p-4 min-h-[80px]' : 'p-4 @2xl:p-6 min-h-[120px]'} ${ad.fgImage && !isHeader ? 'flex-col items-center justify-center text-center gap-4 min-h-[200px]' : 'flex-row items-center justify-between gap-3 @2xl:gap-6'}`} style={bgStyles}>
+    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={wrapperClasses} style={bgStyles}>
        {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
        {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
        
-       {ad.fgImage && !isHeader ? (
+       {isHeader ? (
+         // HEADER VARIANT
          <>
-           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 items-center text-center flex-1`}>
-             <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center`}>
-               {ad.headline}
-             </h2>
-             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
-               {ad.subtext}
-             </p>
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @xs:items-start @xs:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
+             <h2 className={`text-base @xs:text-lg @md:text-xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center @xs:origin-left`}>{ad.headline}</h2>
+             <p className={`text-gray-300 font-bold text-[9px] @md:text-[10px] uppercase tracking-widest relative z-10 line-clamp-1 mt-0.5`}>{ad.subtext}</p>
+             {renderButton("mt-2 flex @sm:hidden w-max")}
+           </div>
+           {ad.fgImage && (
+             <div className="relative z-10 flex justify-center items-center shrink-0 mx-auto px-2">
+               <img src={ad.fgImage} className="max-h-12 w-auto max-w-[80px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+             </div>
+           )}
+           <div className={`relative z-10 hidden @sm:flex justify-end items-center shrink-0 min-w-0`}>
+             {renderButton("")}
+           </div>
+         </>
+       ) : isSidebar && ad.fgImage ? (
+         // SIDEBAR VARIANT (Stacked)
+         <>
+           <div className="relative z-10 flex flex-col justify-center shrink min-w-0 items-center text-center flex-1">
+             <h2 className="text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center">{ad.headline}</h2>
+             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">{ad.subtext}</p>
            </div>
            <div className="relative z-10 flex items-center justify-center shrink-0">
              <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
@@ -62,28 +88,20 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
            {renderButton("")}
          </>
        ) : (
+         // DEFAULT INLINE VARIANT (Wide, Side-by-side)
          <>
-           {/* Text container is allowed to grow as much as it needs without 33% restrictions */}
-           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center ${isHeader ? '@xs:items-start @xs:text-left' : '@2xl:items-start @2xl:text-left flex-1'}`}>
-             <h2 className={`${isHeader ? 'text-base @xs:text-lg @md:text-xl' : 'text-lg @md:text-2xl @2xl:text-3xl'} font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center ${isHeader ? '@xs:origin-left' : '@2xl:origin-left'}`}>
-               {ad.headline}
-             </h2>
-             <p className={`text-gray-300 font-bold ${isHeader ? 'text-[9px] @md:text-[10px]' : 'text-[10px] @md:text-xs'} uppercase tracking-widest relative z-10 line-clamp-1 mt-0.5`}>
-               {ad.subtext}
-             </p>
-             {isHeader ? renderButton("mt-2 flex @sm:hidden w-max") : renderButton("mt-3 flex @2xl:hidden w-max")}
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
+             <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>{ad.headline}</h2>
+             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">{ad.subtext}</p>
+             {renderButton("mt-4 flex @4xl:hidden w-max")}
            </div>
-           
-           {/* Image container floats perfectly in the center of available space via mx-auto */}
-           {ad.fgImage && isHeader && (
-             <div className="relative z-10 flex justify-center items-center shrink-0 mx-auto px-2">
-               <img src={ad.fgImage} className="max-h-12 w-auto max-w-[80px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
-             </div>
+           {ad.fgImage && (
+              <div className="relative z-10 hidden @xs:flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1">
+                 <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+              </div>
            )}
-
-           {/* Button is strictly pushed to the end without forcing width restrictions */}
-           <div className={`relative z-10 ${isHeader ? 'hidden @sm:flex' : 'hidden @2xl:flex'} justify-end items-center shrink-0 min-w-0`}>
-             {renderButton("")}
+           <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
+              {renderButton("")}
            </div>
          </>
        )}
@@ -224,16 +242,14 @@ export default function ArticlesArchive({ articles, activeSport, setSelectedItem
   return (
     <div className="flex flex-col w-full pt-6 pb-16 animate-in fade-in duration-300">
       
-      {/* HEADER SECTION - Wider 675px container */}
+      {/* HEADER SECTION */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-4 border-b border-gray-800">
         
-        {/* The Title block uses shrink-0 and whitespace-nowrap to prevent it from collapsing early */}
         <div className="shrink-0 mr-4">
           <h1 className={`text-4xl font-black uppercase tracking-wider ${theme.text} drop-shadow-lg whitespace-nowrap`}>{activeSport === 'All' ? 'Network' : activeSport} Articles</h1>
           <p className="text-gray-400 mt-2 text-sm whitespace-nowrap">Read the latest analysis, rankings updates, and news.</p>
         </div>
 
-        {/* DYNAMIC HEADER AD SLOT - the flex-1 and shrink classes force the ad to absorb the responsive squeezing before the title wraps! */}
         {headerAds.length > 0 && (
           <div className="hidden lg:block flex-1 max-w-[675px] min-w-[250px] shrink overflow-hidden">
             <DynamicAd ad={headerAds[0]} variant="header" />
@@ -262,10 +278,10 @@ export default function ArticlesArchive({ articles, activeSport, setSelectedItem
             </div>
           )}
 
-          {/* DYNAMIC INLINE AD SLOT 1 */}
+          {/* DYNAMIC INLINE AD SLOT 1 - Wide Component */}
           {inlineAds.length > 0 && (
             <div className="w-full">
-              <DynamicAd ad={inlineAds[0]} />
+              <DynamicAd ad={inlineAds[0]} variant="inline" />
             </div>
           )}
 
@@ -285,15 +301,15 @@ export default function ArticlesArchive({ articles, activeSport, setSelectedItem
                 ))}
               </div>
               <div className="xl:col-span-4 flex flex-col gap-4">
-                {/* DYNAMIC INLINE AD SLOTS 2 & 3 */}
+                {/* DYNAMIC INLINE AD SLOTS 2 & 3 - Passed as "sidebar" so they stack properly in the right column! */}
                 {inlineAds.length > 1 && (
                   <div className="flex-1 w-full min-h-[200px]">
-                    <DynamicAd ad={inlineAds[1]} />
+                    <DynamicAd ad={inlineAds[1]} variant="sidebar" />
                   </div>
                 )}
                 {inlineAds.length > 2 && (
                   <div className="flex-1 w-full min-h-[200px]">
-                    <DynamicAd ad={inlineAds[2]} />
+                    <DynamicAd ad={inlineAds[2]} variant="sidebar" />
                   </div>
                 )}
               </div>
@@ -306,7 +322,6 @@ export default function ArticlesArchive({ articles, activeSport, setSelectedItem
                 const cardTheme = themes[article.sport] || themes.All;
                 const showAd = (index + 1) % 5 === 0; 
                 
-                // Cycles through all inline ads infinitely
                 const adIndex = inlineAds.length > 0 ? (Math.floor(index / 5) % inlineAds.length) : -1;
 
                 return (
@@ -323,9 +338,10 @@ export default function ArticlesArchive({ articles, activeSport, setSelectedItem
                         <div className="text-sm text-gray-400 line-clamp-2 leading-relaxed drop-shadow" dangerouslySetInnerHTML={{ __html: article.excerpt }} />
                       </div>
                     </div>
+                    {/* List Ad - Wide Component */}
                     {showAd && adIndex !== -1 && (
                       <div className="py-4">
-                        <DynamicAd ad={inlineAds[adIndex]} />
+                        <DynamicAd ad={inlineAds[adIndex]} variant="inline" />
                       </div>
                     )}
                   </React.Fragment>
