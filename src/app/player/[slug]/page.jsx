@@ -16,38 +16,54 @@ async function getESPNPlayerData(playerName) {
     
     const allContents = searchData?.results?.flatMap(r => r.contents || []) || [];
     
-    // 2. Intelligently hunt for NFL, NBA, or MLB players in the results
-    const athleteResult = allContents.find(c => {
-      if (!c.url) return false;
-      return c.url.includes('/nfl/player/') || 
-             c.url.includes('/nba/player/') || 
-             c.url.includes('/mlb/player/');
-    });
+    // 2. Intelligently hunt for players using ESPN's internal UID structure
+    // UIDs look like: s:20~l:28~a:4332011 (sport:league:athlete)
+    const athleteResult = allContents.find(c => c.uid && c.uid.includes('~a:'));
     
     if (!athleteResult) return null;
 
-    // 3. Dynamically extract the League, Sport, and Player ID from the URL
-    const url = athleteResult.url;
-    let league = '';
-    let sportName = '';
-    
-    if (url.includes('/nfl/')) { league = 'nfl'; sportName = 'football'; }
-    else if (url.includes('/nba/')) { league = 'nba'; sportName = 'basketball'; }
-    else if (url.includes('/mlb/')) { league = 'mlb'; sportName = 'baseball'; }
+    // 3. Parse the exact sport, league, and ID from the UID
+    const uidParts = athleteResult.uid.split('~');
+    let sportCode = '';
+    let leagueCode = '';
+    let playerId = '';
 
-    const urlParts = url.split('/');
-    const idIndex = urlParts.indexOf('id') + 1;
-    let playerId = urlParts[idIndex];
-    if (!playerId && athleteResult.id) playerId = athleteResult.id;
+    uidParts.forEach(part => {
+      if (part.startsWith('s:')) sportCode = part.replace('s:', '');
+      if (part.startsWith('l:')) leagueCode = part.replace('l:', '');
+      if (part.startsWith('a:')) playerId = part.replace('a:', '');
+    });
 
-    if (!playerId || !league || !sportName) return null;
+    if (!playerId) return null;
 
-    // 4. Hit the highly specific API endpoint for that exact sport and league!
-    const playerRes = await fetch(`https://site.api.espn.com/apis/common/v3/sports/${sportName}/${league}/athletes/${playerId}`, { next: { revalidate: 3600 } });
+    // 4. Map ESPN's internal numerical codes to their URL strings
+    let sportString = '';
+    let leagueString = '';
+
+    // 20 = Football, 28 = NFL
+    if (sportCode === '20') {
+      sportString = 'football';
+      leagueString = leagueCode === '28' ? 'nfl' : 'college-football';
+    } 
+    // 46 = Basketball, 46 = NBA
+    else if (sportCode === '46') {
+      sportString = 'basketball';
+      leagueString = leagueCode === '46' ? 'nba' : (leagueCode === '54' ? 'wnba' : 'mens-college-basketball');
+    }
+    // 1 = Baseball, 10 = MLB
+    else if (sportCode === '1') {
+      sportString = 'baseball';
+      leagueString = leagueCode === '10' ? 'mlb' : 'college-baseball';
+    } else {
+      // Fallback if the sport code isn't recognized
+      return null;
+    }
+
+    // 5. Hit the highly specific API endpoint for that exact sport and league!
+    const playerRes = await fetch(`https://site.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } });
     if (!playerRes.ok) throw new Error('Detail fetch failed');
     const playerData = await playerRes.json();
     
-    // The ESPN API naturally returns the exact data structure our PlayerClient expects
     return playerData.athlete;
   } catch (error) {
     console.error("ESPN API Error for", playerName, ":", error);
@@ -56,7 +72,6 @@ async function getESPNPlayerData(playerName) {
 }
 
 async function getPlayerContent(playerName) {
-  // Force Exact Phrase Match by wrapping the variable in escaped quotes
   const exactMatchQuery = `\\"${playerName}\\"`;
   
   const query = `
@@ -160,7 +175,6 @@ export default async function PlayerPage({ params }) {
     console.error("Menu fetch failed:", e);
   }
 
-  // Pass the data directly into the Client component
   return (
     <PlayerClient 
        playerName={playerName}
