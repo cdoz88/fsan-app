@@ -110,12 +110,42 @@ const ArticleContent = React.memo(function ArticleContent({ content, sportThemeT
   );
 });
 
+// --- NEW: VIDEO GATING OVERLAY ---
+const VideoGatingOverlay = ({ openAuth, onSkip }) => (
+  <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center animate-in fade-in duration-300">
+    <div className="p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] max-w-[320px] w-full shadow-2xl">
+      <div className="bg-[#1a1a1a] p-6 rounded-[22px] text-center w-full h-full flex flex-col items-center">
+        <div className="w-10 h-10 bg-red-900/20 rounded-full flex items-center justify-center mb-3">
+          <Lock size={20} className="text-red-500" />
+        </div>
+        <h3 className="text-xl font-black text-white uppercase tracking-wider mb-2">Unlock Video</h3>
+        <p className="text-gray-400 text-xs mb-5 leading-relaxed">Create a free account to watch this breakdown and remove interruptions.</p>
+        <button 
+          onClick={() => openAuth('subscribe')} 
+          className="w-full bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white font-black uppercase tracking-widest py-3 rounded-xl shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all transform hover:scale-[1.02] mb-3 text-xs"
+        >
+          Create Free Account
+        </button>
+        <button onClick={onSkip} className="text-[10px] text-gray-500 hover:text-white uppercase tracking-widest font-bold transition-colors">
+          Skip for now
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
 // --- MODAL LAYOUTS ---
 
-const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, handleCopy, copied }) => (
+const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, handleCopy, copied, isAuthed, authStatus, openAuth, videoOverlayActive, setVideoOverlayActive }) => (
   <div className="flex flex-col lg:flex-row h-full min-h-0">
     <div className="flex-1 lg:w-3/4 flex flex-col bg-[#121212] overflow-y-auto lg:overflow-hidden min-h-0">
       <div className="w-full aspect-video bg-black flex items-center justify-center relative border-b border-gray-800 overflow-hidden shrink-0">
+         
+         {/* THE VIDEO GATING OVERLAY */}
+         {(!isAuthed && authStatus === 'unauthenticated' && videoOverlayActive) && (
+           <VideoGatingOverlay openAuth={openAuth} onSkip={() => setVideoOverlayActive(false)} />
+         )}
+
          {selectedItem.youtubeId ? (
            <iframe src={`https://www.youtube.com/embed/${selectedItem.youtubeId}?autoplay=1`} className="absolute inset-0 w-full h-full" frameBorder="0" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen></iframe>
          ) : (
@@ -187,13 +217,19 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
   </div>
 );
 
-const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, handleCopy, copied }) => {
+const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, handleCopy, copied, isAuthed, authStatus, openAuth, videoOverlayActive, setVideoOverlayActive }) => {
   const shorts = videos.filter(v => v.type === 'short' && v.id !== selectedItem.id);
   return (
     <div className="flex flex-col h-full min-h-0">
       <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
         <div className="lg:w-[400px] xl:w-[450px] shrink-0 bg-black flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-800 p-4 sm:p-6 relative min-h-0">
           <div className="w-full max-w-[260px] sm:max-w-[320px] lg:max-w-none lg:w-auto lg:h-full aspect-[9/16] bg-gray-900 rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800 mx-auto">
+             
+             {/* THE VIDEO GATING OVERLAY */}
+             {(!isAuthed && authStatus === 'unauthenticated' && videoOverlayActive) && (
+               <VideoGatingOverlay openAuth={openAuth} onSkip={() => setVideoOverlayActive(false)} />
+             )}
+
              {selectedItem.youtubeId ? (
                <iframe src={`https://www.youtube.com/embed/${selectedItem.youtubeId}?autoplay=1`} className="absolute inset-0 w-full h-full" frameBorder="0" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen></iframe>
              ) : (
@@ -268,7 +304,6 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
 // --- ARTICLE GATING IMPLEMENTATION ---
 const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isAuthed, authStatus, openAuth }) => {
 
-  // Show loading spinner safely if session is being fetched, preventing quick flashes
   if (authStatus === 'loading') {
     return (
       <div className="flex flex-col h-full items-center justify-center min-h-[400px]">
@@ -277,7 +312,6 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
     );
   }
 
-  // Define gating logic cleanly
   const showGating = !isAuthed && authStatus === 'unauthenticated';
 
   return (
@@ -307,21 +341,17 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
         </div>
         
         <div className="relative flex-1">
-          {/* DOUBLE THE VISIBLE HEIGHT: Increased from 500px to 1000px */}
           <div className={`${showGating ? 'max-h-[1000px] overflow-hidden' : ''}`}>
              <ArticleContent content={selectedItem.content} sportThemeText={themes[selectedItem.sport]?.text || 'text-white'} />
           </div>
           
-          {/* Fade-out gradient overlay (Only shows for non-authenticated users) */}
           {showGating && (
             <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#121212] via-[#121212]/90 to-transparent z-10 pointer-events-none" />
           )}
         </div>
 
-        {/* ROADBLOCK UI */}
         {showGating && (
           <div className="mt-2 pb-8 flex flex-col items-center justify-center relative z-20 animate-in fade-in slide-in-from-bottom-8 duration-500">
-            {/* CONIC GRADIENT BORDER: Blue -> Red (#c30b16) -> Red -> Orange -> Blue */}
             <div className="p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] max-w-md w-full shadow-2xl">
               <div className="bg-[#1a1a1a] p-8 rounded-[22px] text-center w-full h-full">
                 <div className="w-12 h-12 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -353,26 +383,43 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
   const [copied, setCopied] = useState(false);
   const [globalAds, setGlobalAds] = useState([]);
   
-  // Auth state for gating
   const { data: session, status } = useSession();
   const isAuthed = status === 'authenticated';
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authView, setAuthView] = useState('subscribe');
+  
+  // NEW: Timer State for Video Overlays
+  const [videoOverlayActive, setVideoOverlayActive] = useState(true);
 
   const openAuth = (view) => {
     setAuthView(view);
     setIsAuthOpen(true);
   };
 
-  // Lock body scroll safely alongside AuthModal interactions
+  // Lock body scroll safely
   useEffect(() => {
     if (selectedItem && !isAuthOpen) { 
       document.body.style.overflow = 'hidden'; 
     } else if (!selectedItem) { 
       document.body.style.overflow = 'unset'; 
     }
-    // Cleanup handled by the dependency array
   }, [selectedItem, isAuthOpen]);
+
+  // Reset video overlay whenever a new video is clicked
+  useEffect(() => {
+    setVideoOverlayActive(true);
+  }, [selectedItem]);
+
+  // 3-Minute "Slight Annoyance" Timer Logic
+  useEffect(() => {
+    let interval;
+    if (!isAuthed && status === 'unauthenticated' && !videoOverlayActive) {
+      interval = setInterval(() => {
+        setVideoOverlayActive(true);
+      }, 180000); // 180,000ms = 3 minutes
+    }
+    return () => clearInterval(interval);
+  }, [isAuthed, status, videoOverlayActive]);
 
   // Fetch Ads
   useEffect(() => {
@@ -403,7 +450,6 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
 
   if (!selectedItem) return null;
 
-  // Filter for popup ads specifically
   const today = new Date();
   today.setHours(0, 0, 0, 0); 
   
@@ -444,7 +490,6 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
       <div className="fixed inset-0" onClick={() => setSelectedItem(null)}></div>
       <div className={`relative z-10 w-full animate-in fade-in zoom-in-95 duration-200 ${selectedItem.type === 'article' ? 'max-w-4xl' : 'max-w-6xl'} h-[95vh] flex flex-col`}>
         
-        {/* DYNAMIC POPUP AD SLOT */}
         {popupAds.length > 0 && (
           <div className="w-full shrink-0 mb-3 sm:mb-4">
             <DynamicAd ad={popupAds[0]} />
@@ -456,11 +501,40 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
             <X size={20} className="text-white opacity-80 group-hover:opacity-100" />
           </button>
           <div className="w-full flex-1 bg-[#121212] border border-gray-800 rounded-xl shadow-2xl overflow-hidden flex flex-col min-h-0">
-            {selectedItem.type === 'video' && <VideoModalLayout selectedItem={selectedItem} videos={videos} setSelectedItem={setSelectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
-            {selectedItem.type === 'short' && <ShortModalLayout selectedItem={selectedItem} videos={videos} setSelectedItem={setSelectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
+            {selectedItem.type === 'video' && (
+              <VideoModalLayout 
+                selectedItem={selectedItem} 
+                videos={videos} 
+                setSelectedItem={setSelectedItem} 
+                handleShare={handleShare} 
+                handleCopy={handleCopy} 
+                copied={copied} 
+                isAuthed={isAuthed}
+                authStatus={status}
+                openAuth={openAuth}
+                videoOverlayActive={videoOverlayActive}
+                setVideoOverlayActive={setVideoOverlayActive}
+              />
+            )}
+            
+            {selectedItem.type === 'short' && (
+              <ShortModalLayout 
+                selectedItem={selectedItem} 
+                videos={videos} 
+                setSelectedItem={setSelectedItem} 
+                handleShare={handleShare} 
+                handleCopy={handleCopy} 
+                copied={copied} 
+                isAuthed={isAuthed}
+                authStatus={status}
+                openAuth={openAuth}
+                videoOverlayActive={videoOverlayActive}
+                setVideoOverlayActive={setVideoOverlayActive}
+              />
+            )}
+            
             {selectedItem.type === 'podcast' && <PodcastModalLayout selectedItem={selectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
             
-            {/* Passed auth props specifically to the Article Layout */}
             {selectedItem.type === 'article' && (
               <ArticleModalLayout 
                 selectedItem={selectedItem} 
@@ -476,7 +550,6 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
         </div>
       </div>
 
-      {/* Render the robust AuthModal directly within the ContentModal */}
       <AuthModal 
         isOpen={isAuthOpen} 
         onClose={() => setIsAuthOpen(false)} 
