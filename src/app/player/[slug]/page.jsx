@@ -1,39 +1,36 @@
 import React from 'react';
-import { getMenuBySlug } from '../../../utils/api'; // Corrected path (3 dots)
+import { getMenuBySlug } from '../../../utils/api'; 
 import PlayerClient from './PlayerClient';
 
 // --- DATA FETCHING ---
 
-// 1. Fetch from ESPN APIs
 async function getESPNPlayerData(playerName) {
   try {
-    // Attempt 1: Search API
-    const searchRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(playerName)}&limit=5`, { next: { revalidate: 3600 } });
+    const searchRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(playerName)}&limit=10`, { 
+      next: { revalidate: 3600 },
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FSAN/1.0)' } // Added header for stability
+    });
     if (!searchRes.ok) throw new Error('Search failed');
     const searchData = await searchRes.json();
     
-    // Look for a football player in the results
-    const athleteResult = searchData?.results?.[0]?.contents?.find(c => 
-      c.url && c.url.includes('/nfl/player/') || 
-      (c.url && c.url.includes('/player/') && c.sport === 'football')
+    // Flatten all contents across all result groups (sometimes players aren't in the very first group)
+    const allContents = searchData?.results?.flatMap(r => r.contents || []) || [];
+    
+    const athleteResult = allContents.find(c => 
+      c.url?.includes('/nfl/player/') || 
+      c.url?.includes('/college-football/player/') ||
+      (c.url?.includes('/player/') && c.sport === 'football')
     );
     
-    if (!athleteResult) {
-       console.log("No athlete found in search for:", playerName);
-       return null;
-    }
+    if (!athleteResult) return null;
 
-    // Extract ID
     const urlParts = athleteResult.url.split('/');
     const idIndex = urlParts.indexOf('id') + 1;
-    const playerId = urlParts[idIndex] || athleteResult.id;
+    let playerId = urlParts[idIndex];
+    if (!playerId && athleteResult.id) playerId = athleteResult.id;
 
-    if (!playerId) {
-       console.log("Could not extract player ID from URL:", athleteResult.url);
-       return null;
-    }
+    if (!playerId) return null;
 
-    // Fetch the detailed payload
     const playerRes = await fetch(`https://site.api.espn.com/apis/common/v3/sports/football/nfl/athletes/${playerId}`, { next: { revalidate: 3600 } });
     if (!playerRes.ok) throw new Error('Detail fetch failed');
     const playerData = await playerRes.json();
@@ -45,8 +42,8 @@ async function getESPNPlayerData(playerName) {
   }
 }
 
-// 2. Fetch from your WordPress GraphQL
 async function getPlayerContent(playerName) {
+  // FIX: Added 'content' to the GraphQL Query!
   const query = `
     query GetPlayerPosts {
       posts(where: {search: "${playerName}"}, first: 50) {
@@ -54,6 +51,7 @@ async function getPlayerContent(playerName) {
           id
           title
           excerpt
+          content 
           date
           slug
           featuredImage { node { sourceUrl } }
@@ -87,11 +85,17 @@ async function getPlayerContent(playerName) {
       if (cats.includes('basketball')) sport = 'Basketball';
       if (cats.includes('baseball')) sport = 'Baseball';
 
+      // FIX: Timezone-proof date formatting to eliminate Hydration Error #418
+      const d = new Date(post.date);
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+
       return {
         id: post.id,
         title: post.title,
         excerpt: post.excerpt,
-        date: new Date(post.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        content: post.content, // FIX: Pass content into the object!
+        date: safeDateString,
         imageUrl: post.featuredImage?.node?.sourceUrl || null,
         type,
         sport,
@@ -121,7 +125,6 @@ export default async function PlayerPage({ params }) {
     getPlayerContent(playerName)
   ]);
 
-  // Handle missing API functions gracefully if getMenuBySlug isn't exported yet
   let proToolsMenu = [];
   let connectMenu = [];
   try {

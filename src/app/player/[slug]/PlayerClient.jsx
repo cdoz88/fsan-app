@@ -1,8 +1,8 @@
 "use client";
 import React, { useState } from 'react';
-import Header from '../../../components/Header'; // Corrected path (3 dots)
-import Sidebar from '../../../components/Sidebar'; // Corrected path (3 dots)
-import ContentModal from '../../../components/ContentModal'; // Corrected path (3 dots)
+import Header from '../../../components/Header'; 
+import Sidebar from '../../../components/Sidebar'; 
+import ContentModal from '../../../components/ContentModal'; 
 import { PlayCircle, FileText, Mic, Video, User } from 'lucide-react';
 
 export default function PlayerClient({ playerName, rawSlug, espnData, content, proToolsMenu, connectMenu }) {
@@ -18,7 +18,8 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     <>
       <Header activeSport="Football" />
       <div className="max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-8 w-full">
-        <Sidebar activeSport="Football" proToolsMenu={proToolsMenu} connectMenu={connectMenu} />
+        {/* FIX: Passed the currentPath prop so the Sidebar knows where it is! */}
+        <Sidebar currentPath={`/player/${rawSlug}`} activeSport="Football" proToolsMenu={proToolsMenu} connectMenu={connectMenu} />
         
         <div className="flex-1 w-full min-w-0">
           <main className="flex-1 overflow-y-auto relative z-0 scrollbar-hide pb-24">
@@ -35,6 +36,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                 
                 {/* Left Side: Name and Info */}
                 <div className="flex flex-col gap-4 max-w-3xl">
+                  {/* FIX: Removed the "Back to Hub" link here as requested */}
                   <h1 className="text-5xl sm:text-6xl md:text-7xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white">
                     {playerName}
                   </h1>
