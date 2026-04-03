@@ -42,10 +42,12 @@ async function getESPNPlayerData(playerName) {
 }
 
 async function getPlayerContent(playerName) {
-  // FIX 1: Added author node to GraphQL Query
+  // FIX: Force Exact Phrase Match by wrapping the variable in escaped quotes!
+  const exactMatchQuery = `\\"${playerName}\\"`;
+  
   const query = `
     query GetPlayerPosts {
-      posts(where: {search: "${playerName}"}, first: 50) {
+      posts(where: {search: "${exactMatchQuery}"}, first: 50) {
         nodes {
           id
           title
@@ -101,7 +103,6 @@ async function getPlayerContent(playerName) {
         content: post.content,
         date: safeDateString,
         imageUrl: post.featuredImage?.node?.sourceUrl || null,
-        // FIX 1: Map the author data
         author: {
           name: post.author?.node?.name || null,
           avatar: post.author?.node?.avatar?.url || null
