@@ -8,12 +8,9 @@ import { PlayCircle, FileText, Mic, Video, User } from 'lucide-react';
 export default function PlayerClient({ playerName, rawSlug, espnData, content, proToolsMenu, connectMenu }) {
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // FIX 2: Shallow Routing Logic
-  // When an item is clicked, update the URL without refreshing the page. 
-  // When the modal is closed, revert the URL back to the player page.
+  // Shallow Routing Logic
   const handleSetSelectedItem = (item) => {
     if (item) {
-      // Build the URL: e.g., /football/articles/sell-high-now-4-dynasty...
       const sportPath = item.sport.toLowerCase();
       const typePath = `${item.type}s`; 
       const itemUrl = `/${sportPath}/${typePath}/${item.slug}`;
@@ -26,7 +23,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     }
   };
 
-  // Listen for the browser's native "Back" button so it closes the modal cleanly
   useEffect(() => {
     const handlePopState = () => {
       if (selectedItem) {
@@ -52,26 +48,50 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
         <div className="flex-1 w-full min-w-0">
           <main className="flex-1 overflow-y-auto relative z-0 scrollbar-hide pb-24">
             
-            {/* THE HERO HEADER */}
-            <div className="relative w-full h-80 sm:h-96 md:h-[450px] flex items-end overflow-hidden rounded-2xl mb-8 mt-6">
+            {/* THE NEW, COMPACT HERO HEADER */}
+            <div className="relative w-full h-56 md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-8 mt-6">
+              
+              {/* Dynamic Background Gradient */}
               <div 
                 className="absolute inset-0 opacity-80" 
                 style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/60 to-transparent" />
               
-              <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 pb-8 flex items-end justify-between">
+              {/* Dark fade overlay for readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/40 to-transparent" />
+              
+              {/* Content Container */}
+              <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 pb-6 flex items-end justify-start gap-6 md:gap-10 h-full">
                 
-                {/* Left Side: Name and Info */}
-                <div className="flex flex-col gap-4 max-w-3xl">
-                  <h1 className="text-5xl sm:text-6xl md:text-7xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white">
+                {/* Left Side: High-Res Headshot with CSS Bottom Fade */}
+                {headshot ? (
+                  <div className="hidden md:flex h-[115%] items-end shrink-0 relative -mb-6 z-10">
+                    <img 
+                      src={headshot} 
+                      alt={playerName} 
+                      className="h-full w-auto object-contain drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)]" 
+                      style={{ 
+                        WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 20%)',
+                        maskImage: 'linear-gradient(to top, transparent 0%, black 20%)' 
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="hidden md:flex h-32 w-32 bg-black/20 rounded-full items-center justify-center border-4 border-white/10 backdrop-blur-sm shrink-0 mb-2">
+                    <User size={48} className="text-white/40" />
+                  </div>
+                )}
+
+                {/* Right Side: Name and Info */}
+                <div className="flex flex-col gap-2 pb-0 md:pb-4 w-full z-20">
+                  <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white">
                     {playerName}
                   </h1>
                   
                   {espnData && (
                     <div className="flex items-center gap-4 mt-2">
-                      {teamLogo && <img src={teamLogo} alt={espnData.team.displayName} className="h-8 md:h-12 w-auto object-contain drop-shadow-lg" />}
-                      <div className="flex items-center gap-3 font-bold text-sm md:text-base text-white/90">
+                      {teamLogo && <img src={teamLogo} alt={espnData.team.displayName} className="h-8 md:h-10 w-auto object-contain drop-shadow-lg" />}
+                      <div className="flex flex-wrap items-center gap-2 font-bold text-xs md:text-sm text-white/90">
                         <span className="bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10">{espnData.position?.displayName || 'NFL'}</span>
                         {espnData.displayExperience && <span className="bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10">Year {espnData.displayExperience}</span>}
                         {espnData.height && <span className="bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10 hidden sm:block">{espnData.height}, {espnData.weight}</span>}
@@ -80,18 +100,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                   )}
                 </div>
 
-                {/* Right Side: High-Res Headshot */}
-                {headshot ? (
-                  <img 
-                    src={headshot} 
-                    alt={playerName} 
-                    className="hidden md:block absolute right-8 bottom-0 h-[110%] w-auto object-contain drop-shadow-[0_20px_20px_rgba(0,0,0,0.8)] z-10" 
-                  />
-                ) : (
-                  <div className="hidden md:flex absolute right-8 bottom-0 h-64 w-64 bg-black/20 rounded-full items-center justify-center border-4 border-white/10 backdrop-blur-sm mb-8">
-                    <User size={64} className="text-white/40" />
-                  </div>
-                )}
               </div>
             </div>
 
@@ -111,7 +119,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                   {content.map(item => (
                     <div 
                       key={item.id} 
-                      onClick={() => handleSetSelectedItem(item)} // FIX 2: Use the new wrapper function
+                      onClick={() => handleSetSelectedItem(item)} 
                       className="group cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-colors shadow-xl flex flex-col h-full"
                     >
                       <div className="w-full aspect-video bg-gray-900 relative overflow-hidden shrink-0">
@@ -145,7 +153,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       {selectedItem && (
         <ContentModal 
            selectedItem={selectedItem} 
-           setSelectedItem={handleSetSelectedItem} // FIX 2: Pass wrapper so the close button works identically
+           setSelectedItem={handleSetSelectedItem} 
            videos={content.filter(p => p.type === 'video' || p.type === 'short')} 
         />
       )}
