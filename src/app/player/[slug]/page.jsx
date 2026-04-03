@@ -17,9 +17,7 @@ async function getESPNPlayerData(playerName) {
     const allContents = searchData?.results?.flatMap(r => r.contents || []) || [];
     
     // 2. Intelligently hunt for players using ESPN's internal UID structure
-    // UIDs look like: s:20~l:28~a:4332011 (sport:league:athlete)
     const athleteResult = allContents.find(c => c.uid && c.uid.includes('~a:'));
-    
     if (!athleteResult) return null;
 
     // 3. Parse the exact sport, league, and ID from the UID
@@ -40,31 +38,36 @@ async function getESPNPlayerData(playerName) {
     let sportString = '';
     let leagueString = '';
 
-    // 20 = Football, 28 = NFL
     if (sportCode === '20') {
       sportString = 'football';
       leagueString = leagueCode === '28' ? 'nfl' : 'college-football';
-    } 
-    // 40 = Basketball, 46 = NBA (FIXED!)
-    else if (sportCode === '40') {
+    } else if (sportCode === '40') {
       sportString = 'basketball';
       leagueString = leagueCode === '46' ? 'nba' : (leagueCode === '54' ? 'wnba' : 'mens-college-basketball');
-    }
-    // 1 = Baseball, 10 = MLB
-    else if (sportCode === '1') {
+    } else if (sportCode === '1') {
       sportString = 'baseball';
       leagueString = leagueCode === '10' ? 'mlb' : 'college-baseball';
     } else {
-      // Fallback if the sport code isn't recognized
       return null;
     }
 
-    // 5. Hit the highly specific API endpoint for that exact sport and league!
-    const playerRes = await fetch(`https://site.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } });
-    if (!playerRes.ok) throw new Error('Detail fetch failed');
-    const playerData = await playerRes.json();
+    // 5. Hit BOTH the core athlete endpoint AND the deep overview endpoint
+    const [playerRes, overviewRes] = await Promise.all([
+      fetch(`https://site.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } }),
+      fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/overview`, { next: { revalidate: 3600 } })
+    ]);
     
-    return playerData.athlete;
+    if (!playerRes.ok) throw new Error('Detail fetch failed');
+    
+    const playerData = await playerRes.json();
+    const overviewData = overviewRes.ok ? await overviewRes.json() : null;
+    
+    // Combine them into one massive data object
+    return {
+      ...playerData.athlete,
+      overview: overviewData
+    };
+
   } catch (error) {
     console.error("ESPN API Error for", playerName, ":", error);
     return null;
