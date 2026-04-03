@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../../../components/Header'; 
 import Sidebar from '../../../components/Sidebar'; 
 import ContentModal from '../../../components/ContentModal'; 
@@ -7,6 +7,35 @@ import { PlayCircle, FileText, Mic, Video, User } from 'lucide-react';
 
 export default function PlayerClient({ playerName, rawSlug, espnData, content, proToolsMenu, connectMenu }) {
   const [selectedItem, setSelectedItem] = useState(null);
+
+  // FIX 2: Shallow Routing Logic
+  // When an item is clicked, update the URL without refreshing the page. 
+  // When the modal is closed, revert the URL back to the player page.
+  const handleSetSelectedItem = (item) => {
+    if (item) {
+      // Build the URL: e.g., /football/articles/sell-high-now-4-dynasty...
+      const sportPath = item.sport.toLowerCase();
+      const typePath = `${item.type}s`; 
+      const itemUrl = `/${sportPath}/${typePath}/${item.slug}`;
+      
+      window.history.pushState({ modal: true }, '', itemUrl);
+      setSelectedItem(item);
+    } else {
+      window.history.pushState(null, '', `/player/${rawSlug}`);
+      setSelectedItem(null);
+    }
+  };
+
+  // Listen for the browser's native "Back" button so it closes the modal cleanly
+  useEffect(() => {
+    const handlePopState = () => {
+      if (selectedItem) {
+        setSelectedItem(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [selectedItem]);
 
   // Layout Colors
   const primaryColor = espnData?.team?.color ? `#${espnData.team.color}` : '#374151';
@@ -18,7 +47,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     <>
       <Header activeSport="Football" />
       <div className="max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-8 w-full">
-        {/* FIX: Passed the currentPath prop so the Sidebar knows where it is! */}
         <Sidebar currentPath={`/player/${rawSlug}`} activeSport="Football" proToolsMenu={proToolsMenu} connectMenu={connectMenu} />
         
         <div className="flex-1 w-full min-w-0">
@@ -36,7 +64,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                 
                 {/* Left Side: Name and Info */}
                 <div className="flex flex-col gap-4 max-w-3xl">
-                  {/* FIX: Removed the "Back to Hub" link here as requested */}
                   <h1 className="text-5xl sm:text-6xl md:text-7xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white">
                     {playerName}
                   </h1>
@@ -84,7 +111,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                   {content.map(item => (
                     <div 
                       key={item.id} 
-                      onClick={() => setSelectedItem(item)} 
+                      onClick={() => handleSetSelectedItem(item)} // FIX 2: Use the new wrapper function
                       className="group cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-colors shadow-xl flex flex-col h-full"
                     >
                       <div className="w-full aspect-video bg-gray-900 relative overflow-hidden shrink-0">
@@ -118,7 +145,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       {selectedItem && (
         <ContentModal 
            selectedItem={selectedItem} 
-           setSelectedItem={setSelectedItem} 
+           setSelectedItem={handleSetSelectedItem} // FIX 2: Pass wrapper so the close button works identically
            videos={content.filter(p => p.type === 'video' || p.type === 'short')} 
         />
       )}

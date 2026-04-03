@@ -8,12 +8,11 @@ async function getESPNPlayerData(playerName) {
   try {
     const searchRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(playerName)}&limit=10`, { 
       next: { revalidate: 3600 },
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FSAN/1.0)' } // Added header for stability
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FSAN/1.0)' }
     });
     if (!searchRes.ok) throw new Error('Search failed');
     const searchData = await searchRes.json();
     
-    // Flatten all contents across all result groups (sometimes players aren't in the very first group)
     const allContents = searchData?.results?.flatMap(r => r.contents || []) || [];
     
     const athleteResult = allContents.find(c => 
@@ -43,7 +42,7 @@ async function getESPNPlayerData(playerName) {
 }
 
 async function getPlayerContent(playerName) {
-  // FIX: Added 'content' to the GraphQL Query!
+  // FIX 1: Added author node to GraphQL Query
   const query = `
     query GetPlayerPosts {
       posts(where: {search: "${playerName}"}, first: 50) {
@@ -54,6 +53,12 @@ async function getPlayerContent(playerName) {
           content 
           date
           slug
+          author {
+            node {
+              name
+              avatar { url }
+            }
+          }
           featuredImage { node { sourceUrl } }
           categories { nodes { name } }
           tags { nodes { name } }
@@ -85,7 +90,6 @@ async function getPlayerContent(playerName) {
       if (cats.includes('basketball')) sport = 'Basketball';
       if (cats.includes('baseball')) sport = 'Baseball';
 
-      // FIX: Timezone-proof date formatting to eliminate Hydration Error #418
       const d = new Date(post.date);
       const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
@@ -94,9 +98,14 @@ async function getPlayerContent(playerName) {
         id: post.id,
         title: post.title,
         excerpt: post.excerpt,
-        content: post.content, // FIX: Pass content into the object!
+        content: post.content,
         date: safeDateString,
         imageUrl: post.featuredImage?.node?.sourceUrl || null,
+        // FIX 1: Map the author data
+        author: {
+          name: post.author?.node?.name || null,
+          avatar: post.author?.node?.avatar?.url || null
+        },
         type,
         sport,
         slug: post.slug
