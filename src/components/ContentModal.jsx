@@ -307,8 +307,8 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
         </div>
         
         <div className="relative flex-1">
-          {/* We wrap the memoized article content inside the scaling div. The HTML itself will never re-render! */}
-          <div className={`${showGating ? 'max-h-[500px] overflow-hidden' : ''}`}>
+          {/* DOUBLE THE VISIBLE HEIGHT: Increased from 500px to 1000px */}
+          <div className={`${showGating ? 'max-h-[1000px] overflow-hidden' : ''}`}>
              <ArticleContent content={selectedItem.content} sportThemeText={themes[selectedItem.sport]?.text || 'text-white'} />
           </div>
           
@@ -321,7 +321,7 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
         {/* ROADBLOCK UI */}
         {showGating && (
           <div className="mt-2 pb-8 flex flex-col items-center justify-center relative z-20 animate-in fade-in slide-in-from-bottom-8 duration-500">
-            {/* CORRECTED CONIC GRADIENT BORDER: Blue -> Red (#c30b16) -> Red -> Orange -> Blue */}
+            {/* CONIC GRADIENT BORDER: Blue -> Red (#c30b16) -> Red -> Orange -> Blue */}
             <div className="p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] max-w-md w-full shadow-2xl">
               <div className="bg-[#1a1a1a] p-8 rounded-[22px] text-center w-full h-full">
                 <div className="w-12 h-12 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
