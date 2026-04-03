@@ -67,13 +67,14 @@ const DynamicAd = ({ ad }) => {
   );
 };
 
-// --- MEMOIZED ARTICLE CONTENT (Now with Custom Typography Engine!) ---
+// --- MEMOIZED ARTICLE CONTENT TO PROTECT GETTY IFRAMES & SWAP LINKS ---
 const ArticleContent = React.memo(function ArticleContent({ content, sportThemeHex }) {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       const container = document.getElementById('article-content-container');
       if (!container) return;
 
+      // 1. RE-EVALUATE SCRIPTS
       const scripts = container.getElementsByTagName('script');
       Array.from(scripts).forEach((oldScript) => {
         const newScript = document.createElement('script');
@@ -86,6 +87,7 @@ const ArticleContent = React.memo(function ArticleContent({ content, sportThemeH
         oldScript.parentNode.replaceChild(newScript, oldScript);
       });
 
+      // 2. TRIGGER GETTY EMBEDS
       if (container.querySelector('.gettyimages-embed') && !document.getElementById('getty-script')) {
         const script = document.createElement('script');
         script.id = 'getty-script';
@@ -95,6 +97,25 @@ const ArticleContent = React.memo(function ArticleContent({ content, sportThemeH
       } else if (window.getty) {
         try { window.getty.Init(); } catch(e) {}
       }
+
+      // 3. INTERNAL LINK AUTOMATION (PFR -> Internal Player Hub)
+      const headers = container.querySelectorAll('h1, h2, h3, h4, h5, h6');
+      headers.forEach(header => {
+        const links = header.querySelectorAll('a');
+        links.forEach(link => {
+          // If the link goes to Pro Football Reference
+          if (link.href.includes('pro-football-reference.com')) {
+            const playerName = link.textContent.trim();
+            // Convert "Justin Jefferson" to "justin-jefferson"
+            const slug = playerName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            // Reroute it internally!
+            link.href = `/player/${slug}`;
+            link.removeAttribute('target'); // Opens in same window
+            link.title = `View ${playerName}'s Player Profile`;
+          }
+        });
+      });
+
     }, 100);
 
     return () => clearTimeout(timeoutId);
@@ -161,7 +182,6 @@ const YouTubePlayer = ({ videoId, className }) => {
                 if (playerRef.current && playerRef.current.getCurrentTime) {
                   const time = playerRef.current.getCurrentTime();
                   const duration = playerRef.current.getDuration();
-                  // Wipe tracking if they finished the video (within 2 seconds of the end)
                   if (duration && duration - time < 2) {
                     localStorage.removeItem(`yt-time-${videoId}`);
                   } else {
@@ -171,7 +191,6 @@ const YouTubePlayer = ({ videoId, className }) => {
               }, 1000);
             } else {
               clearInterval(timeTracker);
-              // Clean up if it explicitly ended
               if (event.data === window.YT.PlayerState.ENDED) {
                  localStorage.removeItem(`yt-time-${videoId}`);
               }
@@ -181,7 +200,6 @@ const YouTubePlayer = ({ videoId, className }) => {
       });
     };
 
-    // Load YT Script safely if it doesn't exist
     if (!window.YT) {
       window.YTReadyCallbacks = window.YTReadyCallbacks || [];
       window.YTReadyCallbacks.push(loadPlayer);
@@ -270,7 +288,7 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
           <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} />
         </div>
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-6 leading-tight drop-shadow-lg" dangerouslySetInnerHTML={{ __html: selectedItem.title }} />
-        <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed [&_strong]:font-bold [&_strong]:text-gray-100 [&_h1]:text-white [&_h1]:font-black [&_h2]:text-white [&_h2]:font-black [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
+        <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
       </div>
     </div>
     
@@ -401,7 +419,7 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
         <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} btnSize="w-8 h-8" iconSize={14} />
       </div>
       <h1 className="text-2xl sm:text-3xl font-black text-white mb-6 leading-tight drop-shadow-lg" dangerouslySetInnerHTML={{ __html: selectedItem.title }} />
-      <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-1 pb-4 [&_strong]:font-bold [&_strong]:text-gray-100 [&_h1]:text-white [&_h1]:font-black [&_h2]:text-white [&_h2]:font-black [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
+      <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-1 pb-4" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
     </div>
   </div>
 );
