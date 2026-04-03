@@ -1,8 +1,8 @@
 "use client";
 import React, { useState } from 'react';
-import Header from '../../../../components/Header'; // Adjust path based on your folder structure
-import Sidebar from '../../../../components/Sidebar'; // Adjust path
-import ContentModal from '../../../../components/ContentModal'; // Adjust path
+import Header from '../../../components/Header'; // Corrected path (3 dots)
+import Sidebar from '../../../components/Sidebar'; // Corrected path (3 dots)
+import ContentModal from '../../../components/ContentModal'; // Corrected path (3 dots)
 import { PlayCircle, FileText, Mic, Video, User } from 'lucide-react';
 
 export default function PlayerClient({ playerName, rawSlug, espnData, content, proToolsMenu, connectMenu }) {
@@ -82,7 +82,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                   {content.map(item => (
                     <div 
                       key={item.id} 
-                      onClick={() => setSelectedItem(item)} // FIX: Open Modal on click
+                      onClick={() => setSelectedItem(item)} 
                       className="group cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-colors shadow-xl flex flex-col h-full"
                     >
                       <div className="w-full aspect-video bg-gray-900 relative overflow-hidden shrink-0">

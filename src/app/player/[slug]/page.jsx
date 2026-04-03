@@ -1,5 +1,5 @@
 import React from 'react';
-import { getMenuBySlug } from '../../../../components/utils/api'; // Adjust path if needed based on your structure
+import { getMenuBySlug } from '../../../utils/api'; // Corrected path (3 dots)
 import PlayerClient from './PlayerClient';
 
 // --- DATA FETCHING ---
@@ -26,7 +26,7 @@ async function getESPNPlayerData(playerName) {
     // Extract ID
     const urlParts = athleteResult.url.split('/');
     const idIndex = urlParts.indexOf('id') + 1;
-    const playerId = urlParts[idIndex] || athleteResult.id; // Fallback to object id if URL extraction fails
+    const playerId = urlParts[idIndex] || athleteResult.id;
 
     if (!playerId) {
        console.log("Could not extract player ID from URL:", athleteResult.url);
@@ -121,9 +121,17 @@ export default async function PlayerPage({ params }) {
     getPlayerContent(playerName)
   ]);
 
-  // We fetch menus so Sidebar renders properly
-  const proToolsMenu = await getMenuBySlug('pro-tools-football');
-  const connectMenu = await getMenuBySlug('connect-football');
+  // Handle missing API functions gracefully if getMenuBySlug isn't exported yet
+  let proToolsMenu = [];
+  let connectMenu = [];
+  try {
+    if (typeof getMenuBySlug === 'function') {
+      proToolsMenu = await getMenuBySlug('pro-tools-football');
+      connectMenu = await getMenuBySlug('connect-football');
+    }
+  } catch(e) {
+    console.error("Menu fetch failed:", e);
+  }
 
   return (
     <PlayerClient 
