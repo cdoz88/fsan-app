@@ -196,10 +196,10 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   };
 
   const renderStatistics = () => {
-    // 1. Safely grab the raw statistics payload
-    let rawStats = espnData?.overview?.statistics;
+    // 1. Gather stats from either standard endpoint or deep overview endpoint
+    const baseStats = espnData?.overview?.statistics || espnData?.statistics;
     
-    if (!rawStats) {
+    if (!baseStats) {
       return (
         <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-2xl bg-[#111]">
           Detailed statistics are currently unavailable for this athlete.
@@ -207,10 +207,22 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       );
     }
 
-    // 2. Normalization: ESPN sometimes returns an object of stat blocks instead of an array!
-    const statsArray = Array.isArray(rawStats) ? rawStats : Object.values(rawStats);
+    // 2. Intelligent Extraction: ESPN buries NFL stats inside a 'categories' object, but puts NBA stats right at the root.
+    let categories = [];
+    if (Array.isArray(baseStats)) {
+      categories = baseStats;
+    } else if (Array.isArray(baseStats?.categories)) {
+      categories = baseStats.categories;
+    } else if (Array.isArray(baseStats?.splits?.categories)) {
+      categories = baseStats.splits.categories;
+    } else if (typeof baseStats === 'object') {
+      categories = Object.values(baseStats);
+    }
 
-    if (statsArray.length === 0) {
+    // Flatten it just in case ESPN nested it in an array wrapper
+    categories = categories.flat();
+
+    if (!categories || categories.length === 0) {
       return (
         <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-2xl bg-[#111]">
           Detailed statistics are currently unavailable for this athlete.
@@ -220,23 +232,42 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
 
     return (
       <div className="flex flex-col gap-8">
-        {statsArray.map((statCategory, idx) => {
-          const labels = statCategory?.labels;
-          const stats = statCategory?.stats;
+        {categories.map((category, idx) => {
+          // Normalize names and titles 
+          const labels = category?.labels || category?.names || category?.descriptions;
+          const stats = category?.stats || category?.displayValues || category?.values;
+          const title = category?.text || category?.name || category?.title || category?.displayName || "Season Stats";
 
-          // 3. Safety Check: If the category is missing the standard arrays, skip it to prevent crashes
-          if (!Array.isArray(labels) || !Array.isArray(stats)) return null;
+          // ULTIMATE FAILSAFE: If we still don't have the arrays needed to build a table, 
+          // we print the raw JSON inside a card instead of letting the screen go blank!
+          if (!Array.isArray(labels) || !stats) {
+             if (typeof category !== 'object' || category === null) return null;
+             return (
+               <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg p-6">
+                 <h3 className="font-black text-white text-lg tracking-wide uppercase mb-4 border-b border-gray-800 pb-2">{title}</h3>
+                 <pre className="text-gray-400 text-xs overflow-x-auto">{JSON.stringify(category, null, 2)}</pre>
+               </div>
+             );
+          }
 
-          // 4. Row Normalization: ESPN sometimes returns a single flat array for one row of stats, 
-          // and sometimes an array of arrays for multiple rows.
-          const isMultiRow = Array.isArray(stats[0]);
-          const rows = isMultiRow ? stats : [stats];
+          // 3. Row Normalization: Handle single rows, multi-rows, and rows buried in extra objects
+          let rows = [];
+          if (Array.isArray(stats)) {
+            if (Array.isArray(stats[0])) {
+               rows = stats; // Perfect multi-row table
+            } else if (typeof stats[0] === 'object' && stats[0] !== null && stats[0].stats) {
+               // Array of objects (Sometimes ESPN packages rows as distinct objects)
+               rows = stats.map(s => s.stats || Object.values(s));
+            } else {
+               rows = [stats]; // Standard single row table
+            }
+          }
 
           return (
             <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
               <div className="bg-[#222] px-6 py-4 border-b border-gray-800">
                 <h3 className="font-black text-white text-lg tracking-wide uppercase">
-                  {statCategory.text || statCategory.name || "Season Stats"}
+                  {title}
                 </h3>
               </div>
               
@@ -252,11 +283,18 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                   <tbody className="divide-y divide-gray-800">
                     {rows.map((row, rowIdx) => (
                       <tr key={rowIdx} className="hover:bg-[#222] transition-colors">
-                        {labels.map((_, colIdx) => (
-                           <td key={colIdx} className={`px-6 py-4 text-gray-300 ${colIdx === 0 ? 'font-bold text-white' : ''}`}>
-                             {row[colIdx] ?? '-'}
-                           </td>
-                        ))}
+                        {labels.map((_, colIdx) => {
+                           let val = row[colIdx];
+                           // Deep object unpack (ESPN sometimes sends objects instead of string values)
+                           if (val && typeof val === 'object') {
+                               val = val.displayValue || val.value || JSON.stringify(val);
+                           }
+                           return (
+                             <td key={colIdx} className={`px-6 py-4 text-gray-300 ${colIdx === 0 ? 'font-bold text-white' : ''}`}>
+                               {val ?? '-'}
+                             </td>
+                           );
+                        })}
                       </tr>
                     ))}
                   </tbody>
