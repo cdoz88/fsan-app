@@ -45,8 +45,8 @@ async function getESPNPlayerData(playerName) {
       sportString = 'football';
       leagueString = leagueCode === '28' ? 'nfl' : 'college-football';
     } 
-    // 46 = Basketball, 46 = NBA
-    else if (sportCode === '46') {
+    // 40 = Basketball, 46 = NBA (FIXED!)
+    else if (sportCode === '40') {
       sportString = 'basketball';
       leagueString = leagueCode === '46' ? 'nba' : (leagueCode === '54' ? 'wnba' : 'mens-college-basketball');
     }
