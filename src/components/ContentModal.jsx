@@ -67,8 +67,8 @@ const DynamicAd = ({ ad }) => {
   );
 };
 
-// --- MEMOIZED ARTICLE CONTENT TO PROTECT GETTY IFRAMES ---
-const ArticleContent = React.memo(function ArticleContent({ content, sportThemeText }) {
+// --- MEMOIZED ARTICLE CONTENT (Now with Custom Typography Engine!) ---
+const ArticleContent = React.memo(function ArticleContent({ content, sportThemeHex }) {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       const container = document.getElementById('article-content-container');
@@ -103,14 +103,30 @@ const ArticleContent = React.memo(function ArticleContent({ content, sportThemeT
   return (
     <div 
       id="article-content-container" 
-      className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${sportThemeText} hover:prose-a:text-white`} 
+      style={{ '--theme-color': sportThemeHex }}
+      className={`
+        text-gray-300 text-lg leading-relaxed
+        [&_p]:mb-6
+        [&_h1]:text-4xl [&_h1]:font-black [&_h1]:text-white [&_h1]:mb-6 [&_h1]:mt-10
+        [&_h2]:text-3xl [&_h2]:font-black [&_h2]:text-white [&_h2]:mb-5 [&_h2]:mt-8
+        [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:text-white [&_h3]:mb-4 [&_h3]:mt-6
+        [&_h4]:text-xl [&_h4]:font-bold [&_h4]:text-white [&_h4]:mb-3 [&_h4]:mt-5
+        [&_strong]:font-bold [&_strong]:text-gray-100
+        [&_b]:font-bold [&_b]:text-gray-100
+        [&_em]:italic 
+        [&_i]:italic
+        [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-6 [&_ul]:space-y-2
+        [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-6 [&_ol]:space-y-2
+        [&_blockquote]:border-l-4 [&_blockquote]:border-gray-500 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-400 [&_blockquote]:my-6
+        [&_a]:underline [&_a]:transition-colors [&_a]:text-[var(--theme-color)] hover:[&_a]:text-white
+        [&_img]:rounded-xl [&_img]:shadow-xl [&_img]:my-8 [&_img]:w-full [&_img]:object-cover
+      `} 
       dangerouslySetInnerHTML={{ __html: content }} 
     />
   );
 });
 
 // --- SMART YOUTUBE PLAYER COMPONENT ---
-// Tracks playback progress and restores time automatically
 const YouTubePlayer = ({ videoId, className }) => {
   const containerRef = useRef(null);
   const playerRef = useRef(null);
@@ -201,7 +217,6 @@ const YouTubePlayer = ({ videoId, className }) => {
   return <div className={className} ref={containerRef}></div>;
 };
 
-
 // --- VIDEO GATING OVERLAY ---
 const VideoGatingOverlay = ({ openAuth, onSkip }) => (
   <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center animate-in fade-in duration-300">
@@ -255,7 +270,7 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
           <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} />
         </div>
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-6 leading-tight drop-shadow-lg" dangerouslySetInnerHTML={{ __html: selectedItem.title }} />
-        <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
+        <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed [&_strong]:font-bold [&_strong]:text-gray-100 [&_h1]:text-white [&_h1]:font-black [&_h2]:text-white [&_h2]:font-black [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
       </div>
     </div>
     
@@ -339,7 +354,7 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
           <div className="mb-6 pb-6 border-b border-gray-800">
             <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} btnSize="w-10 h-10" iconSize={16} />
           </div>
-          <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-1" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
+          <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-1 [&_strong]:font-bold [&_strong]:text-gray-100 [&_h1]:text-white [&_h1]:font-black [&_h2]:text-white [&_h2]:font-black [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
         </div>
       </div>
       <div className="bg-[#1a1a1a] border-t border-gray-800 shrink-0 flex flex-col">
@@ -386,7 +401,7 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
         <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} btnSize="w-8 h-8" iconSize={14} />
       </div>
       <h1 className="text-2xl sm:text-3xl font-black text-white mb-6 leading-tight drop-shadow-lg" dangerouslySetInnerHTML={{ __html: selectedItem.title }} />
-      <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-1 pb-4" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
+      <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-1 pb-4 [&_strong]:font-bold [&_strong]:text-gray-100 [&_h1]:text-white [&_h1]:font-black [&_h2]:text-white [&_h2]:font-black [&_a]:underline" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
     </div>
   </div>
 );
@@ -432,7 +447,7 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
         
         <div className="relative flex-1" key={`article-auth-${isAuthed}`}>
           <div className={`${showGating ? 'max-h-[1000px] overflow-hidden' : ''}`}>
-             <ArticleContent content={selectedItem.content} sportThemeText={themes[selectedItem.sport]?.text || 'text-white'} />
+             <ArticleContent content={selectedItem.content} sportThemeHex={themes[selectedItem.sport]?.hex || '#ffffff'} />
           </div>
           
           {showGating && (
