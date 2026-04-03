@@ -224,25 +224,44 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
 
 // --- ARTICLE GATING IMPLEMENTATION ---
 const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isAuthed, authStatus, openAuth }) => {
-  
-  useEffect(() => {
-    // Force a re-mount of Getty Embeds specifically when article loads or auth changes
-    const timeoutId = setTimeout(() => {
-       if (selectedItem?.content?.includes('gettyimages-embed')) {
-          const existingScript = document.getElementById('getty-embed-script');
-          if (existingScript) existingScript.remove();
-          
-          const script = document.createElement('script');
-          script.id = 'getty-embed-script';
-          script.src = 'https://embed.gettyimages.com/embed/5/2';
-          script.async = true;
-          document.body.appendChild(script);
-       }
-    }, 50);
-    return () => clearTimeout(timeoutId);
-  }, [selectedItem, isAuthed, authStatus]);
+  const [mounted, setMounted] = useState(false);
 
-  // FIX: Explicitly wait for session loading to prevent flashing for logged in users!
+  useEffect(() => {
+    setMounted(true);
+    
+    // Getty script needs a stable DOM and manual execution for dynamic content
+    const runScripts = () => {
+      const container = document.getElementById('article-content-container');
+      if (!container) return;
+
+      const scripts = container.getElementsByTagName('script');
+      Array.from(scripts).forEach((oldScript) => {
+        const newScript = document.createElement('script');
+        Array.from(oldScript.attributes).forEach((attr) => {
+          newScript.setAttribute(attr.name, attr.value);
+        });
+        if (oldScript.innerHTML) {
+          newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+        }
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+      });
+
+      // Dedicated Getty Trigger
+      if (container.querySelector('.gettyimages-embed') && !document.getElementById('getty-script')) {
+        const script = document.createElement('script');
+        script.id = 'getty-script';
+        script.src = "https://embed.gettyimages.com/embed/5/2";
+        script.async = true;
+        document.body.appendChild(script);
+      }
+    };
+
+    // Delay slightly to ensure React has painted the initial dangerouslySetInnerHTML
+    const timeoutId = setTimeout(runScripts, 100);
+    return () => clearTimeout(timeoutId);
+  }, [selectedItem, isAuthed]);
+
+  // FIX: Explicitly wait for 'unauthenticated' status to avoid roadblock flashing for logged-in users
   const showGating = !isAuthed && authStatus === 'unauthenticated';
 
   return (
@@ -271,21 +290,20 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
           <div className="ml-auto"><ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} /></div>
         </div>
         
-        {/* KEY-BASED STABILITY: Changing the key forces a hard reset of this div, which lets Getty scripts work correctly */}
-        <div className="relative flex-1" key={`article-auth-${isAuthed}`}>
+        <div className="relative flex-1">
           <div 
             id="article-content-container" 
-            className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport]?.text || 'text-white'} hover:prose-a:text-white transition-opacity duration-300 ${showGating ? 'max-h-[500px] overflow-hidden' : ''}`} 
-            dangerouslySetInnerHTML={{ __html: selectedItem.content }} 
+            className={`prose prose-invert prose-lg max-w-none text-gray-300 space-y-6 prose-a:${themes[selectedItem.sport]?.text || 'text-white'} hover:prose-a:text-white transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'} ${showGating ? 'max-h-[500px] overflow-hidden' : ''}`} 
+            dangerouslySetInnerHTML={{ __html: mounted ? selectedItem.content : "" }} 
           />
           
           {showGating && (
-            <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#121212] via-[#121212]/90 to-transparent z-10 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-[#121212] via-[#121212]/90 to-transparent z-10 pointer-events-none" />
           )}
         </div>
 
         {showGating && (
-          <div className="mt-4 pb-8 flex flex-col items-center justify-center relative z-20 animate-in fade-in slide-in-from-bottom-8 duration-500">
+          <div className="mt-2 pb-8 flex flex-col items-center justify-center relative z-20 animate-in fade-in slide-in-from-bottom-8 duration-500">
             {/* CONIC GRADIENT BORDER: Blue -> Red (#c30b16) -> Orange -> Blue */}
             <div className="p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_33%,#f5a623_66%,#1b75bb_100%)] max-w-md w-full shadow-2xl">
               <div className="bg-[#1a1a1a] p-8 rounded-[22px] text-center w-full h-full">
