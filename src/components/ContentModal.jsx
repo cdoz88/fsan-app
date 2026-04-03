@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, ArrowLeft, PlayCircle, Link as LinkIcon, Check, ChevronRight, Lock, Loader2 } from 'lucide-react';
 import { Facebook, XIcon, Reddit } from './Icons.jsx';
 import { themes } from '../utils/theme.js';
@@ -70,7 +70,6 @@ const DynamicAd = ({ ad }) => {
 // --- MEMOIZED ARTICLE CONTENT TO PROTECT GETTY IFRAMES ---
 const ArticleContent = React.memo(function ArticleContent({ content, sportThemeText }) {
   useEffect(() => {
-    // Only run this once when the content mounts
     const timeoutId = setTimeout(() => {
       const container = document.getElementById('article-content-container');
       if (!container) return;
@@ -110,7 +109,100 @@ const ArticleContent = React.memo(function ArticleContent({ content, sportThemeT
   );
 });
 
-// --- NEW: VIDEO GATING OVERLAY ---
+// --- SMART YOUTUBE PLAYER COMPONENT ---
+// Tracks playback progress and restores time automatically
+const YouTubePlayer = ({ videoId, className }) => {
+  const containerRef = useRef(null);
+  const playerRef = useRef(null);
+
+  useEffect(() => {
+    let timeTracker;
+
+    const loadPlayer = () => {
+      if (!containerRef.current) return;
+      
+      const savedTime = localStorage.getItem(`yt-time-${videoId}`);
+      const startSeconds = savedTime ? Math.floor(Number(savedTime)) : 0;
+
+      const playerDiv = document.createElement('div');
+      containerRef.current.appendChild(playerDiv);
+
+      playerRef.current = new window.YT.Player(playerDiv, {
+        videoId: videoId,
+        width: '100%',
+        height: '100%',
+        playerVars: {
+          autoplay: 1,
+          start: startSeconds,
+          playsinline: 1,
+          rel: 0,
+          modestbranding: 1
+        },
+        events: {
+          onStateChange: (event) => {
+            if (event.data === window.YT.PlayerState.PLAYING) {
+              timeTracker = setInterval(() => {
+                if (playerRef.current && playerRef.current.getCurrentTime) {
+                  const time = playerRef.current.getCurrentTime();
+                  const duration = playerRef.current.getDuration();
+                  // Wipe tracking if they finished the video (within 2 seconds of the end)
+                  if (duration && duration - time < 2) {
+                    localStorage.removeItem(`yt-time-${videoId}`);
+                  } else {
+                    localStorage.setItem(`yt-time-${videoId}`, time);
+                  }
+                }
+              }, 1000);
+            } else {
+              clearInterval(timeTracker);
+              // Clean up if it explicitly ended
+              if (event.data === window.YT.PlayerState.ENDED) {
+                 localStorage.removeItem(`yt-time-${videoId}`);
+              }
+            }
+          }
+        }
+      });
+    };
+
+    // Load YT Script safely if it doesn't exist
+    if (!window.YT) {
+      window.YTReadyCallbacks = window.YTReadyCallbacks || [];
+      window.YTReadyCallbacks.push(loadPlayer);
+
+      if (!document.getElementById('yt-api-script')) {
+        const tag = document.createElement('script');
+        tag.id = 'yt-api-script';
+        tag.src = 'https://www.youtube.com/iframe_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        window.onYouTubeIframeAPIReady = () => {
+          window.YTReadyCallbacks.forEach(cb => cb());
+        };
+      }
+    } else if (!window.YT.Player) {
+      window.YTReadyCallbacks.push(loadPlayer);
+    } else {
+      loadPlayer();
+    }
+
+    return () => {
+      clearInterval(timeTracker);
+      if (playerRef.current && playerRef.current.destroy) {
+         playerRef.current.destroy();
+      }
+      if (containerRef.current) {
+         containerRef.current.innerHTML = '';
+      }
+    };
+  }, [videoId]);
+
+  return <div className={className} ref={containerRef}></div>;
+};
+
+
+// --- VIDEO GATING OVERLAY ---
 const VideoGatingOverlay = ({ openAuth, onSkip }) => (
   <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center animate-in fade-in duration-300">
     <div className="p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] max-w-[320px] w-full shadow-2xl">
@@ -141,13 +233,12 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
     <div className="flex-1 lg:w-3/4 flex flex-col bg-[#121212] overflow-y-auto lg:overflow-hidden min-h-0">
       <div className="w-full aspect-video bg-black flex items-center justify-center relative border-b border-gray-800 overflow-hidden shrink-0">
          
-         {/* THE VIDEO GATING OVERLAY */}
          {(!isAuthed && authStatus === 'unauthenticated' && videoOverlayActive) && (
            <VideoGatingOverlay openAuth={openAuth} onSkip={() => setVideoOverlayActive(false)} />
          )}
 
          {selectedItem.youtubeId ? (
-           <iframe src={`https://www.youtube.com/embed/${selectedItem.youtubeId}?autoplay=1`} className="absolute inset-0 w-full h-full" frameBorder="0" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen></iframe>
+           <YouTubePlayer key={selectedItem.youtubeId} videoId={selectedItem.youtubeId} className="absolute inset-0 w-full h-full" />
          ) : (
            <>
              {selectedItem.imageUrl && <img src={selectedItem.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm" alt="" />}
@@ -225,13 +316,12 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
         <div className="lg:w-[400px] xl:w-[450px] shrink-0 bg-black flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-800 p-4 sm:p-6 relative min-h-0">
           <div className="w-full max-w-[260px] sm:max-w-[320px] lg:max-w-none lg:w-auto lg:h-full aspect-[9/16] bg-gray-900 rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800 mx-auto">
              
-             {/* THE VIDEO GATING OVERLAY */}
              {(!isAuthed && authStatus === 'unauthenticated' && videoOverlayActive) && (
                <VideoGatingOverlay openAuth={openAuth} onSkip={() => setVideoOverlayActive(false)} />
              )}
 
              {selectedItem.youtubeId ? (
-               <iframe src={`https://www.youtube.com/embed/${selectedItem.youtubeId}?autoplay=1`} className="absolute inset-0 w-full h-full" frameBorder="0" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen></iframe>
+               <YouTubePlayer key={selectedItem.youtubeId} videoId={selectedItem.youtubeId} className="absolute inset-0 w-full h-full" />
              ) : (
                <>
                  {selectedItem.imageUrl && <img src={selectedItem.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm" alt="" />}
@@ -340,7 +430,7 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
           <div className="ml-auto"><ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} /></div>
         </div>
         
-        <div className="relative flex-1">
+        <div className="relative flex-1" key={`article-auth-${isAuthed}`}>
           <div className={`${showGating ? 'max-h-[1000px] overflow-hidden' : ''}`}>
              <ArticleContent content={selectedItem.content} sportThemeText={themes[selectedItem.sport]?.text || 'text-white'} />
           </div>
@@ -388,7 +478,6 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authView, setAuthView] = useState('subscribe');
   
-  // NEW: Timer State for Video Overlays
   const [videoOverlayActive, setVideoOverlayActive] = useState(true);
 
   const openAuth = (view) => {
@@ -396,7 +485,6 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
     setIsAuthOpen(true);
   };
 
-  // Lock body scroll safely
   useEffect(() => {
     if (selectedItem && !isAuthOpen) { 
       document.body.style.overflow = 'hidden'; 
@@ -405,23 +493,20 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
     }
   }, [selectedItem, isAuthOpen]);
 
-  // Reset video overlay whenever a new video is clicked
   useEffect(() => {
     setVideoOverlayActive(true);
   }, [selectedItem]);
 
-  // 3-Minute "Slight Annoyance" Timer Logic
   useEffect(() => {
     let interval;
     if (!isAuthed && status === 'unauthenticated' && !videoOverlayActive) {
       interval = setInterval(() => {
         setVideoOverlayActive(true);
-      }, 180000); // 180,000ms = 3 minutes
+      }, 180000); 
     }
     return () => clearInterval(interval);
   }, [isAuthed, status, videoOverlayActive]);
 
-  // Fetch Ads
   useEffect(() => {
     const fetchAds = async () => {
       const query = `
