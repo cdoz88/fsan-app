@@ -97,8 +97,10 @@ async function getPlayerContent(playerName) {
 // --- SERVER COMPONENT ---
 
 export default async function PlayerPage({ params }) {
+  // Await the params object (Required in Next.js 15+)
+  const { slug: rawSlug } = await params;
+  
   // Convert "jalen-hurts" back into "Jalen Hurts"
-  const rawSlug = params.slug;
   const playerName = rawSlug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
   // Fetch data concurrently for speed
