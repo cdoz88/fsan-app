@@ -3,12 +3,10 @@ import React, { useState, useEffect } from 'react';
 import Header from '../../../components/Header'; 
 import Sidebar from '../../../components/Sidebar'; 
 import ContentModal from '../../../components/ContentModal'; 
-import { PlayCircle, FileText, Mic, Video, User, Activity, AlertCircle, FileSignature, Info, LayoutGrid } from 'lucide-react';
+import { PlayCircle, FileText, Mic, Video, User, Activity, AlertCircle, FileSignature, Info, LayoutGrid, Check } from 'lucide-react';
 
 export default function PlayerClient({ playerName, rawSlug, espnData, content, proToolsMenu, connectMenu }) {
   const [selectedItem, setSelectedItem] = useState(null);
-  
-  // NEW: State for the Active Tab
   const [activeTab, setActiveTab] = useState('Content');
 
   // Shallow Routing Logic
@@ -151,7 +149,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   };
 
   const renderContract = () => {
-    // ESPN often obscures contract data in the public API, but we display it if it's in the payload
     const contract = espnData?.contract || espnData?.overview?.contract;
     
     if (!contract && !espnData?.draft) {
@@ -199,9 +196,21 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   };
 
   const renderStatistics = () => {
-    const statsArray = espnData?.overview?.statistics;
+    // 1. Safely grab the raw statistics payload
+    let rawStats = espnData?.overview?.statistics;
     
-    if (!statsArray || statsArray.length === 0) {
+    if (!rawStats) {
+      return (
+        <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-2xl bg-[#111]">
+          Detailed statistics are currently unavailable for this athlete.
+        </div>
+      );
+    }
+
+    // 2. Normalization: ESPN sometimes returns an object of stat blocks instead of an array!
+    const statsArray = Array.isArray(rawStats) ? rawStats : Object.values(rawStats);
+
+    if (statsArray.length === 0) {
       return (
         <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-2xl bg-[#111]">
           Detailed statistics are currently unavailable for this athlete.
@@ -211,36 +220,51 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
 
     return (
       <div className="flex flex-col gap-8">
-        {statsArray.map((statCategory, idx) => (
-          <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
-            <div className="bg-[#222] px-6 py-4 border-b border-gray-800">
-              <h3 className="font-black text-white text-lg tracking-wide uppercase">{statCategory.text || "Season Stats"}</h3>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-[#151515] text-gray-400 font-bold text-xs uppercase tracking-wider">
-                  <tr>
-                    {statCategory.labels.map((label, labelIdx) => (
-                      <th key={labelIdx} className="px-6 py-4 border-b border-gray-800">{label}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800">
-                  {statCategory.stats.map((statRow, rowIdx) => (
-                    <tr key={rowIdx} className="hover:bg-[#222] transition-colors">
-                      {statCategory.labels.map((_, colIdx) => (
-                         <td key={colIdx} className={`px-6 py-4 text-gray-300 ${colIdx === 0 ? 'font-bold text-white' : ''}`}>
-                           {statRow[colIdx] || '-'}
-                         </td>
+        {statsArray.map((statCategory, idx) => {
+          const labels = statCategory?.labels;
+          const stats = statCategory?.stats;
+
+          // 3. Safety Check: If the category is missing the standard arrays, skip it to prevent crashes
+          if (!Array.isArray(labels) || !Array.isArray(stats)) return null;
+
+          // 4. Row Normalization: ESPN sometimes returns a single flat array for one row of stats, 
+          // and sometimes an array of arrays for multiple rows.
+          const isMultiRow = Array.isArray(stats[0]);
+          const rows = isMultiRow ? stats : [stats];
+
+          return (
+            <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
+              <div className="bg-[#222] px-6 py-4 border-b border-gray-800">
+                <h3 className="font-black text-white text-lg tracking-wide uppercase">
+                  {statCategory.text || statCategory.name || "Season Stats"}
+                </h3>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm whitespace-nowrap">
+                  <thead className="bg-[#151515] text-gray-400 font-bold text-xs uppercase tracking-wider">
+                    <tr>
+                      {labels.map((label, labelIdx) => (
+                        <th key={labelIdx} className="px-6 py-4 border-b border-gray-800">{label}</th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800">
+                    {rows.map((row, rowIdx) => (
+                      <tr key={rowIdx} className="hover:bg-[#222] transition-colors">
+                        {labels.map((_, colIdx) => (
+                           <td key={colIdx} className={`px-6 py-4 text-gray-300 ${colIdx === 0 ? 'font-bold text-white' : ''}`}>
+                             {row[colIdx] ?? '-'}
+                           </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
