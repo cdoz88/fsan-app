@@ -74,9 +74,9 @@ async function getESPNPlayerData(playerName) {
 async function getPlayerContent(playerName) {
   const exactMatchQuery = `\\"${playerName}\\"`;
   
-  // Expanded GraphQL query to fetch both standard posts and dedicated video CPTs
-  const query = `
-    query GetPlayerContent {
+  // 1. Independent Posts Query
+  const postsQuery = `
+    query GetPlayerPosts {
       posts(where: {search: "${exactMatchQuery}"}, first: 50) {
         nodes {
           id
@@ -85,16 +85,17 @@ async function getPlayerContent(playerName) {
           content 
           date
           slug
-          author {
-            node {
-              name
-              avatar { url }
-            }
-          }
+          author { node { name avatar { url } } }
           featuredImage { node { sourceUrl } }
           categories { nodes { name } }
         }
       }
+    }
+  `;
+
+  // 2. Independent Videos Query
+  const videosQuery = `
+    query GetPlayerVideos {
       videos(where: {search: "${exactMatchQuery}"}, first: 50) {
         nodes {
           id
@@ -109,69 +110,83 @@ async function getPlayerContent(playerName) {
     }
   `;
 
-  try {
-    const res = await fetch('https://admin.fsan.com/graphql', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
-      next: { revalidate: 60 }
-    });
-    
-    const json = await res.json();
-    const posts = json?.data?.posts?.nodes || [];
-    const videos = json?.data?.videos?.nodes || [];
-
-    const formatItem = (item, defaultType) => {
-      const cats = item.categories?.nodes?.map(c => c.name.toLowerCase()) || [];
+  // Helper function to safely execute a GraphQL query without crashing everything else
+  const fetchSafeGraphQL = async (queryStr) => {
+    try {
+      const res = await fetch('https://admin.fsan.com/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: queryStr }),
+        next: { revalidate: 60 }
+      });
+      const json = await res.json();
       
-      let type = defaultType;
-      // Allow WP Categories to override standard post types if needed
-      if (defaultType === 'article') {
-        if (cats.includes('video') || cats.includes('videos')) type = 'video';
-        else if (cats.includes('short') || cats.includes('shorts')) type = 'short';
-        else if (cats.includes('podcast') || cats.includes('podcasts')) type = 'podcast';
+      // If there are GraphQL errors (e.g., the 'videos' CPT doesn't exist), return an empty array
+      if (json.errors) {
+        console.warn("GraphQL Warning (Safe Catch):", json.errors[0].message);
+        return [];
       }
+      
+      // Dynamically grab the nodes whether they are 'posts' or 'videos'
+      const dataKey = Object.keys(json.data)[0];
+      return json?.data?.[dataKey]?.nodes || [];
+    } catch (error) {
+      console.error("Network Error fetching GraphQL:", error);
+      return [];
+    }
+  };
 
-      let sport = 'All';
-      if (cats.includes('football')) sport = 'Football';
-      if (cats.includes('basketball')) sport = 'Basketball';
-      if (cats.includes('baseball')) sport = 'Baseball';
+  // Run both queries in parallel safely
+  const [posts, videos] = await Promise.all([
+    fetchSafeGraphQL(postsQuery),
+    fetchSafeGraphQL(videosQuery)
+  ]);
 
-      const d = new Date(item.date);
-      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
-
-      return {
-        id: item.id,
-        title: item.title,
-        excerpt: item.excerpt || '',
-        content: item.content,
-        date: safeDateString,
-        rawDate: d.getTime(), // Used for exact timeline sorting
-        imageUrl: item.featuredImage?.node?.sourceUrl || null,
-        author: {
-          name: item.author?.node?.name || null,
-          avatar: item.author?.node?.avatar?.url || null
-        },
-        type,
-        sport,
-        slug: item.slug
-      };
-    };
-
-    const formattedPosts = posts.map(p => formatItem(p, 'article'));
-    const formattedVideos = videos.map(v => formatItem(v, 'video'));
-
-    // Interweave posts and videos, sorted by newest first
-    const combinedContent = [...formattedPosts, ...formattedVideos].sort((a, b) => b.rawDate - a.rawDate);
+  const formatItem = (item, defaultType) => {
+    const cats = item.categories?.nodes?.map(c => c.name.toLowerCase()) || [];
     
-    // Strip out the rawDate before passing to client to keep props clean
-    return combinedContent.map(({ rawDate, ...rest }) => rest);
+    let type = defaultType;
+    if (defaultType === 'article') {
+      if (cats.includes('video') || cats.includes('videos')) type = 'video';
+      else if (cats.includes('short') || cats.includes('shorts')) type = 'short';
+      else if (cats.includes('podcast') || cats.includes('podcasts')) type = 'podcast';
+    }
 
-  } catch (error) {
-    console.error("WP GraphQL Error:", error);
-    return [];
-  }
+    let sport = 'All';
+    if (cats.includes('football')) sport = 'Football';
+    if (cats.includes('basketball')) sport = 'Basketball';
+    if (cats.includes('baseball')) sport = 'Baseball';
+
+    const d = new Date(item.date);
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+
+    return {
+      id: item.id,
+      title: item.title,
+      excerpt: item.excerpt || '',
+      content: item.content || '',
+      date: safeDateString,
+      rawDate: d.getTime(), // For absolute chronological sorting
+      imageUrl: item.featuredImage?.node?.sourceUrl || null,
+      author: {
+        name: item.author?.node?.name || null,
+        avatar: item.author?.node?.avatar?.url || null
+      },
+      type,
+      sport,
+      slug: item.slug
+    };
+  };
+
+  const formattedPosts = posts.map(p => formatItem(p, 'article'));
+  const formattedVideos = videos.map(v => formatItem(v, 'video'));
+
+  // Merge the two independent lists together and sort them chronologically
+  const combinedContent = [...formattedPosts, ...formattedVideos].sort((a, b) => b.rawDate - a.rawDate);
+  
+  // Strip the rawDate out before passing to the client component
+  return combinedContent.map(({ rawDate, ...rest }) => rest);
 }
 
 export async function generateMetadata({ params }) {
