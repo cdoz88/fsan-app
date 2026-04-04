@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Header from '../../../components/Header'; 
 import Sidebar from '../../../components/Sidebar'; 
 import ContentModal from '../../../components/ContentModal'; 
-import { PlayCircle, FileText, Mic, Video, User, Activity, LayoutGrid, Zap, Play, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { PlayCircle, FileText, Video, User, Activity, LayoutGrid, Zap, Play, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { themes } from '../../../utils/theme';
 
 export default function PlayerClient({ playerName, rawSlug, espnData, content, proToolsMenu, connectMenu }) {
@@ -69,12 +69,12 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       );
     }
 
-    // Strict content separation
+    // Strict content separation based on corrected types
     const articles = content.filter(item => item.type === 'article' || item.type === 'podcast');
     const videos = content.filter(item => item.type === 'video');
     const shorts = content.filter(item => item.type === 'short');
 
-    // Standard Card (Tags Removed!)
+    // Standard Card (Tags completely removed from thumbnail)
     const renderCard = (item) => (
       <div 
         onClick={() => handleSetSelectedItem(item)} 
@@ -97,7 +97,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       </div>
     );
 
-    // EXACT Short Card logic borrowed from Home.jsx
+    // EXACT Short Card logic borrowed directly from Home.jsx
     const renderShortCard = (item) => (
       <div onClick={() => handleSetSelectedItem(item)} className={`group h-full w-full min-h-[300px] md:min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
         {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
@@ -176,7 +176,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                 </div>
               ))}
               
-              {/* Added the missing trailing linked card! */}
+              {/* Identical See All Shorts Link */}
               <Link href={`/${content[0]?.sport?.toLowerCase() === 'all' ? 'football' : (content[0]?.sport?.toLowerCase() || 'football')}/videos`} className="relative w-36 md:w-44 flex-shrink-0 snap-start aspect-[9/16] rounded-2xl overflow-hidden bg-[#111] border border-gray-700 hover:border-gray-500 transition-colors flex flex-col items-center justify-center group text-gray-400 hover:text-white no-underline">
                 <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"><ArrowRight size={24} /></div>
                 <span className="font-black uppercase tracking-widest text-sm text-center">See All<br/>Shorts</span>

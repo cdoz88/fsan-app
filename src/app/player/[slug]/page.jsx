@@ -72,8 +72,8 @@ async function getESPNPlayerData(playerName) {
 }
 
 async function getPlayerContent(playerName) {
+  // 1. Fetch Articles Using GraphQL
   const exactMatchQuery = `\\"${playerName}\\"`;
-  
   const postsQuery = `
     query GetPlayerPosts {
       posts(where: {search: "${exactMatchQuery}"}, first: 50) {
@@ -84,7 +84,12 @@ async function getPlayerContent(playerName) {
           content 
           date
           slug
-          author { node { name avatar { url } } }
+          author {
+            node {
+              name
+              avatar { url }
+            }
+          }
           featuredImage { node { sourceUrl } }
           categories { nodes { name } }
         }
@@ -92,92 +97,137 @@ async function getPlayerContent(playerName) {
     }
   `;
 
-  const videosQuery = `
-    query GetPlayerVideos {
-      videos(where: {search: "${exactMatchQuery}"}, first: 50) {
-        nodes {
-          id
-          title
-          content 
-          date
-          slug
-          featuredImage { node { sourceUrl } }
-          categories { nodes { name } }
-        }
-      }
-    }
-  `;
+  let posts = [];
+  try {
+    const res = await fetch('https://admin.fsan.com/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: postsQuery }),
+      next: { revalidate: 60 }
+    });
+    const json = await res.json();
+    posts = json?.data?.posts?.nodes || [];
+  } catch (error) {
+    console.error("WP GraphQL Error:", error);
+  }
 
-  const fetchSafeGraphQL = async (queryStr) => {
-    try {
-      const res = await fetch('https://admin.fsan.com/graphql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: queryStr }),
-        next: { revalidate: 60 }
-      });
-      const json = await res.json();
-      
-      if (json.errors) return [];
-      
-      const dataKey = Object.keys(json.data)[0];
-      return json?.data?.[dataKey]?.nodes || [];
-    } catch (error) {
-      console.error("Network Error fetching GraphQL:", error);
-      return [];
-    }
-  };
-
-  const [posts, videos] = await Promise.all([
-    fetchSafeGraphQL(postsQuery),
-    fetchSafeGraphQL(videosQuery)
-  ]);
-
-  const formatItem = (item, defaultType) => {
-    const cats = item.categories?.nodes?.map(c => c.name.toLowerCase()) || [];
+  // 2. Fetch Videos Using the Custom FSAN Feed Endpoint
+  // This bypasses the GraphQL bug and allows us to search the custom youtube_description field
+  let videos = [];
+  try {
+    const feedUrl1 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=1`;
+    const feedUrl2 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=2`;
     
-    // FIXED: Safely identify the type regardless of whether it came from posts or videos!
-    let type = defaultType;
-    if (cats.includes('short') || cats.includes('shorts')) {
-      type = 'short';
-    } else if (cats.includes('podcast') || cats.includes('podcasts')) {
-      type = 'podcast';
-    } else if (cats.includes('video') || cats.includes('videos')) {
-      type = 'video';
-    }
+    const [res1, res2] = await Promise.all([
+      fetch(feedUrl1, { next: { revalidate: 60 } }),
+      fetch(feedUrl2, { next: { revalidate: 60 } })
+    ]);
+    
+    let allVids = [];
+    if (res1.ok) allVids = allVids.concat(await res1.json());
+    if (res2.ok) allVids = allVids.concat(await res2.json());
+
+    // Manually filter videos to ensure we catch the player's name in the custom description
+    const playerNameLower = playerName.toLowerCase();
+    videos = allVids.filter(v => {
+      const title = (v.title?.rendered || '').toLowerCase();
+      const content = (v.content?.rendered || '').toLowerCase();
+      const desc = (v.youtube_description || '').toLowerCase();
+      return title.includes(playerNameLower) || content.includes(playerNameLower) || desc.includes(playerNameLower);
+    });
+  } catch (e) {
+    console.error("Video fetch error:", e);
+  }
+
+  const stripTags = (html) => html ? html.replace(/<\/?[^>]+(>|$)/g, "").trim() : '';
+  const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+
+  const formattedPosts = posts.map(post => {
+    const cats = post.categories?.nodes?.map(c => c.name.toLowerCase()) || [];
+    let type = 'article';
+    if (cats.includes('video') || cats.includes('videos')) type = 'video';
+    else if (cats.includes('short') || cats.includes('shorts')) type = 'short';
+    else if (cats.includes('podcast') || cats.includes('podcasts')) type = 'podcast';
 
     let sport = 'All';
     if (cats.includes('football')) sport = 'Football';
     if (cats.includes('basketball')) sport = 'Basketball';
     if (cats.includes('baseball')) sport = 'Baseball';
 
+    const d = new Date(post.date);
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+
+    let youtubeId = null;
+    const ytMatch = post.content?.match(ytRegex);
+    if (ytMatch && ytMatch[1]) youtubeId = ytMatch[1];
+
+    return {
+      id: post.id,
+      title: post.title,
+      excerpt: stripTags(post.excerpt),
+      content: post.content,
+      date: safeDateString,
+      rawDate: d.getTime(),
+      imageUrl: post.featuredImage?.node?.sourceUrl || null,
+      author: {
+        name: post.author?.node?.name || null,
+        avatar: post.author?.node?.avatar?.url || null
+      },
+      type,
+      sport,
+      slug: post.slug,
+      youtubeId
+    };
+  });
+
+  const formattedVideos = videos.map(item => {
+    const cats = item.category_slugs || []; 
+    
+    let sport = 'All';
+    if (cats.includes('football') || cats.includes('nfl')) sport = 'Football';
+    if (cats.includes('basketball') || cats.includes('nba')) sport = 'Basketball';
+    if (cats.includes('baseball') || cats.includes('mlb')) sport = 'Baseball';
+
+    let type = 'video';
+    if (cats.includes('shorts') || cats.includes('short') || cats.includes('football-shorts')) {
+      type = 'short';
+    }
+
     const d = new Date(item.date);
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 
+    let contentHtml = item.content?.rendered || '';
+    if (item.youtube_description) {
+        const formattedDesc = item.youtube_description.replace(/(?:\r\n|\r|\n)/g, '<br/>');
+        contentHtml += `<br/><br/><div>${formattedDesc}</div>`;
+    }
+
+    let youtubeId = null;
+    const ytMatch = contentHtml.match(ytRegex);
+    if (ytMatch && ytMatch[1]) youtubeId = ytMatch[1];
+
     return {
-      id: item.id,
-      title: item.title,
-      excerpt: item.excerpt || '',
-      content: item.content || '',
+      id: item.id.toString(),
+      title: stripTags(item.title?.rendered || ''),
+      excerpt: stripTags(item.excerpt?.rendered || ''),
+      content: contentHtml,
       date: safeDateString,
       rawDate: d.getTime(),
-      imageUrl: item.featuredImage?.node?.sourceUrl || null,
+      imageUrl: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || null,
       author: {
-        name: item.author?.node?.name || null,
-        avatar: item.author?.node?.avatar?.url || null
+        name: item._embedded?.author?.[0]?.name || 'FSAN Staff',
+        avatar: item.author_avatar_url || null
       },
       type,
       sport,
-      slug: item.slug
+      slug: item.slug || item.id.toString(),
+      youtubeId
     };
-  };
-
-  const formattedPosts = posts.map(p => formatItem(p, 'article'));
-  const formattedVideos = videos.map(v => formatItem(v, 'video'));
+  });
 
   const combinedContent = [...formattedPosts, ...formattedVideos].sort((a, b) => b.rawDate - a.rawDate);
-  
   return combinedContent.map(({ rawDate, ...rest }) => rest);
 }
 
