@@ -198,9 +198,12 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     const findStatTables = (obj, tables = [], currentTitle = "Career Stats") => {
       if (!obj || typeof obj !== 'object') return tables;
 
+      // Use displayName if available, fallback to the current title
+      const title = obj.displayName || obj.text || obj.name || currentTitle;
+
       // Pattern A: Traditional Table (has labels array and stats array)
       if (Array.isArray(obj.labels) && Array.isArray(obj.stats)) {
-        tables.push({ title: obj.text || obj.name || currentTitle, type: 'table', labels: obj.labels, stats: obj.stats });
+        tables.push({ title: title, type: 'table', labels: obj.labels, stats: obj.stats });
         return tables;
       }
       
@@ -226,7 +229,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     // 2. Feed the vacuum all our data
     const allTables = findStatTables(espnData);
 
-    // 3. De-duplicate (Sometimes ESPN sends the same stats in the overview and deepStats objects)
+    // 3. De-duplicate
     const uniqueTables = [];
     const seen = new Set();
     allTables.forEach(t => {
@@ -264,12 +267,10 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
-                    {/* Handle both multi-row and single-row 'stats' arrays gracefully */}
                     {(Array.isArray(table.stats[0]) ? table.stats : [table.stats]).map((row, rowIdx) => (
                       <tr key={rowIdx} className="hover:bg-[#222] transition-colors">
                         {table.labels.map((_, colIdx) => {
                            let val = row[colIdx];
-                           // Deep object unpack for heavily nested values
                            if (val && typeof val === 'object') val = val.displayValue || val.value;
                            return (
                              <td key={colIdx} className={`px-6 py-4 text-gray-300 ${colIdx === 0 ? 'font-bold text-white' : ''}`}>
