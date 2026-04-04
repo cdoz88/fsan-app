@@ -49,6 +49,8 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
 
   // --- TAB RENDERERS ---
 
+  const hideScrollbar = "scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
+
   const renderContentGrid = () => {
     if (content.length === 0) {
       return (
@@ -57,35 +59,59 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
         </div>
       );
     }
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {content.map(item => (
-          <div 
-            key={item.id} 
-            onClick={() => handleSetSelectedItem(item)} 
-            className="group cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-colors shadow-xl flex flex-col h-full"
-          >
-            <div className="w-full aspect-video bg-gray-900 relative overflow-hidden shrink-0">
-              {item.imageUrl && <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" alt="" />}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1e1e1e] to-transparent" />
-              
-              <div className="absolute top-3 left-3 bg-black/60 px-2 py-1 rounded backdrop-blur-sm border border-white/10 flex items-center gap-1.5">
-                {item.type === 'video' || item.type === 'short' ? <Video size={12} className="text-white" /> : item.type === 'podcast' ? <Mic size={12} className="text-white" /> : <FileText size={12} className="text-white" />}
-                <span className="text-[9px] font-bold uppercase tracking-widest text-white">{item.type}</span>
+
+    // Filter content into specific categories
+    const articles = content.filter(item => item.type === 'article' || item.type === 'podcast');
+    const videos = content.filter(item => item.type === 'video');
+    const shorts = content.filter(item => item.type === 'short');
+
+    // Reusable carousel row renderer
+    const renderCarousel = (title, items, isShorts) => {
+      if (items.length === 0) return null;
+      
+      return (
+        <div className="mb-10 last:mb-0">
+          <h3 className="text-xl font-bold flex items-center gap-2 text-white mb-4 italic uppercase tracking-wide">{title}</h3>
+          <div className={`flex gap-4 md:gap-6 overflow-x-auto pb-4 snap-x ${hideScrollbar}`}>
+            {items.map(item => (
+              <div key={item.id} className={`relative flex-shrink-0 snap-start ${isShorts ? 'w-48 sm:w-56' : 'w-72 sm:w-80'}`}>
+                <div 
+                  onClick={() => handleSetSelectedItem(item)} 
+                  className="group cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-colors shadow-xl flex flex-col h-full"
+                >
+                  {/* Dynamic aspect ratio based on whether it is a short or standard video/article */}
+                  <div className={`w-full ${isShorts ? 'aspect-[9/16]' : 'aspect-video'} bg-gray-900 relative overflow-hidden shrink-0`}>
+                    {item.imageUrl && <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" alt="" />}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1e1e1e] to-transparent" />
+                    
+                    <div className="absolute top-3 left-3 bg-black/60 px-2 py-1 rounded backdrop-blur-sm border border-white/10 flex items-center gap-1.5">
+                      {item.type === 'video' || item.type === 'short' ? <Video size={12} className="text-white" /> : item.type === 'podcast' ? <Mic size={12} className="text-white" /> : <FileText size={12} className="text-white" />}
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-white">{item.type}</span>
+                    </div>
+                    
+                    {(item.type === 'video' || item.type === 'podcast') && (
+                      <PlayCircle size={32} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10" />
+                    )}
+                  </div>
+                  
+                  <div className="p-5 flex flex-col flex-1">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{item.date}</span>
+                    <h3 className="font-black text-base text-gray-200 group-hover:text-white transition-colors leading-tight line-clamp-3 mb-2" dangerouslySetInnerHTML={{ __html: item.title }} />
+                    <p className="text-xs text-gray-400 line-clamp-2 mt-auto" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
+                  </div>
+                </div>
               </div>
-              
-              {(item.type === 'video' || item.type === 'podcast') && (
-                <PlayCircle size={32} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10" />
-              )}
-            </div>
-            
-            <div className="p-5 flex flex-col flex-1">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{item.date}</span>
-              <h3 className="font-black text-base text-gray-200 group-hover:text-white transition-colors leading-tight line-clamp-3 mb-2" dangerouslySetInnerHTML={{ __html: item.title }} />
-              <p className="text-xs text-gray-400 line-clamp-2 mt-auto" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
-            </div>
+            ))}
           </div>
-        ))}
+        </div>
+      );
+    };
+
+    return (
+      <div className="flex flex-col">
+        {renderCarousel("Latest Articles", articles, false)}
+        {renderCarousel("Film Room Videos", videos, false)}
+        {renderCarousel("Highlight Shorts", shorts, true)}
       </div>
     );
   };
