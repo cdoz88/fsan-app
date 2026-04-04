@@ -72,79 +72,43 @@ async function getESPNPlayerData(playerName) {
 }
 
 async function getPlayerContent(playerName) {
-  const exactMatchQuery = `\\"${playerName}\\"`;
-  
-  // 1. Independent Posts Query
-  const postsQuery = `
-    query GetPlayerPosts {
-      posts(where: {search: "${exactMatchQuery}"}, first: 50) {
-        nodes {
-          id
-          title
-          excerpt
-          content 
-          date
-          slug
-          author { node { name avatar { url } } }
-          featuredImage { node { sourceUrl } }
-          categories { nodes { name } }
-        }
-      }
-    }
-  `;
+  // Use exact match phrase for a cleaner search
+  const searchStr = encodeURIComponent(`"${playerName}"`);
 
-  // 2. Independent Videos Query
-  const videosQuery = `
-    query GetPlayerVideos {
-      videos(where: {search: "${exactMatchQuery}"}, first: 50) {
-        nodes {
-          id
-          title
-          content 
-          date
-          slug
-          featuredImage { node { sourceUrl } }
-          categories { nodes { name } }
-        }
-      }
-    }
-  `;
-
-  // Helper function to safely execute a GraphQL query without crashing everything else
-  const fetchSafeGraphQL = async (queryStr) => {
+  // Helper function to hit the native WP REST API safely
+  const fetchRest = async (postType) => {
     try {
-      const res = await fetch('https://admin.fsan.com/graphql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: queryStr }),
-        next: { revalidate: 60 }
-      });
-      const json = await res.json();
-      
-      // If there are GraphQL errors (e.g., the 'videos' CPT doesn't exist), return an empty array
-      if (json.errors) {
-        console.warn("GraphQL Warning (Safe Catch):", json.errors[0].message);
-        return [];
-      }
-      
-      // Dynamically grab the nodes whether they are 'posts' or 'videos'
-      const dataKey = Object.keys(json.data)[0];
-      return json?.data?.[dataKey]?.nodes || [];
-    } catch (error) {
-      console.error("Network Error fetching GraphQL:", error);
+      // _embed=1 pulls in the images, authors, and categories in the same request
+      const url = `https://admin.fsan.com/wp-json/wp/v2/${postType}?search=${searchStr}&_embed=1&per_page=50`;
+      const res = await fetch(url, { next: { revalidate: 60 } });
+      if (!res.ok) return [];
+      return await res.json();
+    } catch (e) {
+      console.error(`REST Fetch Error for ${postType}:`, e);
       return [];
     }
   };
 
-  // Run both queries in parallel safely
+  // Run both queries in parallel against the REST API
   const [posts, videos] = await Promise.all([
-    fetchSafeGraphQL(postsQuery),
-    fetchSafeGraphQL(videosQuery)
+    fetchRest('posts'),
+    fetchRest('yt2posts_youtube')
   ]);
 
   const formatItem = (item, defaultType) => {
-    const cats = item.categories?.nodes?.map(c => c.name.toLowerCase()) || [];
-    
+    // Extract category slugs from the WP REST _embedded object
+    let cats = [];
+    if (item._embedded && item._embedded['wp:term']) {
+       const taxonomies = item._embedded['wp:term'];
+       taxonomies.forEach(tax => {
+          tax.forEach(term => {
+             if (term.taxonomy === 'category') {
+                cats.push(term.slug.toLowerCase());
+             }
+          });
+       });
+    }
+
     let type = defaultType;
     if (defaultType === 'article') {
       if (cats.includes('video') || cats.includes('videos')) type = 'video';
@@ -163,15 +127,15 @@ async function getPlayerContent(playerName) {
 
     return {
       id: item.id,
-      title: item.title,
-      excerpt: item.excerpt || '',
-      content: item.content || '',
+      title: item.title?.rendered || '',
+      excerpt: item.excerpt?.rendered || '',
+      content: item.content?.rendered || '',
       date: safeDateString,
       rawDate: d.getTime(), // For absolute chronological sorting
-      imageUrl: item.featuredImage?.node?.sourceUrl || null,
+      imageUrl: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || null,
       author: {
-        name: item.author?.node?.name || null,
-        avatar: item.author?.node?.avatar?.url || null
+        name: item._embedded?.author?.[0]?.name || 'FSAN Staff',
+        avatar: item._embedded?.author?.[0]?.avatar_urls?.['96'] || null
       },
       type,
       sport,
@@ -179,8 +143,9 @@ async function getPlayerContent(playerName) {
     };
   };
 
-  const formattedPosts = posts.map(p => formatItem(p, 'article'));
-  const formattedVideos = videos.map(v => formatItem(v, 'video'));
+  // Safely map in case API returns an error object instead of an array
+  const formattedPosts = Array.isArray(posts) ? posts.map(p => formatItem(p, 'article')) : [];
+  const formattedVideos = Array.isArray(videos) ? videos.map(v => formatItem(v, 'video')) : [];
 
   // Merge the two independent lists together and sort them chronologically
   const combinedContent = [...formattedPosts, ...formattedVideos].sort((a, b) => b.rawDate - a.rawDate);
