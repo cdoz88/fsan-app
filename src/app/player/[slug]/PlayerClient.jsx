@@ -122,7 +122,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     );
   };
 
-  // Restored exactly from your supplied file
   const renderStatistics = () => {
     const findStatTables = (obj, tables = [], currentTitle = "Career Stats") => {
       if (!obj || typeof obj !== 'object') return tables;
@@ -245,9 +244,9 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
               
               <div className="relative z-10 w-full max-w-7xl mx-auto flex items-end justify-start gap-4 md:gap-10 h-full">
                 
-                {/* Responsive Image Container: The "Happy Medium" (max-w-[240px]) */}
+                {/* Responsive Image Container: Removed -mb-6 and replaced with mb-0 */}
                 {headshot ? (
-                  <div className="hidden md:flex h-[115%] items-end shrink-0 relative -mb-6 z-10 w-[25%] max-w-[240px]">
+                  <div className="hidden md:flex h-[115%] items-end shrink-0 relative mb-0 z-10 w-[25%] max-w-[240px]">
                     <img 
                       src={headshot} 
                       alt={playerName} 
