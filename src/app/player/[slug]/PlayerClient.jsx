@@ -242,15 +242,15 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent" />
               
-              <div className="relative z-10 w-full max-w-7xl mx-auto flex items-end justify-start gap-4 md:gap-10 h-full">
+              <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-end justify-end md:justify-start gap-2 md:gap-10 h-full px-6 md:px-0">
                 
-                {/* Responsive Image Container: Updated w-[25%] to w-[55%] */}
+                {/* Responsive Image Container */}
                 {headshot ? (
-                  <div className="hidden md:flex h-[115%] items-end shrink-0 relative mb-0 z-10 w-[55%] max-w-[400px]">
+                  <div className="flex h-24 sm:h-32 md:h-[115%] items-end shrink-0 relative mb-0 md:-mb-6 z-10 w-auto md:w-[55%] max-w-[400px]">
                     <img 
                       src={headshot} 
                       alt={playerName} 
-                      className="h-full w-full object-contain object-bottom drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)]" 
+                      className="h-full w-auto md:w-full lg:w-auto object-contain object-left-bottom md:object-bottom drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)]" 
                       style={{ 
                         WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 15%)',
                         maskImage: 'linear-gradient(to top, transparent 0%, black 15%)' 
@@ -258,16 +258,15 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                     />
                   </div>
                 ) : (
-                  <div className="hidden md:flex h-32 w-32 bg-black/20 rounded-full items-center justify-center border-4 border-white/10 backdrop-blur-sm shrink-0 mb-4 ml-6">
-                    <User size={48} className="text-white/40" />
+                  <div className="flex h-20 w-20 md:h-32 md:w-32 bg-black/20 rounded-full items-center justify-center border-4 border-white/10 backdrop-blur-sm shrink-0 mb-2 md:mb-4 md:ml-6">
+                    <User className="w-10 h-10 md:w-12 md:h-12 text-white/40" />
                   </div>
                 )}
 
-                <div className="flex flex-col gap-1 md:gap-2 w-full z-20 justify-end h-full pb-4 px-6 md:px-0">
+                <div className="flex flex-col gap-1 md:gap-2 w-full z-20 justify-end md:h-full pb-4 md:px-0">
                   
                   {/* Name and Position Inline */}
                   <div className="flex items-baseline gap-3 md:gap-4 flex-wrap">
-                    {/* Updated md:text-6xl to md:text-4xl */}
                     <h1 className="text-4xl sm:text-5xl md:text-4xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white">
                       {playerName}
                     </h1>
@@ -290,7 +289,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                              Year {espnData.displayExperience}
                            </span>
                         )}
-                        {/* Status block removed */}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-x-4 md:gap-x-6 gap-y-2 text-[11px] md:text-sm mt-1">
