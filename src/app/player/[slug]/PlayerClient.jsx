@@ -244,9 +244,9 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
               
               <div className="relative z-10 w-full max-w-7xl mx-auto flex items-end justify-start gap-4 md:gap-10 h-full">
                 
-                {/* Responsive Image Container: Fixed margin-bottom to 0 (-mb-6 removed) */}
+                {/* Responsive Image Container: Updated w-[25%] to w-[55%] */}
                 {headshot ? (
-                  <div className="hidden md:flex h-[115%] items-end shrink-0 relative mb-0 z-10 w-[25%] max-w-[400px]">
+                  <div className="hidden md:flex h-[115%] items-end shrink-0 relative mb-0 z-10 w-[55%] max-w-[400px]">
                     <img 
                       src={headshot} 
                       alt={playerName} 
@@ -267,7 +267,8 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                   
                   {/* Name and Position Inline */}
                   <div className="flex items-baseline gap-3 md:gap-4 flex-wrap">
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white">
+                    {/* Updated md:text-6xl to md:text-4xl */}
+                    <h1 className="text-4xl sm:text-5xl md:text-4xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white">
                       {playerName}
                     </h1>
                     {espnData?.position && (
@@ -289,11 +290,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                              Year {espnData.displayExperience}
                            </span>
                         )}
-                        {espnData.status?.name && (
-                           <span className="bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10 font-bold text-[10px] sm:text-xs text-white">
-                             {espnData.status.name}
-                           </span>
-                        )}
+                        {/* Status block removed */}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-x-4 md:gap-x-6 gap-y-2 text-[11px] md:text-sm mt-1">
