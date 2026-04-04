@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '../../../components/Header'; 
 import Sidebar from '../../../components/Sidebar'; 
 import ContentModal from '../../../components/ContentModal'; 
-import { PlayCircle, FileText, Mic, Video, User, Activity, AlertCircle, LayoutGrid, Check } from 'lucide-react';
+import { PlayCircle, FileText, Mic, Video, User, Activity, LayoutGrid } from 'lucide-react';
 
 export default function PlayerClient({ playerName, rawSlug, espnData, content, proToolsMenu, connectMenu }) {
   const [selectedItem, setSelectedItem] = useState(null);
@@ -83,38 +83,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
               <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{item.date}</span>
               <h3 className="font-black text-base text-gray-200 group-hover:text-white transition-colors leading-tight line-clamp-3 mb-2" dangerouslySetInnerHTML={{ __html: item.title }} />
               <p className="text-xs text-gray-400 line-clamp-2 mt-auto" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderInjuries = () => {
-    const injuries = espnData?.injuries;
-    if (!injuries || injuries.length === 0) {
-      return (
-        <div className="py-16 flex flex-col items-center justify-center text-center border border-gray-800 rounded-2xl bg-[#111]">
-          <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-4">
-            <Check size={28} className="text-green-500" />
-          </div>
-          <h3 className="text-xl font-bold text-white mb-2">Healthy</h3>
-          <p className="text-gray-400 max-w-md">No current injuries or status updates reported for this athlete.</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex flex-col gap-4">
-        {injuries.map((inj, idx) => (
-          <div key={idx} className="bg-red-900/10 border border-red-900/30 p-5 rounded-xl flex gap-4 items-start">
-            <AlertCircle size={24} className="text-red-500 shrink-0 mt-1" />
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <span className="font-bold text-lg text-white capitalize">{inj.status}</span>
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{new Date(inj.date).toLocaleDateString()}</span>
-              </div>
-              <p className="text-gray-300 leading-relaxed">{inj.details || "No further details provided."}</p>
             </div>
           </div>
         ))}
@@ -221,8 +189,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
 
   const tabs = [
     { id: 'Content', icon: <LayoutGrid size={16} /> },
-    { id: 'Statistics', icon: <Activity size={16} /> },
-    { id: 'Injury Report', icon: <AlertCircle size={16} /> }
+    { id: 'Statistics', icon: <Activity size={16} /> }
   ];
 
   return (
@@ -370,7 +337,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
             <div className="max-w-7xl mx-auto pb-12">
               {activeTab === 'Content' && renderContentGrid()}
               {activeTab === 'Statistics' && renderStatistics()}
-              {activeTab === 'Injury Report' && renderInjuries()}
             </div>
           </main>
         </div>

@@ -47,7 +47,6 @@ async function getESPNPlayerData(playerName) {
       return null;
     }
 
-    // Hit the core athlete, overview, AND deep statistics endpoints!
     const [playerRes, overviewRes, statsRes] = await Promise.all([
       fetch(`https://site.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } }),
       fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/overview`, { next: { revalidate: 3600 } }),
@@ -75,8 +74,9 @@ async function getESPNPlayerData(playerName) {
 async function getPlayerContent(playerName) {
   const exactMatchQuery = `\\"${playerName}\\"`;
   
+  // Expanded GraphQL query to fetch both standard posts and dedicated video CPTs
   const query = `
-    query GetPlayerPosts {
+    query GetPlayerContent {
       posts(where: {search: "${exactMatchQuery}"}, first: 50) {
         nodes {
           id
@@ -93,7 +93,17 @@ async function getPlayerContent(playerName) {
           }
           featuredImage { node { sourceUrl } }
           categories { nodes { name } }
-          tags { nodes { name } }
+        }
+      }
+      videos(where: {search: "${exactMatchQuery}"}, first: 50) {
+        nodes {
+          id
+          title
+          content 
+          date
+          slug
+          featuredImage { node { sourceUrl } }
+          categories { nodes { name } }
         }
       }
     }
@@ -109,39 +119,55 @@ async function getPlayerContent(playerName) {
     
     const json = await res.json();
     const posts = json?.data?.posts?.nodes || [];
+    const videos = json?.data?.videos?.nodes || [];
 
-    return posts.map(post => {
-      const cats = post.categories?.nodes?.map(c => c.name.toLowerCase()) || [];
-      let type = 'article';
-      if (cats.includes('video') || cats.includes('videos')) type = 'video';
-      else if (cats.includes('short') || cats.includes('shorts')) type = 'short';
-      else if (cats.includes('podcast') || cats.includes('podcasts')) type = 'podcast';
+    const formatItem = (item, defaultType) => {
+      const cats = item.categories?.nodes?.map(c => c.name.toLowerCase()) || [];
+      
+      let type = defaultType;
+      // Allow WP Categories to override standard post types if needed
+      if (defaultType === 'article') {
+        if (cats.includes('video') || cats.includes('videos')) type = 'video';
+        else if (cats.includes('short') || cats.includes('shorts')) type = 'short';
+        else if (cats.includes('podcast') || cats.includes('podcasts')) type = 'podcast';
+      }
 
       let sport = 'All';
       if (cats.includes('football')) sport = 'Football';
       if (cats.includes('basketball')) sport = 'Basketball';
       if (cats.includes('baseball')) sport = 'Baseball';
 
-      const d = new Date(post.date);
+      const d = new Date(item.date);
       const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 
       return {
-        id: post.id,
-        title: post.title,
-        excerpt: post.excerpt,
-        content: post.content,
+        id: item.id,
+        title: item.title,
+        excerpt: item.excerpt || '',
+        content: item.content,
         date: safeDateString,
-        imageUrl: post.featuredImage?.node?.sourceUrl || null,
+        rawDate: d.getTime(), // Used for exact timeline sorting
+        imageUrl: item.featuredImage?.node?.sourceUrl || null,
         author: {
-          name: post.author?.node?.name || null,
-          avatar: post.author?.node?.avatar?.url || null
+          name: item.author?.node?.name || null,
+          avatar: item.author?.node?.avatar?.url || null
         },
         type,
         sport,
-        slug: post.slug
+        slug: item.slug
       };
-    });
+    };
+
+    const formattedPosts = posts.map(p => formatItem(p, 'article'));
+    const formattedVideos = videos.map(v => formatItem(v, 'video'));
+
+    // Interweave posts and videos, sorted by newest first
+    const combinedContent = [...formattedPosts, ...formattedVideos].sort((a, b) => b.rawDate - a.rawDate);
+    
+    // Strip out the rawDate before passing to client to keep props clean
+    return combinedContent.map(({ rawDate, ...rest }) => rest);
+
   } catch (error) {
     console.error("WP GraphQL Error:", error);
     return [];
