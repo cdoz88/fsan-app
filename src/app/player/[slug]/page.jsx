@@ -6,7 +6,6 @@ import PlayerClient from './PlayerClient';
 
 async function getESPNPlayerData(playerName) {
   try {
-    // 1. Search across ESPN's entire global database
     const searchRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(playerName)}&limit=10`, { 
       next: { revalidate: 3600 },
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FSAN/1.0)' }
@@ -16,11 +15,9 @@ async function getESPNPlayerData(playerName) {
     
     const allContents = searchData?.results?.flatMap(r => r.contents || []) || [];
     
-    // 2. Intelligently hunt for players using ESPN's internal UID structure
     const athleteResult = allContents.find(c => c.uid && c.uid.includes('~a:'));
     if (!athleteResult) return null;
 
-    // 3. Parse the exact sport, league, and ID from the UID
     const uidParts = athleteResult.uid.split('~');
     let sportCode = '';
     let leagueCode = '';
@@ -34,7 +31,6 @@ async function getESPNPlayerData(playerName) {
 
     if (!playerId) return null;
 
-    // 4. Map ESPN's internal numerical codes to their URL strings
     let sportString = '';
     let leagueString = '';
 
@@ -51,21 +47,23 @@ async function getESPNPlayerData(playerName) {
       return null;
     }
 
-    // 5. Hit BOTH the core athlete endpoint AND the deep overview endpoint
-    const [playerRes, overviewRes] = await Promise.all([
+    // Hit the core athlete, overview, AND deep statistics endpoints!
+    const [playerRes, overviewRes, statsRes] = await Promise.all([
       fetch(`https://site.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } }),
-      fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/overview`, { next: { revalidate: 3600 } })
+      fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/overview`, { next: { revalidate: 3600 } }),
+      fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/statistics`, { next: { revalidate: 3600 } })
     ]);
     
     if (!playerRes.ok) throw new Error('Detail fetch failed');
     
     const playerData = await playerRes.json();
     const overviewData = overviewRes.ok ? await overviewRes.json() : null;
+    const statsData = statsRes.ok ? await statsRes.json() : null;
     
-    // Combine them into one massive data object
     return {
       ...playerData.athlete,
-      overview: overviewData
+      overview: overviewData,
+      deepStats: statsData
     };
 
   } catch (error) {

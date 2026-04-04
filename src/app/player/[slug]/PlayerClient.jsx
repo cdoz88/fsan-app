@@ -9,7 +9,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   const [selectedItem, setSelectedItem] = useState(null);
   const [activeTab, setActiveTab] = useState('Content');
 
-  // Shallow Routing Logic
   const handleSetSelectedItem = (item) => {
     if (item) {
       const sportPath = item.sport.toLowerCase();
@@ -34,7 +33,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     return () => window.removeEventListener('popstate', handlePopState);
   }, [selectedItem]);
 
-  // Layout Colors
   const primaryColor = espnData?.team?.color ? `#${espnData.team.color}` : '#374151';
   const secondaryColor = espnData?.team?.alternateColor ? `#${espnData.team.alternateColor}` : '#1f2937';
   const headshot = espnData?.headshot?.href || null;
@@ -196,33 +194,50 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   };
 
   const renderStatistics = () => {
-    // 1. Gather stats from either standard endpoint or deep overview endpoint
-    const baseStats = espnData?.overview?.statistics || espnData?.statistics;
-    
-    if (!baseStats) {
-      return (
-        <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-2xl bg-[#111]">
-          Detailed statistics are currently unavailable for this athlete.
-        </div>
-      );
-    }
+    // 1. Recursive Data Vacuum: Scours the entire ESPN payload looking for valid stat blocks
+    const findStatTables = (obj, tables = [], currentTitle = "Career Stats") => {
+      if (!obj || typeof obj !== 'object') return tables;
 
-    // 2. Intelligent Extraction: ESPN buries NFL stats inside a 'categories' object, but puts NBA stats right at the root.
-    let categories = [];
-    if (Array.isArray(baseStats)) {
-      categories = baseStats;
-    } else if (Array.isArray(baseStats?.categories)) {
-      categories = baseStats.categories;
-    } else if (Array.isArray(baseStats?.splits?.categories)) {
-      categories = baseStats.splits.categories;
-    } else if (typeof baseStats === 'object') {
-      categories = Object.values(baseStats);
-    }
+      // Pattern A: Traditional Table (has labels array and stats array)
+      if (Array.isArray(obj.labels) && Array.isArray(obj.stats)) {
+        tables.push({ title: obj.text || obj.name || currentTitle, type: 'table', labels: obj.labels, stats: obj.stats });
+        return tables;
+      }
+      
+      // Pattern B: Key-Value List (has displayValue)
+      if (Array.isArray(obj) && obj.length > 0 && obj[0].displayValue !== undefined) {
+        tables.push({ title: currentTitle, type: 'list', stats: obj });
+        return tables;
+      }
 
-    // Flatten it just in case ESPN nested it in an array wrapper
-    categories = categories.flat();
+      // If neither pattern matches, keep digging deeper
+      if (Array.isArray(obj)) {
+        obj.forEach(child => findStatTables(child, tables, child.displayName || child.name || currentTitle));
+      } else {
+        for (const key in obj) {
+          if (key === 'athlete' || key === 'team') continue; // Skip massive recursion traps
+          const nextTitle = obj[key]?.displayName || obj[key]?.name || obj.displayName || obj.name || currentTitle;
+          findStatTables(obj[key], tables, nextTitle);
+        }
+      }
+      return tables;
+    };
 
-    if (!categories || categories.length === 0) {
+    // 2. Feed the vacuum all our data
+    const allTables = findStatTables(espnData);
+
+    // 3. De-duplicate (Sometimes ESPN sends the same stats in the overview and deepStats objects)
+    const uniqueTables = [];
+    const seen = new Set();
+    allTables.forEach(t => {
+      const hash = t.title + JSON.stringify(t.labels || (t.stats && t.stats[0]));
+      if (!seen.has(hash)) {
+        seen.add(hash);
+        uniqueTables.push(t);
+      }
+    });
+
+    if (uniqueTables.length === 0) {
       return (
         <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-2xl bg-[#111]">
           Detailed statistics are currently unavailable for this athlete.
@@ -232,63 +247,30 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
 
     return (
       <div className="flex flex-col gap-8">
-        {categories.map((category, idx) => {
-          // Normalize names and titles 
-          const labels = category?.labels || category?.names || category?.descriptions;
-          const stats = category?.stats || category?.displayValues || category?.values;
-          const title = category?.text || category?.name || category?.title || category?.displayName || "Season Stats";
-
-          // ULTIMATE FAILSAFE: If we still don't have the arrays needed to build a table, 
-          // we print the raw JSON inside a card instead of letting the screen go blank!
-          if (!Array.isArray(labels) || !stats) {
-             if (typeof category !== 'object' || category === null) return null;
-             return (
-               <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg p-6">
-                 <h3 className="font-black text-white text-lg tracking-wide uppercase mb-4 border-b border-gray-800 pb-2">{title}</h3>
-                 <pre className="text-gray-400 text-xs overflow-x-auto">{JSON.stringify(category, null, 2)}</pre>
-               </div>
-             );
-          }
-
-          // 3. Row Normalization: Handle single rows, multi-rows, and rows buried in extra objects
-          let rows = [];
-          if (Array.isArray(stats)) {
-            if (Array.isArray(stats[0])) {
-               rows = stats; // Perfect multi-row table
-            } else if (typeof stats[0] === 'object' && stats[0] !== null && stats[0].stats) {
-               // Array of objects (Sometimes ESPN packages rows as distinct objects)
-               rows = stats.map(s => s.stats || Object.values(s));
-            } else {
-               rows = [stats]; // Standard single row table
-            }
-          }
-
-          return (
-            <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
-              <div className="bg-[#222] px-6 py-4 border-b border-gray-800">
-                <h3 className="font-black text-white text-lg tracking-wide uppercase">
-                  {title}
-                </h3>
-              </div>
-              
-              <div className="overflow-x-auto">
+        {uniqueTables.map((table, idx) => (
+          <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
+            <div className="bg-[#222] px-6 py-4 border-b border-gray-800">
+              <h3 className="font-black text-white text-lg tracking-wide uppercase">{table.title}</h3>
+            </div>
+            
+            <div className="overflow-x-auto">
+              {table.type === 'table' ? (
                 <table className="w-full text-left text-sm whitespace-nowrap">
                   <thead className="bg-[#151515] text-gray-400 font-bold text-xs uppercase tracking-wider">
                     <tr>
-                      {labels.map((label, labelIdx) => (
+                      {table.labels.map((label, labelIdx) => (
                         <th key={labelIdx} className="px-6 py-4 border-b border-gray-800">{label}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
-                    {rows.map((row, rowIdx) => (
+                    {/* Handle both multi-row and single-row 'stats' arrays gracefully */}
+                    {(Array.isArray(table.stats[0]) ? table.stats : [table.stats]).map((row, rowIdx) => (
                       <tr key={rowIdx} className="hover:bg-[#222] transition-colors">
-                        {labels.map((_, colIdx) => {
+                        {table.labels.map((_, colIdx) => {
                            let val = row[colIdx];
-                           // Deep object unpack (ESPN sometimes sends objects instead of string values)
-                           if (val && typeof val === 'object') {
-                               val = val.displayValue || val.value || JSON.stringify(val);
-                           }
+                           // Deep object unpack for heavily nested values
+                           if (val && typeof val === 'object') val = val.displayValue || val.value;
                            return (
                              <td key={colIdx} className={`px-6 py-4 text-gray-300 ${colIdx === 0 ? 'font-bold text-white' : ''}`}>
                                {val ?? '-'}
@@ -299,15 +281,23 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                     ))}
                   </tbody>
                 </table>
-              </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
+                  {table.stats.map((stat, statIdx) => (
+                    <div key={statIdx} className="flex flex-col">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{stat.displayName || stat.label || stat.name}</span>
+                      <span className="text-lg font-semibold text-white">{stat.displayValue || stat.value || '-'}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     );
   };
 
-  // Setup dynamic tabs
   const tabs = [
     { id: 'Content', icon: <LayoutGrid size={16} /> },
     { id: 'Statistics', icon: <Activity size={16} /> },
@@ -325,7 +315,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
         <div className="flex-1 w-full min-w-0">
           <main className="flex-1 overflow-y-auto relative z-0 scrollbar-hide pb-24">
             
-            {/* THE HERO HEADER */}
             <div className="relative w-full h-56 md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-6 mt-6">
               <div 
                 className="absolute inset-0 opacity-80" 
@@ -334,8 +323,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
               <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/40 to-transparent" />
               
               <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 pb-6 flex items-end justify-start gap-6 md:gap-10 h-full">
-                
-                {/* High-Res Headshot */}
                 {headshot ? (
                   <div className="hidden md:flex h-[115%] items-end shrink-0 relative -mb-6 z-10">
                     <img 
@@ -354,7 +341,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                   </div>
                 )}
 
-                {/* Name and Info */}
                 <div className="flex flex-col gap-2 pb-0 md:pb-4 w-full z-20">
                   <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white">
                     {playerName}
@@ -371,11 +357,9 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                     </div>
                   )}
                 </div>
-
               </div>
             </div>
 
-            {/* TAB NAVIGATION */}
             <div className="max-w-7xl mx-auto mb-8 border-b border-gray-800">
               <div className="flex overflow-x-auto scrollbar-hide gap-2 sm:gap-6">
                 {tabs.map((tab) => (
@@ -394,7 +378,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
               </div>
             </div>
 
-            {/* DYNAMIC TAB CONTENT */}
             <div className="max-w-7xl mx-auto pb-12">
               {activeTab === 'Content' && renderContentGrid()}
               {activeTab === 'Statistics' && renderStatistics()}
@@ -402,7 +385,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
               {activeTab === 'Contract Info' && renderContract()}
               {activeTab === 'Bio' && renderBio()}
             </div>
-
           </main>
         </div>
       </div>
