@@ -236,17 +236,29 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
             
             {/* THE HERO HEADER */}
             <div className="relative w-full h-[260px] flex items-end overflow-hidden rounded-2xl mb-6 mt-6">
+              {/* Background Gradient */}
               <div 
-                className="absolute inset-0 opacity-80" 
+                className="absolute inset-0 opacity-80 z-0" 
                 style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent" />
+
+              {/* HUGE BACKGROUND LOGO (40% Opacity) */}
+              {teamLogo && (
+                <img 
+                  src={teamLogo} 
+                  alt="Team Logo Background" 
+                  className="absolute -left-[5%] md:left-10 top-1/2 transform -translate-y-1/2 h-[130%] md:h-[160%] w-auto opacity-40 pointer-events-none z-0" 
+                />
+              )}
+
+              {/* Fade Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent z-0" />
               
               <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-end justify-end md:justify-start gap-2 md:gap-10 h-full px-6 md:px-0">
                 
-                {/* Responsive Image Container */}
+                {/* Responsive Image Container: md:-mb-6 eradicated permanently! */}
                 {headshot ? (
-                  <div className="flex h-24 sm:h-32 md:h-[115%] items-end shrink-0 relative mb-0 md:-mb-6 z-10 w-auto md:w-[55%] max-w-[400px]">
+                  <div className="flex h-24 sm:h-32 md:h-[115%] items-end shrink-0 relative mb-0 md:mb-0 z-10 w-auto md:w-[55%] max-w-[400px]">
                     <img 
                       src={headshot} 
                       alt={playerName} 
