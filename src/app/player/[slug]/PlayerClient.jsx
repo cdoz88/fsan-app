@@ -124,28 +124,24 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
 
   // Restored exactly from your supplied file
   const renderStatistics = () => {
-    // 1. Recursive Data Vacuum: Scours the entire ESPN payload looking for valid stat blocks
     const findStatTables = (obj, tables = [], currentTitle = "Career Stats") => {
       if (!obj || typeof obj !== 'object') return tables;
 
-      // Pattern A: Traditional Table (has labels array and stats array)
       if (Array.isArray(obj.labels) && Array.isArray(obj.stats)) {
         tables.push({ title: obj.text || obj.name || currentTitle, type: 'table', labels: obj.labels, stats: obj.stats });
         return tables;
       }
       
-      // Pattern B: Key-Value List (has displayValue)
       if (Array.isArray(obj) && obj.length > 0 && obj[0].displayValue !== undefined) {
         tables.push({ title: currentTitle, type: 'list', stats: obj });
         return tables;
       }
 
-      // If neither pattern matches, keep digging deeper
       if (Array.isArray(obj)) {
         obj.forEach(child => findStatTables(child, tables, child.displayName || child.name || currentTitle));
       } else {
         for (const key in obj) {
-          if (key === 'athlete' || key === 'team') continue; // Skip massive recursion traps
+          if (key === 'athlete' || key === 'team') continue; 
           const nextTitle = obj[key]?.displayName || obj[key]?.name || obj.displayName || obj.name || currentTitle;
           findStatTables(obj[key], tables, nextTitle);
         }
@@ -153,10 +149,8 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       return tables;
     };
 
-    // 2. Feed the vacuum all our data
     const allTables = findStatTables(espnData);
 
-    // 3. De-duplicate (Sometimes ESPN sends the same stats in the overview and deepStats objects)
     const uniqueTables = [];
     const seen = new Set();
     allTables.forEach(t => {
@@ -194,12 +188,10 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
-                    {/* Handle both multi-row and single-row 'stats' arrays gracefully */}
                     {(Array.isArray(table.stats[0]) ? table.stats : [table.stats]).map((row, rowIdx) => (
                       <tr key={rowIdx} className="hover:bg-[#222] transition-colors">
                         {table.labels.map((_, colIdx) => {
                            let val = row[colIdx];
-                           // Deep object unpack for heavily nested values
                            if (val && typeof val === 'object') val = val.displayValue || val.value;
                            return (
                              <td key={colIdx} className={`px-6 py-4 text-gray-300 ${colIdx === 0 ? 'font-bold text-white' : ''}`}>
@@ -244,22 +236,22 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
           <main className="flex-1 overflow-y-auto relative z-0 scrollbar-hide pb-24">
             
             {/* THE HERO HEADER */}
-            <div className="relative w-full pt-10 pb-8 px-6 sm:px-10 md:pt-16 md:pb-12 flex flex-col overflow-hidden rounded-2xl mb-6 mt-6 min-h-[220px]">
+            <div className="relative w-full h-[260px] flex items-end overflow-hidden rounded-2xl mb-6 mt-6">
               <div 
                 className="absolute inset-0 opacity-80" 
                 style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent" />
               
-              <div className="relative z-10 w-full max-w-7xl mx-auto flex items-end justify-start gap-4 md:gap-10 h-full flex-1">
+              <div className="relative z-10 w-full max-w-7xl mx-auto flex items-end justify-start gap-4 md:gap-10 h-full">
                 
-                {/* Responsive Image Container: FIXED AND SHRUNK */}
+                {/* Responsive Image Container: The "Happy Medium" (max-w-[240px]) */}
                 {headshot ? (
-                  <div className="hidden md:flex h-[60%] items-end shrink-0 relative -mb-3 z-10 w-[15%] max-w-[120px]">
+                  <div className="hidden md:flex h-[115%] items-end shrink-0 relative -mb-6 z-10 w-[25%] max-w-[240px]">
                     <img 
                       src={headshot} 
                       alt={playerName} 
-                      className="h-full w-full lg:w-auto object-contain object-bottom drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)]" 
+                      className="h-full w-full object-contain object-bottom drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)]" 
                       style={{ 
                         WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 15%)',
                         maskImage: 'linear-gradient(to top, transparent 0%, black 15%)' 
@@ -267,12 +259,12 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                     />
                   </div>
                 ) : (
-                  <div className="hidden md:flex h-16 w-16 bg-black/20 rounded-full items-center justify-center border-2 border-white/10 backdrop-blur-sm shrink-0 mb-3 ml-3">
-                    <User size={24} className="text-white/40" />
+                  <div className="hidden md:flex h-32 w-32 bg-black/20 rounded-full items-center justify-center border-4 border-white/10 backdrop-blur-sm shrink-0 mb-4 ml-6">
+                    <User size={48} className="text-white/40" />
                   </div>
                 )}
 
-                <div className="flex flex-col gap-1 w-full z-20 justify-end h-full pb-4 px-6 md:px-0">
+                <div className="flex flex-col gap-1 md:gap-2 w-full z-20 justify-end h-full pb-4 px-6 md:px-0">
                   
                   {/* Name and Position Inline */}
                   <div className="flex items-baseline gap-3 md:gap-4 flex-wrap">
@@ -287,9 +279,8 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                   </div>
                   
                   {espnData && (
-                    <div className="flex flex-col gap-3 mt-3">
+                    <div className="flex flex-col gap-3 mt-1 md:mt-3">
                       
-                      {/* Top Line: Team, Exp, Status */}
                       <div className="flex items-center gap-3">
                         {teamLogo && <img src={teamLogo} alt={espnData.team?.displayName} className="h-6 md:h-8 w-auto object-contain drop-shadow-lg" />}
                         <span className="font-bold text-white/90 text-sm md:text-lg">{espnData.team?.displayName || 'Free Agent'}</span>
@@ -306,7 +297,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                         )}
                       </div>
 
-                      {/* Bottom Line: Detailed Bio Attributes */}
                       <div className="flex flex-wrap items-center gap-x-4 md:gap-x-6 gap-y-2 text-[11px] md:text-sm mt-1">
                         {espnData.displayHeight && espnData.displayWeight && (
                           <div className="flex gap-1.5">
