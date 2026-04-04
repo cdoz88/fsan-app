@@ -244,9 +244,9 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
               
               <div className="relative z-10 w-full max-w-7xl mx-auto flex items-end justify-start gap-4 md:gap-10 h-full">
                 
-                {/* Responsive Image Container: max-w updated to 400px */}
+                {/* Responsive Image Container: Fixed margin-bottom to 0 (-mb-6 removed) */}
                 {headshot ? (
-                  <div className="hidden md:flex h-[115%] items-end shrink-0 relative -mb-6 z-10 w-[25%] max-w-[400px]">
+                  <div className="hidden md:flex h-[115%] items-end shrink-0 relative mb-0 z-10 w-[25%] max-w-[400px]">
                     <img 
                       src={headshot} 
                       alt={playerName} 
