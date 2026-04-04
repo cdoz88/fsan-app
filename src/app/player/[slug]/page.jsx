@@ -47,20 +47,23 @@ async function getESPNPlayerData(playerName) {
       return null;
     }
 
-    // Reverted to just the standard API and Overview endpoints
-    const [playerRes, overviewRes] = await Promise.all([
+    // Hit the core athlete, overview, AND the deep splits endpoints!
+    const [playerRes, overviewRes, splitsRes] = await Promise.all([
       fetch(`https://site.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } }),
-      fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/overview`, { next: { revalidate: 3600 } })
+      fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/overview`, { next: { revalidate: 3600 } }),
+      fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/splits`, { next: { revalidate: 3600 } })
     ]);
     
     if (!playerRes.ok) throw new Error('Detail fetch failed');
     
     const playerData = await playerRes.json();
     const overviewData = overviewRes.ok ? await overviewRes.json() : null;
+    const splitsData = splitsRes.ok ? await splitsRes.json() : null;
     
     return {
       ...playerData.athlete,
-      overview: overviewData
+      overview: overviewData,
+      splits: splitsData
     };
 
   } catch (error) {
