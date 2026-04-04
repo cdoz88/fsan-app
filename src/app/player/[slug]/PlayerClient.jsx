@@ -122,89 +122,108 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     );
   };
 
+  // Restored exactly from your supplied file
   const renderStatistics = () => {
-    const baseStats = espnData?.overview?.statistics || espnData?.statistics;
-    
-    if (!baseStats) {
-      return <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-2xl bg-[#111]">Detailed statistics are currently unavailable for this athlete.</div>;
-    }
+    // 1. Recursive Data Vacuum: Scours the entire ESPN payload looking for valid stat blocks
+    const findStatTables = (obj, tables = [], currentTitle = "Career Stats") => {
+      if (!obj || typeof obj !== 'object') return tables;
 
-    // Shape 1: NFL Summary Style (Array of objects with displayValue)
-    if (Array.isArray(baseStats) && baseStats.length > 0 && baseStats[0].displayValue !== undefined) {
+      // Pattern A: Traditional Table (has labels array and stats array)
+      if (Array.isArray(obj.labels) && Array.isArray(obj.stats)) {
+        tables.push({ title: obj.text || obj.name || currentTitle, type: 'table', labels: obj.labels, stats: obj.stats });
+        return tables;
+      }
+      
+      // Pattern B: Key-Value List (has displayValue)
+      if (Array.isArray(obj) && obj.length > 0 && obj[0].displayValue !== undefined) {
+        tables.push({ title: currentTitle, type: 'list', stats: obj });
+        return tables;
+      }
+
+      // If neither pattern matches, keep digging deeper
+      if (Array.isArray(obj)) {
+        obj.forEach(child => findStatTables(child, tables, child.displayName || child.name || currentTitle));
+      } else {
+        for (const key in obj) {
+          if (key === 'athlete' || key === 'team') continue; // Skip massive recursion traps
+          const nextTitle = obj[key]?.displayName || obj[key]?.name || obj.displayName || obj.name || currentTitle;
+          findStatTables(obj[key], tables, nextTitle);
+        }
+      }
+      return tables;
+    };
+
+    // 2. Feed the vacuum all our data
+    const allTables = findStatTables(espnData);
+
+    // 3. De-duplicate (Sometimes ESPN sends the same stats in the overview and deepStats objects)
+    const uniqueTables = [];
+    const seen = new Set();
+    allTables.forEach(t => {
+      const hash = t.title + JSON.stringify(t.labels || (t.stats && t.stats[0]));
+      if (!seen.has(hash)) {
+        seen.add(hash);
+        uniqueTables.push(t);
+      }
+    });
+
+    if (uniqueTables.length === 0) {
       return (
-        <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
-          <div className="bg-[#222] px-6 py-4 border-b border-gray-800">
-            <h3 className="font-black text-white text-lg tracking-wide uppercase">Regular Season Stats</h3>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 p-6">
-            {baseStats.map((stat, statIdx) => (
-              <div key={statIdx} className="flex flex-col">
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{stat.displayName || stat.label || stat.name}</span>
-                <span className="text-xl font-semibold text-white">{stat.displayValue || stat.value || '-'}</span>
-              </div>
-            ))}
-          </div>
+        <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-2xl bg-[#111]">
+          Detailed statistics are currently unavailable for this athlete.
         </div>
       );
     }
 
-    // Shape 2: NBA/MLB Table Style (Array of category objects with labels and stats)
-    let categories = [];
-    if (Array.isArray(baseStats)) {
-      categories = baseStats;
-    } else if (Array.isArray(baseStats?.categories)) {
-      categories = baseStats.categories;
-    } else if (typeof baseStats === 'object') {
-      categories = Object.values(baseStats);
-    }
-
-    categories = categories.flat().filter(c => c && Array.isArray(c.labels) && Array.isArray(c.stats));
-
-    if (categories.length === 0) {
-      return <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-2xl bg-[#111]">Detailed statistics are currently unavailable for this athlete.</div>;
-    }
-
     return (
       <div className="flex flex-col gap-8">
-        {categories.map((category, idx) => {
-          const title = category.text || category.name || category.title || category.displayName || "Regular Season Stats";
-          const labels = category.labels || [];
-          const stats = category.stats || [];
-          const isMultiRow = Array.isArray(stats[0]);
-          const rows = isMultiRow ? stats : [stats];
-
-          return (
-            <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
-              <div className="bg-[#222] px-6 py-4 border-b border-gray-800">
-                <h3 className="font-black text-white text-lg tracking-wide uppercase">{title}</h3>
-              </div>
-              <div className="overflow-x-auto">
+        {uniqueTables.map((table, idx) => (
+          <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
+            <div className="bg-[#222] px-6 py-4 border-b border-gray-800">
+              <h3 className="font-black text-white text-lg tracking-wide uppercase">{table.title}</h3>
+            </div>
+            
+            <div className="overflow-x-auto">
+              {table.type === 'table' ? (
                 <table className="w-full text-left text-sm whitespace-nowrap">
                   <thead className="bg-[#151515] text-gray-400 font-bold text-xs uppercase tracking-wider">
                     <tr>
-                      {labels.map((label, labelIdx) => (
+                      {table.labels.map((label, labelIdx) => (
                         <th key={labelIdx} className="px-6 py-4 border-b border-gray-800">{label}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
-                    {rows.map((row, rowIdx) => (
+                    {/* Handle both multi-row and single-row 'stats' arrays gracefully */}
+                    {(Array.isArray(table.stats[0]) ? table.stats : [table.stats]).map((row, rowIdx) => (
                       <tr key={rowIdx} className="hover:bg-[#222] transition-colors">
-                        {labels.map((_, colIdx) => {
-                          let val = row[colIdx];
-                          if (val && typeof val === 'object') val = val.displayValue || val.value;
-                          return (
-                            <td key={colIdx} className={`px-6 py-4 text-gray-300 ${colIdx === 0 ? 'font-bold text-white' : ''}`}>{val ?? '-'}</td>
-                          );
+                        {table.labels.map((_, colIdx) => {
+                           let val = row[colIdx];
+                           // Deep object unpack for heavily nested values
+                           if (val && typeof val === 'object') val = val.displayValue || val.value;
+                           return (
+                             <td key={colIdx} className={`px-6 py-4 text-gray-300 ${colIdx === 0 ? 'font-bold text-white' : ''}`}>
+                               {val ?? '-'}
+                             </td>
+                           );
                         })}
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
+                  {table.stats.map((stat, statIdx) => (
+                    <div key={statIdx} className="flex flex-col">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{stat.displayName || stat.label || stat.name}</span>
+                      <span className="text-lg font-semibold text-white">{stat.displayValue || stat.value || '-'}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     );
   };
@@ -225,35 +244,35 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
           <main className="flex-1 overflow-y-auto relative z-0 scrollbar-hide pb-24">
             
             {/* THE HERO HEADER */}
-            <div className="relative w-full h-56 md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-6 mt-6">
+            <div className="relative w-full pt-10 pb-8 px-6 sm:px-10 md:pt-16 md:pb-12 flex flex-col overflow-hidden rounded-2xl mb-6 mt-6 min-h-[220px]">
               <div 
                 className="absolute inset-0 opacity-80" 
                 style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent" />
               
-              <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 pb-6 flex items-end justify-start gap-6 md:gap-10 h-full">
+              <div className="relative z-10 w-full max-w-7xl mx-auto flex items-end justify-start gap-4 md:gap-10 h-full flex-1">
                 
-                {/* Responsive Image Container: Shrinks dynamically to protect text, natural size on large screens */}
+                {/* Responsive Image Container */}
                 {headshot ? (
-                  <div className="hidden md:flex h-[115%] w-[30%] max-w-[220px] lg:max-w-none lg:w-auto items-end shrink-0 relative -mb-6 z-10">
+                  <div className="hidden md:flex h-[130%] items-end shrink-0 relative -mb-12 z-10 w-[30%] max-w-[220px] lg:max-w-none lg:w-auto">
                     <img 
                       src={headshot} 
                       alt={playerName} 
                       className="h-full w-full lg:w-auto object-contain object-bottom drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)]" 
                       style={{ 
-                        WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 20%)',
-                        maskImage: 'linear-gradient(to top, transparent 0%, black 20%)' 
+                        WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 15%)',
+                        maskImage: 'linear-gradient(to top, transparent 0%, black 15%)' 
                       }}
                     />
                   </div>
                 ) : (
-                  <div className="hidden md:flex h-32 w-32 bg-black/20 rounded-full items-center justify-center border-4 border-white/10 backdrop-blur-sm shrink-0 mb-2">
+                  <div className="hidden md:flex h-32 w-32 bg-black/20 rounded-full items-center justify-center border-4 border-white/10 backdrop-blur-sm shrink-0 mb-6 ml-6">
                     <User size={48} className="text-white/40" />
                   </div>
                 )}
 
-                <div className="flex flex-col gap-2 pb-0 md:pb-4 w-full z-20">
+                <div className="flex flex-col gap-1 w-full z-20 justify-end h-full pb-4 px-6 md:px-0">
                   
                   {/* Name and Position Inline */}
                   <div className="flex items-baseline gap-3 md:gap-4 flex-wrap">
@@ -268,8 +287,9 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                   </div>
                   
                   {espnData && (
-                    <div className="flex flex-col gap-3 mt-2">
+                    <div className="flex flex-col gap-3 mt-3">
                       
+                      {/* Top Line: Team, Exp, Status */}
                       <div className="flex items-center gap-3">
                         {teamLogo && <img src={teamLogo} alt={espnData.team?.displayName} className="h-6 md:h-8 w-auto object-contain drop-shadow-lg" />}
                         <span className="font-bold text-white/90 text-sm md:text-lg">{espnData.team?.displayName || 'Free Agent'}</span>
@@ -286,7 +306,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                         )}
                       </div>
 
-                      {/* Bio Attributes Grouped Together */}
+                      {/* Bottom Line: Detailed Bio Attributes */}
                       <div className="flex flex-wrap items-center gap-x-4 md:gap-x-6 gap-y-2 text-[11px] md:text-sm mt-1">
                         {espnData.displayHeight && espnData.displayWeight && (
                           <div className="flex gap-1.5">
