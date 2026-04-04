@@ -142,7 +142,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       categories = Object.values(baseStats);
     }
 
-    // Wrap in a parent array if ESPN returns a flat array of stat objects
     const isSummaryArray = categories.every(c => c.displayValue !== undefined || c.value !== undefined);
     if (isSummaryArray && categories.length > 0) {
       categories = [categories];
@@ -165,7 +164,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
           const labels = category.labels || category.names || category.descriptions;
           const stats = category.stats || category.displayValues || category.values;
 
-          // Type 1: Standard Multi-Row Table (MLB, NBA, etc.)
           if (Array.isArray(labels) && Array.isArray(stats)) {
             const isMultiRow = Array.isArray(stats[0]);
             const rows = isMultiRow ? stats : [stats];
@@ -203,7 +201,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
             );
           }
 
-          // Type 2: Key-Value Summary Grid (NFL)
           if (Array.isArray(category) && category.length > 0 && (category[0].displayValue !== undefined || category[0].value !== undefined)) {
             return (
               <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
@@ -222,7 +219,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
             );
           }
 
-          return null; // Ignore any junk metadata objects
+          return null; 
         })}
       </div>
     );
@@ -243,34 +240,36 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
         <div className="flex-1 w-full min-w-0">
           <main className="flex-1 overflow-y-auto relative z-0 scrollbar-hide pb-24">
             
-            {/* THE HERO HEADER */}
-            <div className="relative w-full pt-10 pb-8 px-6 sm:px-10 md:pt-16 md:pb-12 flex flex-col overflow-hidden rounded-2xl mb-6 mt-6 min-h-[220px]">
+            {/* THE HERO HEADER - RESTORED STRICT HEIGHT */}
+            <div className="relative w-full h-56 md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-6 mt-6">
               <div 
                 className="absolute inset-0 opacity-80" 
                 style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/40 to-transparent" />
               
-              <div className="relative z-10 w-full max-w-7xl mx-auto flex items-end justify-start gap-6 md:gap-10 h-full flex-1">
+              <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 pb-6 flex items-end justify-start gap-6 md:gap-10 h-full">
+                
+                {/* Image Restored to 115% scaling with 20% fade */}
                 {headshot ? (
-                  <div className="hidden md:flex h-[130%] items-end shrink-0 relative -mb-12 z-10">
+                  <div className="hidden md:flex h-[115%] items-end shrink-0 relative -mb-6 z-10">
                     <img 
                       src={headshot} 
                       alt={playerName} 
                       className="h-full w-auto object-contain drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)]" 
                       style={{ 
-                        WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 15%)',
-                        maskImage: 'linear-gradient(to top, transparent 0%, black 15%)' 
+                        WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 20%)',
+                        maskImage: 'linear-gradient(to top, transparent 0%, black 20%)' 
                       }}
                     />
                   </div>
                 ) : (
-                  <div className="hidden md:flex h-32 w-32 bg-black/20 rounded-full items-center justify-center border-4 border-white/10 backdrop-blur-sm shrink-0">
+                  <div className="hidden md:flex h-32 w-32 bg-black/20 rounded-full items-center justify-center border-4 border-white/10 backdrop-blur-sm shrink-0 mb-2">
                     <User size={48} className="text-white/40" />
                   </div>
                 )}
 
-                <div className="flex flex-col gap-1 w-full z-20 justify-end h-full">
+                <div className="flex flex-col gap-1 md:gap-2 pb-0 md:pb-4 w-full z-20 justify-end h-full">
                   
                   {/* Name and Position Inline */}
                   <div className="flex items-baseline gap-3 md:gap-4 flex-wrap">
@@ -285,7 +284,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                   </div>
                   
                   {espnData && (
-                    <div className="flex flex-col gap-3 mt-3">
+                    <div className="flex flex-col gap-3 mt-1 md:mt-3">
                       
                       {/* Top Line: Team, Exp, Status */}
                       <div className="flex items-center gap-3">
