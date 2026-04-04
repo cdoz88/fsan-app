@@ -38,6 +38,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   const headshot = espnData?.headshot?.href || null;
   const teamLogo = espnData?.team?.logos?.[0]?.href || null;
 
+  // --- BIO DATA PREP ---
   let birthplace = '';
   if (espnData?.birthPlace) {
     const { city, state, country } = espnData.birthPlace;
@@ -45,6 +46,8 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   }
   const dob = espnData?.dateOfBirth ? new Date(espnData.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
 
+
+  // --- TAB RENDERERS ---
 
   const renderContentGrid = () => {
     if (content.length === 0) {
@@ -119,18 +122,33 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     );
   };
 
-  // STRICT REVERT: Back to the exact logic that rendered the working stats grid
   const renderStatistics = () => {
     const baseStats = espnData?.overview?.statistics || espnData?.statistics;
     
     if (!baseStats) {
+      return <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-2xl bg-[#111]">Detailed statistics are currently unavailable for this athlete.</div>;
+    }
+
+    // Shape 1: NFL Summary Style (Array of objects with displayValue)
+    if (Array.isArray(baseStats) && baseStats.length > 0 && baseStats[0].displayValue !== undefined) {
       return (
-        <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-2xl bg-[#111]">
-          Detailed statistics are currently unavailable for this athlete.
+        <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
+          <div className="bg-[#222] px-6 py-4 border-b border-gray-800">
+            <h3 className="font-black text-white text-lg tracking-wide uppercase">Regular Season Stats</h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 p-6">
+            {baseStats.map((stat, statIdx) => (
+              <div key={statIdx} className="flex flex-col">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{stat.displayName || stat.label || stat.name}</span>
+                <span className="text-xl font-semibold text-white">{stat.displayValue || stat.value || '-'}</span>
+              </div>
+            ))}
+          </div>
         </div>
       );
     }
 
+    // Shape 2: NBA/MLB Table Style (Array of category objects with labels and stats)
     let categories = [];
     if (Array.isArray(baseStats)) {
       categories = baseStats;
@@ -140,86 +158,52 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       categories = Object.values(baseStats);
     }
 
-    const isSummaryArray = categories.every(c => c.displayValue !== undefined || c.value !== undefined);
-    if (isSummaryArray && categories.length > 0) {
-      categories = [categories];
-    }
-
-    categories = categories.flat().filter(c => c && typeof c === 'object');
+    categories = categories.flat().filter(c => c && Array.isArray(c.labels) && Array.isArray(c.stats));
 
     if (categories.length === 0) {
-      return (
-        <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-2xl bg-[#111]">
-          Detailed statistics are currently unavailable for this athlete.
-        </div>
-      );
+      return <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-2xl bg-[#111]">Detailed statistics are currently unavailable for this athlete.</div>;
     }
 
     return (
       <div className="flex flex-col gap-8">
         {categories.map((category, idx) => {
           const title = category.text || category.name || category.title || category.displayName || "Regular Season Stats";
-          const labels = category.labels || category.names || category.descriptions;
-          const stats = category.stats || category.displayValues || category.values;
+          const labels = category.labels || [];
+          const stats = category.stats || [];
+          const isMultiRow = Array.isArray(stats[0]);
+          const rows = isMultiRow ? stats : [stats];
 
-          // Type 1: Standard Multi-Row Table (MLB, NBA, etc.)
-          if (Array.isArray(labels) && Array.isArray(stats)) {
-            const isMultiRow = Array.isArray(stats[0]);
-            const rows = isMultiRow ? stats : [stats];
-            
-            return (
-              <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
-                <div className="bg-[#222] px-6 py-4 border-b border-gray-800">
-                  <h3 className="font-black text-white text-lg tracking-wide uppercase">{title}</h3>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm whitespace-nowrap">
-                    <thead className="bg-[#151515] text-gray-400 font-bold text-xs uppercase tracking-wider">
-                      <tr>
-                        {labels.map((label, labelIdx) => (
-                          <th key={labelIdx} className="px-6 py-4 border-b border-gray-800">{label}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-800">
-                      {rows.map((row, rowIdx) => (
-                        <tr key={rowIdx} className="hover:bg-[#222] transition-colors">
-                          {labels.map((_, colIdx) => {
-                            let val = row[colIdx];
-                            if (val && typeof val === 'object') val = val.displayValue || val.value;
-                            return (
-                              <td key={colIdx} className={`px-6 py-4 text-gray-300 ${colIdx === 0 ? 'font-bold text-white' : ''}`}>{val ?? '-'}</td>
-                            );
-                          })}
-                        </tr>
+          return (
+            <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
+              <div className="bg-[#222] px-6 py-4 border-b border-gray-800">
+                <h3 className="font-black text-white text-lg tracking-wide uppercase">{title}</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm whitespace-nowrap">
+                  <thead className="bg-[#151515] text-gray-400 font-bold text-xs uppercase tracking-wider">
+                    <tr>
+                      {labels.map((label, labelIdx) => (
+                        <th key={labelIdx} className="px-6 py-4 border-b border-gray-800">{label}</th>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800">
+                    {rows.map((row, rowIdx) => (
+                      <tr key={rowIdx} className="hover:bg-[#222] transition-colors">
+                        {labels.map((_, colIdx) => {
+                          let val = row[colIdx];
+                          if (val && typeof val === 'object') val = val.displayValue || val.value;
+                          return (
+                            <td key={colIdx} className={`px-6 py-4 text-gray-300 ${colIdx === 0 ? 'font-bold text-white' : ''}`}>{val ?? '-'}</td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            );
-          }
-
-          // Type 2: Key-Value Summary Grid (NFL)
-          if (Array.isArray(category) && category.length > 0 && (category[0].displayValue !== undefined || category[0].value !== undefined)) {
-            return (
-              <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
-                <div className="bg-[#222] px-6 py-4 border-b border-gray-800">
-                  <h3 className="font-black text-white text-lg tracking-wide uppercase">Regular Season Stats</h3>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 p-6">
-                  {category.map((stat, statIdx) => (
-                    <div key={statIdx} className="flex flex-col">
-                      <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{stat.displayName || stat.label || stat.name}</span>
-                      <span className="text-xl font-semibold text-white">{stat.displayValue || stat.value || '-'}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          }
-
-          return null; 
+            </div>
+          );
         })}
       </div>
     );
@@ -240,37 +224,38 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
         <div className="flex-1 w-full min-w-0">
           <main className="flex-1 overflow-y-auto relative z-0 scrollbar-hide pb-24">
             
-            {/* THE HERO HEADER - STRICTLY CONSTRAINED HEIGHT */}
-            <div className="relative w-full h-[260px] flex items-end overflow-hidden rounded-2xl mb-6 mt-6">
+            {/* THE HERO HEADER */}
+            <div className="relative w-full h-56 md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-6 mt-6">
               <div 
                 className="absolute inset-0 opacity-80" 
                 style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/40 to-transparent" />
               
-              <div className="relative z-10 w-full max-w-7xl mx-auto flex items-end justify-start gap-4 md:gap-10 h-full">
+              <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 pb-6 flex items-end justify-start gap-6 md:gap-10 h-full">
                 
-                {/* FIX: Bulletproof Image Container - Prevents Ballooning */}
+                {/* Responsive Image Container: Shrinks dynamically to protect text, natural size on large screens */}
                 {headshot ? (
-                  <div className="hidden md:flex h-full pt-4 items-end shrink-0 relative z-10">
+                  <div className="hidden md:flex h-[115%] w-[30%] max-w-[220px] lg:max-w-none lg:w-auto items-end shrink-0 relative -mb-6 z-10">
                     <img 
                       src={headshot} 
                       alt={playerName} 
-                      className="h-full w-auto max-w-[200px] lg:max-w-[250px] object-contain drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)] origin-bottom" 
+                      className="h-full w-full lg:w-auto object-contain object-bottom drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)]" 
                       style={{ 
-                        WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 15%)',
-                        maskImage: 'linear-gradient(to top, transparent 0%, black 15%)' 
+                        WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 20%)',
+                        maskImage: 'linear-gradient(to top, transparent 0%, black 20%)' 
                       }}
                     />
                   </div>
                 ) : (
-                  <div className="hidden md:flex h-32 w-32 bg-black/20 rounded-full items-center justify-center border-4 border-white/10 backdrop-blur-sm shrink-0 mb-6 ml-6">
+                  <div className="hidden md:flex h-32 w-32 bg-black/20 rounded-full items-center justify-center border-4 border-white/10 backdrop-blur-sm shrink-0 mb-2">
                     <User size={48} className="text-white/40" />
                   </div>
                 )}
 
-                <div className="flex flex-col gap-1 md:gap-2 w-full z-20 justify-end h-full pb-4 px-6 md:px-0">
+                <div className="flex flex-col gap-2 pb-0 md:pb-4 w-full z-20">
                   
+                  {/* Name and Position Inline */}
                   <div className="flex items-baseline gap-3 md:gap-4 flex-wrap">
                     <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white">
                       {playerName}
@@ -283,7 +268,8 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                   </div>
                   
                   {espnData && (
-                    <div className="flex flex-col gap-3 mt-1 md:mt-3">
+                    <div className="flex flex-col gap-3 mt-2">
+                      
                       <div className="flex items-center gap-3">
                         {teamLogo && <img src={teamLogo} alt={espnData.team?.displayName} className="h-6 md:h-8 w-auto object-contain drop-shadow-lg" />}
                         <span className="font-bold text-white/90 text-sm md:text-lg">{espnData.team?.displayName || 'Free Agent'}</span>
@@ -300,6 +286,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                         )}
                       </div>
 
+                      {/* Bio Attributes Grouped Together */}
                       <div className="flex flex-wrap items-center gap-x-4 md:gap-x-6 gap-y-2 text-[11px] md:text-sm mt-1">
                         {espnData.displayHeight && espnData.displayWeight && (
                           <div className="flex gap-1.5">
