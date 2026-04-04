@@ -112,18 +112,32 @@ async function getPlayerContent(playerName) {
     console.error("WP GraphQL Error:", error);
   }
 
-  // 2. Fetch Videos Using the Native WP REST API (Looser search to find more videos)
+  // 2. Fetch Videos Using the Custom FSAN Feed Endpoint
+  // This grabs the 200 most recent videos so we can manually search the custom youtube_description field
   let videos = [];
   try {
-    const searchStr = encodeURIComponent(playerName);
-    const url = `https://admin.fsan.com/wp-json/wp/v2/yt2posts_youtube?search=${searchStr}&_embed=1&per_page=100`;
-    const res = await fetch(url, { next: { revalidate: 60 } });
-    if (res.ok) {
-      const videoData = await res.json();
-      videos = Array.isArray(videoData) ? videoData : [];
-    }
+    const feedUrl1 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=1`;
+    const feedUrl2 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=2`;
+    
+    const [res1, res2] = await Promise.all([
+      fetch(feedUrl1, { next: { revalidate: 60 } }),
+      fetch(feedUrl2, { next: { revalidate: 60 } })
+    ]);
+    
+    let allVids = [];
+    if (res1.ok) allVids = allVids.concat(await res1.json());
+    if (res2.ok) allVids = allVids.concat(await res2.json());
+
+    // Manually filter videos to ensure we catch the player's name in the custom description
+    const playerNameLower = playerName.toLowerCase();
+    videos = allVids.filter(v => {
+      const title = (v.title?.rendered || '').toLowerCase();
+      const content = (v.content?.rendered || '').toLowerCase();
+      const desc = (v.youtube_description || '').toLowerCase();
+      return title.includes(playerNameLower) || content.includes(playerNameLower) || desc.includes(playerNameLower);
+    });
   } catch (e) {
-    console.error("REST Video fetch error:", e);
+    console.error("Video fetch error:", e);
   }
 
   // Standard regex to parse YouTube IDs for the pop-up modal
@@ -172,28 +186,26 @@ async function getPlayerContent(playerName) {
   });
 
   const formattedVideos = videos.map(item => {
-    let cats = [];
-    if (item._embedded && item._embedded['wp:term']) {
-      item._embedded['wp:term'].forEach(tax => {
-        tax.forEach(term => {
-          if (term.taxonomy === 'category' || term.taxonomy === 'yt2posts_category') {
-            cats.push(term.name.toLowerCase());
-          }
-        });
-      });
-    }
+    let cats = item.category_slugs || [];
     
     let sport = 'All';
-    if (cats.includes('football')) sport = 'Football';
-    if (cats.includes('basketball')) sport = 'Basketball';
-    if (cats.includes('baseball')) sport = 'Baseball';
+    if (cats.includes('football') || cats.includes('nfl')) sport = 'Football';
+    if (cats.includes('basketball') || cats.includes('nba')) sport = 'Basketball';
+    if (cats.includes('baseball') || cats.includes('mlb')) sport = 'Baseball';
 
     const d = new Date(item.date);
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 
-    // Extract youtubeId from the video description/content so the content modal displays the video properly
     let contentHtml = item.content?.rendered || '';
+    
+    // If there's a custom youtube description, append it so it shows up in the modal!
+    if (item.youtube_description) {
+        const formattedDesc = item.youtube_description.replace(/(?:\r\n|\r|\n)/g, '<br/>');
+        contentHtml += `<br/><br/><div>${formattedDesc}</div>`;
+    }
+
+    // Extract youtubeId from the content so the content modal displays the YouTube video properly
     let youtubeId = null;
     const ytMatch = contentHtml.match(ytRegex);
     if (ytMatch && ytMatch[1]) {
@@ -210,9 +222,9 @@ async function getPlayerContent(playerName) {
       imageUrl: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || null,
       author: {
         name: item._embedded?.author?.[0]?.name || 'FSAN Staff',
-        avatar: item._embedded?.author?.[0]?.avatar_urls?.['96'] || null
+        avatar: item.author_avatar_url || null
       },
-      type: 'video',
+      type: cats.includes('shorts') || cats.includes('short') ? 'short' : 'video',
       sport,
       slug: item.slug || item.id.toString(),
       youtubeId
