@@ -44,6 +44,12 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   const headshot = espnData?.headshot?.href || null;
   const teamLogo = espnData?.team?.logos?.[0]?.href || null;
 
+  // --- RESTORED BIO DATA PREP ---
+  let birthplace = '';
+  if (espnData?.birthPlace) {
+    const { city, state, country } = espnData.birthPlace;
+    birthplace = [city, state, country].filter(Boolean).join(', ');
+  }
   const dob = espnData?.dateOfBirth ? new Date(espnData.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
 
   const hideScrollbar = "scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
@@ -77,8 +83,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
         <div className="w-full aspect-video bg-gray-900 relative overflow-hidden shrink-0">
           {item.imageUrl && <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" alt="" />}
           <div className="absolute inset-0 bg-gradient-to-t from-[#1e1e1e] to-transparent" />
-          
-          {/* Tag overlay removed as requested */}
           
           {(item.type === 'video' || item.type === 'podcast') && (
             <PlayCircle size={32} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-20" />
@@ -266,7 +270,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
         <div className="flex-1 w-full min-w-0">
           <main className="flex-1 overflow-y-auto relative z-0 scrollbar-hide pb-24">
             
-            {/* --- HERO HEADER (UNTOUCHED DESIGN) --- */}
+            {/* THE HERO HEADER (UNTOUCHED DESIGN) */}
             <div className="relative w-full h-[260px] flex items-end overflow-hidden rounded-2xl mb-6 mt-6">
               <div 
                 className="absolute inset-0 opacity-80 z-0" 
@@ -320,6 +324,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                       <div className="flex flex-wrap items-center gap-x-4 md:gap-x-6 gap-y-2 text-[11px] md:text-sm mt-1">
                         {espnData.displayHeight && espnData.displayWeight && (<div className="flex gap-1.5"><span className="text-gray-500 uppercase font-bold tracking-wider">HT/WT</span><span className="text-gray-200 font-semibold">{espnData.displayHeight}, {espnData.displayWeight}</span></div>)}
                         {espnData.age && (<div className="flex gap-1.5"><span className="text-gray-500 uppercase font-bold tracking-wider">Age</span><span className="text-gray-200 font-semibold">{espnData.age}</span></div>)}
+                        {dob && (<div className="flex gap-1.5 hidden sm:flex"><span className="text-gray-500 uppercase font-bold tracking-wider">DOB</span><span className="text-gray-200 font-semibold">{dob}</span></div>)}
                         {birthplace && (<div className="flex gap-1.5"><span className="text-gray-500 uppercase font-bold tracking-wider">Born</span><span className="text-gray-200 font-semibold">{birthplace}</span></div>)}
                         {espnData.college?.name && (<div className="flex gap-1.5"><span className="text-gray-500 uppercase font-bold tracking-wider">College</span><span className="text-gray-200 font-semibold">{espnData.college.name}</span></div>)}
                       </div>
