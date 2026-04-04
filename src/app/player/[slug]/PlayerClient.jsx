@@ -253,9 +253,9 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
               
               <div className="relative z-10 w-full max-w-7xl mx-auto flex items-end justify-start gap-4 md:gap-10 h-full flex-1">
                 
-                {/* Responsive Image Container */}
+                {/* Responsive Image Container: Halved size */}
                 {headshot ? (
-                  <div className="hidden md:flex h-[130%] items-end shrink-0 relative -mb-12 z-10 w-[30%] max-w-[220px] lg:max-w-none lg:w-auto">
+                  <div className="hidden md:flex h-[65%] items-end shrink-0 relative -mb-6 z-10 w-[15%] max-w-[110px] lg:max-w-none lg:w-auto">
                     <img 
                       src={headshot} 
                       alt={playerName} 
@@ -267,8 +267,8 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                     />
                   </div>
                 ) : (
-                  <div className="hidden md:flex h-32 w-32 bg-black/20 rounded-full items-center justify-center border-4 border-white/10 backdrop-blur-sm shrink-0 mb-6 ml-6">
-                    <User size={48} className="text-white/40" />
+                  <div className="hidden md:flex h-16 w-16 bg-black/20 rounded-full items-center justify-center border-2 border-white/10 backdrop-blur-sm shrink-0 mb-3 ml-3">
+                    <User size={24} className="text-white/40" />
                   </div>
                 )}
 
