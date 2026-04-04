@@ -1,9 +1,10 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import Header from '../../../components/Header'; 
 import Sidebar from '../../../components/Sidebar'; 
 import ContentModal from '../../../components/ContentModal'; 
-import { PlayCircle, FileText, Mic, Video, User, Activity, LayoutGrid, Zap, Play, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PlayCircle, FileText, Mic, Video, User, Activity, LayoutGrid, Zap, Play, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { themes } from '../../../utils/theme';
 
 export default function PlayerClient({ playerName, rawSlug, espnData, content, proToolsMenu, connectMenu }) {
@@ -44,13 +45,12 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   const headshot = espnData?.headshot?.href || null;
   const teamLogo = espnData?.team?.logos?.[0]?.href || null;
 
-  // --- RESTORED BIO DATA PREP ---
+  const dob = espnData?.dateOfBirth ? new Date(espnData.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
   let birthplace = '';
   if (espnData?.birthPlace) {
     const { city, state, country } = espnData.birthPlace;
     birthplace = [city, state, country].filter(Boolean).join(', ');
   }
-  const dob = espnData?.dateOfBirth ? new Date(espnData.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
 
   const hideScrollbar = "scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
 
@@ -74,7 +74,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     const videos = content.filter(item => item.type === 'video');
     const shorts = content.filter(item => item.type === 'short');
 
-    // Standard Card (No Tags)
+    // Standard Card (Tags Removed!)
     const renderCard = (item) => (
       <div 
         onClick={() => handleSetSelectedItem(item)} 
@@ -97,16 +97,16 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       </div>
     );
 
-    // Short Card (Home Page Style)
+    // EXACT Short Card logic borrowed from Home.jsx
     const renderShortCard = (item) => (
-      <div onClick={() => handleSetSelectedItem(item)} className="group h-full w-full min-h-[300px] md:min-h-[400px] cursor-pointer bg-[#111] border border-gray-800 hover:border-gray-500 rounded-2xl overflow-hidden shadow-xl transition-all flex flex-col relative">
+      <div onClick={() => handleSetSelectedItem(item)} className={`group h-full w-full min-h-[300px] md:min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
         {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
           <div className="bg-black/50 backdrop-blur-sm rounded-full p-3 md:p-4 border border-white/10"><Play size={24} className="text-white ml-1" fill="currentColor"/></div>
         </div>
         <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 z-20">
-          <h3 className="font-black text-sm md:text-lg text-white leading-tight transition-colors line-clamp-3 drop-shadow-md" dangerouslySetInnerHTML={{ __html: item.title }} />
+          <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
         </div>
       </div>
     );
@@ -159,7 +159,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
           </section>
         )}
 
-        {/* Shorts Carousel (Highlight Reel) */}
+        {/* Shorts Carousel (Highlight Reel) - Identical to Home.jsx */}
         {shorts.length > 0 && (
           <section className={`relative ${articles.length > 0 || videos.length > 0 ? 'pt-6 border-t border-gray-800/50' : ''}`}>
             <div className="flex items-center justify-between mb-6">
@@ -175,6 +175,12 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                   {renderShortCard(short)}
                 </div>
               ))}
+              
+              {/* Added the missing trailing linked card! */}
+              <Link href={`/${content[0]?.sport?.toLowerCase() === 'all' ? 'football' : (content[0]?.sport?.toLowerCase() || 'football')}/videos`} className="relative w-36 md:w-44 flex-shrink-0 snap-start aspect-[9/16] rounded-2xl overflow-hidden bg-[#111] border border-gray-700 hover:border-gray-500 transition-colors flex flex-col items-center justify-center group text-gray-400 hover:text-white no-underline">
+                <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"><ArrowRight size={24} /></div>
+                <span className="font-black uppercase tracking-widest text-sm text-center">See All<br/>Shorts</span>
+              </Link>
             </div>
           </section>
         )}
