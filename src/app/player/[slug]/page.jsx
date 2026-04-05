@@ -76,13 +76,19 @@ async function getESPNPlayerData(playerName) {
   }
 }
 
-async function getPlayerContent(playerName) {
+async function getPlayerContent(playerName, sportName) {
   const exactMatchQuery = `\\"${playerName}\\"`;
   
-  // 1. Fetch Articles Using GraphQL
+  // Convert sport name to taxonomy slug (e.g., 'Football' -> 'football')
+  const sportSlug = sportName && sportName !== 'All' ? sportName.toLowerCase() : '';
+  
+  // Create GraphQL filter (WPGraphQL automatically includes child categories like 'football-podcast')
+  const categoryFilter = sportSlug ? `, categoryName: "${sportSlug}"` : '';
+
+  // 1. Fetch Articles Using GraphQL with Category Filter Injection
   const postsQuery = `
     query GetPlayerPosts {
-      posts(where: {search: "${exactMatchQuery}"}, first: 50) {
+      posts(where: {search: "${exactMatchQuery}"${categoryFilter}}, first: 50) {
         nodes {
           id
           title
@@ -121,11 +127,14 @@ async function getPlayerContent(playerName) {
   let videos = [];
   let podcasts = [];
   try {
-    const feedUrl1 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=1`;
-    const feedUrl2 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=2`;
+    // Append the sport parameter dynamically to the custom feed endpoint!
+    const sportParam = sportSlug ? `&sport=${sportSlug}` : '';
     
-    const podUrl1 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=podcasts&per_page=100&page=1`;
-    const podUrl2 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=podcasts&per_page=100&page=2`;
+    const feedUrl1 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=1${sportParam}`;
+    const feedUrl2 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=2${sportParam}`;
+    
+    const podUrl1 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=podcasts&per_page=100&page=1${sportParam}`;
+    const podUrl2 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=podcasts&per_page=100&page=2${sportParam}`;
 
     const [v1, v2, p1, p2] = await Promise.all([
       fetch(feedUrl1, { next: { revalidate: 60 } }),
@@ -289,13 +298,12 @@ export default async function PlayerPage({ params }) {
   const { slug: rawSlug } = await params;
   const playerName = rawSlug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
-  const [espnData, content] = await Promise.all([
-    getESPNPlayerData(playerName),
-    getPlayerContent(playerName)
-  ]);
+  // 1. Await the ESPN fetch FIRST so we can figure out the sport!
+  const espnData = await getESPNPlayerData(playerName);
+  const playerSport = espnData?.sportName || 'All';
 
-  // Determine the sport dynamically (Fallback to 'All' if ESPN couldn't find a specific sport)
-  const playerSport = espnData?.sportName || content[0]?.sport || 'All';
+  // 2. Fetch the content specifically filtered by that exact sport
+  const content = await getPlayerContent(playerName, playerSport);
 
   let proToolsMenu = [];
   let connectMenu = [];
@@ -316,7 +324,7 @@ export default async function PlayerPage({ params }) {
        content={content}
        proToolsMenu={proToolsMenu}
        connectMenu={connectMenu}
-       playerSport={playerSport} // Passing the dynamic sport to the Client UI
+       playerSport={playerSport} 
     />
   );
 }
