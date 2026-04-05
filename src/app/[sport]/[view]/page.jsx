@@ -75,22 +75,18 @@ export default async function DynamicPage({ params, searchParams }) {
          body: JSON.stringify({ query: postsQuery })
        });
        const json = await res.json();
-       const gqlPosts = json?.data?.posts?.nodes?.map(post => {
-          let type = 'article';
+       const rawPosts = json?.data?.posts?.nodes || [];
+
+       // Filter out duplicates (if WP GraphQL accidentally caught a video/podcast as a post)
+       const gqlPosts = rawPosts.reduce((acc, post) => {
           const cats = post.categories?.nodes?.map(c => c.name.toLowerCase()) || [];
-          if (cats.includes('video') || cats.includes('videos')) type = 'video';
-          else if (cats.includes('short') || cats.includes('shorts')) type = 'short';
-          else if (cats.includes('podcast') || cats.includes('podcasts')) type = 'podcast';
+          if (cats.some(c => c.includes('pod') || c.includes('video') || c.includes('short'))) return acc;
 
           const d = new Date(post.date);
           const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
           const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 
-          let youtubeId = null;
-          const ytMatch = post.content?.match(ytRegex);
-          if (ytMatch && ytMatch[1]) youtubeId = ytMatch[1];
-
-          return {
+          acc.push({
             id: post.id,
             title: post.title,
             excerpt: stripTags(post.excerpt),
@@ -99,54 +95,108 @@ export default async function DynamicPage({ params, searchParams }) {
             rawDate: d.getTime(),
             imageUrl: post.featuredImage?.node?.sourceUrl || null,
             author: { name: post.author?.node?.name || 'FSAN Staff', avatar: post.author?.node?.avatar?.url || null },
-            type, sport: activeSport, slug: post.slug, youtubeId
-          };
-       }) || [];
+            type: 'article',
+            sport: activeSport,
+            slug: post.slug,
+            youtubeId: null
+          });
+          return acc;
+       }, []);
+
        posts = [...posts, ...gqlPosts];
      } catch (e) {}
 
-     // Search REST API for Videos
+     // Search REST API for Videos & Podcasts (Parallel Fetch)
      try {
        const sportParam = sportSlug ? `&sport=${sportSlug}` : '';
-       const feedUrl = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=1${sportParam}`;
-       const res = await fetch(feedUrl);
-       if (res.ok) {
-          const vids = await res.json();
-          const qLower = q.toLowerCase();
-          const matchedVids = vids.filter(v => 
-            (v.title?.rendered || '').toLowerCase().includes(qLower) || 
-            (v.youtube_description || '').toLowerCase().includes(qLower)
-          );
-          const formattedVids = matchedVids.map(v => {
-            const cats = v.category_slugs || [];
-            const d = new Date(v.date);
-            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+       
+       const vUrl1 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=1${sportParam}`;
+       const vUrl2 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=2${sportParam}`;
+       const pUrl1 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=podcasts&per_page=100&page=1${sportParam}`;
+       const pUrl2 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=podcasts&per_page=100&page=2${sportParam}`;
 
-            let contentHtml = v.content?.rendered || '';
-            if (v.youtube_description) contentHtml += `<br/><br/><div>${v.youtube_description.replace(/(?:\r\n|\r|\n)/g, '<br/>')}</div>`;
+       const [vRes1, vRes2, pRes1, pRes2] = await Promise.all([
+         fetch(vUrl1), fetch(vUrl2), fetch(pUrl1), fetch(pUrl2)
+       ]);
 
-            let youtubeId = null;
-            const ytMatch = contentHtml.match(ytRegex);
-            if (ytMatch && ytMatch[1]) youtubeId = ytMatch[1];
+       let vids = [];
+       if (vRes1.ok) vids = vids.concat(await vRes1.json());
+       if (vRes2.ok) vids = vids.concat(await vRes2.json());
 
-            return {
-              id: v.id.toString(),
-              title: stripTags(v.title?.rendered || ''),
-              excerpt: stripTags(v.excerpt?.rendered || ''),
-              content: contentHtml,
-              date: safeDateString,
-              rawDate: d.getTime(),
-              imageUrl: v._embedded?.['wp:featuredmedia']?.[0]?.source_url || null,
-              author: { name: v._embedded?.author?.[0]?.name || 'FSAN Staff', avatar: v.author_avatar_url || null },
-              type: cats.includes('shorts') || cats.includes('short') ? 'short' : 'video',
-              sport: activeSport, slug: v.slug || v.id.toString(), youtubeId
-            };
-          });
-          posts = [...posts, ...formattedVids];
-       }
+       let pods = [];
+       if (pRes1.ok) pods = pods.concat(await pRes1.json());
+       if (pRes2.ok) pods = pods.concat(await pRes2.json());
+
+       const qLower = q.toLowerCase();
+
+       // Manually filter videos based on title, content, or custom YouTube description
+       const matchedVids = vids.filter(v => 
+         (v.title?.rendered || '').toLowerCase().includes(qLower) || 
+         (v.content?.rendered || '').toLowerCase().includes(qLower) ||
+         (v.youtube_description || '').toLowerCase().includes(qLower)
+       );
+
+       // Manually filter podcasts based on title or content
+       const matchedPods = pods.filter(p => 
+         (p.title?.rendered || '').toLowerCase().includes(qLower) || 
+         (p.content?.rendered || '').toLowerCase().includes(qLower)
+       );
+
+       const formattedVids = matchedVids.map(v => {
+         const cats = v.category_slugs || [];
+         const d = new Date(v.date);
+         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+         const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+
+         let contentHtml = v.content?.rendered || '';
+         if (v.youtube_description) contentHtml += `<br/><br/><div>${v.youtube_description.replace(/(?:\r\n|\r|\n)/g, '<br/>')}</div>`;
+
+         let youtubeId = null;
+         const ytMatch = contentHtml.match(ytRegex);
+         if (ytMatch && ytMatch[1]) youtubeId = ytMatch[1];
+
+         return {
+           id: v.id.toString(),
+           title: stripTags(v.title?.rendered || ''),
+           excerpt: stripTags(v.excerpt?.rendered || ''),
+           content: contentHtml,
+           date: safeDateString,
+           rawDate: d.getTime(),
+           imageUrl: v._embedded?.['wp:featuredmedia']?.[0]?.source_url || null,
+           author: { name: v._embedded?.author?.[0]?.name || 'FSAN Staff', avatar: v.author_avatar_url || null },
+           type: cats.includes('shorts') || cats.includes('short') || cats.includes('football-shorts') ? 'short' : 'video',
+           sport: activeSport, 
+           slug: v.slug || v.id.toString(), 
+           youtubeId
+         };
+       });
+
+       const formattedPods = matchedPods.map(p => {
+         const d = new Date(p.date);
+         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+         const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+
+         return {
+           id: p.id.toString(),
+           title: stripTags(p.title?.rendered || ''),
+           excerpt: stripTags(p.excerpt?.rendered || ''),
+           content: p.content?.rendered || '',
+           date: safeDateString,
+           rawDate: d.getTime(),
+           imageUrl: p._embedded?.['wp:featuredmedia']?.[0]?.source_url || null,
+           author: { name: p._embedded?.author?.[0]?.name || 'FSAN Staff', avatar: p.author_avatar_url || null },
+           type: 'podcast',
+           sport: activeSport,
+           slug: p.slug || p.id.toString(),
+           spreakerId: p.spreaker_episode_id || null,
+           spreakerShowId: p.spreaker_show_id || null
+         };
+       });
+
+       posts = [...posts, ...formattedVids, ...formattedPods];
      } catch(e) {}
      
+     // Sort all merged content by newest first
      posts.sort((a,b) => b.rawDate - a.rawDate);
 
   } else {
