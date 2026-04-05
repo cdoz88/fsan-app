@@ -348,70 +348,75 @@ export default function Header({ activeSport }) {
       {isSearchModalOpen && (
         <div className="fixed inset-0 z-[110] bg-black/90 backdrop-blur-md flex items-start justify-center pt-[15vh] px-4">
           
-          <button 
-            onClick={() => setIsSearchModalOpen(false)} 
-            className="absolute top-6 right-6 md:top-10 md:right-10 p-3 bg-gray-900/60 hover:bg-gray-800 rounded-full transition-colors text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 shadow-xl"
-          >
-            <X size={28} />
-          </button>
-          
-          <div className="w-full max-w-4xl relative">
+          <div className="w-full max-w-4xl relative flex flex-col">
             
-            {/* INLINE SEARCH BAR */}
-            <div className="flex items-center bg-[#1e1e1e] border border-gray-700 rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.8)] focus-within:border-gray-500 transition-all h-16 md:h-20 relative z-20">
-              
-              {/* COMPACT SPORT SELECTOR ON LEFT (Icon Only) */}
-              <div className="relative h-full flex items-center border-r border-gray-800 bg-[#151515] rounded-l-2xl">
-                <button 
-                  onClick={() => setIsSearchSportDropdownOpen(!isSearchSportDropdownOpen)} 
-                  className="flex items-center justify-center h-full px-4 md:px-5 gap-1.5 md:gap-2 text-gray-300 hover:text-white transition-colors rounded-l-2xl group min-w-[60px] md:min-w-[80px]"
-                  title={`Search within: ${searchSport}`}
-                >
-                  {sportsList.find(s => s.name === searchSport) && (
-                    <img 
-                      src={sportsList.find(s => s.name === searchSport).icon} 
-                      className="w-6 h-6 md:w-7 md:h-7 object-contain group-hover:scale-110 transition-transform" 
-                      alt={searchSport} 
-                    />
-                  )}
-                  <ChevronsUpDown size={14} className="text-gray-500 shrink-0" />
-                </button>
-
-                {isSearchSportDropdownOpen && (
-                  <>
-                    <div className="fixed inset-0 z-10" onClick={() => setIsSearchSportDropdownOpen(false)}></div>
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl z-20 overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
-                      <div className="px-4 py-2 text-[9px] font-black uppercase tracking-widest text-gray-500 border-b border-gray-800/50 mb-1">Search Within</div>
-                      {sportsList.map(s => (
-                        <button key={s.name} onClick={() => { setSearchSport(s.name); setIsSearchSportDropdownOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${searchSport === s.name ? 'bg-[#252525] text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
-                          <img src={s.icon} className="w-5 h-5 object-contain" alt="" />
-                          <span className="font-bold text-xs uppercase tracking-wider">{s.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <Search size={24} className="text-gray-400 ml-4 shrink-0 hidden md:block" />
-              
-              <input 
-                type="text" 
-                autoFocus 
-                placeholder="Search players, articles, videos..." 
-                className="flex-1 bg-transparent text-white text-lg md:text-xl p-4 md:p-6 outline-none placeholder-gray-600 h-full w-full min-w-0" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSearch();
-                }}
-              />
-              
-              {/* INLINE SUBMIT BUTTON */}
-              <button onClick={handleSearch} className="h-full px-6 md:px-8 bg-white text-black transition-colors hover:bg-gray-300 text-xs md:text-sm font-black uppercase tracking-widest border-l border-gray-300 rounded-r-2xl flex items-center gap-2 shadow-inner group shrink-0">
-                <span className="hidden md:inline">Search</span>
-                <Search size={20} className="md:hidden" />
+            {/* CLOSE BUTTON - UPPER RIGHT OF SEARCH BAR */}
+            <div className="flex justify-end mb-3 pr-1">
+              <button 
+                onClick={() => setIsSearchModalOpen(false)} 
+                className="p-2 bg-[#1a1a1a] hover:bg-gray-800 rounded-full transition-all text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 shadow-2xl group"
+              >
+                <X size={20} className="opacity-80 group-hover:opacity-100" />
               </button>
+            </div>
+
+            {/* INLINE SEARCH BAR (Wrapped in Pro+ Gradient Border) */}
+            <div className="p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] w-full shadow-[0_0_50px_rgba(0,0,0,0.8)] relative z-20">
+              <div className="flex items-center bg-[#1e1e1e] rounded-[22px] h-16 md:h-20 w-full overflow-hidden">
+                
+                {/* COMPACT SPORT SELECTOR ON LEFT (Icon Only) */}
+                <div className="relative h-full flex items-center border-r border-gray-800 bg-[#151515] rounded-l-[22px]">
+                  <button 
+                    onClick={() => setIsSearchSportDropdownOpen(!isSearchSportDropdownOpen)} 
+                    className="flex items-center justify-center h-full px-4 md:px-5 gap-1.5 md:gap-2 text-gray-300 hover:text-white transition-colors rounded-l-[22px] group min-w-[60px] md:min-w-[80px]"
+                    title={`Search within: ${searchSport}`}
+                  >
+                    {sportsList.find(s => s.name === searchSport) && (
+                      <img 
+                        src={sportsList.find(s => s.name === searchSport).icon} 
+                        className="w-6 h-6 md:w-7 md:h-7 object-contain group-hover:scale-110 transition-transform" 
+                        alt={searchSport} 
+                      />
+                    )}
+                    <ChevronsUpDown size={14} className="text-gray-500 shrink-0" />
+                  </button>
+
+                  {isSearchSportDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setIsSearchSportDropdownOpen(false)}></div>
+                      <div className="absolute top-full left-0 mt-3 w-48 bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl z-20 overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
+                        <div className="px-4 py-2 text-[9px] font-black uppercase tracking-widest text-gray-500 border-b border-gray-800/50 mb-1">Search Within</div>
+                        {sportsList.map(s => (
+                          <button key={s.name} onClick={() => { setSearchSport(s.name); setIsSearchSportDropdownOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${searchSport === s.name ? 'bg-[#252525] text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+                            <img src={s.icon} className="w-5 h-5 object-contain" alt="" />
+                            <span className="font-bold text-xs uppercase tracking-wider">{s.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <Search size={24} className="text-gray-400 ml-4 shrink-0 hidden md:block" />
+                
+                <input 
+                  type="text" 
+                  autoFocus 
+                  placeholder="Search players, articles, videos..." 
+                  className="flex-1 bg-transparent text-white text-lg md:text-xl p-4 md:p-6 outline-none placeholder-gray-600 h-full w-full min-w-0" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSearch();
+                  }}
+                />
+                
+                {/* INLINE SUBMIT BUTTON - Grey Gradient */}
+                <button onClick={handleSearch} className="h-full px-6 md:px-8 bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 text-white transition-all text-xs md:text-sm font-black uppercase tracking-widest border-l border-gray-700 rounded-r-[22px] flex items-center gap-2 shadow-inner group shrink-0">
+                  <span className="hidden md:inline">Search</span>
+                  <Search size={20} className="md:hidden" />
+                </button>
+              </div>
             </div>
 
             {/* LIVE TYPEAHEAD SUGGESTIONS */}
