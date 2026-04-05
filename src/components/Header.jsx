@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Search, Menu, X, ChevronsUpDown, User, LogOut, Users, Flame, Loader2, FileText } from 'lucide-react';
+import { Search, Menu, X, ChevronsUpDown, User, LogOut, Users, Flame, Loader2, FileText, ChevronRight } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { themes } from '../utils/theme';
 import { SelloutCrowds } from './Icons';
@@ -18,14 +18,17 @@ const sportsList = [
 export default function Header({ activeSport }) {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isSportDropdownOpen, setIsSportDropdownOpen] = useState(false);
+  const [isSearchSportDropdownOpen, setIsSearchSportDropdownOpen] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(null); 
   
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalView, setAuthModalView] = useState('login'); 
   
-  // --- NEW SEARCH STATE ---
   const [searchQuery, setSearchQuery] = useState('');
   const [searchSport, setSearchSport] = useState(activeSport || 'All');
+  
+  // --- NEW TYPEAHEAD STATE ---
+  const [suggestions, setSuggestions] = useState([]);
   
   const { data: session, status } = useSession();
   
@@ -57,6 +60,38 @@ export default function Header({ activeSport }) {
   useEffect(() => {
     setSearchSport(activeSport || 'All');
   }, [activeSport]);
+
+  // DEBOUNCED ESPN PLAYER FETCHING FOR SUGGESTIONS
+  useEffect(() => {
+    if (searchQuery.trim().length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    
+    const timer = setTimeout(async () => {
+      try {
+        const espnQ = searchSport !== 'All' ? `${searchQuery} ${searchSport}` : searchQuery;
+        const res = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(espnQ)}&limit=5`);
+        
+        if (res.ok) {
+          const data = await res.json();
+          const contents = data?.results?.flatMap(r => r.contents || []) || [];
+          const athletes = contents.filter(c => c.uid && c.uid.includes('~a:'));
+          
+          const mapped = athletes.map(a => {
+             const slug = a.displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+             return { name: a.displayName, slug, desc: a.description || '' };
+          });
+          
+          // Deduplicate by slug
+          const unique = Array.from(new Map(mapped.map(item => [item.slug, item])).values()).slice(0, 4);
+          setSuggestions(unique);
+        }
+      } catch(e) {}
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, searchSport]);
 
   useEffect(() => {
     const fetchMobileMenu = async () => {
@@ -104,6 +139,11 @@ export default function Header({ activeSport }) {
     setIsSearchModalOpen(false);
     const searchBasePath = searchSport === 'All' ? '' : `/${searchSport.toLowerCase()}`;
     router.push(`${searchBasePath}/search?q=${encodeURIComponent(searchQuery)}`);
+  };
+
+  const handleSuggestionClick = (slug) => {
+    setIsSearchModalOpen(false);
+    router.push(`/player/${slug}`);
   };
 
   const getMobileIcon = (label) => {
@@ -283,18 +323,26 @@ export default function Header({ activeSport }) {
       />
 
       {isSearchModalOpen && (
-        <div className="fixed inset-0 z-[110] bg-black/90 backdrop-blur-sm flex items-start justify-center pt-[15vh] px-4">
-          <div className="w-full max-w-3xl">
+        <div className="fixed inset-0 z-[110] bg-black/90 backdrop-blur-md flex items-start justify-center pt-[15vh] px-4">
+          
+          <button 
+            onClick={() => setIsSearchModalOpen(false)} 
+            className="absolute top-6 right-6 md:top-10 md:right-10 p-3 bg-gray-900/60 hover:bg-gray-800 rounded-full transition-colors text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 shadow-xl"
+          >
+            <X size={28} />
+          </button>
+          
+          <div className="w-full max-w-4xl relative">
             
-            {/* UPDATED SEARCH BOX - Centered Layout */}
-            <div className="flex items-center bg-[#1e1e1e] border border-gray-700 rounded-xl shadow-2xl overflow-hidden focus-within:border-gray-500 transition-colors h-16">
-              <Search size={24} className="text-gray-400 ml-4 shrink-0" />
+            {/* INLINE SEARCH BAR */}
+            <div className="flex items-center bg-[#1e1e1e] border border-gray-700 rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.8)] focus-within:border-gray-500 transition-all h-16 md:h-20 relative z-20">
+              <Search size={28} className="text-gray-400 ml-6 shrink-0" />
               
               <input 
                 type="text" 
                 autoFocus 
                 placeholder="Search players, articles, videos..." 
-                className="flex-1 bg-transparent text-white text-lg md:text-xl p-4 outline-none placeholder-gray-600 h-full" 
+                className="flex-1 bg-transparent text-white text-xl md:text-2xl p-4 md:p-6 outline-none placeholder-gray-600 h-full" 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -302,35 +350,64 @@ export default function Header({ activeSport }) {
                 }}
               />
               
-              <div className="relative border-l border-gray-700 bg-[#151515] flex items-center h-full">
-                <select
-                  value={searchSport}
-                  onChange={(e) => setSearchSport(e.target.value)}
-                  className="bg-transparent text-gray-300 hover:text-white text-[10px] sm:text-xs font-black uppercase tracking-widest outline-none cursor-pointer appearance-none pl-4 pr-10 py-5 w-full h-full"
-                >
-                  <option value="All" className="bg-[#1a1a1a]">All Sports</option>
-                  <option value="Football" className="bg-[#1a1a1a]">Football</option>
-                  <option value="Basketball" className="bg-[#1a1a1a]">Basketball</option>
-                  <option value="Baseball" className="bg-[#1a1a1a]">Baseball</option>
-                </select>
-                <ChevronsUpDown size={14} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" />
+              {/* CUSTOM STYLIZED SPORT SELECTOR */}
+              <div className="relative h-full flex items-center border-l border-gray-800 bg-[#151515]">
+                <button onClick={() => setIsSearchSportDropdownOpen(!isSearchSportDropdownOpen)} className="flex items-center h-full px-4 md:px-6 gap-2 text-gray-300 hover:text-white transition-colors text-[10px] md:text-xs font-black uppercase tracking-widest w-[110px] md:w-[140px] justify-between">
+                  <div className="flex items-center gap-2">
+                    {sportsList.find(s => s.name === searchSport) && (
+                      <img src={sportsList.find(s => s.name === searchSport).icon} className="w-4 h-4 object-contain hidden md:block" alt="" />
+                    )}
+                    <span className="truncate">{searchSport}</span>
+                  </div>
+                  <ChevronsUpDown size={14} className="text-gray-500 shrink-0" />
+                </button>
+
+                {isSearchSportDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setIsSearchSportDropdownOpen(false)}></div>
+                    <div className="absolute top-full right-0 mt-2 w-48 bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl z-20 overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
+                      <div className="px-4 py-2 text-[9px] font-black uppercase tracking-widest text-gray-500 border-b border-gray-800/50 mb-1">Search Within</div>
+                      {sportsList.map(s => (
+                        <button key={s.name} onClick={() => { setSearchSport(s.name); setIsSearchSportDropdownOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${searchSport === s.name ? 'bg-[#252525] text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
+                          <img src={s.icon} className="w-5 h-5 object-contain" alt="" />
+                          <span className="font-bold text-xs uppercase tracking-wider">{s.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
-            
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 px-2">
-              <button 
-                onClick={handleSearch} 
-                className="w-full max-w-[250px] px-6 py-4 bg-white text-black rounded-xl transition-colors hover:bg-gray-200 text-sm font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2"
-              >
-                <Search size={18} /> Search
-              </button>
-              <button 
-                onClick={() => setIsSearchModalOpen(false)} 
-                className="w-full max-w-[250px] px-6 py-3 hover:bg-gray-800 rounded-xl transition-colors text-gray-400 hover:text-white text-xs font-bold uppercase tracking-widest border border-transparent hover:border-gray-700"
-              >
-                Cancel
+
+              {/* INLINE SUBMIT BUTTON */}
+              <button onClick={handleSearch} className="h-full px-6 md:px-8 bg-white text-black transition-colors hover:bg-gray-300 text-xs md:text-sm font-black uppercase tracking-widest border-l border-gray-300 rounded-r-2xl flex items-center gap-2 shadow-inner group">
+                <span className="hidden md:inline">Search</span>
+                <ChevronRight size={20} className="md:hidden" />
               </button>
             </div>
+
+            {/* LIVE TYPEAHEAD SUGGESTIONS */}
+            {suggestions.length > 0 && (
+              <div className="absolute top-full left-0 w-full mt-3 bg-[#1a1a1a] border border-gray-700 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-10 animate-in fade-in slide-in-from-top-2">
+                <div className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500 border-b border-gray-800/50 bg-[#111]">
+                  Suggested Players
+                </div>
+                {suggestions.map(s => (
+                  <button 
+                    key={s.slug} 
+                    onClick={() => handleSuggestionClick(s.slug)} 
+                    className="w-full flex items-center gap-5 p-4 md:px-6 md:py-5 border-b border-gray-800 last:border-0 hover:bg-[#252525] transition-colors text-left group"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-black border border-gray-700 flex items-center justify-center shrink-0 group-hover:border-gray-500 group-hover:scale-110 transition-all shadow-inner">
+                      <User size={24} className="text-gray-500 group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-white font-black text-lg md:text-xl group-hover:text-blue-400 transition-colors leading-tight">{s.name}</span>
+                      {s.desc && <span className="text-gray-400 text-[10px] md:text-xs font-bold tracking-wide uppercase mt-1">{s.desc}</span>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
             
           </div>
         </div>

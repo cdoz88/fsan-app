@@ -32,15 +32,17 @@ export default async function DynamicPage({ params, searchParams }) {
 
      if (isPotentiallyPlayer) {
          try {
-            // INCREASING LIMIT TO 30 to ensure we catch players from MLB/NBA even if an NFL player with the same name is more famous!
-            const searchRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(q)}&limit=30`);
+            // FIX: Secretly append the sport to the ESPN query to force correct ranking (e.g., "Josh Allen Baseball")
+            const espnQuery = activeSport !== 'All' ? `${q} ${activeSport}` : q;
+            
+            const searchRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(espnQuery)}&limit=30`);
             if (searchRes.ok) {
                const searchData = await searchRes.json();
                const allContents = searchData?.results?.flatMap(r => r.contents || []) || [];
 
                const validAthletes = allContents.filter(c => c.uid && c.uid.includes('~a:'));
 
-               // Sport-Aware ESPN Redirect
+               // Sport-Aware ESPN Target checking
                let targetSportCode = null;
                if (activeSport === 'Football') targetSportCode = 's:20~';
                else if (activeSport === 'Basketball') targetSportCode = 's:40~';
@@ -230,11 +232,9 @@ export default async function DynamicPage({ params, searchParams }) {
        posts = [...posts, ...formattedVids, ...formattedPods];
      } catch(e) {}
      
-     // Sort all merged content by newest first
      posts.sort((a,b) => b.rawDate - a.rawDate);
 
   } else {
-     // Default fetching for regular archive pages
      const targetType = view === 'home' ? 'all' : (view === 'podcasts' ? 'shows' : view);
      const data = await fetchPosts(activeSport, targetType, 1);
      posts = data.posts;
