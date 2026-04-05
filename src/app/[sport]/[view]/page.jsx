@@ -26,28 +26,29 @@ export default async function DynamicPage({ params, searchParams }) {
      
      let playerRedirectSlug = null;
 
-     // FIX 4: Only attempt an ESPN player redirect if they typed 2 or more words (skips "draft", "waivers", etc.)
+     // Only attempt an ESPN player redirect if they typed 2 or more words (skips "draft", "waivers", etc.)
      const searchWords = q.trim().split(/\s+/);
      const isPotentiallyPlayer = searchWords.length >= 2;
 
      if (isPotentiallyPlayer) {
          try {
-            const searchRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(q)}&limit=5`);
+            // INCREASING LIMIT TO 30 to ensure we catch players from MLB/NBA even if an NFL player with the same name is more famous!
+            const searchRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(q)}&limit=30`);
             if (searchRes.ok) {
                const searchData = await searchRes.json();
                const allContents = searchData?.results?.flatMap(r => r.contents || []) || [];
 
                const validAthletes = allContents.filter(c => c.uid && c.uid.includes('~a:'));
 
-               // FIX 3: Sport-Aware ESPN Redirect (Looks for a match in the active sport first!)
+               // Sport-Aware ESPN Redirect
                let targetSportCode = null;
-               if (activeSport === 'Football') targetSportCode = '20';
-               else if (activeSport === 'Basketball') targetSportCode = '40';
-               else if (activeSport === 'Baseball') targetSportCode = '1';
+               if (activeSport === 'Football') targetSportCode = 's:20~';
+               else if (activeSport === 'Basketball') targetSportCode = 's:40~';
+               else if (activeSport === 'Baseball') targetSportCode = 's:1~';
 
                let athleteResult = null;
                if (targetSportCode) {
-                   athleteResult = validAthletes.find(c => c.uid.includes(`s:${targetSportCode}~`));
+                   athleteResult = validAthletes.find(c => c.uid.includes(targetSportCode));
                }
 
                // Fallback to the first athlete found if no sport match or activeSport is 'All'
@@ -69,8 +70,7 @@ export default async function DynamicPage({ params, searchParams }) {
         redirect(`/player/${playerRedirectSlug}`);
      }
 
-     // FIX 2: Aggressive/Fuzzy Search Prep
-     // Maps common missing punctuation to exact phrases for WP GraphQL
+     // Aggressive/Fuzzy Search Prep
      let processedQuery = q.toLowerCase().trim();
      if (processedQuery === 'start sit') processedQuery = 'start/sit';
 
@@ -153,10 +153,10 @@ export default async function DynamicPage({ params, searchParams }) {
        if (pRes1.ok) pods = pods.concat(await pRes1.json());
        if (pRes2.ok) pods = pods.concat(await pRes2.json());
 
-       // FIX 2: Split query into terms for aggressive REST API filtering
+       // Split query into terms for aggressive REST API filtering
        const searchTerms = processedQuery.split(/[\s/]+/).filter(Boolean);
 
-       // Filter Videos (Must contain all search terms across title, content, or description)
+       // Filter Videos
        const matchedVids = vids.filter(v => {
          const title = (v.title?.rendered || '').toLowerCase();
          const content = (v.content?.rendered || '').toLowerCase();
@@ -165,14 +165,10 @@ export default async function DynamicPage({ params, searchParams }) {
          return searchTerms.every(term => combinedText.includes(term));
        });
 
-       // Filter Podcasts (Must contain all search terms, AND exclude Master Shows)
+       // Filter Podcasts
        const matchedPods = pods.filter(p => {
          const cats = p.category_slugs || [];
-         
-         // FIX 1: Exclude master podcast shows! Only keep individual episodes.
-         if (cats.includes('football-podcast') || cats.includes('podcast-basketball') || cats.includes('podcast-baseball')) {
-            return false;
-         }
+         if (cats.includes('football-podcast') || cats.includes('podcast-basketball') || cats.includes('podcast-baseball')) return false;
 
          const title = (p.title?.rendered || '').toLowerCase();
          const content = (p.content?.rendered || '').toLowerCase();
@@ -246,7 +242,6 @@ export default async function DynamicPage({ params, searchParams }) {
      hasMore = 1 < totalPages;
   }
 
-  // FETCH WORDPRESS MENUS DYNAMICALLY BASED ON CURRENT SPORT
   const proToolsMenu = await getMenuBySlug(`pro-tools-${sport.toLowerCase()}`);
   const connectMenu = await getMenuBySlug(`connect-${sport.toLowerCase()}`);
 

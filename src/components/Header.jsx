@@ -54,12 +54,10 @@ export default function Header({ activeSport }) {
   const currentGradient = sportGradients[activeSport] || sportGradients.All;
   const basePath = activeSport === 'All' || !activeSport ? '' : `/${activeSport.toLowerCase()}`;
 
-  // Keep searchSport synced if activeSport prop changes while navigating
   useEffect(() => {
     setSearchSport(activeSport || 'All');
   }, [activeSport]);
 
-  // FETCH WORDPRESS MOBILE MENU
   useEffect(() => {
     const fetchMobileMenu = async () => {
       const query = `
@@ -101,7 +99,6 @@ export default function Header({ activeSport }) {
     setIsAuthModalOpen(true);
   };
 
-  // --- EXECUTE SEARCH ROUTING ---
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
     setIsSearchModalOpen(false);
@@ -288,15 +285,16 @@ export default function Header({ activeSport }) {
       {isSearchModalOpen && (
         <div className="fixed inset-0 z-[110] bg-black/90 backdrop-blur-sm flex items-start justify-center pt-[15vh] px-4">
           <div className="w-full max-w-3xl">
-            {/* UPDATED SEARCH BOX WITH SPORT DROPDOWN */}
-            <div className="flex items-center bg-[#1e1e1e] border border-gray-700 rounded-xl shadow-2xl overflow-hidden focus-within:border-gray-500 transition-colors">
+            
+            {/* UPDATED SEARCH BOX - Centered Layout */}
+            <div className="flex items-center bg-[#1e1e1e] border border-gray-700 rounded-xl shadow-2xl overflow-hidden focus-within:border-gray-500 transition-colors h-16">
               <Search size={24} className="text-gray-400 ml-4 shrink-0" />
               
               <input 
                 type="text" 
                 autoFocus 
                 placeholder="Search players, articles, videos..." 
-                className="flex-1 bg-transparent text-white text-lg md:text-xl p-4 outline-none placeholder-gray-600" 
+                className="flex-1 bg-transparent text-white text-lg md:text-xl p-4 outline-none placeholder-gray-600 h-full" 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -317,12 +315,21 @@ export default function Header({ activeSport }) {
                 </select>
                 <ChevronsUpDown size={14} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" />
               </div>
-
             </div>
             
-            <div className="mt-4 flex justify-end gap-2 px-2">
-              <button onClick={() => setIsSearchModalOpen(false)} className="px-4 py-2 hover:bg-gray-800 rounded-md transition-colors text-gray-400 hover:text-white text-xs font-bold uppercase tracking-widest border border-transparent hover:border-gray-700">Cancel</button>
-              <button onClick={handleSearch} className="px-6 py-2 bg-white text-black rounded-md transition-colors hover:bg-gray-200 text-xs font-black uppercase tracking-widest shadow-lg">Search</button>
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 px-2">
+              <button 
+                onClick={handleSearch} 
+                className="w-full max-w-[250px] px-6 py-4 bg-white text-black rounded-xl transition-colors hover:bg-gray-200 text-sm font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2"
+              >
+                <Search size={18} /> Search
+              </button>
+              <button 
+                onClick={() => setIsSearchModalOpen(false)} 
+                className="w-full max-w-[250px] px-6 py-3 hover:bg-gray-800 rounded-xl transition-colors text-gray-400 hover:text-white text-xs font-bold uppercase tracking-widest border border-transparent hover:border-gray-700"
+              >
+                Cancel
+              </button>
             </div>
             
           </div>
