@@ -362,7 +362,8 @@ export default function Header({ activeSport }) {
 
             {/* INLINE SEARCH BAR (Wrapped in Pro+ Gradient Border) */}
             <div className="p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] w-full shadow-[0_0_50px_rgba(0,0,0,0.8)] relative z-20">
-              <div className="flex items-center bg-[#1e1e1e] rounded-[22px] h-16 md:h-20 w-full overflow-hidden">
+              {/* Removed overflow-hidden so the dropdown menu can escape the container! */}
+              <div className="flex items-center bg-[#1e1e1e] rounded-[22px] h-16 md:h-20 w-full">
                 
                 {/* COMPACT SPORT SELECTOR ON LEFT (Icon Only) */}
                 <div className="relative h-full flex items-center border-r border-gray-800 bg-[#151515] rounded-l-[22px]">
