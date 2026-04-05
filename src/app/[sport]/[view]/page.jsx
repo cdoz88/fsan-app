@@ -26,28 +26,55 @@ export default async function DynamicPage({ params, searchParams }) {
      
      let playerRedirectSlug = null;
 
-     // 1. Instantly check if the user searched for a player!
-     try {
-        const searchRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(q)}&limit=3`);
-        if (searchRes.ok) {
-           const searchData = await searchRes.json();
-           const allContents = searchData?.results?.flatMap(r => r.contents || []) || [];
-           const athleteResult = allContents.find(c => c.uid && c.uid.includes('~a:'));
-           if (athleteResult) {
-              playerRedirectSlug = q.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-           }
-        }
-     } catch(e) {
-        console.error("ESPN Search Check Error:", e);
+     // FIX 4: Only attempt an ESPN player redirect if they typed 2 or more words (skips "draft", "waivers", etc.)
+     const searchWords = q.trim().split(/\s+/);
+     const isPotentiallyPlayer = searchWords.length >= 2;
+
+     if (isPotentiallyPlayer) {
+         try {
+            const searchRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(q)}&limit=5`);
+            if (searchRes.ok) {
+               const searchData = await searchRes.json();
+               const allContents = searchData?.results?.flatMap(r => r.contents || []) || [];
+
+               const validAthletes = allContents.filter(c => c.uid && c.uid.includes('~a:'));
+
+               // FIX 3: Sport-Aware ESPN Redirect (Looks for a match in the active sport first!)
+               let targetSportCode = null;
+               if (activeSport === 'Football') targetSportCode = '20';
+               else if (activeSport === 'Basketball') targetSportCode = '40';
+               else if (activeSport === 'Baseball') targetSportCode = '1';
+
+               let athleteResult = null;
+               if (targetSportCode) {
+                   athleteResult = validAthletes.find(c => c.uid.includes(`s:${targetSportCode}~`));
+               }
+
+               // Fallback to the first athlete found if no sport match or activeSport is 'All'
+               if (!athleteResult && validAthletes.length > 0) {
+                   athleteResult = validAthletes[0];
+               }
+
+               if (athleteResult) {
+                  playerRedirectSlug = q.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+               }
+            }
+         } catch(e) {
+            console.error("ESPN Search Check Error:", e);
+         }
      }
 
-     // Trigger the redirect safely OUTSIDE of the try...catch block!
+     // Trigger the redirect safely OUTSIDE of the try...catch block
      if (playerRedirectSlug) {
         redirect(`/player/${playerRedirectSlug}`);
      }
 
-     // 2. If it is NOT a player, fetch standard search results from WP
-     const exactMatchQuery = `\\"${q}\\"`;
+     // FIX 2: Aggressive/Fuzzy Search Prep
+     // Maps common missing punctuation to exact phrases for WP GraphQL
+     let processedQuery = q.toLowerCase().trim();
+     if (processedQuery === 'start sit') processedQuery = 'start/sit';
+
+     const exactMatchQuery = `\\"${processedQuery}\\"`;
      const sportSlug = activeSport !== 'All' ? activeSport.toLowerCase() : '';
      const categoryFilter = sportSlug ? `, categoryName: "${sportSlug}"` : '';
      
@@ -77,7 +104,6 @@ export default async function DynamicPage({ params, searchParams }) {
        const json = await res.json();
        const rawPosts = json?.data?.posts?.nodes || [];
 
-       // Filter out duplicates (if WP GraphQL accidentally caught a video/podcast as a post)
        const gqlPosts = rawPosts.reduce((acc, post) => {
           const cats = post.categories?.nodes?.map(c => c.name.toLowerCase()) || [];
           if (cats.some(c => c.includes('pod') || c.includes('video') || c.includes('short'))) return acc;
@@ -127,20 +153,32 @@ export default async function DynamicPage({ params, searchParams }) {
        if (pRes1.ok) pods = pods.concat(await pRes1.json());
        if (pRes2.ok) pods = pods.concat(await pRes2.json());
 
-       const qLower = q.toLowerCase();
+       // FIX 2: Split query into terms for aggressive REST API filtering
+       const searchTerms = processedQuery.split(/[\s/]+/).filter(Boolean);
 
-       // Manually filter videos based on title, content, or custom YouTube description
-       const matchedVids = vids.filter(v => 
-         (v.title?.rendered || '').toLowerCase().includes(qLower) || 
-         (v.content?.rendered || '').toLowerCase().includes(qLower) ||
-         (v.youtube_description || '').toLowerCase().includes(qLower)
-       );
+       // Filter Videos (Must contain all search terms across title, content, or description)
+       const matchedVids = vids.filter(v => {
+         const title = (v.title?.rendered || '').toLowerCase();
+         const content = (v.content?.rendered || '').toLowerCase();
+         const desc = (v.youtube_description || '').toLowerCase();
+         const combinedText = `${title} ${content} ${desc}`;
+         return searchTerms.every(term => combinedText.includes(term));
+       });
 
-       // Manually filter podcasts based on title or content
-       const matchedPods = pods.filter(p => 
-         (p.title?.rendered || '').toLowerCase().includes(qLower) || 
-         (p.content?.rendered || '').toLowerCase().includes(qLower)
-       );
+       // Filter Podcasts (Must contain all search terms, AND exclude Master Shows)
+       const matchedPods = pods.filter(p => {
+         const cats = p.category_slugs || [];
+         
+         // FIX 1: Exclude master podcast shows! Only keep individual episodes.
+         if (cats.includes('football-podcast') || cats.includes('podcast-basketball') || cats.includes('podcast-baseball')) {
+            return false;
+         }
+
+         const title = (p.title?.rendered || '').toLowerCase();
+         const content = (p.content?.rendered || '').toLowerCase();
+         const combinedText = `${title} ${content}`;
+         return searchTerms.every(term => combinedText.includes(term));
+       });
 
        const formattedVids = matchedVids.map(v => {
          const cats = v.category_slugs || [];
