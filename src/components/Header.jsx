@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Search, Menu, X, ChevronsUpDown, User, LogOut, Users, Flame, Loader2, FileText } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { themes } from '../utils/theme';
@@ -18,18 +18,21 @@ const sportsList = [
 export default function Header({ activeSport }) {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isSportDropdownOpen, setIsSportDropdownOpen] = useState(false);
-  const [mobileMenu, setMobileMenu] = useState(null); // State for our WP Mobile Menu
+  const [mobileMenu, setMobileMenu] = useState(null); 
   
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalView, setAuthModalView] = useState('login'); 
   
+  // --- NEW SEARCH STATE ---
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchSport, setSearchSport] = useState(activeSport || 'All');
+  
   const { data: session, status } = useSession();
   
-  const theme = themes[activeSport] || themes.All;
   const pathname = usePathname() || '';
+  const router = useRouter();
   const pathParts = pathname.split('/').filter(Boolean);
   
-  // FIX: Because the sport segment is now missing on /home, we dynamically figure out the view
   const currentView = pathParts.includes('home') ? 'home' : pathParts.includes('articles') ? 'articles' : pathParts.includes('videos') ? 'videos' : pathParts.includes('podcasts') ? 'podcasts' : 'home';
 
   const logos = {
@@ -49,9 +52,12 @@ export default function Header({ activeSport }) {
   };
   
   const currentGradient = sportGradients[activeSport] || sportGradients.All;
-
-  // FIX: Dynamic Path Helper
   const basePath = activeSport === 'All' || !activeSport ? '' : `/${activeSport.toLowerCase()}`;
+
+  // Keep searchSport synced if activeSport prop changes while navigating
+  useEffect(() => {
+    setSearchSport(activeSport || 'All');
+  }, [activeSport]);
 
   // FETCH WORDPRESS MOBILE MENU
   useEffect(() => {
@@ -95,7 +101,14 @@ export default function Header({ activeSport }) {
     setIsAuthModalOpen(true);
   };
 
-  // Icon Matcher for the dynamic mobile menu
+  // --- EXECUTE SEARCH ROUTING ---
+  const handleSearch = () => {
+    if (!searchQuery.trim()) return;
+    setIsSearchModalOpen(false);
+    const searchBasePath = searchSport === 'All' ? '' : `/${searchSport.toLowerCase()}`;
+    router.push(`${searchBasePath}/search?q=${encodeURIComponent(searchQuery)}`);
+  };
+
   const getMobileIcon = (label) => {
     const lower = label.toLowerCase();
     if (lower.includes('menu')) return Menu;
@@ -103,7 +116,7 @@ export default function Header({ activeSport }) {
     if (lower.includes('wire') || lower.includes('home') || lower.includes('flame')) return Flame;
     if (lower.includes('crowd') || lower.includes('sellout')) return SelloutCrowds;
     if (lower.includes('search')) return Search;
-    return FileText; // fallback
+    return FileText; 
   };
 
   return (
@@ -111,7 +124,6 @@ export default function Header({ activeSport }) {
       <div className="bg-[#1a1a1a] border-b border-gray-800 px-4 py-3 flex justify-between items-center z-[100] sticky top-0 shadow-md">
         
         <div className="relative flex items-center">
-          {/* FIX: Dynamic Logo Link */}
           <Link href={`${basePath}/home`} className="flex items-center hover:opacity-80 transition-opacity">
             <img src={currentLogo} alt={`${activeSport} Logo`} className="h-8 md:h-10 object-contain transition-all duration-300" />
           </Link>
@@ -126,7 +138,6 @@ export default function Header({ activeSport }) {
               <div className="absolute top-full left-0 mt-3 w-64 bg-[#1a1a1a] border border-gray-800 rounded-xl shadow-2xl z-[100] overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
                 <div className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 border-b border-gray-800/50">Select Network</div>
                 {sportsList.map((sport) => {
-                  {/* FIX: Omit /all prefix for the 'All' sport selection */}
                   const targetPath = sport.name === 'All' ? `/${currentView}` : `/${sport.name.toLowerCase()}/${currentView}`;
                   return (
                     <Link key={sport.name} href={targetPath} onClick={() => setIsSportDropdownOpen(false)} className={`w-full flex items-center gap-4 px-4 py-3 text-left transition-colors no-underline ${activeSport === sport.name ? 'bg-[#252525] text-white shadow-inner' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
@@ -202,7 +213,7 @@ export default function Header({ activeSport }) {
             const Icon = getMobileIcon(item.label);
             const isMenuBtn = item.url.includes('#menu');
             const isSearchBtn = item.url.includes('#search');
-            const isCenterBtn = index === Math.floor(mobileMenu.length / 2); // Dynamically elevates the middle item
+            const isCenterBtn = index === Math.floor(mobileMenu.length / 2);
 
             if (isMenuBtn) {
               return (
@@ -241,13 +252,11 @@ export default function Header({ activeSport }) {
             );
           })
         ) : (
-          // Hardcoded Fallback in case WP menu hasn't loaded yet
           <>
             <button onClick={toggleMobileSidebar} className="flex flex-col items-center gap-1 text-gray-500 hover:text-white transition-colors">
               <Menu size={20} />
               <span className="text-[9px] font-bold uppercase tracking-widest">Menu</span>
             </button>
-            {/* FIX: Dynamic fallbacks */}
             <Link href={`${basePath}/rankings`} className="flex flex-col items-center gap-1 text-gray-500 hover:text-white transition-colors no-underline">
               <Users size={20} />
               <span className="text-[9px] font-bold uppercase tracking-widest">Ranks</span>
@@ -279,11 +288,43 @@ export default function Header({ activeSport }) {
       {isSearchModalOpen && (
         <div className="fixed inset-0 z-[110] bg-black/90 backdrop-blur-sm flex items-start justify-center pt-[15vh] px-4">
           <div className="w-full max-w-3xl">
-            <div className="flex items-center gap-4 bg-[#1e1e1e] border border-gray-700 p-2 rounded-lg shadow-2xl">
-              <Search size={24} className="text-gray-400 ml-3" />
-              <input type="text" autoFocus placeholder="Search players, articles, videos..." className="flex-1 bg-transparent text-white text-xl p-2 outline-none placeholder-gray-500" />
-              <button onClick={() => setIsSearchModalOpen(false)} className="p-2 hover:bg-gray-800 rounded-md transition-colors text-gray-400 hover:text-white"><X size={24} /></button>
+            {/* UPDATED SEARCH BOX WITH SPORT DROPDOWN */}
+            <div className="flex items-center bg-[#1e1e1e] border border-gray-700 rounded-xl shadow-2xl overflow-hidden focus-within:border-gray-500 transition-colors">
+              <Search size={24} className="text-gray-400 ml-4 shrink-0" />
+              
+              <input 
+                type="text" 
+                autoFocus 
+                placeholder="Search players, articles, videos..." 
+                className="flex-1 bg-transparent text-white text-lg md:text-xl p-4 outline-none placeholder-gray-600" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSearch();
+                }}
+              />
+              
+              <div className="relative border-l border-gray-700 bg-[#151515] flex items-center h-full">
+                <select
+                  value={searchSport}
+                  onChange={(e) => setSearchSport(e.target.value)}
+                  className="bg-transparent text-gray-300 hover:text-white text-[10px] sm:text-xs font-black uppercase tracking-widest outline-none cursor-pointer appearance-none pl-4 pr-10 py-5 w-full h-full"
+                >
+                  <option value="All" className="bg-[#1a1a1a]">All Sports</option>
+                  <option value="Football" className="bg-[#1a1a1a]">Football</option>
+                  <option value="Basketball" className="bg-[#1a1a1a]">Basketball</option>
+                  <option value="Baseball" className="bg-[#1a1a1a]">Baseball</option>
+                </select>
+                <ChevronsUpDown size={14} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" />
+              </div>
+
             </div>
+            
+            <div className="mt-4 flex justify-end gap-2 px-2">
+              <button onClick={() => setIsSearchModalOpen(false)} className="px-4 py-2 hover:bg-gray-800 rounded-md transition-colors text-gray-400 hover:text-white text-xs font-bold uppercase tracking-widest border border-transparent hover:border-gray-700">Cancel</button>
+              <button onClick={handleSearch} className="px-6 py-2 bg-white text-black rounded-md transition-colors hover:bg-gray-200 text-xs font-black uppercase tracking-widest shadow-lg">Search</button>
+            </div>
+            
           </div>
         </div>
       )}
