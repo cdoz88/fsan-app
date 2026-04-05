@@ -24,6 +24,8 @@ export default async function DynamicPage({ params, searchParams }) {
   // --- MAGIC SEARCH ROUTING ---
   if (view === 'search' && q) {
      
+     let playerRedirectSlug = null;
+
      // 1. Instantly check if the user searched for a player!
      try {
         const searchRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(q)}&limit=3`);
@@ -32,12 +34,17 @@ export default async function DynamicPage({ params, searchParams }) {
            const allContents = searchData?.results?.flatMap(r => r.contents || []) || [];
            const athleteResult = allContents.find(c => c.uid && c.uid.includes('~a:'));
            if (athleteResult) {
-              const slug = q.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-              // We found a player! Redirect directly to their hub to trigger dynamic sport switching.
-              redirect(`/player/${slug}`);
+              playerRedirectSlug = q.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
            }
         }
-     } catch(e) {}
+     } catch(e) {
+        console.error("ESPN Search Check Error:", e);
+     }
+
+     // Trigger the redirect safely OUTSIDE of the try...catch block!
+     if (playerRedirectSlug) {
+        redirect(`/player/${playerRedirectSlug}`);
+     }
 
      // 2. If it is NOT a player, fetch standard search results from WP
      const exactMatchQuery = `\\"${q}\\"`;
