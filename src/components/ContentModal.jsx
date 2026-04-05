@@ -98,22 +98,33 @@ const ArticleContent = React.memo(function ArticleContent({ content, sportThemeH
         try { window.getty.Init(); } catch(e) {}
       }
 
-      // 3. INTERNAL LINK AUTOMATION (PFR -> Internal Player Hub)
-      const headers = container.querySelectorAll('h1, h2, h3, h4, h5, h6');
-      headers.forEach(header => {
-        const links = header.querySelectorAll('a');
-        links.forEach(link => {
-          // If the link goes to Pro Football Reference
-          if (link.href.includes('pro-football-reference.com')) {
-            const playerName = link.textContent.trim();
-            // Convert "Justin Jefferson" to "justin-jefferson"
-            const slug = playerName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-            // Reroute it internally!
+      // 3. SMART INTERNAL LINK AUTOMATION (The PFR Hijack)
+      const seenPlayers = new Set();
+      const links = container.querySelectorAll('a');
+      
+      links.forEach(link => {
+        // If the link goes to the Sports Reference network
+        if (link.href.includes('reference.com')) {
+          const playerName = link.textContent.trim();
+          if (!playerName) return;
+
+          // Convert "Justin Jefferson" to "justin-jefferson"
+          const slug = playerName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          
+          if (!seenPlayers.has(slug)) {
+            // First time seeing this player! Let PFR keep the backlink.
+            seenPlayers.add(slug);
+            // Ensure it opens in a new tab so they don't leave FSAN
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener noreferrer');
+          } else {
+            // We've already given PFR a backlink for this player. Hijack it!
             link.href = `/player/${slug}`;
-            link.removeAttribute('target'); // Opens in same window
+            link.removeAttribute('target'); // Opens internally
+            link.removeAttribute('rel');
             link.title = `View ${playerName}'s Player Profile`;
           }
-        });
+        }
       });
 
     }, 100);
