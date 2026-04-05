@@ -98,7 +98,7 @@ const ArticleContent = React.memo(function ArticleContent({ content, sportThemeH
         try { window.getty.Init(); } catch(e) {}
       }
 
-      // 3. SMART INTERNAL LINK AUTOMATION (The PFR Hijack)
+      // 3. SMART INTERNAL LINK AUTOMATION (The PFR Hijack & Stealth Link)
       const seenPlayers = new Set();
       const links = container.querySelectorAll('a');
       
@@ -117,6 +117,12 @@ const ArticleContent = React.memo(function ArticleContent({ content, sportThemeH
             // Ensure it opens in a new tab so they don't leave FSAN
             link.setAttribute('target', '_blank');
             link.setAttribute('rel', 'noopener noreferrer');
+            
+            // STEALTH MODE: Blend the link perfectly into the surrounding text!
+            link.style.setProperty('color', 'inherit', 'important');
+            link.style.setProperty('text-decoration', 'none', 'important');
+            link.style.setProperty('font-weight', 'inherit', 'important');
+            link.style.setProperty('cursor', 'text', 'important'); // Makes the mouse cursor a text selector instead of a pointer hand
           } else {
             // We've already given PFR a backlink for this player. Hijack it!
             link.href = `/player/${slug}`;
