@@ -27,7 +27,6 @@ export default function Header({ activeSport }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchSport, setSearchSport] = useState(activeSport || 'All');
   
-  // --- NEW TYPEAHEAD STATE ---
   const [suggestions, setSuggestions] = useState([]);
   
   const { data: session, status } = useSession();
@@ -61,7 +60,6 @@ export default function Header({ activeSport }) {
     setSearchSport(activeSport || 'All');
   }, [activeSport]);
 
-  // DEBOUNCED ESPN PLAYER FETCHING FOR SUGGESTIONS
   useEffect(() => {
     if (searchQuery.trim().length < 3) {
       setSuggestions([]);
@@ -70,27 +68,25 @@ export default function Header({ activeSport }) {
     
     const timer = setTimeout(async () => {
       try {
-        // Fetch raw name globally so ESPN's typeahead works properly
         const res = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(searchQuery)}&limit=15`);
         
         if (res.ok) {
           const data = await res.json();
           const contents = data?.results?.flatMap(r => r.contents || []) || [];
           
-          // Strict filtering for NFL, NBA, and MLB ONLY!
           const athletes = contents.filter(c => {
             if (!c.uid || !c.uid.includes('~a:')) return false;
             
             let isAllowed = false;
             let isTargetSport = false;
             
-            if (c.uid.includes('s:20~l:28')) { // NFL
+            if (c.uid.includes('s:20~l:28')) { 
               isAllowed = true;
               if (searchSport === 'All' || searchSport === 'Football') isTargetSport = true;
-            } else if (c.uid.includes('s:40~l:46')) { // NBA
+            } else if (c.uid.includes('s:40~l:46')) { 
               isAllowed = true;
               if (searchSport === 'All' || searchSport === 'Basketball') isTargetSport = true;
-            } else if (c.uid.includes('s:1~l:10')) { // MLB
+            } else if (c.uid.includes('s:1~l:10')) { 
               isAllowed = true;
               if (searchSport === 'All' || searchSport === 'Baseball') isTargetSport = true;
             }
@@ -101,7 +97,6 @@ export default function Header({ activeSport }) {
           const mapped = athletes.map(a => {
              const slug = a.displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
              
-             // Extract the headshot from the response
              let imageUrl = null;
              if (a.image && typeof a.image === 'string') imageUrl = a.image;
              else if (a.image?.url) imageUrl = a.image.url;
@@ -112,7 +107,6 @@ export default function Header({ activeSport }) {
              return { name: a.displayName, slug, desc: a.description || '', image: imageUrl };
           });
           
-          // Deduplicate by slug and limit to top 4 results
           const unique = Array.from(new Map(mapped.map(item => [item.slug, item])).values()).slice(0, 4);
           setSuggestions(unique);
         }
@@ -366,15 +360,20 @@ export default function Header({ activeSport }) {
             {/* INLINE SEARCH BAR */}
             <div className="flex items-center bg-[#1e1e1e] border border-gray-700 rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.8)] focus-within:border-gray-500 transition-all h-16 md:h-20 relative z-20">
               
-              {/* CUSTOM STYLIZED SPORT SELECTOR ON LEFT */}
+              {/* COMPACT SPORT SELECTOR ON LEFT (Icon Only) */}
               <div className="relative h-full flex items-center border-r border-gray-800 bg-[#151515] rounded-l-2xl">
-                <button onClick={() => setIsSearchSportDropdownOpen(!isSearchSportDropdownOpen)} className="flex items-center h-full px-4 md:px-6 gap-2 text-gray-300 hover:text-white transition-colors text-[10px] md:text-xs font-black uppercase tracking-widest w-[110px] md:w-[140px] justify-between rounded-l-2xl">
-                  <div className="flex items-center gap-2">
-                    {sportsList.find(s => s.name === searchSport) && (
-                      <img src={sportsList.find(s => s.name === searchSport).icon} className="w-4 h-4 object-contain hidden md:block" alt="" />
-                    )}
-                    <span className="truncate">{searchSport}</span>
-                  </div>
+                <button 
+                  onClick={() => setIsSearchSportDropdownOpen(!isSearchSportDropdownOpen)} 
+                  className="flex items-center justify-center h-full px-4 md:px-5 gap-1.5 md:gap-2 text-gray-300 hover:text-white transition-colors rounded-l-2xl group min-w-[60px] md:min-w-[80px]"
+                  title={`Search within: ${searchSport}`}
+                >
+                  {sportsList.find(s => s.name === searchSport) && (
+                    <img 
+                      src={sportsList.find(s => s.name === searchSport).icon} 
+                      className="w-6 h-6 md:w-7 md:h-7 object-contain group-hover:scale-110 transition-transform" 
+                      alt={searchSport} 
+                    />
+                  )}
                   <ChevronsUpDown size={14} className="text-gray-500 shrink-0" />
                 </button>
 
