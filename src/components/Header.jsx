@@ -70,20 +70,49 @@ export default function Header({ activeSport }) {
     
     const timer = setTimeout(async () => {
       try {
-        const espnQ = searchSport !== 'All' ? `${searchQuery} ${searchSport}` : searchQuery;
-        const res = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(espnQ)}&limit=5`);
+        // Fetch raw name globally so ESPN's typeahead works properly
+        const res = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(searchQuery)}&limit=15`);
         
         if (res.ok) {
           const data = await res.json();
           const contents = data?.results?.flatMap(r => r.contents || []) || [];
-          const athletes = contents.filter(c => c.uid && c.uid.includes('~a:'));
+          
+          // Strict filtering for NFL, NBA, and MLB ONLY!
+          const athletes = contents.filter(c => {
+            if (!c.uid || !c.uid.includes('~a:')) return false;
+            
+            let isAllowed = false;
+            let isTargetSport = false;
+            
+            if (c.uid.includes('s:20~l:28')) { // NFL
+              isAllowed = true;
+              if (searchSport === 'All' || searchSport === 'Football') isTargetSport = true;
+            } else if (c.uid.includes('s:40~l:46')) { // NBA
+              isAllowed = true;
+              if (searchSport === 'All' || searchSport === 'Basketball') isTargetSport = true;
+            } else if (c.uid.includes('s:1~l:10')) { // MLB
+              isAllowed = true;
+              if (searchSport === 'All' || searchSport === 'Baseball') isTargetSport = true;
+            }
+            
+            return isAllowed && isTargetSport;
+          });
           
           const mapped = athletes.map(a => {
              const slug = a.displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-             return { name: a.displayName, slug, desc: a.description || '' };
+             
+             // Extract the headshot from the response
+             let imageUrl = null;
+             if (a.image && typeof a.image === 'string') imageUrl = a.image;
+             else if (a.image?.url) imageUrl = a.image.url;
+             else if (a.image?.default) imageUrl = a.image.default;
+             else if (a.headshot && typeof a.headshot === 'string') imageUrl = a.headshot;
+             else if (a.headshot?.href) imageUrl = a.headshot.href;
+
+             return { name: a.displayName, slug, desc: a.description || '', image: imageUrl };
           });
           
-          // Deduplicate by slug
+          // Deduplicate by slug and limit to top 4 results
           const unique = Array.from(new Map(mapped.map(item => [item.slug, item])).values()).slice(0, 4);
           setSuggestions(unique);
         }
@@ -336,23 +365,10 @@ export default function Header({ activeSport }) {
             
             {/* INLINE SEARCH BAR */}
             <div className="flex items-center bg-[#1e1e1e] border border-gray-700 rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.8)] focus-within:border-gray-500 transition-all h-16 md:h-20 relative z-20">
-              <Search size={28} className="text-gray-400 ml-6 shrink-0" />
               
-              <input 
-                type="text" 
-                autoFocus 
-                placeholder="Search players, articles, videos..." 
-                className="flex-1 bg-transparent text-white text-xl md:text-2xl p-4 md:p-6 outline-none placeholder-gray-600 h-full" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSearch();
-                }}
-              />
-              
-              {/* CUSTOM STYLIZED SPORT SELECTOR */}
-              <div className="relative h-full flex items-center border-l border-gray-800 bg-[#151515]">
-                <button onClick={() => setIsSearchSportDropdownOpen(!isSearchSportDropdownOpen)} className="flex items-center h-full px-4 md:px-6 gap-2 text-gray-300 hover:text-white transition-colors text-[10px] md:text-xs font-black uppercase tracking-widest w-[110px] md:w-[140px] justify-between">
+              {/* CUSTOM STYLIZED SPORT SELECTOR ON LEFT */}
+              <div className="relative h-full flex items-center border-r border-gray-800 bg-[#151515] rounded-l-2xl">
+                <button onClick={() => setIsSearchSportDropdownOpen(!isSearchSportDropdownOpen)} className="flex items-center h-full px-4 md:px-6 gap-2 text-gray-300 hover:text-white transition-colors text-[10px] md:text-xs font-black uppercase tracking-widest w-[110px] md:w-[140px] justify-between rounded-l-2xl">
                   <div className="flex items-center gap-2">
                     {sportsList.find(s => s.name === searchSport) && (
                       <img src={sportsList.find(s => s.name === searchSport).icon} className="w-4 h-4 object-contain hidden md:block" alt="" />
@@ -365,7 +381,7 @@ export default function Header({ activeSport }) {
                 {isSearchSportDropdownOpen && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setIsSearchSportDropdownOpen(false)}></div>
-                    <div className="absolute top-full right-0 mt-2 w-48 bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl z-20 overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
+                    <div className="absolute top-full left-0 mt-2 w-48 bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl z-20 overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
                       <div className="px-4 py-2 text-[9px] font-black uppercase tracking-widest text-gray-500 border-b border-gray-800/50 mb-1">Search Within</div>
                       {sportsList.map(s => (
                         <button key={s.name} onClick={() => { setSearchSport(s.name); setIsSearchSportDropdownOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${searchSport === s.name ? 'bg-[#252525] text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
@@ -378,10 +394,24 @@ export default function Header({ activeSport }) {
                 )}
               </div>
 
+              <Search size={24} className="text-gray-400 ml-4 shrink-0 hidden md:block" />
+              
+              <input 
+                type="text" 
+                autoFocus 
+                placeholder="Search players, articles, videos..." 
+                className="flex-1 bg-transparent text-white text-lg md:text-xl p-4 md:p-6 outline-none placeholder-gray-600 h-full w-full min-w-0" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSearch();
+                }}
+              />
+              
               {/* INLINE SUBMIT BUTTON */}
-              <button onClick={handleSearch} className="h-full px-6 md:px-8 bg-white text-black transition-colors hover:bg-gray-300 text-xs md:text-sm font-black uppercase tracking-widest border-l border-gray-300 rounded-r-2xl flex items-center gap-2 shadow-inner group">
+              <button onClick={handleSearch} className="h-full px-6 md:px-8 bg-white text-black transition-colors hover:bg-gray-300 text-xs md:text-sm font-black uppercase tracking-widest border-l border-gray-300 rounded-r-2xl flex items-center gap-2 shadow-inner group shrink-0">
                 <span className="hidden md:inline">Search</span>
-                <ChevronRight size={20} className="md:hidden" />
+                <Search size={20} className="md:hidden" />
               </button>
             </div>
 
@@ -397,8 +427,12 @@ export default function Header({ activeSport }) {
                     onClick={() => handleSuggestionClick(s.slug)} 
                     className="w-full flex items-center gap-5 p-4 md:px-6 md:py-5 border-b border-gray-800 last:border-0 hover:bg-[#252525] transition-colors text-left group"
                   >
-                    <div className="w-12 h-12 rounded-full bg-black border border-gray-700 flex items-center justify-center shrink-0 group-hover:border-gray-500 group-hover:scale-110 transition-all shadow-inner">
-                      <User size={24} className="text-gray-500 group-hover:text-white transition-colors" />
+                    <div className="w-12 h-12 rounded-full bg-black border border-gray-700 flex items-center justify-center shrink-0 group-hover:border-gray-500 group-hover:scale-110 transition-all shadow-inner overflow-hidden">
+                      {s.image ? (
+                        <img src={s.image} alt={s.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <User size={24} className="text-gray-500 group-hover:text-white transition-colors" />
+                      )}
                     </div>
                     <div className="flex flex-col">
                       <span className="text-white font-black text-lg md:text-xl group-hover:text-blue-400 transition-colors leading-tight">{s.name}</span>
