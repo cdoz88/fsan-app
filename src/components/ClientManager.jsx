@@ -8,9 +8,10 @@ import Home from './Home';
 import VideosArchive from './VideosArchive';
 import ArticlesArchive from './ArticlesArchive';
 import PodcastsArchive from './PodcastsArchive';
+import SearchResults from './SearchResults';
 import { fetchPosts } from '../utils/api';
 
-export default function ClientManager({ initialPosts, activeSport, currentView, initialHasMore, autoOpenItem, proToolsMenu, connectMenu }) {
+export default function ClientManager({ initialPosts, activeSport, currentView, initialHasMore, autoOpenItem, proToolsMenu, connectMenu, searchQuery }) {
   const router = useRouter();
   const [selectedItem, setSelectedItem] = useState(autoOpenItem || null);
   const [wpPosts, setWpPosts] = useState(initialPosts);
@@ -23,17 +24,21 @@ export default function ClientManager({ initialPosts, activeSport, currentView, 
       setSelectedItem(item);
       const itemView = item.view || (item.type === 'article' ? 'articles' : item.type === 'podcast' ? 'podcasts' : 'videos');
       
-      // FIX: Check if sport is All to omit the prefix
       const sportPrefix = item.sport === 'All' ? '' : `/${item.sport.toLowerCase()}`;
       const newPath = `${sportPrefix}/${itemView}/${item.slug}`;
       window.history.pushState(null, '', newPath);
     } else {
       setSelectedItem(null);
       
-      // FIX: Check if active sport is All to omit the prefix
-      const sportPrefix = activeSport === 'All' ? '' : `/${activeSport.toLowerCase()}`;
-      const basePath = `${sportPrefix}/${currentView}`;
-      window.history.pushState(null, '', basePath);
+      // If we exit a modal from the search page, go back to the search URL, otherwise base path.
+      if (currentView === 'search') {
+         const sportPrefix = activeSport === 'All' ? '' : `/${activeSport.toLowerCase()}`;
+         window.history.pushState(null, '', `${sportPrefix}/search?q=${encodeURIComponent(searchQuery)}`);
+      } else {
+         const sportPrefix = activeSport === 'All' ? '' : `/${activeSport.toLowerCase()}`;
+         const basePath = `${sportPrefix}/${currentView}`;
+         window.history.pushState(null, '', basePath);
+      }
     }
   };
 
@@ -48,7 +53,7 @@ export default function ClientManager({ initialPosts, activeSport, currentView, 
   }, [initialPosts, activeSport, currentView]);
 
   const loadMorePosts = async () => {
-    if (!isLoadingMore && hasMore) {
+    if (!isLoadingMore && hasMore && currentView !== 'search') {
       setIsLoadingMore(true);
       const nextPage = currentPage + 1;
       try {
@@ -97,6 +102,9 @@ export default function ClientManager({ initialPosts, activeSport, currentView, 
           )}
           {currentView === 'podcasts' && (
             <PodcastsArchive podcasts={masterPodcasts} activeSport={activeSport} setSelectedItem={handleSelectItem} />
+          )}
+          {currentView === 'search' && (
+            <SearchResults results={wpPosts} activeSport={activeSport} setSelectedItem={handleSelectItem} searchQuery={searchQuery} />
           )}
         </div>
       </div>
