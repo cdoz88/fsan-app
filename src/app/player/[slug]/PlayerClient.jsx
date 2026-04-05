@@ -1,10 +1,9 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
 import Header from '../../../components/Header'; 
 import Sidebar from '../../../components/Sidebar'; 
 import ContentModal from '../../../components/ContentModal'; 
-import { PlayCircle, FileText, Video, User, Activity, LayoutGrid, Zap, Play, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { PlayCircle, FileText, Video, User, Activity, LayoutGrid, Zap, Play, ChevronLeft, ChevronRight, Headphones } from 'lucide-react';
 import { themes } from '../../../utils/theme';
 
 export default function PlayerClient({ playerName, rawSlug, espnData, content, proToolsMenu, connectMenu }) {
@@ -15,6 +14,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   const articlesRef = useRef(null);
   const videosRef = useRef(null);
   const shortsRef = useRef(null);
+  const podcastsRef = useRef(null);
 
   const handleSetSelectedItem = (item) => {
     if (item) {
@@ -69,13 +69,13 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       );
     }
 
-    // Strict content separation based on corrected types
-    const articles = content.filter(item => item.type === 'article' || item.type === 'podcast');
+    const articles = content.filter(item => item.type === 'article');
     const videos = content.filter(item => item.type === 'video');
     const shorts = content.filter(item => item.type === 'short');
+    const podcasts = content.filter(item => item.type === 'podcast');
 
-    // Standard Card (Tags completely removed from thumbnail)
-    const renderCard = (item) => (
+    // Standard Article Card
+    const renderArticleCard = (item) => (
       <div 
         onClick={() => handleSetSelectedItem(item)} 
         className="group h-full w-full cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-colors shadow-xl flex flex-col relative"
@@ -83,12 +83,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
         <div className="w-full aspect-video bg-gray-900 relative overflow-hidden shrink-0">
           {item.imageUrl && <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" alt="" />}
           <div className="absolute inset-0 bg-gradient-to-t from-[#1e1e1e] to-transparent" />
-          
-          {(item.type === 'video' || item.type === 'podcast') && (
-            <PlayCircle size={32} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-20" />
-          )}
         </div>
-        
         <div className="p-5 flex flex-col flex-1">
           <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{item.date}</span>
           <h3 className="font-black text-base text-gray-200 group-hover:text-white transition-colors leading-tight line-clamp-3 mb-2" dangerouslySetInnerHTML={{ __html: item.title }} />
@@ -97,7 +92,26 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       </div>
     );
 
-    // EXACT Short Card logic borrowed directly from Home.jsx
+    // Cinematic 16:9 Video Card (Title shows on hover)
+    const renderVideoCard = (item) => {
+      const cardTheme = themes[item.sport] || themes.All;
+      return (
+        <div onClick={() => handleSetSelectedItem(item)} className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${cardTheme.border} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${cardTheme.hoverBorder} transition-all flex flex-col relative`}>
+          {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
+          <PlayCircle size={48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
+          <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-5 z-20 flex flex-col justify-end opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`w-1.5 h-1.5 rounded-full ${cardTheme.bg}`}></span>
+              <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">{item.date}</span>
+            </div>
+            <h3 className={`font-black text-lg lg:text-xl text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+          </div>
+        </div>
+      );
+    };
+
+    // Short Card
     const renderShortCard = (item) => (
       <div onClick={() => handleSetSelectedItem(item)} className={`group h-full w-full min-h-[300px] md:min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
         {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
@@ -110,6 +124,32 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
         </div>
       </div>
     );
+
+    // Podcast Booth Card
+    const renderPodcastCard = (item) => {
+      const itemTheme = themes[item.sport] || themes.All;
+      return (
+        <div onClick={() => handleSetSelectedItem(item)} className={`flex items-stretch bg-[#1e1e1e] border ${itemTheme.border} border-opacity-40 rounded-2xl overflow-hidden ${itemTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg h-[120px]`}>
+          <div className="w-28 shrink-0 relative bg-gray-900 flex items-center justify-center overflow-hidden border-r border-gray-800/50">
+            {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" /> : <div className="absolute inset-0 bg-gray-800" />}
+            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
+            <PlayCircle size={36} className="text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-md" />
+          </div>
+          <div className="flex-1 p-4 flex flex-col justify-center overflow-hidden">
+            <div className="flex items-center gap-2 mb-1.5">
+               <span className={`w-1.5 h-1.5 rounded-full ${itemTheme.bg}`}></span>
+               <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500">{item.date}</span>
+            </div>
+            <h4 className={`font-bold text-sm leading-snug mb-2 text-gray-200 group-hover:${itemTheme.text} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: item.title }} />
+            <div className="flex items-center gap-[3px] mt-auto h-4 opacity-70 group-hover:opacity-100 transition-opacity">
+              {[4, 8, 12, 8, 16, 10, 14, 6, 10, 12, 8, 6, 14, 8, 4, 8, 12].map((h, i) => (
+                <div key={i} className={`w-[2px] sm:w-[3px] shrink-0 rounded-full bg-gray-600 group-hover:${itemTheme.bg} transition-colors`} style={{ height: `${h}px` }} />
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    };
 
     return (
       <div className="flex flex-col gap-10">
@@ -131,8 +171,8 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
             </div>
             <div ref={articlesRef} className={`flex gap-4 md:gap-6 overflow-x-auto pb-4 snap-x ${hideScrollbar}`}>
               {articles.map(item => (
-                <div key={item.id} className="relative w-72 sm:w-80 flex-shrink-0 snap-start">
-                  {renderCard(item)}
+                <div key={item.id} className="relative w-72 sm:w-80 md:w-96 flex-shrink-0 snap-start">
+                  {renderArticleCard(item)}
                 </div>
               ))}
             </div>
@@ -151,15 +191,15 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
             </div>
             <div ref={videosRef} className={`flex gap-4 md:gap-6 overflow-x-auto pb-4 snap-x ${hideScrollbar}`}>
               {videos.map(item => (
-                <div key={item.id} className="relative w-72 sm:w-80 flex-shrink-0 snap-start">
-                  {renderCard(item)}
+                <div key={item.id} className="relative w-72 sm:w-80 md:w-96 flex-shrink-0 snap-start">
+                  {renderVideoCard(item)}
                 </div>
               ))}
             </div>
           </section>
         )}
 
-        {/* Shorts Carousel (Highlight Reel) - Identical to Home.jsx */}
+        {/* Shorts Carousel */}
         {shorts.length > 0 && (
           <section className={`relative ${articles.length > 0 || videos.length > 0 ? 'pt-6 border-t border-gray-800/50' : ''}`}>
             <div className="flex items-center justify-between mb-6">
@@ -175,12 +215,26 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                   {renderShortCard(short)}
                 </div>
               ))}
-              
-              {/* Identical See All Shorts Link */}
-              <Link href={`/${content[0]?.sport?.toLowerCase() === 'all' ? 'football' : (content[0]?.sport?.toLowerCase() || 'football')}/videos`} className="relative w-36 md:w-44 flex-shrink-0 snap-start aspect-[9/16] rounded-2xl overflow-hidden bg-[#111] border border-gray-700 hover:border-gray-500 transition-colors flex flex-col items-center justify-center group text-gray-400 hover:text-white no-underline">
-                <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"><ArrowRight size={24} /></div>
-                <span className="font-black uppercase tracking-widest text-sm text-center">See All<br/>Shorts</span>
-              </Link>
+            </div>
+          </section>
+        )}
+
+        {/* Podcasts Carousel (The Booth) */}
+        {podcasts.length > 0 && (
+          <section className={`relative ${articles.length > 0 || videos.length > 0 || shorts.length > 0 ? 'pt-6 border-t border-gray-800/50' : ''}`}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold flex items-center gap-2 text-white italic"><Headphones stroke="url(#grey-grad)" /> The Booth</h3>
+              <div className="hidden md:flex items-center gap-2">
+                 <button onClick={() => scroll(podcastsRef, 'left')} className="w-8 h-8 rounded-full border border-gray-700 bg-[#111113] hover:bg-gray-800 flex items-center justify-center transition-colors text-gray-400 hover:text-white"><ChevronLeft size={18} /></button>
+                 <button onClick={() => scroll(podcastsRef, 'right')} className="w-8 h-8 rounded-full border border-gray-700 bg-[#111113] hover:bg-gray-800 flex items-center justify-center transition-colors text-gray-400 hover:text-white"><ChevronRight size={18} /></button>
+              </div>
+            </div>
+            <div ref={podcastsRef} className={`flex gap-4 md:gap-6 overflow-x-auto pb-4 snap-x ${hideScrollbar}`}>
+              {podcasts.map(item => (
+                <div key={item.id} className="relative w-72 sm:w-80 md:w-96 flex-shrink-0 snap-start">
+                  {renderPodcastCard(item)}
+                </div>
+              ))}
             </div>
           </section>
         )}
