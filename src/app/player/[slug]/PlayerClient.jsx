@@ -1,12 +1,13 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import Header from '../../../components/Header'; 
 import Sidebar from '../../../components/Sidebar'; 
 import ContentModal from '../../../components/ContentModal'; 
-import { PlayCircle, FileText, Video, User, Activity, LayoutGrid, Zap, Play, ChevronLeft, ChevronRight, Headphones } from 'lucide-react';
+import { PlayCircle, FileText, Video, User, Activity, LayoutGrid, Zap, Play, ChevronLeft, ChevronRight, ArrowRight, Headphones } from 'lucide-react';
 import { themes } from '../../../utils/theme';
 
-export default function PlayerClient({ playerName, rawSlug, espnData, content, proToolsMenu, connectMenu }) {
+export default function PlayerClient({ playerName, rawSlug, espnData, content, proToolsMenu, connectMenu, playerSport = 'All' }) {
   const [selectedItem, setSelectedItem] = useState(null);
   const [activeTab, setActiveTab] = useState('Content');
   
@@ -92,7 +93,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       </div>
     );
 
-    // Cinematic 16:9 Video Card (Title shows on hover)
+    // Cinematic 16:9 Video Card
     const renderVideoCard = (item) => {
       const cardTheme = themes[item.sport] || themes.All;
       return (
@@ -199,7 +200,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
           </section>
         )}
 
-        {/* Shorts Carousel */}
+        {/* Shorts Carousel (Highlight Reel) */}
         {shorts.length > 0 && (
           <section className={`relative ${articles.length > 0 || videos.length > 0 ? 'pt-6 border-t border-gray-800/50' : ''}`}>
             <div className="flex items-center justify-between mb-6">
@@ -323,9 +324,9 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
 
   return (
     <>
-      <Header activeSport="Football" />
+      <Header activeSport={playerSport} />
       <div className="max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-8 w-full">
-        <Sidebar currentPath={`/player/${rawSlug}`} activeSport="Football" proToolsMenu={proToolsMenu} connectMenu={connectMenu} />
+        <Sidebar currentPath={`/player/${rawSlug}`} activeSport={playerSport} proToolsMenu={proToolsMenu} connectMenu={connectMenu} />
         
         <div className="flex-1 w-full min-w-0">
           <main className="flex-1 overflow-y-auto relative z-0 scrollbar-hide pb-24">

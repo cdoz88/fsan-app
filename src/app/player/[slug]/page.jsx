@@ -33,15 +33,19 @@ async function getESPNPlayerData(playerName) {
 
     let sportString = '';
     let leagueString = '';
+    let sportName = 'All'; // Dynamically capturing the Sport Name for the UI
 
     if (sportCode === '20') {
       sportString = 'football';
+      sportName = 'Football';
       leagueString = leagueCode === '28' ? 'nfl' : 'college-football';
     } else if (sportCode === '40') {
       sportString = 'basketball';
+      sportName = 'Basketball';
       leagueString = leagueCode === '46' ? 'nba' : (leagueCode === '54' ? 'wnba' : 'mens-college-basketball');
     } else if (sportCode === '1') {
       sportString = 'baseball';
+      sportName = 'Baseball';
       leagueString = leagueCode === '10' ? 'mlb' : 'college-baseball';
     } else {
       return null;
@@ -62,7 +66,8 @@ async function getESPNPlayerData(playerName) {
     return {
       ...playerData.athlete,
       overview: overviewData,
-      deepStats: statsData
+      deepStats: statsData,
+      sportName // Pass this to the client
     };
 
   } catch (error) {
@@ -158,7 +163,6 @@ async function getPlayerContent(playerName) {
   const stripTags = (html) => html ? html.replace(/<\/?[^>]+(>|$)/g, "").trim() : '';
   const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
 
-  // Filter out any podcasts/videos that might have accidentally been caught by the general GraphQL 'posts' query
   const formattedPosts = posts.reduce((acc, post) => {
     const cats = post.categories?.nodes?.map(c => c.name.toLowerCase()) || [];
     if (cats.some(c => c.includes('pod') || c.includes('video') || c.includes('short'))) return acc;
@@ -290,12 +294,15 @@ export default async function PlayerPage({ params }) {
     getPlayerContent(playerName)
   ]);
 
+  // Determine the sport dynamically (Fallback to 'All' if ESPN couldn't find a specific sport)
+  const playerSport = espnData?.sportName || content[0]?.sport || 'All';
+
   let proToolsMenu = [];
   let connectMenu = [];
   try {
     if (typeof getMenuBySlug === 'function') {
-      proToolsMenu = await getMenuBySlug('pro-tools-football');
-      connectMenu = await getMenuBySlug('connect-football');
+      proToolsMenu = await getMenuBySlug(`pro-tools-${playerSport.toLowerCase()}`);
+      connectMenu = await getMenuBySlug(`connect-${playerSport.toLowerCase()}`);
     }
   } catch(e) {
     console.error("Menu fetch failed:", e);
@@ -309,6 +316,7 @@ export default async function PlayerPage({ params }) {
        content={content}
        proToolsMenu={proToolsMenu}
        connectMenu={connectMenu}
+       playerSport={playerSport} // Passing the dynamic sport to the Client UI
     />
   );
 }
