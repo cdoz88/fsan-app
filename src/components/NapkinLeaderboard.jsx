@@ -30,28 +30,36 @@ const Club200SVG = () => (
   </svg>
 );
 
-export default function NapkinLeaderboard() {
-  const [teams, setTeams] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function NapkinLeaderboard({ initialTeams = [] }) {
+  const [teams, setTeams] = useState(initialTeams);
+  const [loading, setLoading] = useState(false); 
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
   const [showKey, setShowKey] = useState(false);
 
   useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        const res = await fetch('https://admin.fsan.com/wp-json/scl/v1/leaderboard');
-        if (!res.ok) throw new Error('Failed to load leaderboard data.');
-        const data = await res.json();
-        setTeams(data.teams || []);
-      } catch (err) {
-        setError('Leaderboard is currently syncing. Please check back later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchLeaderboard();
-  }, []);
+    // If the server-side fetch failed, fallback to client-side fetch
+    if (initialTeams.length === 0) {
+      setLoading(true);
+      const fetchLeaderboard = async () => {
+        try {
+          const res = await fetch('https://admin.fsan.com/wp-json/scl/v1/leaderboard');
+          if (!res.ok) throw new Error('Failed to load leaderboard data.');
+          const data = await res.json();
+          if (data.teams && data.teams.length > 0) {
+             setTeams(data.teams);
+          } else {
+             setError('Leaderboard is empty. Waiting for initial draft sync.');
+          }
+        } catch (err) {
+          setError('Leaderboard is currently syncing. Please check back later.');
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchLeaderboard();
+    }
+  }, [initialTeams]);
 
   const filteredTeams = teams.filter(team => 
     team.ownerUsername?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -63,7 +71,7 @@ export default function NapkinLeaderboard() {
       <div className="p-6 md:p-8 border-b border-gray-800 flex flex-col md:flex-row justify-between gap-4 items-center bg-[#151515]">
         <div>
            <h2 className="text-2xl font-black uppercase tracking-wider text-white">Live Leaderboard</h2>
-           <p className="text-gray-500 text-xs font-bold tracking-widest uppercase">Current 2025 Standings</p>
+           <p className="text-gray-500 text-xs font-bold tracking-widest uppercase">Current 2026 Standings</p>
         </div>
         <div className="relative w-full md:w-64">
            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />

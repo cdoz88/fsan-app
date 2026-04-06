@@ -3,10 +3,11 @@ import React from 'react';
 import Link from 'next/link';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
-import NapkinLeaderboard from '../../../components/NapkinLeaderboard'; // <-- IMPORTED HERE
+import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
 import { HeartHandshake, Trophy, Gift, BarChart3, ShieldCheck, ArrowRight } from 'lucide-react';
 
-export default function NapkinClient({ proToolsMenu, connectMenu }) {
+// Added initialLeaderboard to the props
+export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderboard }) {
   const activeSport = 'Football';
 
   return (
@@ -20,7 +21,6 @@ export default function NapkinClient({ proToolsMenu, connectMenu }) {
           
           {/* HERO SECTION - RED, WHITE & BLUE THEME */}
           <div className="relative w-full rounded-3xl overflow-hidden mb-12 shadow-2xl border border-gray-800/50 bg-[#111] animate-in fade-in slide-in-from-bottom-8 duration-500">
-            {/* Ambient Red, White, and Blue Gradients */}
             <div className="absolute inset-0 bg-gradient-to-br from-red-600/20 via-white/5 to-blue-600/20 opacity-90 z-0"></div>
             <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-red-600/10 blur-[120px] rounded-full -translate-x-1/4 -translate-y-1/4 pointer-events-none"></div>
             <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full translate-x-1/4 translate-y-1/4 pointer-events-none"></div>
@@ -213,7 +213,7 @@ export default function NapkinClient({ proToolsMenu, connectMenu }) {
           </div>
 
           {/* DYNAMIC LEADERBOARD INJECTED HERE */}
-          <NapkinLeaderboard />
+          <NapkinLeaderboard initialTeams={initialLeaderboard} />
 
         </div>
       </div>
