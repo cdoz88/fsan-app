@@ -1,5 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      {
+        source: '/:sport(football|basketball|baseball|all)',
+        destination: '/:sport/home',
+        permanent: false,
+      }
+    ];
+  },
   async rewrites() {
     return [
       // Routes /home, /articles, /videos, /podcasts, /rankings, /search to the 'all' sport folder

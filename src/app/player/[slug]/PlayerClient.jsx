@@ -75,7 +75,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     const shorts = content.filter(item => item.type === 'short');
     const podcasts = content.filter(item => item.type === 'podcast');
 
-    // Standard Article Card (Converted to SEO-friendly Link)
+    // Standard Article Card
     const renderArticleCard = (item) => {
       const itemUrl = `/${item.sport.toLowerCase()}/${item.type}s/${item.slug}`;
       return (
@@ -97,7 +97,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       );
     };
 
-    // Cinematic 16:9 Video Card (Converted to SEO-friendly Link)
+    // Cinematic 16:9 Video Card
     const renderVideoCard = (item) => {
       const cardTheme = themes[item.sport] || themes.All;
       const itemUrl = `/${item.sport.toLowerCase()}/${item.type}s/${item.slug}`;
@@ -121,7 +121,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       );
     };
 
-    // Short Card (Converted to SEO-friendly Link)
+    // Short Card
     const renderShortCard = (item) => {
       const itemUrl = `/${item.sport.toLowerCase()}/${item.type}s/${item.slug}`;
       return (
@@ -142,7 +142,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       );
     };
 
-    // Podcast Booth Card (Converted to SEO-friendly Link)
+    // Podcast Booth Card
     const renderPodcastCard = (item) => {
       const itemTheme = themes[item.sport] || themes.All;
       const itemUrl = `/${item.sport.toLowerCase()}/${item.type}s/${item.slug}`;
@@ -390,18 +390,8 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                 )}
 
                 <div className="flex flex-col gap-1 md:gap-2 w-full z-20 justify-end md:h-full pb-4 md:px-0">
-                  
-                  {/* SEO DIRECTORY BREADCRUMB */}
-                  <div className="flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-gray-400 mb-1 md:mb-2">
-                    <Link href={`/${playerSport.toLowerCase()}`} className="hover:text-white transition-colors">{playerSport}</Link>
-                    <span>/</span>
-                    <Link href={`/${playerSport.toLowerCase()}/players`} className="hover:text-white transition-colors">Players</Link>
-                    <span>/</span>
-                    <span className="text-gray-500">{playerName}</span>
-                  </div>
-
-                  <div className="flex items-baseline gap-3 md:gap-4 flex-wrap mt-[-8px]">
-                    <h1 className="text-4xl sm:text-5xl md:text-4xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white">{playerName}</h1>
+                  <div className="flex items-baseline gap-3 md:gap-4 flex-wrap">
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white">{playerName}</h1>
                     {espnData?.position && (
                       <span className="text-lg sm:text-xl md:text-2xl font-bold text-gray-400 uppercase tracking-widest">{espnData.position.abbreviation || espnData.position.displayName}</span>
                     )}
@@ -426,7 +416,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
               </div>
             </div>
 
-            <div className="max-w-7xl mx-auto mb-8 border-b border-gray-800">
+            <div className="max-w-7xl mx-auto mb-8 border-b border-gray-800 flex justify-between items-end">
               <div className="flex overflow-x-auto scrollbar-hide gap-2 sm:gap-6">
                 {tabs.map((tab) => (
                   <button
@@ -438,6 +428,15 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                     {tab.icon} {tab.id}
                   </button>
                 ))}
+              </div>
+
+              {/* SEO DIRECTORY BREADCRUMB */}
+              <div className="hidden md:flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-500 pb-4">
+                <Link href={`/${playerSport.toLowerCase()}`} className="hover:text-white transition-colors">{playerSport}</Link>
+                <span>/</span>
+                <Link href={`/${playerSport.toLowerCase()}/players`} className="hover:text-white transition-colors">Players</Link>
+                <span>/</span>
+                <span className="text-gray-400">{playerName}</span>
               </div>
             </div>
 
