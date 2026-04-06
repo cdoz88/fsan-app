@@ -11,7 +11,6 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
   const pathname = usePathname() || '';
   const pathParts = pathname.split('/').filter(Boolean);
   
-  // FIX 1: Removed the forced 'home' default so it correctly un-highlights when on custom pages
   let currentView = '';
   if (pathParts.includes('home')) currentView = 'home';
   else if (pathParts.includes('articles')) currentView = 'articles';
@@ -25,8 +24,9 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
   const accentColor = theme.text;
   const hoverAccentColor = theme.hoverText;
 
+  // Fixed the sportGradients! When 'All' is active, the border is completely removed to show the conic gradient ring!
   const sportGradients = {
-    All: 'bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border-gray-500',
+    All: 'bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border-transparent',
     Football: 'bg-gradient-to-r from-[#e42d38] to-[#8a1a20] hover:from-[#f03a45] hover:to-[#a3222a] border-[#e42d38]',
     Basketball: 'bg-gradient-to-r from-[#e85d22] to-[#a33308] hover:from-[#f26d35] hover:to-[#bc4010] border-[#e85d22]',
     Baseball: 'bg-gradient-to-r from-[#1b75bb] to-[#1e3b8a] hover:from-[#2587d0] hover:to-[#2546a1] border-[#1b75bb]',
@@ -56,14 +56,9 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
       : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline";
   };
 
-  // FIX 2: Helper to determine if a custom WordPress/Pro Tool link should be highlighted
   const isDynamicActive = (url) => {
     const lowerUrl = url?.toLowerCase() || '';
-    
-    // Fuzzy matching specifically for the "Team Rosters" or "Players" linking to /teams
     if (currentView === 'teams' && lowerUrl.includes('/teams')) return true;
-    
-    // Exact path matching for things like /football/rankings
     if (lowerUrl !== '/' && lowerUrl !== 'http://dummy.com/') {
        try {
           const urlPath = new URL(url, 'http://dummy.com').pathname;
@@ -277,14 +272,26 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
           </div>
 
           {/* GO PRO BUTTON */}
-          <div className="mt-2 mb-2">
-            <Link 
-              href="/subscribe" 
-              onClick={() => setIsMobileMenuOpen(false)}
-              className={`w-full flex justify-center items-center py-3.5 rounded-xl text-white font-black uppercase tracking-widest text-sm shadow-lg border transition-all no-underline ${currentGradient}`}
-            >
-              GO PRO
-            </Link>
+          <div className="mt-2 mb-4">
+            {activeSport === 'All' ? (
+              <div className="p-[2px] rounded-[14px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] transition-shadow">
+                <Link 
+                  href="/subscribe" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`w-full flex justify-center items-center py-3.5 rounded-xl text-white font-black uppercase tracking-widest text-sm transition-all no-underline ${currentGradient} border-none`}
+                >
+                  GO PRO
+                </Link>
+              </div>
+            ) : (
+              <Link 
+                href="/subscribe" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`w-full flex justify-center items-center py-3.5 rounded-xl text-white font-black uppercase tracking-widest text-sm shadow-lg border transition-all no-underline ${currentGradient}`}
+              >
+                GO PRO
+              </Link>
+            )}
           </div>
 
           {/* FOOTER / SOCIALS */}

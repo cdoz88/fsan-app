@@ -405,16 +405,16 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
         <section className="flex flex-col gap-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
             <div className="lg:col-span-2 flex flex-col gap-6">
-              {/* HERO FEATURE: Prevents video cropping by forcing aspect-video, but lets articles flow natively! */}
+              {/* HERO FEATURE: Allows Article to grow using flex-1 while keeping ad tight! */}
               {mainFeature && (
-                <div className="w-full shrink-0 flex flex-col">
+                <div className="w-full flex-1 flex flex-col min-h-0">
                   <VideoCard item={mainFeature} isHero={true} setSelectedItem={setSelectedItem} activeSport={activeSport} />
                 </div>
               )}
               
-              {/* Ad Slot 1 - Moved INSIDE the left column to dynamically balance vertical gaps! */}
+              {/* Ad Slot 1 - Moved INSIDE the left column to dynamically balance vertical gaps! Shrink-0 keeps it from stretching! */}
               {inlineAds[0] && (
-                <div className="w-full flex-1 flex flex-col min-h-[120px]">
+                <div className="w-full shrink-0 flex flex-col">
                   <DynamicAd ad={inlineAds[0]} variant="inline" />
                 </div>
               )}
