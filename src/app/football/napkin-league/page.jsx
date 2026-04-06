@@ -10,7 +10,7 @@ export const metadata = {
 export default async function NapkinPage() {
   let proToolsMenu = [];
   let connectMenu = [];
-  let leaderboardData = { data: { teams: [], available_weeks: [] } };
+  let leaderboardData = { data: { teams: [], available_weeks: [], winners_registry: {} } };
   
   try {
     if (typeof getMenuBySlug === 'function') {
@@ -19,7 +19,13 @@ export default async function NapkinPage() {
     }
     const lbRes = await fetch('https://admin.fsan.com/wp-json/scl/v1/leaderboard', { next: { revalidate: 60 } });
     if (lbRes.ok) leaderboardData = await lbRes.json();
-  } catch(e) { console.error("Data fetch error:", e); }
+  } catch(e) { console.error("Leaderboard fetch error:", e); }
 
-  return <NapkinClient proToolsMenu={proToolsMenu} connectMenu={connectMenu} initialLeaderboard={leaderboardData} />;
+  return (
+    <NapkinClient 
+      proToolsMenu={proToolsMenu} 
+      connectMenu={connectMenu} 
+      initialLeaderboard={leaderboardData} 
+    />
+  );
 }
