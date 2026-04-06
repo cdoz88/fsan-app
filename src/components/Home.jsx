@@ -122,19 +122,32 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   );
 };
 
-// --- CONTENT CARD COMPONENTS (SEO UPDATED TO LINKS) ---
+// --- CONTENT CARD COMPONENTS ---
 
-const VideoCard = ({ item, isHero, setSelectedItem, activeSport }) => (
-  <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative no-underline block`}>
-    {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
-    <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
-    <PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
-    <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-5 z-20 flex flex-col justify-end opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
-      <PostMeta item={item} activeSport={activeSport} />
-      <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'} text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
-    </div>
-  </Link>
-);
+const VideoCard = ({ item, isHero, setSelectedItem, activeSport }) => {
+  // Fix: Dynamically determine if this card is holding a video or an article!
+  const isVideo = item.type === 'video' || item.type === 'short';
+  
+  return (
+    <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative no-underline block`}>
+      {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
+      
+      {/* If Video: Hide gradient and text until hover. If Article: Always show gradient. */}
+      <div className={`absolute inset-0 bg-gradient-to-t ${isVideo ? 'from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100' : 'from-[#050505] via-black/60 to-transparent opacity-100'} transition-opacity duration-300 z-10`}></div>
+      
+      {/* Only show the massive Play Button if it's actually a video */}
+      {isVideo && (
+        <PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
+      )}
+      
+      {/* If Video: Animate text up on hover. If Article: Keep text static and permanently visible. */}
+      <div className={`absolute bottom-0 left-0 right-0 p-4 lg:p-5 z-20 flex flex-col justify-end ${isVideo ? 'opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0' : 'opacity-100 translate-y-0'} transition-all duration-300`}>
+        <PostMeta item={item} activeSport={activeSport} />
+        <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'} text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+      </div>
+    </Link>
+  );
+};
 
 const ShortCard = ({ item, setSelectedItem, activeSport }) => (
   <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group h-full w-full min-h-[300px] md:min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative no-underline block`}>
@@ -149,20 +162,24 @@ const ShortCard = ({ item, setSelectedItem, activeSport }) => (
   </Link>
 );
 
-const VerticalCard = ({ item, setSelectedItem, activeSport }) => (
-  <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group h-full w-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative no-underline block`}>
-    <div className="w-full aspect-video relative flex items-center justify-center overflow-hidden shrink-0 bg-[#111]">
-      {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
-      <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-[#1e1e1e] via-[#1e1e1e]/80 to-transparent z-10" />
-      {item.type === 'video' && <PlayCircle size={32} className="absolute text-white/80 z-20" />}
-    </div>
-    <div className="px-5 pb-5 flex flex-col flex-1 relative z-20 -mt-10 pt-2">
-      <PostMeta item={item} activeSport={activeSport} />
-      <h3 className={`font-black text-lg leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors mb-2 line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
-      <div className="text-sm text-gray-400 line-clamp-2 mt-auto drop-shadow-md" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
-    </div>
-  </Link>
-);
+const VerticalCard = ({ item, setSelectedItem, activeSport }) => {
+  const isVideo = item.type === 'video' || item.type === 'short';
+
+  return (
+    <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group h-full w-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative no-underline block`}>
+      <div className="w-full aspect-video relative flex items-center justify-center overflow-hidden shrink-0 bg-[#111]">
+        {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
+        <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-[#1e1e1e] via-[#1e1e1e]/80 to-transparent z-10" />
+        {isVideo && <PlayCircle size={32} className="absolute text-white/80 z-20" />}
+      </div>
+      <div className="px-5 pb-5 flex flex-col flex-1 relative z-20 -mt-10 pt-2">
+        <PostMeta item={item} activeSport={activeSport} />
+        <h3 className={`font-black text-lg leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors mb-2 line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+        <div className="text-sm text-gray-400 line-clamp-2 mt-auto drop-shadow-md" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
+      </div>
+    </Link>
+  );
+};
 
 const PressBoxCard = ({ item, setSelectedItem, activeSport }) => (
   <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 rounded-2xl flex flex-col md:flex-row overflow-hidden ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[220px] items-stretch no-underline block`}>
@@ -390,12 +407,12 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
             <div className="flex flex-col gap-6 h-full">
               {sideTopFeature && (
                 <div className="flex-1 w-full">
-                  {sideTopFeature.type === 'video' ? <VideoCard item={sideTopFeature} isHero={false} setSelectedItem={setSelectedItem} activeSport={activeSport} /> : <VerticalCard item={sideTopFeature} setSelectedItem={setSelectedItem} activeSport={activeSport} />}
+                  <VerticalCard item={sideTopFeature} setSelectedItem={setSelectedItem} activeSport={activeSport} />
                 </div>
               )}
               {sideBottomFeature && (
                 <div className="flex-1 w-full">
-                  {sideBottomFeature.type === 'video' ? <VideoCard item={sideBottomFeature} isHero={false} setSelectedItem={setSelectedItem} activeSport={activeSport} /> : <VerticalCard item={sideBottomFeature} setSelectedItem={setSelectedItem} activeSport={activeSport} />}
+                  <VerticalCard item={sideBottomFeature} setSelectedItem={setSelectedItem} activeSport={activeSport} />
                 </div>
               )}
             </div>
