@@ -15,9 +15,9 @@ export default function TeamsClient({ activeSport, teams, proToolsMenu, connectM
 
   const bgImages = {
     All: 'https://admin.fsan.com/wp-content/uploads/2023/11/FSAN-Icon.webp',
-    Football: 'https://admin.fsan.com/wp-content/uploads/2023/11/FFAN-Icon.webp',
-    Basketball: 'https://admin.fsan.com/wp-content/uploads/2023/11/FBBAN-Icon.webp',
-    Baseball: 'https://admin.fsan.com/wp-content/uploads/2023/11/FBAN-Icon.webp'
+    Football: 'https://admin.fsan.com/wp-content/uploads/2026/04/NFL-Logo.webp',
+    Basketball: 'https://admin.fsan.com/wp-content/uploads/2026/04/nba-logo.webp',
+    Baseball: 'https://admin.fsan.com/wp-content/uploads/2026/04/Major_League_Baseball_logo.webp'
   };
 
   const sportColors = {
