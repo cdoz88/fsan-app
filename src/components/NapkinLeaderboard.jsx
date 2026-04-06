@@ -25,7 +25,7 @@ ChartJS.register(
   Filler
 );
 
-// --- ASSETS (FULL SVGS FOR VERCEL BUILD) ---
+// --- ASSETS (FULL SVGS FOR PRODUCTION) ---
 
 const WeeklyScorerSVG = () => (
   <svg viewBox="0 0 100 100" className="w-5 h-5 shrink-0 drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
@@ -64,7 +64,7 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
   
-  // Selectors State
+  // States
   const [currentWeek, setCurrentWeek] = useState('overall');
   const [availableWeeks, setAvailableWeeks] = useState([]);
   
@@ -74,47 +74,58 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState('');
 
-  // Initial Fetch logic
+  // Fixed Initial Fetch Logic to correct unwrap "data" property
   useEffect(() => {
-    const fetchInitialMeta = async () => {
+    const fetchInitialData = async () => {
       setLoading(true);
       try {
         const res = await fetch('/api/scl?action=scl_get_leaderboard_data');
-        if (!res.ok) throw new Error('Failed to load leaderboard.');
-        const data = await res.json();
+        if (!res.ok) throw new Error('Failed to load leaderboard data.');
+        const result = await res.json();
         
-        if (data.available_weeks) setAvailableWeeks(data.available_weeks);
-        if (data.teams && data.teams.length > 0) {
+        // UNWRAP: result.data contains the real object
+        const data = result.data;
+        
+        if (data?.available_weeks) {
+           setAvailableWeeks(data.available_weeks);
+        }
+        
+        if (data?.teams && data.teams.length > 0) {
            setOverallTeams(data.teams);
            setActiveTeams(data.teams);
         } else {
            setError('No data found for the 2025-2026 season.');
         }
       } catch (err) {
-        setError('Leaderboard is currently syncing. Check back later.');
+        setError('Leaderboard is currently syncing. Please check back later.');
       } finally {
         setLoading(false);
       }
     };
-    fetchInitialMeta();
+    fetchInitialData();
   }, []);
 
   const fetchWeeklyData = async (week) => {
     setLoading(true);
     setCurrentWeek(week);
+    
     if (week === 'overall') {
       setActiveTeams(overallTeams);
       setLoading(false);
       return;
     }
+
     try {
       const res = await fetch(`/api/scl?action=scl_get_weekly_data&week=${week}`);
       const result = await res.json();
-      if (result.success && result.data.teams) {
+      // UNWRAP data from standard WordPress response
+      if (result.success && result.data?.teams) {
          setActiveTeams(result.data.teams);
+      } else {
+         setError('Could not fetch weekly data.');
       }
     } catch (err) {
-      console.error('Weekly sync failed');
+      setError('Error loading week data.');
     } finally {
       setLoading(false);
     }
@@ -135,7 +146,7 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
       if (result.success) {
          setModalData(result.data);
       } else {
-         setModalError('No weekly results available.');
+         setModalError('Weekly results are still syncing.');
       }
     } catch (err) {
       setModalError('Failed to connect to the server.');
@@ -154,7 +165,7 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
       {/* HEADER & SELECTORS */}
       <div className="p-4 md:p-6 border-b border-gray-800 bg-[#151515] flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-           <h2 className="text-xl font-black uppercase tracking-wider text-white mr-4">2025-2026 Season</h2>
+           <h2 className="text-xl font-black uppercase tracking-wider text-white mr-4 whitespace-nowrap">2025-2026 Season</h2>
            
            <div className="relative w-full md:w-48">
              <select 
@@ -163,7 +174,9 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
                className="w-full bg-[#111] border border-gray-700 text-white rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-gray-500 appearance-none shadow-inner cursor-pointer font-bold"
              >
                <option value="overall">Overall Results</option>
-               {availableWeeks.map(w => <option key={w} value={w}>Week {w}</option>)}
+               {availableWeeks.map(w => (
+                 <option key={w} value={w}>Week {w}</option>
+               ))}
              </select>
              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
                <ChevronDown size={16} />
@@ -175,7 +188,7 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
            <input 
              type="text"
-             placeholder="Search players..."
+             placeholder="Search by owner name..."
              value={searchTerm}
              onChange={(e) => setSearchTerm(e.target.value)}
              className="w-full bg-[#0a0a0a] border border-gray-700 text-white rounded-xl py-2.5 pl-11 pr-4 text-sm focus:outline-none focus:border-gray-500 transition-colors shadow-inner"
@@ -188,9 +201,9 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
         <span className="text-gray-500 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest mr-2">
            <Info size={14} className="text-blue-500" /> Awards Key:
         </span>
-        <span className="flex items-center gap-2 text-xs text-gray-300 transition-all hover:text-white group"><LitchSVG /> <b>LITCH:</b> Overall Points Leader</span>
-        <span className="flex items-center gap-2 text-xs text-gray-300 transition-all hover:text-white group"><WeeklyScorerSVG /> <b>Weekly Top:</b> Highest score</span>
-        <span className="flex items-center gap-2 text-xs text-gray-300 transition-all hover:text-white group"><Club200SVG /> <b>200+ Club:</b> Scored 200+ pts</span>
+        <span className="flex items-center gap-2 text-xs text-gray-300"><LitchSVG /> <b>LITCH:</b> Overall Points Leader</span>
+        <span className="flex items-center gap-2 text-xs text-gray-300"><WeeklyScorerSVG /> <b>Weekly Top:</b> Highest score</span>
+        <span className="flex items-center gap-2 text-xs text-gray-300"><Club200SVG /> <b>200+ Club:</b> Scored 200+ pts</span>
       </div>
 
       {/* TABLE */}
@@ -208,7 +221,7 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
             {loading ? (
               <tr><td colSpan="4" className="py-16 text-center"><Loader2 size={32} className="animate-spin text-gray-600 mx-auto" /></td></tr>
             ) : filteredTeams.length === 0 ? (
-              <tr><td colSpan="4" className="py-16 text-center text-gray-500 font-bold uppercase text-sm">{error || "No data found."}</td></tr>
+              <tr><td colSpan="4" className="py-16 text-center text-gray-500 font-bold uppercase text-sm">{error || "No matching data recorded."}</td></tr>
             ) : (
               filteredTeams.map((team) => {
                 let badges = [];
@@ -218,17 +231,35 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
                 if (bSource?.twoHundredClub) badges.push({ icon: <Club200SVG />, count: currentWeek === 'overall' ? team.badges.twoHundredClub : null });
 
                 return (
-                  <tr key={team.teamId} onClick={() => handleRowClick(team.teamId)} className="hover:bg-[#151515] transition-colors group cursor-pointer">
-                    <td className="px-6 py-4 text-center"><span className={`font-black text-lg ${team.rank <= 3 ? 'text-white drop-shadow-md' : 'text-gray-500'}`}>{team.rank}</span></td>
+                  <tr 
+                    key={team.teamId} 
+                    onClick={() => handleRowClick(team.teamId)} 
+                    className="hover:bg-[#151515] transition-colors group cursor-pointer"
+                  >
+                    <td className="px-6 py-4 text-center">
+                      <span className={`font-black text-lg ${team.rank <= 3 ? 'text-white drop-shadow-md' : 'text-gray-500'}`}>{team.rank}</span>
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
                         <img src={team.ownerAvatar} alt={team.ownerUsername} className="w-10 h-10 rounded-full border border-gray-700 bg-gray-900 shrink-0 shadow-inner group-hover:border-gray-500 transition-colors" />
-                        <div className="flex flex-col"><span className="font-bold text-gray-200 text-sm group-hover:text-blue-400 transition-colors">{team.ownerUsername}</span><span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">{team.leagueName}</span></div>
+                        <div className="flex flex-col">
+                           <span className="font-bold text-gray-200 text-sm group-hover:text-blue-400 transition-colors">{team.ownerUsername}</span>
+                           <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">{team.leagueName}</span>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 text-center">
                       <div className="flex items-center justify-center gap-3">
-                        {badges.length > 0 ? badges.map((b, i) => (<div key={i} className="flex items-center">{b.icon}{b.count && <span className="text-[10px] font-black text-gray-400 ml-1.5">{b.count}</span>}</div>)) : <span className="text-gray-700">-</span>}
+                        {badges.length > 0 ? (
+                           badges.map((b, i) => (
+                             <div key={i} className="flex items-center">
+                               {b.icon}
+                               {b.count && <span className="text-[10px] font-black text-gray-400 ml-1.5">{b.count}</span>}
+                             </div>
+                           ))
+                        ) : (
+                          <span className="text-gray-700 font-bold">-</span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right flex flex-col items-end justify-center h-full">
@@ -266,28 +297,35 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
                  {modalLoading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                        <Loader2 size={40} className="animate-spin text-gray-600 mb-4" />
-                       <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Crunching Archive...</span>
+                       <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Compiling Stats...</span>
                     </div>
                  ) : modalData ? (
                     <div className="flex flex-col gap-8">
                        
-                       {/* UPDATED SUMMARY STATS GRID (INCLUDES AWARDS) */}
+                       {/* SUMMARY STATS GRID */}
                        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                           <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
                              <span className="text-[10px] font-black uppercase text-gray-500 mb-1">Rank</span>
                              <span className="text-xl font-black text-white">{selectedTeam.rank}</span>
                           </div>
                           <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
-                             <span className="text-[10px] font-black uppercase text-gray-500 mb-1">Total Points</span>
+                             <span className="text-[10px] font-black uppercase text-gray-500 mb-1">Points</span>
                              <span className="text-xl font-black text-white">{parseFloat(selectedTeam.totalPoints).toFixed(2)}</span>
                           </div>
+                          {/* UPDATED AWARDS STAT BOX */}
                           <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
                              <span className="text-[10px] font-black uppercase text-gray-500 mb-1">Awards</span>
-                             <div className="flex gap-2 mt-1">
-                               {selectedTeam.badges?.litchAward > 0 && <LitchSVG />}
-                               {selectedTeam.badges?.weeklyTopScorer > 0 && <WeeklyScorerSVG />}
-                               {selectedTeam.badges?.twoHundredClub > 0 && <Club200SVG />}
-                               {(!selectedTeam.badges || Object.values(selectedTeam.badges).every(v => v === 0)) && <span className="text-white font-bold">N/A</span>}
+                             <div className="flex gap-3 mt-1 items-center">
+                               {selectedTeam.badges?.litchAward > 0 && (
+                                 <div className="flex flex-col items-center gap-0.5"><LitchSVG /><span className="text-[9px] font-bold text-gray-500">{selectedTeam.badges.litchAward}</span></div>
+                               )}
+                               {selectedTeam.badges?.weeklyTopScorer > 0 && (
+                                 <div className="flex flex-col items-center gap-0.5"><WeeklyScorerSVG /><span className="text-[9px] font-bold text-gray-500">{selectedTeam.badges.weeklyTopScorer}</span></div>
+                               )}
+                               {selectedTeam.badges?.twoHundredClub > 0 && (
+                                 <div className="flex flex-col items-center gap-0.5"><Club200SVG /><span className="text-[9px] font-bold text-gray-500">{selectedTeam.badges.twoHundredClub}</span></div>
+                               )}
+                               {(!selectedTeam.badges || Object.values(selectedTeam.badges).every(v => !v || v === 0)) && <span className="text-white font-bold text-xs uppercase">N/A</span>}
                              </div>
                           </div>
                           <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
@@ -341,7 +379,7 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
                          </table>
                        </div>
                     </div>
-                 ) : <div className="text-center py-20 text-gray-500 uppercase font-black tracking-widest text-sm border border-dashed border-gray-800 rounded-2xl">{modalError || "No data recorded for this manager."}</div>}
+                 ) : <div className="text-center py-20 text-gray-500 uppercase font-black tracking-widest text-sm border border-dashed border-gray-800 rounded-2xl">{modalError || "No manager data recorded."}</div>}
               </div>
            </div>
         </div>
