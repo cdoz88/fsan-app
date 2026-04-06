@@ -3,6 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
+import NapkinLeaderboard from '../../../components/NapkinLeaderboard'; // <-- IMPORTED HERE
 import { HeartHandshake, Trophy, Gift, BarChart3, ShieldCheck, ArrowRight } from 'lucide-react';
 
 export default function NapkinClient({ proToolsMenu, connectMenu }) {
@@ -210,6 +211,10 @@ export default function NapkinClient({ proToolsMenu, connectMenu }) {
             </div>
 
           </div>
+
+          {/* DYNAMIC LEADERBOARD INJECTED HERE */}
+          <NapkinLeaderboard />
+
         </div>
       </div>
     </>
