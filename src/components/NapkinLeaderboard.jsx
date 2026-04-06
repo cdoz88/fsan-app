@@ -6,7 +6,7 @@ import { Line } from 'react-chartjs-2';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, ChartTooltip, Legend, Filler);
 
-// --- ASSETS (FULL SVGS) ---
+// --- ASSETS (FULL SVGS FOR PRODUCTION) ---
 const WeeklyScorerSVG = () => (
   <svg viewBox="0 0 100 100" className="w-5 h-5 shrink-0 drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
     <linearGradient id="grad1" gradientUnits="userSpaceOnUse" x1="50" x2="50" y1="38.457" y2="98.241"><stop offset="0" stopColor="#27d7ff"/><stop offset=".044" stopColor="#29d2ff"/><stop offset=".437" stopColor="#3db3ff"/><stop offset=".769" stopColor="#49a0ff"/><stop offset="1" stopColor="#4e9aff"/></linearGradient>
@@ -50,6 +50,7 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
 
   const [activeHistoryAward, setActiveHistoryAward] = useState(null);
 
+  // Initial Sync from server data
   useEffect(() => {
     if (availableWeeks.length > 0) return;
     const fetchMeta = async () => {
@@ -71,8 +72,8 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
     if (week === 'overall') { setActiveTeams(overallTeams); setLoading(false); return; }
     try {
       const res = await fetch(`/api/scl?action=scl_get_weekly_data&week=${week}`);
-      const json = await res.json();
-      if (json.success && json.data?.teams) setActiveTeams(json.data.teams);
+      const result = await res.json();
+      if (result.success && result.data?.teams) setActiveTeams(result.data.teams);
     } catch (err) { console.error('Weekly sync failed'); } finally { setLoading(false); }
   };
 
@@ -89,40 +90,15 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
 
   const filteredTeams = activeTeams.filter(team => team.ownerUsername?.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  // SHARED AWARD RENDERER
-  const renderBadges = (team, isFullCount = false) => {
-    const badges = [];
-    const bSource = isFullCount ? team.badges : (currentWeek === 'overall' ? team.badges : team.weekly_badges);
-    if (bSource?.litchAward) badges.push({ icon: <LitchSVG />, count: bSource.litchAward, title: 'LITCH' });
-    if (bSource?.weeklyTopScorer) badges.push({ icon: <WeeklyScorerSVG />, count: bSource.weeklyTopScorer, title: 'Weekly Top' });
-    if (bSource?.twoHundredClub) badges.push({ icon: <Club200SVG />, count: bSource.twoHundredClub, title: '200+ Club' });
-    
-    if (badges.length === 0) return <span className="text-gray-700 font-bold">-</span>;
-    
-    return (
-      <div className="flex items-center justify-center gap-3">
-        {badges.map((b, i) => (
-          <div key={i} className="flex items-center" title={b.title}>
-            {b.icon}
-            {/* Logic: Only show count if it's overall results OR explicitly requested in popup */}
-            {(isFullCount || currentWeek === 'overall') && b.count > 0 && (
-               <span className="text-[10px] font-black text-gray-400 ml-1.5">{b.count}</span>
-            )}
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   return (
     <div className="bg-[#1a1a1a] rounded-3xl border border-gray-800 shadow-xl overflow-hidden mt-12 flex flex-col animate-in fade-in duration-500">
       
-      {/* HEADER & SELECTOR */}
+      {/* HEADER & REVERSED SELECTOR */}
       <div className="p-4 md:p-6 border-b border-gray-800 bg-[#151515] flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
            <h2 className="text-xl font-black uppercase tracking-wider text-white mr-4 whitespace-nowrap">2025-2026 Season</h2>
            <div className="relative w-full md:w-48">
-             <select value={currentWeek} onChange={(e) => fetchWeeklyData(e.target.value)} className="w-full bg-[#111] border border-gray-700 text-white rounded-xl py-2.5 px-4 text-sm appearance-none cursor-pointer font-bold">
+             <select value={currentWeek} onChange={(e) => fetchWeeklyData(e.target.value)} className="w-full bg-[#111] border border-gray-700 text-white rounded-xl py-2.5 px-4 text-sm appearance-none shadow-inner cursor-pointer font-bold">
                <option value="overall">Overall Results</option>
                {[...availableWeeks].sort((a,b) => b-a).map(w => <option key={w} value={w}>Week {w}</option>)}
              </select>
@@ -135,12 +111,12 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
         </div>
       </div>
 
-      {/* PERMANENT AWARDS KEY PANEL */}
+      {/* PERMANENT AWARDS KEY (HISTORY ENABLED) */}
       <div className="bg-[#111] px-6 py-5 border-b border-gray-800 flex flex-wrap items-center gap-8 justify-center md:justify-start">
-        <span className="text-gray-500 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest mr-2"><Info size={14} className="text-blue-500" /> Click to view winner history:</span>
-        <button onClick={() => setActiveHistoryAward('litchAward')} className="flex items-center gap-2 text-xs text-gray-300 hover:text-white transition-all"><LitchSVG /> <b>LITCH:</b> Overall Points Leader</button>
-        <button onClick={() => setActiveHistoryAward('weeklyTopScorer')} className="flex items-center gap-2 text-xs text-gray-300 hover:text-white transition-all"><WeeklyScorerSVG /> <b>Weekly Top:</b> Highest score</button>
-        <button onClick={() => setActiveHistoryAward('twoHundredClub')} className="flex items-center gap-2 text-xs text-gray-300 hover:text-white transition-all"><Club200SVG /> <b>200+ Club:</b> Scored 200+ pts</button>
+        <span className="text-gray-500 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest mr-2"><Info size={14} className="text-blue-500" /> Awards History Legend:</span>
+        <button onClick={() => setActiveHistoryAward('litchAward')} className="flex items-center gap-2 text-xs text-gray-300 hover:text-white transition-all"><LitchSVG /> <b>LITCH:</b> Points Leader</button>
+        <button onClick={() => setActiveHistoryAward('weeklyTopScorer')} className="flex items-center gap-2 text-xs text-gray-300 hover:text-white transition-all"><WeeklyScorerSVG /> <b>Weekly Top:</b> High score</button>
+        <button onClick={() => setActiveHistoryAward('twoHundredClub')} className="flex items-center gap-2 text-xs text-gray-300 hover:text-white transition-all"><Club200SVG /> <b>200+ Club:</b> Scored 200+</button>
       </div>
 
       {/* TABLE */}
@@ -153,14 +129,26 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
           </thead>
           <tbody className="divide-y divide-gray-800/50">
             {loading ? ( <tr><td colSpan="4" className="py-16 text-center"><Loader2 size={32} className="animate-spin text-gray-600 mx-auto" /></td></tr> ) : (
-              filteredTeams.map((team) => (
-                <tr key={team.teamId} onClick={() => handleRowClick(team.teamId)} className="hover:bg-[#151515] transition-colors group cursor-pointer">
-                  <td className="px-6 py-4 text-center"><span className={`font-black text-lg ${team.rank <= 3 ? 'text-white' : 'text-gray-500'}`}>{team.rank}</span></td>
-                  <td className="px-6 py-4"><div className="flex items-center gap-4"><img src={team.ownerAvatar} className="w-10 h-10 rounded-full border border-gray-700 bg-gray-900 shadow-inner" alt="" /><div className="flex flex-col"><span className="font-bold text-gray-200 text-sm group-hover:text-blue-400 transition-colors">{team.ownerUsername}</span><span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">{team.leagueName}</span></div></div></td>
-                  <td className="px-6 py-4 text-center">{renderBadges(team)}</td>
-                  <td className="px-6 py-4 text-right flex flex-col items-end justify-center h-full"><span className="font-black text-white text-base drop-shadow-md">{parseFloat(currentWeek === 'overall' ? team.totalPoints : team.points).toFixed(2)}</span>{currentWeek === 'overall' && <span className="text-[10px] font-bold text-gray-500 tracking-widest mt-1">{team.wins}-{team.losses}</span>}</td>
-                </tr>
-              ))
+              filteredTeams.map((team) => {
+                let badges = [];
+                const bSource = currentWeek === 'overall' ? team.badges : team.weekly_badges;
+                // Mapping counts for both overall and week views to icons
+                if (bSource?.litchAward) badges.push({ icon: <LitchSVG />, count: currentWeek === 'overall' ? team.badges.litchAward : null });
+                if (bSource?.weeklyTopScorer) badges.push({ icon: <WeeklyScorerSVG />, count: currentWeek === 'overall' ? team.badges.weeklyTopScorer : null });
+                if (bSource?.twoHundredClub) badges.push({ icon: <Club200SVG />, count: currentWeek === 'overall' ? team.badges.twoHundredClub : null });
+                return (
+                  <tr key={team.teamId} onClick={() => handleRowClick(team.teamId)} className="hover:bg-[#151515] transition-colors group cursor-pointer">
+                    <td className="px-6 py-4 text-center"><span className={`font-black text-lg ${team.rank <= 3 ? 'text-white' : 'text-gray-500'}`}>{team.rank}</span></td>
+                    <td className="px-6 py-4"><div className="flex items-center gap-4"><img src={team.ownerAvatar} className="w-10 h-10 rounded-full border border-gray-700 bg-gray-900 shadow-inner" alt="" /><div className="flex flex-col"><span className="font-bold text-gray-200 text-sm group-hover:text-blue-400 transition-colors">{team.ownerUsername}</span><span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">{team.leagueName}</span></div></div></td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex items-center justify-center gap-3">
+                        {badges.length > 0 ? badges.map((b, i) => (<div key={i} className="flex items-center">{b.icon}{b.count && <span className="text-[10px] font-black text-gray-400 ml-1.5">{b.count}</span>}</div>)) : <span className="text-gray-700 font-bold">-</span>}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right flex flex-col items-end justify-center h-full"><span className="font-black text-white text-base drop-shadow-md">{parseFloat(currentWeek === 'overall' ? team.totalPoints : team.points).toFixed(2)}</span>{currentWeek === 'overall' && <span className="text-[10px] font-bold text-gray-500 tracking-widest mt-1">{team.wins}-{team.losses}</span>}</td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -175,10 +163,10 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
              <div className="p-6 border-b border-gray-800 bg-[#111] flex items-center gap-4">
                 {activeHistoryAward === 'litchAward' ? <LitchSVG /> : activeHistoryAward === 'weeklyTopScorer' ? <WeeklyScorerSVG /> : <Club200SVG />}
                 <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter">
-                   {activeHistoryAward === 'litchAward' ? 'LITCH Award History' : activeHistoryAward === 'weeklyTopScorer' ? 'Weekly Top Scorer History' : '200+ Club Members'}
+                   {activeHistoryAward === 'litchAward' ? 'LITCH Award History' : activeHistoryAward === 'weeklyTopScorer' ? 'Weekly Top Scorer History' : '200+ Club History'}
                 </h2>
              </div>
-             <div className="p-6 overflow-y-auto flex-1">
+             <div className="p-6 overflow-y-auto flex-1 scrollbar-hide">
                 <div className="space-y-4">
                   {[...availableWeeks].sort((a,b) => b-a).map(w => {
                     const winnersForWeek = winnersRegistry[activeHistoryAward]?.[w] || [];
@@ -211,31 +199,40 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
       {selectedTeam && (
         <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4">
            <div className="absolute inset-0" onClick={() => setSelectedTeam(null)}></div>
-           <div className="relative bg-[#1a1a1a] border border-gray-700 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col animate-in fade-in duration-200 overflow-hidden">
+           <div className="relative bg-[#1a1a1a] border border-gray-700 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col animate-in fade-in duration-200 overflow-hidden">
               <button onClick={() => setSelectedTeam(null)} className="absolute top-4 right-4 p-2 bg-gray-900 rounded-full text-gray-400 z-10 hover:text-white"><X size={20} /></button>
-              <div className="p-6 border-b border-gray-800 bg-gradient-to-r from-[#111] to-[#1a1a1a] flex items-center gap-6"><img src={selectedTeam.ownerAvatar} className="w-16 h-16 rounded-full border-2 border-gray-600 shadow-xl" alt="" /><div><h2 className="text-2xl md:text-3xl font-black text-white italic">{selectedTeam.ownerUsername}</h2><span className="text-xs font-bold text-gray-500 uppercase">{selectedTeam.leagueName}</span></div></div>
-              <div className="p-6 md:p-8 overflow-y-auto flex-1">
-                 {modalLoading ? ( <div className="flex flex-col items-center justify-center py-20"><Loader2 size={40} className="animate-spin text-gray-600 mb-4" /><span className="text-xs font-bold text-gray-500 uppercase">Crunching Analytics...</span></div>
+              <div className="p-6 border-b border-gray-800 bg-[#111] flex items-center gap-6"><img src={selectedTeam.ownerAvatar} className="w-16 h-16 rounded-full border-2 border-gray-600 shadow-xl" alt="" /><div><h2 className="text-2xl md:text-3xl font-black text-white italic">{selectedTeam.ownerUsername}</h2><span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{selectedTeam.leagueName}</span></div></div>
+              <div className="p-6 md:p-8 overflow-y-auto flex-1 scrollbar-hide">
+                 {modalLoading ? ( <div className="flex flex-col items-center justify-center py-20"><Loader2 size={40} className="animate-spin text-gray-600 mb-4" /><span className="text-xs font-bold text-gray-500 uppercase tracking-widest uppercase">Crunching Stats...</span></div>
                  ) : modalData ? (
                     <div className="flex flex-col gap-8">
                        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center text-center shadow-inner"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">Rank</span><span className="text-xl font-black text-white">{selectedTeam.rank}</span></div>
-                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center text-center shadow-inner"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">Points</span><span className="text-xl font-black text-white">{parseFloat(selectedTeam.totalPoints).toFixed(2)}</span></div>
+                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">Rank</span><span className="text-xl font-black text-white">{selectedTeam.rank}</span></div>
+                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">Points</span><span className="text-xl font-black text-white">{parseFloat(selectedTeam.totalPoints).toFixed(2)}</span></div>
                           
-                          {/* PARITY: Awards box matches list view exactly */}
+                          {/* UPDATED MODAL AWARDS BOX (LITCH RESTORED) */}
                           <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
                              <span className="text-[10px] font-black uppercase text-gray-500 mb-1">Awards</span>
-                             {renderBadges(selectedTeam, true)}
+                             <div className="flex gap-3 mt-1 items-center">
+                               {selectedTeam.badges?.litchAward > 0 && ( <div className="flex flex-col items-center gap-0.5"><LitchSVG /><span className="text-[9px] font-bold text-gray-500">{selectedTeam.badges.litchAward}</span></div> )}
+                               {selectedTeam.badges?.weeklyTopScorer > 0 && ( <div className="flex flex-col items-center gap-0.5"><WeeklyScorerSVG /><span className="text-[9px] font-bold text-gray-500">{selectedTeam.badges.weeklyTopScorer}</span></div> )}
+                               {selectedTeam.badges?.twoHundredClub > 0 && ( <div className="flex flex-col items-center gap-0.5"><Club200SVG /><span className="text-[9px] font-bold text-gray-500">{selectedTeam.badges.twoHundredClub}</span></div> )}
+                               {(!selectedTeam.badges || Object.values(selectedTeam.badges).every(v => !v || v === 0)) && <span className="text-white font-bold text-xs uppercase tracking-tighter">N/A</span>}
+                             </div>
                           </div>
 
                           <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">H2H Wins</span><span className="text-xl font-black text-white">{Object.values(modalData.weekly_results).filter(w => w.h2h === 'W').length}</span></div>
                           <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">Med Wins</span><span className="text-xl font-black text-white">{Object.values(modalData.weekly_results).filter(w => w.median === 'W').length}</span></div>
                           <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">Total Wins</span><span className="text-xl font-black text-white">{Object.values(modalData.weekly_results).filter(w => w.h2h === 'W').length + Object.values(modalData.weekly_results).filter(w => w.median === 'W').length}</span></div>
                        </div>
-                       <div className="w-full h-[300px] bg-[#111] border border-gray-800 rounded-2xl p-4 shadow-inner"><Line data={{ labels: Array.from({length: 17}, (_, i) => `Wk ${i + 1}`), datasets: [{ label: 'Points', data: Array.from({length: 17}, (_, i) => modalData.weekly_results[i+1]?.points || null), borderColor: '#48bb78', backgroundColor: 'rgba(72, 187, 120, 0.1)', yAxisID: 'yPoints', fill: true, tension: 0.4 }, { label: 'Rank', data: Array.from({length: 17}, (_, i) => modalData.weekly_results[i+1]?.rank || null), borderColor: '#27d7ff', backgroundColor: 'rgba(39, 215, 255, 0.1)', yAxisID: 'yRank', fill: true, tension: 0.4 }] }} options={{ responsive: true, maintainAspectRatio: false, scales: { yPoints: { type: 'linear', position: 'left', grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a0aec0' } }, yRank: { type: 'linear', position: 'right', reverse: true, min: 1, max: overallTeams.length, grid: { drawOnChartArea: false }, ticks: { color: '#a0aec0' } }, x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a0aec0' } } }, plugins: { legend: { labels: { color: '#e2e8f0', usePointStyle: true, boxWidth: 8 } } } }} /></div>
+                       
+                       <div className="w-full h-[300px] bg-[#111] border border-gray-800 rounded-2xl p-4 shadow-inner">
+                         <Line data={{ labels: Array.from({length: 17}, (_, i) => `Wk ${i + 1}`), datasets: [{ label: 'Points', data: Array.from({length: 17}, (_, i) => modalData.weekly_results[i+1]?.points || null), borderColor: '#48bb78', backgroundColor: 'rgba(72, 187, 120, 0.1)', yAxisID: 'yPoints', fill: true, tension: 0.4 }, { label: 'Rank', data: Array.from({length: 17}, (_, i) => modalData.weekly_results[i+1]?.rank || null), borderColor: '#27d7ff', backgroundColor: 'rgba(39, 215, 255, 0.1)', yAxisID: 'yRank', fill: true, tension: 0.4 }] }} options={{ responsive: true, maintainAspectRatio: false, scales: { yPoints: { type: 'linear', position: 'left', grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a0aec0' } }, yRank: { type: 'linear', position: 'right', reverse: true, min: 1, max: overallTeams.length, grid: { drawOnChartArea: false }, ticks: { color: '#a0aec0' } }, x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a0aec0' } } }, plugins: { legend: { labels: { color: '#e2e8f0', usePointStyle: true, boxWidth: 8 } } } }} />
+                       </div>
+
                        <div className="w-full overflow-x-auto bg-[#111] border border-gray-800 rounded-2xl shadow-inner"><table className="w-full text-center whitespace-nowrap"><thead><tr className="border-b border-gray-800 bg-[#0a0a0a]"><th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase text-left">Week</th>{Array.from({length: 17}, (_, i) => <th key={i} className="px-3 py-3 text-[10px] font-black text-gray-500">{i + 1}</th>)}</tr></thead><tbody className="divide-y divide-gray-800/50 text-xs font-bold text-gray-300"><tr className="hover:bg-[#151515]"><td className="px-4 py-3 text-left text-gray-500">PTS</td>{Array.from({length: 17}, (_, i) => <td key={i} className="px-3 py-3">{modalData.weekly_results[i+1] ? Math.round(modalData.weekly_results[i+1].points) : '-'}</td>)}</tr><tr className="hover:bg-[#151515]"><td className="px-4 py-3 text-left text-gray-500">H2H</td>{Array.from({length: 17}, (_, i) => { const res = modalData.weekly_results[i+1]?.h2h; return <td key={i} className={`px-3 py-3 ${res === 'W' ? 'text-green-500' : res === 'L' ? 'text-red-500' : ''}`}>{res || '-'}</td> })}</tr><tr className="hover:bg-[#151515]"><td className="px-4 py-3 text-left text-gray-500">MED</td>{Array.from({length: 17}, (_, i) => { const res = modalData.weekly_results[i+1]?.median; return <td key={i} className={`px-3 py-3 ${res === 'W' ? 'text-green-500' : res === 'L' ? 'text-red-500' : ''}`}>{res || '-'}</td> })}</tr><tr className="hover:bg-[#151515]"><td className="px-4 py-3 text-left text-gray-500 font-black">RNK</td>{Array.from({length: 17}, (_, i) => <td key={i} className="px-3 py-3 text-white">{modalData.weekly_results[i+1]?.rank || '-'}</td>)}</tr></tbody></table></div>
                     </div>
-                 ) : null}
+                 ) : <div className="text-center py-20 text-gray-500 uppercase font-black tracking-widest text-sm border border-dashed border-gray-800 rounded-2xl">Manager data found.</div>}
               </div>
            </div>
         </div>
