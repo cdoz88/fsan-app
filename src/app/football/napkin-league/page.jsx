@@ -21,11 +21,5 @@ export default async function NapkinPage() {
     if (lbRes.ok) leaderboardData = await lbRes.json();
   } catch(e) { console.error("Leaderboard fetch error:", e); }
 
-  return (
-    <NapkinClient 
-      proToolsMenu={proToolsMenu} 
-      connectMenu={connectMenu} 
-      initialLeaderboard={leaderboardData} 
-    />
-  );
+  return <NapkinClient proToolsMenu={proToolsMenu} connectMenu={connectMenu} initialLeaderboard={leaderboardData} />;
 }
