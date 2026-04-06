@@ -45,6 +45,9 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   const secondaryColor = espnData?.team?.alternateColor ? `#${espnData.team.alternateColor}` : '#1f2937';
   const headshot = espnData?.headshot?.href || null;
   const teamLogo = espnData?.team?.logos?.[0]?.href || null;
+  
+  // Create a clean slug for the team if they are on one!
+  const teamSlug = espnData?.team?.displayName ? espnData.team.displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : null;
 
   const dob = espnData?.dateOfBirth ? new Date(espnData.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
   let birthplace = '';
@@ -434,9 +437,15 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
               <div className="hidden md:flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-500 pb-4">
                 <Link href={`/${playerSport.toLowerCase()}`} className="hover:text-white transition-colors">{playerSport}</Link>
                 <span>/</span>
-                <Link href={`/${playerSport.toLowerCase()}/players`} className="hover:text-white transition-colors">Players</Link>
+                <Link href={`/${playerSport.toLowerCase()}/teams`} className="hover:text-white transition-colors">Teams</Link>
                 <span>/</span>
-                <span className="text-gray-400">{playerName}</span>
+                {teamSlug && (
+                  <>
+                    <Link href={`/${playerSport.toLowerCase()}/teams/${teamSlug}`} className="hover:text-white transition-colors whitespace-nowrap">{espnData.team.displayName}</Link>
+                    <span>/</span>
+                  </>
+                )}
+                <span className="text-gray-400 whitespace-nowrap">{playerName}</span>
               </div>
             </div>
 
