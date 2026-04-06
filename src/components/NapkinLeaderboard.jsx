@@ -1,12 +1,12 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Search, Loader2, Info, X, ChevronDown } from 'lucide-react';
+import { Search, Loader2, Info, X, ChevronDown, Trophy } from 'lucide-react';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip as ChartTooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, ChartTooltip, Legend, Filler);
 
-// --- SVGS ---
+// --- ASSETS (FULL SVGS FOR VERCEL) ---
 const WeeklyScorerSVG = () => (
   <svg viewBox="0 0 100 100" className="w-5 h-5 shrink-0 drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
     <linearGradient id="grad1" gradientUnits="userSpaceOnUse" x1="50" x2="50" y1="38.457" y2="98.241"><stop offset="0" stopColor="#27d7ff"/><stop offset=".044" stopColor="#29d2ff"/><stop offset=".437" stopColor="#3db3ff"/><stop offset=".769" stopColor="#49a0ff"/><stop offset="1" stopColor="#4e9aff"/></linearGradient>
@@ -87,7 +87,6 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
 
   const filteredTeams = activeTeams.filter(team => team.ownerUsername?.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  // Dynamic Badge Mapping Function to ensure identical structure between List & Popup
   const getBadges = (team) => {
     let badges = [];
     const bSource = currentWeek === 'overall' ? team.badges : team.weekly_badges;
@@ -98,7 +97,7 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
   };
 
   return (
-    <div className="bg-[#1a1a1a] rounded-3xl border border-gray-800 shadow-xl overflow-hidden mt-12 flex flex-col animate-in fade-in duration-500">
+    <div className="bg-[#1a1a1a] rounded-3xl border border-gray-800 shadow-xl overflow-hidden flex flex-col animate-in fade-in duration-500">
       
       <div className="p-4 md:p-6 border-b border-gray-800 bg-[#151515] flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
@@ -128,7 +127,6 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
         <button onClick={() => setActiveHistoryAward('twoHundredClub')} className="flex items-center gap-2 text-xs text-gray-300 hover:text-white transition-all"><Club200SVG /> <b>200+ Club:</b> Scored 200+</button>
       </div>
 
-      {/* TABLE */}
       <div className="w-full overflow-x-auto">
         <table className="w-full text-left whitespace-nowrap">
           <thead>
@@ -173,7 +171,6 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
         </table>
       </div>
 
-      {/* AWARD HISTORY MODAL */}
       {activeHistoryAward && (
         <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="absolute inset-0" onClick={() => setActiveHistoryAward(null)}></div>
@@ -182,17 +179,19 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
              <div className="p-6 border-b border-gray-800 bg-[#111] flex items-center gap-4">
                 {activeHistoryAward === 'litchAward' ? <LitchSVG /> : activeHistoryAward === 'weeklyTopScorer' ? <WeeklyScorerSVG /> : <Club200SVG />}
                 <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter">
-                   {activeHistoryAward === 'litchAward' ? 'LITCH Award History' : activeHistoryAward === 'weeklyTopScorer' ? 'Weekly Top Scorer History' : '200+ Club Members'}
+                   {activeHistoryAward === 'litchAward' ? 'LITCH Award History' : activeHistoryAward === 'weeklyTopScorer' ? 'Weekly Top Scorer History' : '200+ Club History'}
                 </h2>
              </div>
-             <div className="p-6 overflow-y-auto flex-1">
+             <div className="p-6 overflow-y-auto flex-1 scrollbar-hide">
                 <div className="space-y-4">
                   {[...availableWeeks].sort((a,b) => b-a).map(w => {
                     const winnersForWeek = winnersRegistry[activeHistoryAward]?.[w] || [];
                     if (winnersForWeek.length === 0) return null;
                     return (
                       <div key={w} className="bg-[#111] rounded-2xl p-4 border border-gray-800">
-                        <div className="text-[10px] font-black uppercase text-blue-500 mb-3 tracking-widest border-b border-gray-800 pb-2">Week {w} Winners</div>
+                        <div className="text-[10px] font-black uppercase text-blue-500 mb-3 tracking-widest border-b border-gray-800 pb-2">
+                          Week {w} {activeHistoryAward === 'twoHundredClub' ? 'Members' : 'Winner'}
+                        </div>
                         <div className="flex flex-wrap gap-4">
                            {winnersForWeek.map(tid => {
                              const team = overallTeams.find(t => t.teamId === tid);
@@ -214,21 +213,20 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
         </div>
       )}
 
-      {/* MANAGER ANALYTICS MODAL */}
       {selectedTeam && (
         <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4">
            <div className="absolute inset-0" onClick={() => setSelectedTeam(null)}></div>
            <div className="relative bg-[#1a1a1a] border border-gray-700 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col animate-in fade-in duration-200 overflow-hidden">
               <button onClick={() => setSelectedTeam(null)} className="absolute top-4 right-4 p-2 bg-gray-900 rounded-full text-gray-400 z-10 hover:text-white"><X size={20} /></button>
               <div className="p-6 border-b border-gray-800 bg-[#111] flex items-center gap-6"><img src={selectedTeam.ownerAvatar} className="w-16 h-16 rounded-full border-2 border-gray-600 shadow-xl" alt="" /><div><h2 className="text-2xl md:text-3xl font-black text-white italic">{selectedTeam.ownerUsername}</h2><span className="text-xs font-bold text-gray-500 uppercase">{selectedTeam.leagueName}</span></div></div>
-              <div className="p-6 md:p-8 overflow-y-auto flex-1">
-                 {modalLoading ? ( <div className="flex flex-col items-center justify-center py-20"><Loader2 size={40} className="animate-spin text-gray-600 mb-4" /><span className="text-xs font-bold text-gray-500 uppercase tracking-widest uppercase">Compiling Analytics...</span></div>
+              <div className="p-6 md:p-8 overflow-y-auto flex-1 scrollbar-hide">
+                 {modalLoading ? ( <div className="flex flex-col items-center justify-center py-20"><Loader2 size={40} className="animate-spin text-gray-600 mb-4" /><span className="text-xs font-bold text-gray-500 uppercase tracking-widest uppercase">Compiling Stats...</span></div>
                  ) : modalData ? (
                     <div className="flex flex-col gap-8">
                        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                          {[ {l: 'Rank', v: selectedTeam.rank}, {l: 'Points', v: parseFloat(selectedTeam.totalPoints).toFixed(2)} ].map(s => (<div key={s.l} className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center text-center shadow-inner"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">{s.l}</span><span className="text-xl font-black text-white">{s.v}</span></div>))}
+                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">Rank</span><span className="text-xl font-black text-white">{selectedTeam.rank}</span></div>
+                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">Points</span><span className="text-xl font-black text-white">{parseFloat(selectedTeam.totalPoints).toFixed(2)}</span></div>
                           
-                          {/* EXACTLY IDENTICAL AWARDS BOX FOR POPUP */}
                           <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
                              <span className="text-[10px] font-black uppercase text-gray-500 mb-2">Awards</span>
                              <div className="flex gap-4 items-center justify-center">
@@ -241,7 +239,9 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
                              </div>
                           </div>
 
-                          {[ {l: 'H2H Wins', v: Object.values(modalData.weekly_results).filter(w => w.h2h === 'W').length}, {l: 'Med Wins', v: Object.values(modalData.weekly_results).filter(w => w.median === 'W').length}, {l: 'Total Wins', v: Object.values(modalData.weekly_results).filter(w => w.h2h === 'W').length + Object.values(modalData.weekly_results).filter(w => w.median === 'W').length} ].map(s => (<div key={s.l} className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center text-center shadow-inner"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">{s.l}</span><span className="text-xl font-black text-white">{s.v}</span></div>))}
+                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">H2H Wins</span><span className="text-xl font-black text-white">{Object.values(modalData.weekly_results).filter(w => w.h2h === 'W').length}</span></div>
+                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">Med Wins</span><span className="text-xl font-black text-white">{Object.values(modalData.weekly_results).filter(w => w.median === 'W').length}</span></div>
+                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">Total Wins</span><span className="text-xl font-black text-white">{Object.values(modalData.weekly_results).filter(w => w.h2h === 'W').length + Object.values(modalData.weekly_results).filter(w => w.median === 'W').length}</span></div>
                        </div>
                        
                        <div className="w-full h-[300px] bg-[#111] border border-gray-800 rounded-2xl p-4 shadow-inner">
@@ -260,7 +260,7 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
                          </table>
                        </div>
                     </div>
-                 ) : null}
+                 ) : <div className="text-center py-20 text-gray-500 uppercase font-black tracking-widest text-sm border border-dashed border-gray-800 rounded-2xl">Manager data found.</div>}
               </div>
            </div>
         </div>

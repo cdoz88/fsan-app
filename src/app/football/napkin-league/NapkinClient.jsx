@@ -4,10 +4,25 @@ import Link from 'next/link';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
-import { HeartHandshake, Trophy, Gift, BarChart3, ShieldCheck, ArrowRight } from 'lucide-react';
+import { HeartHandshake, Trophy, Gift, BarChart3, ShieldCheck, ArrowRight, ArrowDown } from 'lucide-react';
 
 export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderboard }) {
   const activeSport = 'Football';
+
+  // Smooth scroll handler for the submenu
+  const handleScroll = (e, id) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      const headerOffset = 100; // Account for sticky headers
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+    }
+  };
 
   return (
     <>
@@ -19,7 +34,7 @@ export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderb
         <div className="flex-1 w-full min-w-0 pt-6 relative">
           
           {/* HERO SECTION - RED, WHITE & BLUE THEME */}
-          <div className="relative w-full rounded-3xl overflow-hidden mb-12 shadow-2xl border border-gray-800/50 bg-[#111] animate-in fade-in slide-in-from-bottom-8 duration-500">
+          <div className="relative w-full rounded-3xl overflow-hidden shadow-2xl border border-gray-800/50 bg-[#111] animate-in fade-in slide-in-from-bottom-8 duration-500">
             {/* Ambient Red, White, and Blue Gradients */}
             <div className="absolute inset-0 bg-gradient-to-br from-red-600/20 via-white/5 to-blue-600/20 opacity-90 z-0"></div>
             <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-red-600/10 blur-[120px] rounded-full -translate-x-1/4 -translate-y-1/4 pointer-events-none"></div>
@@ -49,12 +64,26 @@ export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderb
             </div>
           </div>
 
+          {/* PAGE ANCHOR SUBMENU */}
+          <div className="flex flex-wrap items-center gap-4 py-6 mb-6 border-b border-gray-800/50 animate-in fade-in duration-700 delay-100">
+             <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mr-2">Jump To:</span>
+             <a href="#about" onClick={(e) => handleScroll(e, 'about')} className="text-xs font-bold text-gray-300 hover:text-white transition-colors uppercase tracking-widest no-underline flex items-center gap-1.5 bg-[#1a1a1a] hover:bg-gray-800 px-4 py-2 rounded-lg border border-gray-800">
+                Story & Info <ArrowDown size={14}/>
+             </a>
+             <a href="#rules" onClick={(e) => handleScroll(e, 'rules')} className="text-xs font-bold text-gray-300 hover:text-white transition-colors uppercase tracking-widest no-underline flex items-center gap-1.5 bg-[#1a1a1a] hover:bg-gray-800 px-4 py-2 rounded-lg border border-gray-800">
+                League Rules <ArrowDown size={14}/>
+             </a>
+             <a href="#leaderboard" onClick={(e) => handleScroll(e, 'leaderboard')} className="text-xs font-bold text-gray-300 hover:text-white transition-colors uppercase tracking-widest no-underline flex items-center gap-1.5 bg-[#1a1a1a] hover:bg-gray-800 px-4 py-2 rounded-lg border border-gray-800">
+                Leaderboard <ArrowDown size={14}/>
+             </a>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 animate-in fade-in duration-700 delay-150">
             
             {/* LEFT COLUMN: STORY, PERKS, & RULES */}
             <div className="lg:col-span-8 flex flex-col gap-12">
               
-              <section className="bg-[#1a1a1a] rounded-3xl p-8 md:p-10 border border-gray-800 shadow-xl relative overflow-hidden">
+              <section id="about" className="bg-[#1a1a1a] rounded-3xl p-8 md:p-10 border border-gray-800 shadow-xl relative overflow-hidden scroll-mt-24">
                  <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none"><Trophy size={160} /></div>
                  <h2 className="text-2xl font-black uppercase tracking-wider text-white mb-4 relative z-10">Our Origin Story</h2>
                  <p className="text-gray-400 leading-relaxed mb-4 relative z-10">
@@ -91,7 +120,7 @@ export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderb
               </section>
 
               {/* INTEGRATED RULES SECTION */}
-              <section className="mb-8">
+              <section id="rules" className="mb-8 scroll-mt-24">
                  <h2 className="text-3xl font-black italic text-white mb-6">OFFICIAL LEAGUE RULES</h2>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     
@@ -138,21 +167,25 @@ export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderb
             <div className="lg:col-span-4" id="join-now">
               <div className="sticky top-24 bg-gradient-to-b from-[#1a1a1a] to-[#111] border border-gray-700 rounded-3xl p-6 shadow-2xl">
                 
-                {/* Fixed the Join Today order here */}
-                <div className="text-center pb-6 border-b border-gray-800 mb-6">
-                   <h3 className="text-2xl font-black uppercase tracking-wider text-white mb-2">Join Today</h3>
-                   <p className="text-gray-400 text-sm font-bold mb-4">Your entry fee directly contributes to Mission 22.</p>
-                   <img 
-                      src="https://admin.fsan.com/wp-content/uploads/2026/04/Mission-22-Logo.webp" 
-                      alt="Mission 22" 
-                      className="h-16 mx-auto object-contain drop-shadow-lg" 
-                   />
+                {/* 2-Column Desktop layout for Mission 22 Join Header */}
+                <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-6 pb-6 border-b border-gray-800 mb-6">
+                   <div className="flex-1">
+                     <h3 className="text-2xl font-black uppercase tracking-wider text-white mb-2">Join Today</h3>
+                     <p className="text-gray-400 text-sm font-bold">Your entry fee directly contributes to Mission 22.</p>
+                   </div>
+                   <div className="shrink-0">
+                     <img 
+                        src="https://admin.fsan.com/wp-content/uploads/2026/04/Mission-22-Logo.webp" 
+                        alt="Mission 22" 
+                        className="w-24 md:w-32 h-auto object-contain drop-shadow-lg" 
+                     />
+                   </div>
                 </div>
                 
                 <div className="bg-red-900/10 border border-red-900/30 rounded-xl p-4 mb-8 flex items-start gap-4">
                    <Gift size={24} className="text-red-500 shrink-0 mt-1" />
                    <div>
-                     <h4 className="text-white font-bold text-sm mb-1">Instant $5 Shop Credit</h4>
+                     <h4 className="text-white font-bold text-sm mb-1 uppercase tracking-tight">Instant $5 Shop Credit</h4>
                      <p className="text-xs text-gray-400 leading-relaxed">When you donate to enter, you instantly receive a $5 Gift Certificate to the FSAN Shop to purchase the Rookie Draft Guide or apply to any merch!</p>
                    </div>
                 </div>
@@ -202,7 +235,7 @@ export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderb
                 </div>
 
                 <a 
-                  href="http://sleeper.com/i/89LZ1pyL1QE5" 
+                  href="https://www.selloutcrowds.com/sp-fanfeed/napkin-league" 
                   target="_blank" 
                   rel="noreferrer" 
                   className="w-full bg-[#111] border border-gray-600 hover:border-gray-400 text-white font-bold uppercase tracking-widest py-3.5 rounded-xl transition-all text-xs flex items-center justify-center gap-2 no-underline shadow-inner"
@@ -214,8 +247,9 @@ export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderb
 
           </div>
 
-          {/* ADDED THE LEADERBOARD HERE */}
-          <NapkinLeaderboard initialLeaderboard={initialLeaderboard} />
+          <div id="leaderboard" className="scroll-mt-24 pt-4">
+            <NapkinLeaderboard initialLeaderboard={initialLeaderboard} />
+          </div>
           
         </div>
       </div>
