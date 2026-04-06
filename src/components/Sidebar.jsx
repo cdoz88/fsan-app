@@ -11,8 +11,13 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
   const pathname = usePathname() || '';
   const pathParts = pathname.split('/').filter(Boolean);
   
-  // FIX: Dynamically determine the view regardless of path depth since '/home' is shorter than '/football/home'
-  const currentView = pathParts.includes('home') ? 'home' : pathParts.includes('articles') ? 'articles' : pathParts.includes('videos') ? 'videos' : pathParts.includes('podcasts') ? 'podcasts' : 'home';
+  // FIX 1: Removed the forced 'home' default so it correctly un-highlights when on custom pages
+  let currentView = '';
+  if (pathParts.includes('home')) currentView = 'home';
+  else if (pathParts.includes('articles')) currentView = 'articles';
+  else if (pathParts.includes('videos')) currentView = 'videos';
+  else if (pathParts.includes('podcasts')) currentView = 'podcasts';
+  else if (pathParts.includes('teams') || pathParts.includes('player')) currentView = 'teams';
 
   const [isMobileOpen, setIsMobileMenuOpen] = useState(false);
   const [hoveredSocial, setHoveredSocial] = useState(null);
@@ -20,7 +25,6 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
   const accentColor = theme.text;
   const hoverAccentColor = theme.hoverText;
 
-  // Dynamic Gradients for the GO PRO button based on current sport
   const sportGradients = {
     All: 'bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border-gray-500',
     Football: 'bg-gradient-to-r from-[#e42d38] to-[#8a1a20] hover:from-[#f03a45] hover:to-[#a3222a] border-[#e42d38]',
@@ -29,7 +33,6 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
   };
   const currentGradient = sportGradients[activeSport] || sportGradients.All;
 
-  // FIX: Dynamic Base Path to omit '/all' from root pages
   const basePath = activeSport === 'All' ? '' : `/${activeSport.toLowerCase()}`;
 
   useEffect(() => {
@@ -53,17 +56,33 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
       : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline";
   };
 
-  // ICON MATCHER FOR WORDPRESS MENUS
+  // FIX 2: Helper to determine if a custom WordPress/Pro Tool link should be highlighted
+  const isDynamicActive = (url) => {
+    const lowerUrl = url?.toLowerCase() || '';
+    
+    // Fuzzy matching specifically for the "Team Rosters" or "Players" linking to /teams
+    if (currentView === 'teams' && lowerUrl.includes('/teams')) return true;
+    
+    // Exact path matching for things like /football/rankings
+    if (lowerUrl !== '/' && lowerUrl !== 'http://dummy.com/') {
+       try {
+          const urlPath = new URL(url, 'http://dummy.com').pathname;
+          if (urlPath.length > 1 && pathname.includes(urlPath)) return true;
+       } catch(e) {}
+    }
+    return false;
+  };
+
   const getIconForLabel = (label) => {
     const lower = label.toLowerCase();
-    if (lower.includes('rank') || lower.includes('player')) return Users;
+    if (lower.includes('rank') || lower.includes('player') || lower.includes('team') || lower.includes('roster')) return Users;
     if (lower.includes('calc')) return Calculator;
     if (lower.includes('value') || lower.includes('trade')) return ArrowLeftRight;
     if (lower.includes('communit') || lower.includes('crowd')) return SelloutCrowds;
     if (lower.includes('jersey') || lower.includes('league')) return Shirt;
     if (lower.includes('charity')) return HeartHandshake;
     if (lower.includes('merch') || lower.includes('shop')) return ShoppingCart;
-    return FileText; // Generic fallback
+    return FileText; 
   };
 
   const socialLinksData = {
@@ -74,7 +93,6 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
   };
   const currentLinks = socialLinksData[activeSport] || socialLinksData.All;
 
-  // HARDCODED FALLBACK MENUS (In case WP menu is empty)
   const sidebarMenus = {
     All: {
       proTools: [
@@ -188,6 +206,7 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
                 {proToolsMenu && proToolsMenu.length > 0 ? (
                   proToolsMenu.map((item) => {
                     const Icon = getIconForLabel(item.label);
+                    const active = isDynamicActive(item.url);
                     return (
                       <Link 
                         key={item.id} 
@@ -195,18 +214,19 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
                         onClick={() => setIsMobileMenuOpen(false)}
                         target={item.url.startsWith('http') ? "_blank" : undefined}
                         rel={item.url.startsWith('http') ? "noopener noreferrer" : undefined}
-                        className="flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl no-underline group"
+                        className={active ? getNavStyle('home') : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline group"}
                       >
-                        <Icon size={18} className={`${theme.text} group-hover:text-white transition-colors`} /> {item.label}
+                        <Icon size={18} className={`${active ? 'text-white' : theme.text} group-hover:text-white transition-colors`} /> {item.label}
                       </Link>
                     );
                   })
                 ) : (
                   currentMenu.proTools.map((tool, idx) => {
                     const Icon = tool.icon;
+                    const active = isDynamicActive(tool.href);
                     return (
-                      <Link key={idx} href={tool.href} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl no-underline group">
-                        <Icon size={18} className={`${theme.text} group-hover:text-white transition-colors`} /> {tool.name}
+                      <Link key={idx} href={tool.href} onClick={() => setIsMobileMenuOpen(false)} className={active ? getNavStyle('home') : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline group"}>
+                        <Icon size={18} className={`${active ? 'text-white' : theme.text} group-hover:text-white transition-colors`} /> {tool.name}
                       </Link>
                     );
                   })
@@ -221,6 +241,7 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
                 {connectMenu && connectMenu.length > 0 ? (
                   connectMenu.map((item) => {
                     const Icon = getIconForLabel(item.label);
+                    const active = isDynamicActive(item.url);
                     return (
                       <Link 
                         key={item.id} 
@@ -228,15 +249,16 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
                         onClick={() => setIsMobileMenuOpen(false)}
                         target={item.url.startsWith('http') ? "_blank" : undefined}
                         rel={item.url.startsWith('http') ? "noopener noreferrer" : undefined}
-                        className="flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl no-underline group"
+                        className={active ? getNavStyle('home') : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline group"}
                       >
-                        <Icon size={18} className={`${theme.text} group-hover:text-white transition-colors`} /> {item.label}
+                        <Icon size={18} className={`${active ? 'text-white' : theme.text} group-hover:text-white transition-colors`} /> {item.label}
                       </Link>
                     );
                   })
                 ) : (
                   currentMenu.connect.map((item, idx) => {
                     const Icon = item.icon;
+                    const active = isDynamicActive(item.href);
                     return (
                       <Link 
                         key={idx} 
@@ -244,9 +266,9 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
                         onClick={() => setIsMobileMenuOpen(false)}
                         target={item.external ? "_blank" : undefined}
                         rel={item.external ? "noopener noreferrer" : undefined}
-                        className="flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl no-underline group"
+                        className={active ? getNavStyle('home') : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline group"}
                       >
-                        <Icon size={18} className={`${theme.text} group-hover:text-white transition-colors`} /> {item.name}
+                        <Icon size={18} className={`${active ? 'text-white' : theme.text} group-hover:text-white transition-colors`} /> {item.name}
                       </Link>
                     );
                   })
