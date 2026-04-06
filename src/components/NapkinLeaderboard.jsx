@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Search, Loader2, Info, X, Trophy } from 'lucide-react';
+import { Search, Loader2, Info, X } from 'lucide-react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -37,7 +37,7 @@ const WeeklyScorerSVG = () => (
 const LitchSVG = () => (
   <svg viewBox="0 0 512 512" className="w-5 h-5 shrink-0 drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
     <defs><linearGradient id="litchGrad"><stop stopOpacity="1" stopColor="#b89905" offset="0.02"/><stop stopOpacity="1" stopColor="#e6d604" offset="1"/></linearGradient></defs>
-    <path d="m434.6 30.2h-76.4c-6.9 50.2-50.1 89.1-102.2 89.1s-95.3-38.8-102.2-89.1h-76.4c-26 0-47.2 21.2-47.2 47.2v115h51.7v-49.4c0-7.8 6.3-14.1 14.1-14.1s14.1 6.3 14.1 14.1v338.8h291.7v-338.8c0-7.8 6.3-14.1 14.1-14.1s-14.1 6.3-14.1 14.1v49.4h51.7v-115c.1-26-21.1-47.2-47.1-47.2z" fill="url(#litchGrad)"/>
+    <path d="m434.6 30.2h-76.4c-6.9 50.2-50.1 89.1-102.2 89.1s-95.3-38.8-102.2-89.1h-76.4c-26 0-47.2 21.2-47.2 47.2v115h51.7v-49.4c0-7.8 6.3-14.1 14.1-14.1s14.1 6.3 14.1 14.1v338.8h291.7v-338.8c0-7.8 6.3-14.1 14.1-14.1s14.1 6.3 14.1 14.1v49.4h51.7v-115c.1-26-21.1-47.2-47.1-47.2z" fill="url(#litchGrad)"/>
     <path d="m434.6 2h-89.5c-7.8 0-14.1 6.3-14.1 14.1 0 41.3-33.6 75-75 75-41.3 0-75-33.6-75-75 0-7.8-6.3-14.1-14.1-14.1h-89.5c-41.6 0-75.4 33.8-75.4 75.4v129.1c0 7.8 6.3 14.1 14.1 14.1h65.8v275.3c0 7.8 6.3 14.1 14.1 14.1h319.9c7.8 0 14.1-6.3 14.1-14.1v-275.3h65.8c7.8 0 14.1-6.3 14.1-14.1v-129.1c.1-41.6-33.7-75.4-75.3-75.4zm47.2 190.4h-51.7v-49.4c0-7.8-6.3-14.1-14.1-14.1s-14.1 6.3-14.1 14.1v338.8h-291.7v-338.8c0-7.8-6.3-14.1-14.1-14.1s-14.1 6.3-14.1 14.1v49.4h-51.8v-115c0-26 21.2-47.2 47.2-47.2h76.4c6.9 50.2 50.1 89.1 102.2 89.1s95.3-38.8 102.2-89.1h76.4c26 0 47.2 21.2 47.2 47.2z" fill="#000000"/>
     <g fill="#194f82"><path d="m216.3 218c5.5 5.5 4.6 12.8-.6 21.3-6.5 9.2-27.6 29.1-47.7 50.5v18.8h80.1v-22.7h-44.8c15.4-16 30.1-30.1 37-41.8 7.9-15.8 5.2-32.2-6.7-42.2-19.8-17.3-53.4-10.5-67.5 15.7l20.3 12c5.9-10.2 18.9-21.6 29.9-11.6z" fill="#000000"/><path d="m278.2 274.3-13.3 18.5c23.9 28.5 80.1 21.1 81.1-21.7 0-26.6-25.5-41.3-51.7-35.2v-19h44.8v-21.9h-68.6v55.4l10.6 11.4c21.6-11.8 39.6-5.1 39.5 9.7-.3 16.9-21.6 22.7-42.4 2.8z" fill="#000000"/><path d="m339.1 349.1h-166.3c-7.8 0-14.1 6.3-14.1 14.1s6.3 14.1 14.1 14.1h166.3c7.8 0 14.1-6.3 14.1-14.1.1-7.8-6.3-14.1-14.1-14.1z" fill="#000000"/><path d="m339.1 405.5h-166.3c-7.8 0-14.1 6.3-14.1 14.1s6.3 14.1 14.1 14.1h166.3c7.8 0 14.1-6.3 14.1-14.1.1-7.8-6.3-14.1-14.1-14.1z" fill="#000000"/></g>
   </svg>
@@ -65,6 +65,7 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
   const [currentWeek, setCurrentWeek] = useState('overall');
   const [availableWeeks, setAvailableWeeks] = useState([]);
   const [archivedSeasons, setArchivedSeasons] = useState([]);
+  const [showKey, setShowKey] = useState(false);
   
   // Modal State
   const [selectedTeam, setSelectedTeam] = useState(null);
@@ -77,16 +78,13 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
     if (initialTeams.length === 0 && !error) {
       fetchData('current');
     } else {
-      // Calculate available weeks based on badges/points to populate dropdown
       const maxWeeks = 18; 
       const mockWeeks = Array.from({length: maxWeeks}, (_, i) => i + 1);
       setAvailableWeeks(mockWeeks);
     }
   }, [initialTeams]);
 
-  // Fetch Available Archives (You can hardcode this based on the WP options or fetch it)
   useEffect(() => {
-    // Assuming 2025 and 2024 are archived
     setArchivedSeasons(['2025', '2024', '2023', '2022']); 
   }, []);
 
@@ -98,8 +96,8 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
     
     try {
       const url = season === 'current' 
-        ? 'https://admin.fsan.com/wp-json/scl/v1/leaderboard'
-        : `https://admin.fsan.com/wp-admin/admin-ajax.php?action=scl_get_archive_data&season=${season}`; // Requires noncing in real WP, assuming public for now
+        ? '/api/scl?action=scl_get_leaderboard_data'
+        : `/api/scl?action=scl_get_archive_data&season=${season}`; 
 
       const res = await fetch(url);
       const data = await res.json();
@@ -130,7 +128,7 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
     }
 
     try {
-      const res = await fetch(`https://admin.fsan.com/wp-admin/admin-ajax.php?action=scl_get_weekly_data&week=${week}${currentSeason !== 'current' ? `&season=${currentSeason}` : ''}`);
+      const res = await fetch(`/api/scl?action=scl_get_weekly_data&week=${week}${currentSeason !== 'current' ? `&season=${currentSeason}` : ''}`);
       const result = await res.json();
       
       if (result.success && result.data.teams) {
@@ -155,8 +153,7 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
     setModalData(null);
 
     try {
-      // Need to hit the custom endpoint for deep user details
-      const res = await fetch(`https://admin.fsan.com/wp-admin/admin-ajax.php?action=scl_get_user_details&user_id=${team.ownerId}&league_id=${team.leagueId}${currentSeason !== 'current' ? `&season=${currentSeason}` : ''}`);
+      const res = await fetch(`/api/scl?action=scl_get_user_details&user_id=${team.ownerId}&league_id=${team.leagueId}${currentSeason !== 'current' ? `&season=${currentSeason}` : ''}`);
       const result = await res.json();
       
       if (result.success) {
@@ -229,6 +226,18 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
         </div>
       </div>
 
+      {/* RE-ARCHITECTED AWARDS KEY DROPDOWN */}
+      {showKey && (
+        <div className="bg-[#111] px-6 py-4 border-b border-gray-800 flex flex-wrap items-center gap-6 justify-center md:justify-start animate-in fade-in slide-in-from-top-2 duration-300 shadow-inner">
+          <span className="text-gray-500 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest mr-2">
+             Awards Key:
+          </span>
+          <span className="flex items-center gap-2 text-xs text-gray-300"><LitchSVG /> <b>LITCH:</b> Overall Points Leader</span>
+          <span className="flex items-center gap-2 text-xs text-gray-300"><WeeklyScorerSVG /> <b>Weekly Top:</b> Highest weekly score</span>
+          <span className="flex items-center gap-2 text-xs text-gray-300"><Club200SVG /> <b>200+ Club:</b> Scored 200+ points</span>
+        </div>
+      )}
+
       {/* TABLE */}
       <div className="w-full overflow-x-auto">
         <table className="w-full text-left whitespace-nowrap">
@@ -237,28 +246,12 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
               <th className="px-6 py-4 w-16 text-center">Rank</th>
               <th className="px-6 py-4">Team</th>
               <th className="px-6 py-4 text-center">
-                <div className="flex items-center justify-center gap-1 group relative cursor-help">
-                  Awards <Info size={12} className="text-gray-500" />
-                  
-                  {/* AWARDS TOOLTIP */}
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-[#252525] border border-gray-700 rounded-xl p-4 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 normal-case tracking-normal font-normal text-left">
-                     <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#252525] border-b border-r border-gray-700 transform rotate-45"></div>
-                     <div className="relative z-10 flex flex-col gap-4">
-                        <div>
-                          <div className="flex items-center gap-2 font-bold text-white mb-1"><WeeklyScorerSVG /> Weekly Top Scorer:</div>
-                          <p className="text-xs text-gray-400 pl-7">Highest score for the week.</p>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 font-bold text-white mb-1"><Club200SVG /> 200+ Point Club:</div>
-                          <p className="text-xs text-gray-400 pl-7">Score 200+ points in a week.</p>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 font-bold text-white mb-1"><LitchSVG /> L.I.T.C.H. Award:</div>
-                          <p className="text-xs text-gray-400 pl-7">Overall points leader for the week.</p>
-                        </div>
-                     </div>
-                  </div>
-                </div>
+                <button 
+                  onClick={() => setShowKey(!showKey)} 
+                  className="flex items-center justify-center gap-1 mx-auto text-gray-400 hover:text-white transition-colors cursor-pointer group"
+                >
+                  Awards <Info size={12} className="group-hover:scale-110 transition-transform" />
+                </button>
               </th>
               <th className="px-6 py-4 text-right">Points</th>
             </tr>
@@ -285,7 +278,6 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
             ) : (
               filteredTeams.map((team) => {
                 
-                // Determine badges based on view
                 let badges = [];
                 if (currentWeek === 'overall') {
                    if (team.badges?.litchAward > 0) badges.push({ icon: <LitchSVG />, count: team.badges.litchAward, title: 'LITCH Award' });
