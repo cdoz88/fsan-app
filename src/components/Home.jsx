@@ -125,25 +125,30 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
 // --- CONTENT CARD COMPONENTS ---
 
 const VideoCard = ({ item, isHero, setSelectedItem, activeSport }) => {
-  // Fix: Dynamically determine if this card is holding a video or an article!
   const isVideo = item.type === 'video' || item.type === 'short';
-  
+  const cardTheme = themes[item.sport] || themes.All;
+
   return (
-    <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative no-underline block`}>
+    <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group relative w-full ${isVideo ? 'aspect-video' : 'h-full min-h-[350px]'} cursor-pointer bg-[#111] border ${cardTheme.border} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${cardTheme.hoverBorder} transition-all flex flex-col relative no-underline block`}>
       {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
       
-      {/* If Video: Hide gradient and text until hover. If Article: Always show gradient. */}
-      <div className={`absolute inset-0 bg-gradient-to-t ${isVideo ? 'from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100' : 'from-[#050505] via-black/60 to-transparent opacity-100'} transition-opacity duration-300 z-10`}></div>
+      {/* If Video: Hide gradient until hover. If Article: Always show gradient so text is readable. */}
+      <div className={`absolute inset-0 bg-gradient-to-t ${isVideo ? 'from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100' : 'from-[#050505] via-[#050505]/80 to-transparent opacity-100'} transition-opacity duration-300 z-10`}></div>
       
-      {/* Only show the massive Play Button if it's actually a video */}
+      {/* Only show Play Button if it's a video */}
       {isVideo && (
         <PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
       )}
       
-      {/* If Video: Animate text up on hover. If Article: Keep text static and permanently visible. */}
-      <div className={`absolute bottom-0 left-0 right-0 p-4 lg:p-5 z-20 flex flex-col justify-end ${isVideo ? 'opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0' : 'opacity-100 translate-y-0'} transition-all duration-300`}>
+      {/* Content Block */}
+      <div className={`absolute bottom-0 left-0 right-0 p-4 lg:p-6 z-20 flex flex-col justify-end ${isVideo ? 'opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0' : 'opacity-100 translate-y-0'} transition-all duration-300`}>
         <PostMeta item={item} activeSport={activeSport} />
-        <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'} text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+        <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'} text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-3 drop-shadow-md mb-2`} dangerouslySetInnerHTML={{ __html: item.title }} />
+        
+        {/* ALWAYS show excerpt if it's an article AND it's the Hero slot */}
+        {!isVideo && isHero && item.excerpt && (
+          <div className="text-sm text-gray-300 line-clamp-2 max-w-3xl drop-shadow-md mt-1" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
+        )}
       </div>
     </Link>
   );
@@ -398,12 +403,23 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
       {/* FEATURED GRID */}
       <div className="space-y-12">
         <section className="flex flex-col gap-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {mainFeature && (
-              <div className="lg:col-span-2 w-full shrink-0 h-full flex flex-col">
-                <VideoCard item={mainFeature} isHero={true} setSelectedItem={setSelectedItem} activeSport={activeSport} />
-              </div>
-            )}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+            <div className="lg:col-span-2 flex flex-col gap-6">
+              {/* HERO FEATURE: Prevents video cropping by forcing aspect-video, but lets articles flow natively! */}
+              {mainFeature && (
+                <div className="w-full shrink-0 flex flex-col">
+                  <VideoCard item={mainFeature} isHero={true} setSelectedItem={setSelectedItem} activeSport={activeSport} />
+                </div>
+              )}
+              
+              {/* Ad Slot 1 - Moved INSIDE the left column to dynamically balance vertical gaps! */}
+              {inlineAds[0] && (
+                <div className="w-full flex-1 flex flex-col min-h-[120px]">
+                  <DynamicAd ad={inlineAds[0]} variant="inline" />
+                </div>
+              )}
+            </div>
+            
             <div className="flex flex-col gap-6 h-full">
               {sideTopFeature && (
                 <div className="flex-1 w-full">
@@ -417,13 +433,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
               )}
             </div>
           </div>
-          
-          {/* Ad Slot 1 - Full Width */}
-          {inlineAds[0] && (
-            <div className="w-full min-h-[120px]">
-              <DynamicAd ad={inlineAds[0]} variant="inline" />
-            </div>
-          )}
         </section>
 
         {/* PRESS BOX & BOOTH */}
@@ -490,7 +499,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
               {highlightShorts.map(short => (
                 <div key={short.id} className="relative w-36 md:w-44 flex-shrink-0 snap-start"><ShortCard item={short} setSelectedItem={setSelectedItem} activeSport={activeSport} /></div>
               ))}
-              <Link href={`${basePath}/videos`} className="relative w-36 md:w-44 flex-shrink-0 snap-start aspect-[9/16] rounded-2xl overflow-hidden bg-[#111] border border-gray-700 hover:border-gray-500 transition-colors flex flex-col items-center justify-center group text-gray-400 hover:text-white no-underline">
+              <Link href={`${basePath}/videos`} className="relative w-36 md:w-44 flex-shrink-0 snap-start aspect-[9/16] rounded-2xl overflow-hidden bg-[#111] border border-gray-700 hover:border-gray-500 transition-colors flex flex-col items-center justify-center group text-gray-400 hover:text-white no-underline block">
                 <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"><ArrowRight size={24} /></div>
                 <span className="font-black uppercase tracking-widest text-sm text-center">See All<br/>Shorts</span>
               </Link>

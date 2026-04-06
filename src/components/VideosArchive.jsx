@@ -117,6 +117,8 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   );
 };
 
+// --- CONTENT CARD COMPONENTS ---
+
 const WideVideoCard = ({ item, setSelectedItem, activeSport }) => {
   const cardTheme = themes[item.sport] || themes.All;
   return (
@@ -164,14 +166,14 @@ const GridVideoCard = ({ item, setSelectedItem, activeSport }) => {
 };
 
 const ShortCard = ({ item, setSelectedItem, activeSport }) => (
-  <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group h-full w-full min-h-[300px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative no-underline block`}>
+  <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group h-full w-full min-h-[300px] md:min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative no-underline block`}>
     {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
       <div className="bg-black/50 backdrop-blur-sm rounded-full p-3 md:p-4 border border-white/10"><Play size={24} className="text-white ml-1" fill="currentColor"/></div>
     </div>
-    <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
-      <h3 className={`font-black text-sm text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+    <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 z-20">
+      <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
     </div>
   </Link>
 );
@@ -282,11 +284,17 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
           {(heroVideo || sideVideos.length > 0) && (
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
               <div className="xl:col-span-8 flex flex-col gap-6">
-                {heroVideo && <WideVideoCard item={heroVideo} setSelectedItem={setSelectedItem} activeSport={activeSport} />}
                 
-                {/* DYNAMIC INLINE AD SLOT 1 */}
+                {/* FORCE aspect-video, prevent flex stretching on the video */}
+                {heroVideo && (
+                    <div className="w-full shrink-0 flex flex-col">
+                        <WideVideoCard item={heroVideo} setSelectedItem={setSelectedItem} activeSport={activeSport} />
+                    </div>
+                )}
+                
+                {/* DYNAMIC INLINE AD SLOT 1 - Takes flex-1 to fill remaining vertical gap! */}
                 {inlineAds.length > 0 && (
-                  <div className="w-full">
+                  <div className="w-full flex-1 flex flex-col min-h-[120px]">
                     <DynamicAd ad={inlineAds[0]} variant="inline" />
                   </div>
                 )}
