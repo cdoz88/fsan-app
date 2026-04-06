@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { PlayCircle, FileText, Video, Mic, Play, Zap, Flame, ChevronLeft, ChevronRight, ChevronUp, Headphones, ArrowRight } from 'lucide-react';
 import { themes } from '../utils/theme';
 
-// --- GLOBAL CONSTANTS ---
+// --- GLOBAL CONSTANTS & HELPERS ---
 
 const hideScrollbar = "scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
 
@@ -13,6 +13,13 @@ const shieldMaskStyle = {
   maskImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg%20viewBox%3D%220%200%20706.29%20800%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M404.07%2C303.86c.61%2C0%2C1.22-.04%2C1.83-.04%2C1%2C0%2C1.98.06%2C2.98.07-1.26-.02-2.52-.03-3.78-.03-.34%2C0-.68%2C0-1.02%2C0%22%2F%3E%3Cpath%20d%3D%22M624.47%2C522.59c-59.75%2C113.25-148.42%2C205.88-256.42%2C267.9l-10.35%2C5.95-6.21%2C3.57-6.31-3.38-10.51-5.63c-112.29-60.12-203.01-153.79-262.36-270.88C13%2C403.11-10.51%2C271.58%2C4.32%2C139.75l1.34-11.89.8-7.14%2C5.92-3.54%2C9.87-5.91C147.41%2C36.4%2C258.58%2C0%2C362.11%2C0c109.19%2C0%2C213.33%2C38.89%2C327.73%2C122.4l9.02%2C6.58%2C5.41%2C3.95.37%2C6.93.61%2C11.56c6.89%2C129.58-21.04%2C257.92-80.79%2C371.16Z%22%2F%3E%3C%2Fsvg%3E")',
   WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center',
   maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center'
+};
+
+// SEO Helper: Generates the true path for Googlebot
+const getItemUrl = (item) => {
+  const itemView = item.type === 'article' ? 'articles' : item.type === 'podcast' ? 'podcasts' : 'videos';
+  const sportPrefix = (!item.sport || item.sport === 'All') ? '' : `/${item.sport.toLowerCase()}`;
+  return `${sportPrefix}/${itemView}/${item.slug}`;
 };
 
 // --- GLOBAL SUB-COMPONENTS ---
@@ -42,7 +49,7 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   else if (ad.bgGradientType === 'radial') bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
 
   const isHeader = variant === 'header';
-  const isSidebar = variant === 'sidebar'; // Triggers the vertical stack for narrow columns
+  const isSidebar = variant === 'sidebar'; 
 
   const renderButton = (extraClass) => (
     <div className={`px-3 py-2 ${isHeader ? '@md:px-4 @md:py-2.5' : '@2xl:px-5 @2xl:py-2.5'} rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 ${isHeader ? '@md:gap-1.5' : '@2xl:gap-2'} shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
@@ -57,7 +64,6 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   } else if (isSidebar && ad.fgImage) {
     wrapperClasses += `p-4 @2xl:p-6 min-h-[200px] flex-col items-center justify-center text-center gap-4`;
   } else {
-    // Exact wrapper logic from your working code
     wrapperClasses += `p-4 @2xl:p-6 min-h-[120px] gap-3 @2xl:gap-6 ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between'}`;
   }
 
@@ -67,7 +73,6 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
        {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
        
        {isHeader ? (
-         // HEADER VARIANT
          <>
            <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @xs:items-start @xs:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
              <h2 className={`text-base @xs:text-lg @md:text-xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center @xs:origin-left`}>{ad.headline}</h2>
@@ -84,7 +89,6 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
            </div>
          </>
        ) : isSidebar && ad.fgImage ? (
-         // SIDEBAR VARIANT (Stacked)
          <>
            <div className="relative z-10 flex flex-col justify-center shrink min-w-0 items-center text-center flex-1">
              <h2 className="text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center">{ad.headline}</h2>
@@ -96,26 +100,21 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
            {renderButton("")}
          </>
        ) : (
-         // EXACT INLINE LOGIC FROM YOUR LAST WORKING VERSION
          <>
-           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
-             <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>
-               {ad.headline}
-             </h2>
-             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">
-               {ad.subtext}
-             </p>
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left flex-1`}>
+             <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>{ad.headline}</h2>
+             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">{ad.subtext}</p>
              {renderButton("mt-4 flex @4xl:hidden w-max")}
            </div>
-
+           
            {ad.fgImage && (
-             <div className="relative z-10 hidden @xs:flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1">
-               <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
-             </div>
+              <div className="relative z-10 flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1 mx-auto">
+                 <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[90px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+              </div>
            )}
-
+           
            <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
-             {renderButton("")}
+              {renderButton("")}
            </div>
          </>
        )}
@@ -123,10 +122,10 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   );
 };
 
-// --- CONTENT CARD COMPONENTS ---
+// --- CONTENT CARD COMPONENTS (SEO UPDATED TO LINKS) ---
 
 const VideoCard = ({ item, isHero, setSelectedItem, activeSport }) => (
-  <div onClick={() => setSelectedItem(item)} className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
+  <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative no-underline block`}>
     {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
     <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
     <PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
@@ -134,11 +133,11 @@ const VideoCard = ({ item, isHero, setSelectedItem, activeSport }) => (
       <PostMeta item={item} activeSport={activeSport} />
       <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'} text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
     </div>
-  </div>
+  </Link>
 );
 
 const ShortCard = ({ item, setSelectedItem, activeSport }) => (
-  <div onClick={() => setSelectedItem(item)} className={`group h-full w-full min-h-[300px] md:min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
+  <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group h-full w-full min-h-[300px] md:min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative no-underline block`}>
     {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -147,11 +146,11 @@ const ShortCard = ({ item, setSelectedItem, activeSport }) => (
     <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 z-20">
       <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
     </div>
-  </div>
+  </Link>
 );
 
 const VerticalCard = ({ item, setSelectedItem, activeSport }) => (
-  <div onClick={() => setSelectedItem(item)} className={`group h-full w-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
+  <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group h-full w-full cursor-pointer bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-lg ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative no-underline block`}>
     <div className="w-full aspect-video relative flex items-center justify-center overflow-hidden shrink-0 bg-[#111]">
       {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
       <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-[#1e1e1e] via-[#1e1e1e]/80 to-transparent z-10" />
@@ -162,11 +161,11 @@ const VerticalCard = ({ item, setSelectedItem, activeSport }) => (
       <h3 className={`font-black text-lg leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors mb-2 line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
       <div className="text-sm text-gray-400 line-clamp-2 mt-auto drop-shadow-md" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
     </div>
-  </div>
+  </Link>
 );
 
 const PressBoxCard = ({ item, setSelectedItem, activeSport }) => (
-  <div onClick={() => setSelectedItem(item)} className={`bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 rounded-2xl flex flex-col md:flex-row overflow-hidden ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[220px] items-stretch`}>
+  <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`bg-[#1e1e1e] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 rounded-2xl flex flex-col md:flex-row overflow-hidden ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[220px] items-stretch no-underline block`}>
     <div className="w-full md:w-64 lg:w-80 aspect-video md:aspect-auto bg-gray-900 flex-shrink-0 relative overflow-hidden">
         {item.imageUrl && <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover object-left-bottom opacity-90 group-hover:scale-105 transition-transform duration-500" alt="" />}
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#1e1e1e] to-transparent md:hidden z-10" />
@@ -177,7 +176,7 @@ const PressBoxCard = ({ item, setSelectedItem, activeSport }) => (
       <h4 className={`text-lg md:text-xl lg:text-2xl font-bold leading-tight mb-2 text-gray-200 group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors drop-shadow-lg`} dangerouslySetInnerHTML={{ __html: item.title }} />
       <div className="text-sm text-gray-400 line-clamp-2 leading-relaxed drop-shadow" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
     </div>
-  </div>
+  </Link>
 );
 
 const BoothCard = ({ item, setSelectedItem, activeSport, masterPodcasts }) => {
@@ -209,7 +208,7 @@ const BoothCard = ({ item, setSelectedItem, activeSport, masterPodcasts }) => {
   const finalImage = displayImage || fetchedImage;
 
   return (
-    <div onClick={() => setSelectedItem(item)} className={`flex items-stretch bg-[#1e1e1e] border ${itemTheme.border} border-opacity-40 rounded-2xl overflow-hidden ${itemTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[100px]`}>
+    <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`flex items-stretch bg-[#1e1e1e] border ${itemTheme.border} border-opacity-40 rounded-2xl overflow-hidden ${itemTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[100px] no-underline block`}>
       <div className="w-24 sm:w-28 shrink-0 relative bg-gray-900 flex items-center justify-center overflow-hidden border-r border-gray-800/50">
         {finalImage ? <img src={finalImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" /> : <div className="absolute inset-0 bg-gray-800" />}
         <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
@@ -227,12 +226,12 @@ const BoothCard = ({ item, setSelectedItem, activeSport, masterPodcasts }) => {
           ))}
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
 const LineupCard = ({ item, setSelectedItem, activeSport }) => (
-  <div onClick={() => setSelectedItem(item)} className={`group h-full w-full min-w-[160px] md:min-w-[200px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative aspect-square`}>
+  <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group h-full w-full min-w-[160px] md:min-w-[200px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative aspect-square no-underline block`}>
     {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
@@ -241,7 +240,7 @@ const LineupCard = ({ item, setSelectedItem, activeSport }) => (
     <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 z-20">
       <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
     </div>
-  </div>
+  </Link>
 );
 
 // --- MAIN HOME COMPONENT ---
@@ -358,7 +357,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
           </div>
           <div className={`flex-1 min-w-0 flex items-center gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory ${hideScrollbar} pl-4 md:pl-6`}>
             {wireFeed.map((item) => (
-              <div key={`wire-${item.id}`} onClick={() => setSelectedItem(item)} className="flex flex-col items-center gap-2 shrink-0 snap-start group cursor-pointer relative pt-2 pr-2">
+              <Link key={`wire-${item.id}`} href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className="flex flex-col items-center gap-2 shrink-0 snap-start group cursor-pointer relative pt-2 pr-2 no-underline">
                 <div className="relative">
                   <div className={`w-[84px] h-[94px] p-[2px] ${themes[item.sport]?.bg || 'bg-gray-500'} relative transition-transform duration-300 group-hover:scale-105 flex items-center justify-center`} style={shieldMaskStyle}>
                     <div className="w-full h-full relative bg-gray-900" style={shieldMaskStyle}>
@@ -373,7 +372,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
                   </div>
                 </div>
                 <span className="text-[11px] font-medium text-gray-400 group-hover:text-white transition-colors text-center w-[90px] line-clamp-2 leading-tight" dangerouslySetInnerHTML={{ __html: item.title }} />
-              </div>
+              </Link>
             ))}
           </div>
         </div>

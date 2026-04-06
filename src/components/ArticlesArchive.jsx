@@ -1,7 +1,15 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Loader2, ChevronRight, ChevronUp } from 'lucide-react';
 import { themes } from '../utils/theme';
+
+// SEO Helper: Generates the true path for Googlebot
+const getItemUrl = (item) => {
+  const itemView = item.type === 'article' ? 'articles' : item.type === 'podcast' ? 'podcasts' : 'videos';
+  const sportPrefix = (!item.sport || item.sport === 'All') ? '' : `/${item.sport.toLowerCase()}`;
+  return `${sportPrefix}/${itemView}/${item.slug}`;
+};
 
 // --- GLOBAL SUB-COMPONENTS ---
 
@@ -35,7 +43,7 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   else if (ad.bgGradientType === 'radial') bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
 
   const isHeader = variant === 'header';
-  const isSidebar = variant === 'sidebar'; // Triggers the vertical stack for narrow columns
+  const isSidebar = variant === 'sidebar'; 
 
   const renderButton = (extraClass) => (
     <div className={`px-3 py-2 ${isHeader ? '@md:px-4 @md:py-2.5' : '@2xl:px-5 @2xl:py-2.5'} rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 ${isHeader ? '@md:gap-1.5' : '@2xl:gap-2'} shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
@@ -50,7 +58,6 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   } else if (isSidebar && ad.fgImage) {
     wrapperClasses += `p-4 @2xl:p-6 min-h-[200px] flex-col items-center justify-center text-center gap-4`;
   } else {
-    // Exact wrapper logic from your working code
     wrapperClasses += `p-4 @2xl:p-6 min-h-[120px] gap-3 @2xl:gap-6 ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between'}`;
   }
 
@@ -60,7 +67,6 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
        {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
        
        {isHeader ? (
-         // HEADER VARIANT
          <>
            <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @xs:items-start @xs:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
              <h2 className={`text-base @xs:text-lg @md:text-xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center @xs:origin-left`}>{ad.headline}</h2>
@@ -77,7 +83,6 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
            </div>
          </>
        ) : isSidebar && ad.fgImage ? (
-         // SIDEBAR VARIANT (Stacked)
          <>
            <div className="relative z-10 flex flex-col justify-center shrink min-w-0 items-center text-center flex-1">
              <h2 className="text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center">{ad.headline}</h2>
@@ -89,23 +94,19 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
            {renderButton("")}
          </>
        ) : (
-         // DEFAULT INLINE VARIANT (Wide, Side-by-side)
          <>
-           {/* TEXT BLOCK: Center-aligned by default (base tailwind classes), shifts to left-aligned only for very wide containers (@4xl) */}
            <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left flex-1`}>
              <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>{ad.headline}</h2>
              <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">{ad.subtext}</p>
              {renderButton("mt-4 flex @4xl:hidden w-max")}
            </div>
            
-           {/* IMAGE CONTAINER: We removed `@xs:flex` and forced `flex`, so it *never* hides, even when squeezed. The margin (mx-auto) handles centering. */}
            {ad.fgImage && (
               <div className="relative z-10 flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1 mx-auto">
                  <img src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[90px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
               </div>
            )}
            
-           {/* This main button ONLY appears on wide containers (@4xl), so the centered button above handles the narrow views */}
            <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
               {renderButton("")}
            </div>
@@ -118,7 +119,7 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
 const HeroCard = ({ item, setSelectedItem, activeSport }) => {
   const cardTheme = themes[item.sport] || themes.All;
   return (
-    <div onClick={() => setSelectedItem(item)} className={`group relative w-full h-full min-h-[400px] lg:min-h-[500px] cursor-pointer bg-[#111] border ${cardTheme.border} rounded-2xl overflow-hidden shadow-2xl ${cardTheme.hoverBorder} transition-all`}>
+    <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group relative w-full h-full min-h-[400px] lg:min-h-[500px] cursor-pointer bg-[#111] border ${cardTheme.border} rounded-2xl overflow-hidden shadow-2xl ${cardTheme.hoverBorder} transition-all no-underline block`}>
       {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" /> : <div className="absolute inset-0 bg-gray-900" />}
       <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent z-10"></div>
       <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-8 z-20 flex flex-col justify-end">
@@ -126,14 +127,14 @@ const HeroCard = ({ item, setSelectedItem, activeSport }) => {
         <h3 className={`font-black text-2xl lg:text-4xl text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-3 drop-shadow-xl mb-3`} dangerouslySetInnerHTML={{ __html: item.title }} />
         <div className="text-sm text-gray-300 line-clamp-2 max-w-3xl drop-shadow-md" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
       </div>
-    </div>
+    </Link>
   );
 };
 
 const SideListCard = ({ item, setSelectedItem, activeSport }) => {
   const cardTheme = themes[item.sport] || themes.All;
   return (
-    <div onClick={() => setSelectedItem(item)} className={`group relative w-full flex flex-row cursor-pointer bg-[#1e1e1e] border ${cardTheme.border} border-opacity-40 rounded-2xl overflow-hidden shadow-lg ${cardTheme.hoverBorder} transition-all items-stretch min-h-[140px]`}>
+    <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group relative w-full flex flex-row cursor-pointer bg-[#1e1e1e] border ${cardTheme.border} border-opacity-40 rounded-2xl overflow-hidden shadow-lg ${cardTheme.hoverBorder} transition-all items-stretch min-h-[140px] no-underline block`}>
       <div className="w-1/3 lg:w-2/5 shrink-0 relative bg-gray-900 overflow-hidden">
          {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" />}
          <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-r from-transparent to-[#1e1e1e] z-10" />
@@ -143,14 +144,14 @@ const SideListCard = ({ item, setSelectedItem, activeSport }) => {
         <h4 className={`font-black text-sm lg:text-base text-gray-200 leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-md mb-1`} dangerouslySetInnerHTML={{ __html: item.title }} />
         <div className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed opacity-80" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
       </div>
-    </div>
+    </Link>
   );
 };
 
 const MidCard = ({ item, setSelectedItem, activeSport }) => {
   const cardTheme = themes[item.sport] || themes.All;
   return (
-    <div onClick={() => setSelectedItem(item)} className={`group relative w-full h-[250px] md:h-[300px] cursor-pointer bg-[#111] border ${cardTheme.border} rounded-2xl overflow-hidden shadow-xl ${cardTheme.hoverBorder} transition-all`}>
+    <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group relative w-full h-[250px] md:h-[300px] cursor-pointer bg-[#111] border ${cardTheme.border} rounded-2xl overflow-hidden shadow-xl ${cardTheme.hoverBorder} transition-all no-underline block`}>
       {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" /> : <div className="absolute inset-0 bg-gray-900" />}
       <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent z-10"></div>
       <div className="absolute bottom-0 left-0 right-0 p-5 z-20 flex flex-col justify-end">
@@ -158,14 +159,14 @@ const MidCard = ({ item, setSelectedItem, activeSport }) => {
         <h3 className={`font-black text-lg lg:text-xl text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-lg mb-2`} dangerouslySetInnerHTML={{ __html: item.title }} />
         <div className="text-xs text-gray-300 line-clamp-1 drop-shadow-md" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
       </div>
-    </div>
+    </Link>
   );
 };
 
 const StackedCard = ({ item, setSelectedItem, activeSport }) => {
   const cardTheme = themes[item.sport] || themes.All;
   return (
-    <div onClick={() => setSelectedItem(item)} className={`group relative w-full flex flex-col md:flex-row cursor-pointer bg-[#1e1e1e] border ${cardTheme.border} border-opacity-40 rounded-2xl overflow-hidden shadow-lg ${cardTheme.hoverBorder} transition-all items-stretch`}>
+    <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group relative w-full flex flex-col md:flex-row cursor-pointer bg-[#1e1e1e] border ${cardTheme.border} border-opacity-40 rounded-2xl overflow-hidden shadow-lg ${cardTheme.hoverBorder} transition-all items-stretch no-underline block`}>
        <div className="w-full md:w-2/5 shrink-0 relative bg-gray-900 overflow-hidden min-h-[160px] md:min-h-[200px]">
           {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" />}
           <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#1e1e1e] to-transparent md:hidden z-10" />
@@ -176,7 +177,7 @@ const StackedCard = ({ item, setSelectedItem, activeSport }) => {
          <h3 className={`font-black text-lg lg:text-2xl text-gray-200 leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 mb-2`} dangerouslySetInnerHTML={{ __html: item.title }} />
          <div className="text-sm text-gray-400 line-clamp-2" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
        </div>
-    </div>
+    </Link>
   );
 };
 
@@ -333,7 +334,7 @@ export default function ArticlesArchive({ articles, activeSport, setSelectedItem
 
                 return (
                   <React.Fragment key={article.id}>
-                    <div onClick={() => setSelectedItem(article)} className={`bg-[#1e1e1e] border ${cardTheme.border} border-opacity-40 rounded-2xl flex flex-col md:flex-row overflow-hidden ${cardTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[200px] items-stretch`}>
+                    <Link href={getItemUrl(article)} onClick={(e) => { e.preventDefault(); setSelectedItem(article); }} className={`bg-[#1e1e1e] border ${cardTheme.border} border-opacity-40 rounded-2xl flex flex-col md:flex-row overflow-hidden ${cardTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[200px] items-stretch no-underline block`}>
                       <div className="w-full md:w-72 lg:w-80 shrink-0 relative bg-gray-900 overflow-hidden min-h-[200px]">
                           {article.imageUrl && <img src={article.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500"/>}
                           <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#1e1e1e] to-transparent md:hidden z-10" />
@@ -344,7 +345,7 @@ export default function ArticlesArchive({ articles, activeSport, setSelectedItem
                         <h3 className={`text-xl lg:text-2xl font-black leading-tight mb-2 text-gray-200 group-hover:${cardTheme.text} transition-colors drop-shadow-lg`} dangerouslySetInnerHTML={{ __html: article.title }} />
                         <div className="text-sm text-gray-400 line-clamp-2 leading-relaxed drop-shadow" dangerouslySetInnerHTML={{ __html: article.excerpt }} />
                       </div>
-                    </div>
+                    </Link>
                     {/* List Ad - Wide Component */}
                     {showAd && adIndex !== -1 && (
                       <div className="py-4">

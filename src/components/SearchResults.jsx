@@ -1,7 +1,15 @@
 "use client";
 import React, { useRef } from 'react';
+import Link from 'next/link';
 import { PlayCircle, FileText, Video, Zap, Play, ChevronLeft, ChevronRight, Headphones } from 'lucide-react';
 import { themes } from '../utils/theme';
+
+// SEO Helper: Generates the true path for Googlebot
+const getItemUrl = (item) => {
+  const itemView = item.type === 'article' ? 'articles' : item.type === 'podcast' ? 'podcasts' : 'videos';
+  const sportPrefix = (!item.sport || item.sport === 'All') ? '' : `/${item.sport.toLowerCase()}`;
+  return `${sportPrefix}/${itemView}/${item.slug}`;
+};
 
 export default function SearchResults({ results, activeSport, setSelectedItem, searchQuery }) {
   // Refs for carousel scrolling
@@ -43,9 +51,10 @@ export default function SearchResults({ results, activeSport, setSelectedItem, s
 
   // Standard Article Card
   const renderArticleCard = (item) => (
-    <div 
-      onClick={() => setSelectedItem(item)} 
-      className="group h-full w-full cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-colors shadow-xl flex flex-col relative"
+    <Link 
+      href={getItemUrl(item)}
+      onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} 
+      className="group h-full w-full cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-colors shadow-xl flex flex-col relative no-underline block"
     >
       <div className="w-full aspect-video bg-gray-900 relative overflow-hidden shrink-0">
         {item.imageUrl && <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" alt="" />}
@@ -56,14 +65,18 @@ export default function SearchResults({ results, activeSport, setSelectedItem, s
         <h3 className="font-black text-base text-gray-200 group-hover:text-white transition-colors leading-tight line-clamp-3 mb-2" dangerouslySetInnerHTML={{ __html: item.title }} />
         <p className="text-xs text-gray-400 line-clamp-2 mt-auto" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
       </div>
-    </div>
+    </Link>
   );
 
   // Cinematic 16:9 Video Card
   const renderVideoCard = (item) => {
     const cardTheme = themes[item.sport] || themes.All;
     return (
-      <div onClick={() => setSelectedItem(item)} className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${cardTheme.border} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${cardTheme.hoverBorder} transition-all flex flex-col relative`}>
+      <Link 
+        href={getItemUrl(item)}
+        onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} 
+        className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${cardTheme.border} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${cardTheme.hoverBorder} transition-all flex flex-col relative no-underline block`}
+      >
         {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
         <PlayCircle size={48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
@@ -74,13 +87,17 @@ export default function SearchResults({ results, activeSport, setSelectedItem, s
           </div>
           <h3 className={`font-black text-lg lg:text-xl text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
         </div>
-      </div>
+      </Link>
     );
   };
 
   // Short Card
   const renderShortCard = (item) => (
-    <div onClick={() => setSelectedItem(item)} className={`group h-full w-full min-h-[300px] md:min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
+    <Link 
+      href={getItemUrl(item)}
+      onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} 
+      className={`group h-full w-full min-h-[300px] md:min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative no-underline block`}
+    >
       {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -89,14 +106,18 @@ export default function SearchResults({ results, activeSport, setSelectedItem, s
       <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 z-20">
         <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
       </div>
-    </div>
+    </Link>
   );
 
   // Podcast Booth Card
   const renderPodcastCard = (item) => {
     const itemTheme = themes[item.sport] || themes.All;
     return (
-      <div onClick={() => setSelectedItem(item)} className={`flex items-stretch bg-[#1e1e1e] border ${itemTheme.border} border-opacity-40 rounded-2xl overflow-hidden ${itemTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg h-[120px]`}>
+      <Link 
+        href={getItemUrl(item)}
+        onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} 
+        className={`flex items-stretch bg-[#1e1e1e] border ${itemTheme.border} border-opacity-40 rounded-2xl overflow-hidden ${itemTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg h-[120px] no-underline block`}
+      >
         <div className="w-28 shrink-0 relative bg-gray-900 flex items-center justify-center overflow-hidden border-r border-gray-800/50">
           {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" /> : <div className="absolute inset-0 bg-gray-800" />}
           <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
@@ -114,7 +135,7 @@ export default function SearchResults({ results, activeSport, setSelectedItem, s
             ))}
           </div>
         </div>
-      </div>
+      </Link>
     );
   };
 

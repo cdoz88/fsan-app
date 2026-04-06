@@ -4,6 +4,13 @@ import Link from 'next/link';
 import { Headphones, ChevronRight } from 'lucide-react';
 import { themes } from '../utils/theme';
 
+// SEO Helper: Generates the true path for Googlebot
+const getItemUrl = (item) => {
+  const itemView = item.type === 'article' ? 'articles' : item.type === 'podcast' ? 'podcasts' : 'videos';
+  const sportPrefix = (!item.sport || item.sport === 'All') ? '' : `/${item.sport.toLowerCase()}`;
+  return `${sportPrefix}/${itemView}/${item.slug}`;
+};
+
 // --- GLOBAL SUB-COMPONENTS ---
 
 const DynamicAd = ({ ad, variant = "inline" }) => {
@@ -50,7 +57,6 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
          </>
        ) : (
          <>
-           {/* Text container is allowed to grow as much as it needs without 33% restrictions */}
            <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center ${isHeader ? '@xs:items-start @xs:text-left' : '@2xl:items-start @2xl:text-left flex-1'}`}>
              <h2 className={`${isHeader ? 'text-base @xs:text-lg @md:text-xl' : 'text-lg @md:text-2xl @2xl:text-3xl'} font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center ${isHeader ? '@xs:origin-left' : '@2xl:origin-left'}`}>
                {ad.headline}
@@ -61,14 +67,12 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
              {isHeader ? renderButton("mt-2 flex @sm:hidden w-max") : renderButton("mt-3 flex @2xl:hidden w-max")}
            </div>
            
-           {/* Image container floats perfectly in the center of available space via mx-auto */}
            {ad.fgImage && isHeader && (
              <div className="relative z-10 flex justify-center items-center shrink-0 mx-auto px-2">
                <img src={ad.fgImage} className="max-h-12 w-auto max-w-[80px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
              </div>
            )}
 
-           {/* Button is strictly pushed to the end without forcing width restrictions */}
            <div className={`relative z-10 ${isHeader ? 'hidden @sm:flex' : 'hidden @2xl:flex'} justify-end items-center shrink-0 min-w-0`}>
              {renderButton("")}
            </div>
@@ -79,7 +83,7 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
 };
 
 const LineupCard = ({ item, setSelectedItem }) => (
-  <div onClick={() => setSelectedItem(item)} className={`group w-full cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative aspect-square`}>
+  <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group w-full cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-800'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-600'} transition-all flex flex-col relative aspect-square no-underline block`}>
     {item.imageUrl ? (
        <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
     ) : (
@@ -94,7 +98,7 @@ const LineupCard = ({ item, setSelectedItem }) => (
     <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 z-20">
       <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
     </div>
-  </div>
+  </Link>
 );
 
 // --- MAIN COMPONENT ---
