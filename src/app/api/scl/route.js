@@ -7,12 +7,7 @@ export async function GET(request) {
   if (!action) return NextResponse.json({ success: false, message: 'Action required' }, { status: 400 });
 
   try {
-    const nonceRes = await fetch('https://admin.fsan.com/wp-json/scl/v1/nonce', { cache: 'no-store' });
-    const { nonce } = await nonceRes.json();
-    
-    searchParams.set('nonce', nonce);
     const wpUrl = `https://admin.fsan.com/wp-admin/admin-ajax.php?${searchParams.toString()}`;
-    
     const res = await fetch(wpUrl, { cache: 'no-store' });
     const data = await res.json();
     return NextResponse.json(data);
