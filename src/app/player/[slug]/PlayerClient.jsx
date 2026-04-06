@@ -75,29 +75,38 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     const shorts = content.filter(item => item.type === 'short');
     const podcasts = content.filter(item => item.type === 'podcast');
 
-    // Standard Article Card
-    const renderArticleCard = (item) => (
-      <div 
-        onClick={() => handleSetSelectedItem(item)} 
-        className="group h-full w-full cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-colors shadow-xl flex flex-col relative"
-      >
-        <div className="w-full aspect-video bg-gray-900 relative overflow-hidden shrink-0">
-          {item.imageUrl && <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" alt="" />}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#1e1e1e] to-transparent" />
-        </div>
-        <div className="p-5 flex flex-col flex-1">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{item.date}</span>
-          <h3 className="font-black text-base text-gray-200 group-hover:text-white transition-colors leading-tight line-clamp-3 mb-2" dangerouslySetInnerHTML={{ __html: item.title }} />
-          <p className="text-xs text-gray-400 line-clamp-2 mt-auto" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
-        </div>
-      </div>
-    );
+    // Standard Article Card (Converted to SEO-friendly Link)
+    const renderArticleCard = (item) => {
+      const itemUrl = `/${item.sport.toLowerCase()}/${item.type}s/${item.slug}`;
+      return (
+        <Link 
+          href={itemUrl}
+          onClick={(e) => { e.preventDefault(); handleSetSelectedItem(item); }} 
+          className="group h-full w-full cursor-pointer bg-[#1e1e1e] border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-colors shadow-xl flex flex-col relative no-underline block"
+        >
+          <div className="w-full aspect-video bg-gray-900 relative overflow-hidden shrink-0">
+            {item.imageUrl && <img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" alt="" />}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#1e1e1e] to-transparent" />
+          </div>
+          <div className="p-5 flex flex-col flex-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{item.date}</span>
+            <h3 className="font-black text-base text-gray-200 group-hover:text-white transition-colors leading-tight line-clamp-3 mb-2" dangerouslySetInnerHTML={{ __html: item.title }} />
+            <p className="text-xs text-gray-400 line-clamp-2 mt-auto" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
+          </div>
+        </Link>
+      );
+    };
 
-    // Cinematic 16:9 Video Card
+    // Cinematic 16:9 Video Card (Converted to SEO-friendly Link)
     const renderVideoCard = (item) => {
       const cardTheme = themes[item.sport] || themes.All;
+      const itemUrl = `/${item.sport.toLowerCase()}/${item.type}s/${item.slug}`;
       return (
-        <div onClick={() => handleSetSelectedItem(item)} className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${cardTheme.border} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${cardTheme.hoverBorder} transition-all flex flex-col relative`}>
+        <Link 
+          href={itemUrl}
+          onClick={(e) => { e.preventDefault(); handleSetSelectedItem(item); }} 
+          className={`group w-full h-full aspect-video cursor-pointer bg-[#111] border ${cardTheme.border} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${cardTheme.hoverBorder} transition-all flex flex-col relative no-underline block`}
+        >
           {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
           <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
           <PlayCircle size={48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
@@ -108,29 +117,41 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
             </div>
             <h3 className={`font-black text-lg lg:text-xl text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
           </div>
-        </div>
+        </Link>
       );
     };
 
-    // Short Card
-    const renderShortCard = (item) => (
-      <div onClick={() => handleSetSelectedItem(item)} className={`group h-full w-full min-h-[300px] md:min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative`}>
-        {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
-          <div className="bg-black/50 backdrop-blur-sm rounded-full p-3 md:p-4 border border-white/10"><Play size={24} className="text-white ml-1" fill="currentColor"/></div>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 z-20">
-          <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
-        </div>
-      </div>
-    );
+    // Short Card (Converted to SEO-friendly Link)
+    const renderShortCard = (item) => {
+      const itemUrl = `/${item.sport.toLowerCase()}/${item.type}s/${item.slug}`;
+      return (
+        <Link 
+          href={itemUrl}
+          onClick={(e) => { e.preventDefault(); handleSetSelectedItem(item); }} 
+          className={`group h-full w-full min-h-[300px] md:min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative no-underline block`}
+        >
+          {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <div className="bg-black/50 backdrop-blur-sm rounded-full p-3 md:p-4 border border-white/10"><Play size={24} className="text-white ml-1" fill="currentColor"/></div>
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 z-20">
+            <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+          </div>
+        </Link>
+      );
+    };
 
-    // Podcast Booth Card
+    // Podcast Booth Card (Converted to SEO-friendly Link)
     const renderPodcastCard = (item) => {
       const itemTheme = themes[item.sport] || themes.All;
+      const itemUrl = `/${item.sport.toLowerCase()}/${item.type}s/${item.slug}`;
       return (
-        <div onClick={() => handleSetSelectedItem(item)} className={`flex items-stretch bg-[#1e1e1e] border ${itemTheme.border} border-opacity-40 rounded-2xl overflow-hidden ${itemTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg h-[120px]`}>
+        <Link 
+          href={itemUrl}
+          onClick={(e) => { e.preventDefault(); handleSetSelectedItem(item); }} 
+          className={`flex items-stretch bg-[#1e1e1e] border ${itemTheme.border} border-opacity-40 rounded-2xl overflow-hidden ${itemTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg h-[120px] no-underline`}
+        >
           <div className="w-28 shrink-0 relative bg-gray-900 flex items-center justify-center overflow-hidden border-r border-gray-800/50">
             {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" /> : <div className="absolute inset-0 bg-gray-800" />}
             <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
@@ -148,7 +169,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
               ))}
             </div>
           </div>
-        </div>
+        </Link>
       );
     };
 
@@ -200,7 +221,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
           </section>
         )}
 
-        {/* Shorts Carousel (Highlight Reel) */}
+        {/* Shorts Carousel */}
         {shorts.length > 0 && (
           <section className={`relative ${articles.length > 0 || videos.length > 0 ? 'pt-6 border-t border-gray-800/50' : ''}`}>
             <div className="flex items-center justify-between mb-6">
@@ -220,7 +241,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
           </section>
         )}
 
-        {/* Podcasts Carousel (The Booth) */}
+        {/* Podcasts Carousel */}
         {podcasts.length > 0 && (
           <section className={`relative ${articles.length > 0 || videos.length > 0 || shorts.length > 0 ? 'pt-6 border-t border-gray-800/50' : ''}`}>
             <div className="flex items-center justify-between mb-6">
@@ -331,7 +352,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
         <div className="flex-1 w-full min-w-0">
           <main className="flex-1 overflow-y-auto relative z-0 scrollbar-hide pb-24">
             
-            {/* THE HERO HEADER (UNTOUCHED DESIGN) */}
+            {/* THE HERO HEADER */}
             <div className="relative w-full h-[260px] flex items-end overflow-hidden rounded-2xl mb-6 mt-6">
               <div 
                 className="absolute inset-0 opacity-80 z-0" 
@@ -369,7 +390,17 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                 )}
 
                 <div className="flex flex-col gap-1 md:gap-2 w-full z-20 justify-end md:h-full pb-4 md:px-0">
-                  <div className="flex items-baseline gap-3 md:gap-4 flex-wrap">
+                  
+                  {/* SEO DIRECTORY BREADCRUMB */}
+                  <div className="flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-gray-400 mb-1 md:mb-2">
+                    <Link href={`/${playerSport.toLowerCase()}`} className="hover:text-white transition-colors">{playerSport}</Link>
+                    <span>/</span>
+                    <Link href={`/${playerSport.toLowerCase()}/players`} className="hover:text-white transition-colors">Players</Link>
+                    <span>/</span>
+                    <span className="text-gray-500">{playerName}</span>
+                  </div>
+
+                  <div className="flex items-baseline gap-3 md:gap-4 flex-wrap mt-[-8px]">
                     <h1 className="text-4xl sm:text-5xl md:text-4xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white">{playerName}</h1>
                     {espnData?.position && (
                       <span className="text-lg sm:text-xl md:text-2xl font-bold text-gray-400 uppercase tracking-widest">{espnData.position.abbreviation || espnData.position.displayName}</span>
