@@ -1,16 +1,17 @@
 "use client";
 import React, { useState } from 'react';
+import Link from 'next/link';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
-import { HeartHandshake, Trophy, Gift, BarChart3, ShieldCheck, ArrowRight, ListOrdered, BookOpen, Heart } from 'lucide-react';
+import { HeartHandshake, Trophy, Gift, BarChart3, ShieldCheck, ArrowRight, ListOrdered, BookOpen, Heart, Newspaper } from 'lucide-react';
 
-export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderboard }) {
+export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderboard, updates }) {
   const activeSport = 'Football';
   const [activeTab, setActiveTab] = useState('leaderboard');
 
-  // Unified Dark Blue styling for active tabs
-  const activeTabStyle = "bg-blue-800 text-white shadow-[0_0_15px_rgba(30,64,175,0.5)] border border-blue-600";
+  // Navy Blue Active Tab Styling
+  const activeTabStyle = "bg-[#1e3a8a] text-white shadow-[0_0_15px_rgba(30,58,138,0.6)] border border-[#1e40af]";
   const inactiveTabStyle = "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 border border-transparent";
 
   return (
@@ -61,6 +62,12 @@ export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderb
                <ListOrdered size={16} /> Leaderboard
              </button>
              <button 
+                onClick={() => setActiveTab('updates')} 
+                className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'updates' ? activeTabStyle : inactiveTabStyle}`}
+             >
+               <Newspaper size={16} /> Updates
+             </button>
+             <button 
                 onClick={() => setActiveTab('cause')} 
                 className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'cause' ? activeTabStyle : inactiveTabStyle}`}
              >
@@ -77,7 +84,7 @@ export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderb
           {/* MAIN GRID LAYOUT: Content on Left (8 cols), Funnel on Right (4 cols) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 animate-in fade-in duration-700 delay-150">
             
-            {/* LEFT COLUMN: TAB CONTENT */}
+            {/* LEFT COLUMN: DYNAMIC TAB CONTENT */}
             <div className="lg:col-span-8 flex flex-col gap-8 min-w-0">
               
               {/* TAB 1: LEADERBOARD */}
@@ -87,7 +94,43 @@ export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderb
                  </div>
               )}
 
-              {/* TAB 2: THE CAUSE */}
+              {/* TAB 2: UPDATES */}
+              {activeTab === 'updates' && (
+                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <section className="bg-[#1a1a1a] rounded-3xl p-8 md:p-10 border border-gray-800 shadow-xl">
+                       <h2 className="text-3xl font-black italic text-white mb-8 uppercase">League Updates</h2>
+                       
+                       {updates && updates.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                             {updates.map(post => (
+                                <Link href={`/football/article/${post.slug}`} key={post.id} className="bg-[#111] rounded-2xl border border-gray-800 hover:border-gray-600 transition-all shadow-inner overflow-hidden flex flex-col group no-underline">
+                                   {post.featuredImage?.node?.sourceUrl && (
+                                      <div className="w-full h-48 overflow-hidden bg-gray-900">
+                                         <img src={post.featuredImage.node.sourceUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                      </div>
+                                   )}
+                                   <div className="p-6 flex flex-col flex-1">
+                                      <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">
+                                         {new Date(post.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                      </span>
+                                      <h3 className="text-lg font-bold text-white mb-3 group-hover:text-blue-400 transition-colors line-clamp-2" dangerouslySetInnerHTML={{ __html: post.title }}></h3>
+                                      <div className="text-sm text-gray-400 line-clamp-3 mb-4" dangerouslySetInnerHTML={{ __html: post.excerpt }}></div>
+                                      <span className="mt-auto text-xs font-black uppercase tracking-widest text-blue-500 group-hover:text-blue-400 flex items-center gap-1">Read Article <ArrowRight size={14}/></span>
+                                   </div>
+                                </Link>
+                             ))}
+                          </div>
+                       ) : (
+                          <div className="text-center py-16 border border-dashed border-gray-800 rounded-2xl bg-[#111]">
+                             <Newspaper size={40} className="mx-auto text-gray-600 mb-4" />
+                             <p className="text-gray-500 font-bold uppercase tracking-widest text-sm">No updates posted yet.</p>
+                          </div>
+                       )}
+                    </section>
+                 </div>
+              )}
+
+              {/* TAB 3: THE CAUSE */}
               {activeTab === 'cause' && (
                  <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <section className="bg-[#1a1a1a] rounded-3xl p-8 md:p-10 border border-gray-800 shadow-xl relative overflow-hidden">
@@ -138,12 +181,13 @@ export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderb
                  </div>
               )}
 
-              {/* TAB 3: LEAGUE RULES */}
+              {/* TAB 4: LEAGUE RULES */}
               {activeTab === 'rules' && (
                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <section className="bg-[#1a1a1a] rounded-3xl p-8 md:p-10 border border-gray-800 shadow-xl">
                        <h2 className="text-3xl font-black italic text-white mb-8">OFFICIAL LEAGUE RULES</h2>
-                       <div className="flex flex-col gap-8">
+                       
+                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                           
                           <div className="bg-[#111] rounded-2xl p-6 border border-gray-800 shadow-inner">
                              <h3 className="text-lg font-black uppercase tracking-widest text-gray-300 mb-6 border-b border-gray-800 pb-3">The Golden Rules</h3>
@@ -158,7 +202,7 @@ export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderb
 
                           <div className="bg-[#111] rounded-2xl p-6 border border-gray-800 shadow-inner">
                              <h3 className="text-lg font-black uppercase tracking-widest text-gray-300 mb-6 border-b border-gray-800 pb-3">Draft Settings</h3>
-                             <ul className="space-y-4 text-sm text-gray-400 font-medium grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6">
+                             <ul className="space-y-4 text-sm text-gray-400 font-medium">
                                <li className="flex gap-3 items-center"><span className="text-blue-500 font-black text-lg">•</span> Hosted on Sleeper App</li>
                                <li className="flex gap-3 items-center"><span className="text-blue-500 font-black text-lg">•</span> 12 Teams Per League</li>
                                <li className="flex gap-3 items-center"><span className="text-blue-500 font-black text-lg">•</span> Randomized Pick Order</li>
@@ -170,7 +214,7 @@ export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderb
 
                           <div className="bg-[#111] rounded-2xl p-6 border border-gray-800 shadow-inner">
                              <h3 className="text-lg font-black uppercase tracking-widest text-gray-300 mb-6 border-b border-gray-800 pb-3">Scoring & Format</h3>
-                             <ul className="space-y-4 text-sm text-gray-400 font-medium grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6">
+                             <ul className="space-y-4 text-sm text-gray-400 font-medium">
                                <li className="flex gap-3 items-start"><span className="text-orange-500 font-black text-lg leading-none mt-1">»</span> <span className="pt-0.5">PPR PPFD "Big Plays"</span></li>
                                <li className="flex gap-3 items-start"><span className="text-orange-500 font-black text-lg leading-none mt-1">»</span> <span className="pt-0.5">Start: 1QB 2RB 3WR 1TE 1FLEX 1DST</span></li>
                                <li className="flex gap-3 items-start"><span className="text-orange-500 font-black text-lg leading-none mt-1">»</span> <span className="pt-0.5">Bench: 5 Players (Plus 1 IR)</span></li>
@@ -179,6 +223,7 @@ export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderb
                                <li className="flex gap-3 items-start"><span className="text-orange-500 font-black text-lg leading-none mt-1">»</span> <span className="pt-0.5">Winner: Most points among league champs</span></li>
                              </ul>
                           </div>
+
                        </div>
                     </section>
                  </div>
@@ -226,14 +271,14 @@ export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderb
                   
                   <div className="flex gap-4">
                     <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center font-black text-white shrink-0 shadow-[0_0_10px_rgba(220,38,38,0.5)]">2</div>
-                    <div className="pt-1">
+                    <div className="pt-1 flex flex-col items-start">
                       <h5 className="font-bold text-sm text-white mb-1">Make Your Donation</h5>
-                      <p className="text-xs text-gray-400 mb-2">Submit your $5 entry fee directly to Mission 22.</p>
+                      <p className="text-xs text-gray-400 mb-2 text-left">Submit your $5 entry fee directly to Mission 22.</p>
                       <a 
                         href="http://donate.mission22.org/campaign/702655/donate" 
                         target="_blank" 
                         rel="noreferrer" 
-                        className="inline-block bg-[#111] hover:bg-gray-800 border border-gray-600 text-white text-[10px] font-bold uppercase tracking-widest py-1.5 px-4 rounded-lg transition-colors no-underline shadow-md"
+                        className="inline-block bg-[#111] hover:bg-gray-800 border border-gray-600 text-white text-[10px] font-bold uppercase tracking-widest py-1.5 px-4 rounded-lg transition-colors no-underline shadow-md mt-1"
                       >
                         Donate Here
                       </a>
@@ -261,7 +306,7 @@ export default function NapkinClient({ proToolsMenu, connectMenu, initialLeaderb
                   href="https://www.selloutcrowds.com/sp-fanfeed/napkin-league" 
                   target="_blank" 
                   rel="noreferrer" 
-                  className="w-full bg-[#111] border border-gray-600 hover:border-gray-400 text-white font-bold uppercase tracking-widest py-3.5 rounded-xl transition-all text-xs flex items-center justify-center gap-2 no-underline shadow-inner"
+                  className="w-full bg-[#111] border border-gray-600 hover:border-gray-400 text-white font-bold uppercase tracking-widest py-3.5 rounded-xl transition-all text-xs flex items-center justify-center gap-2 no-underline shadow-inner mt-4"
                 >
                   Join League Chat
                 </a>
