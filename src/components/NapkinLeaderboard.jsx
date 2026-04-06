@@ -14,16 +14,7 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  ChartTooltip,
-  Legend,
-  Filler
-);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, ChartTooltip, Legend, Filler);
 
 const WeeklyScorerSVG = () => (
   <svg viewBox="0 0 100 100" className="w-5 h-5 shrink-0 drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
@@ -60,11 +51,9 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
   
-  // Selectors State
-  const [currentSeason, setCurrentSeason] = useState('current');
+  // States
   const [currentWeek, setCurrentWeek] = useState('overall');
   const [availableWeeks, setAvailableWeeks] = useState([]);
-  const [archivedSeasons, setArchivedSeasons] = useState([]);
   const [showKey, setShowKey] = useState(false);
   
   // Modal State
@@ -73,49 +62,30 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState('');
 
-  // Fallback initial fetch (if server props failed)
   useEffect(() => {
-    if (initialTeams.length === 0 && !error) {
-      fetchData('current');
-    } else {
-      const maxWeeks = 18; 
-      const mockWeeks = Array.from({length: maxWeeks}, (_, i) => i + 1);
-      setAvailableWeeks(mockWeeks);
-    }
-  }, [initialTeams]);
-
-  useEffect(() => {
-    setArchivedSeasons(['2025', '2024', '2023', '2022']); 
-  }, []);
-
-  const fetchData = async (season) => {
-    setLoading(true);
-    setError('');
-    setCurrentSeason(season);
-    setCurrentWeek('overall');
-    
-    try {
-      const url = season === 'current' 
-        ? '/api/scl?action=scl_get_leaderboard_data'
-        : `/api/scl?action=scl_get_archive_data&season=${season}`; 
-
-      const res = await fetch(url);
-      const data = await res.json();
-      
-      if (data.teams) {
-         setOverallTeams(data.teams);
-         setActiveTeams(data.teams);
-         setAvailableWeeks(data.available_weeks || Array.from({length: 18}, (_, i) => i + 1));
-      } else {
-         setError('No data found for this season.');
-         setActiveTeams([]);
+    const fetchInitialData = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch('/api/scl?action=scl_get_leaderboard_data');
+        if (!res.ok) throw new Error('Failed to load leaderboard data.');
+        const data = await res.json();
+        
+        if (data.available_weeks) setAvailableWeeks(data.available_weeks);
+        
+        if (data.teams && data.teams.length > 0) {
+           setOverallTeams(data.teams);
+           setActiveTeams(data.teams);
+        } else {
+           setError('No data found for the 2025-2026 season.');
+        }
+      } catch (err) {
+        setError('Leaderboard is currently syncing. Please check back later.');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError('Leaderboard is currently syncing. Please check back later.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    fetchInitialData();
+  }, []);
 
   const fetchWeeklyData = async (week) => {
     setLoading(true);
@@ -128,9 +98,8 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
     }
 
     try {
-      const res = await fetch(`/api/scl?action=scl_get_weekly_data&week=${week}${currentSeason !== 'current' ? `&season=${currentSeason}` : ''}`);
+      const res = await fetch(`/api/scl?action=scl_get_weekly_data&week=${week}`);
       const result = await res.json();
-      
       if (result.success && result.data.teams) {
          setActiveTeams(result.data.teams);
       } else {
@@ -153,9 +122,8 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
     setModalData(null);
 
     try {
-      const res = await fetch(`/api/scl?action=scl_get_user_details&user_id=${team.ownerId}&league_id=${team.leagueId}${currentSeason !== 'current' ? `&season=${currentSeason}` : ''}`);
+      const res = await fetch(`/api/scl?action=scl_get_user_details&user_id=${team.ownerId}&league_id=${team.leagueId}`);
       const result = await res.json();
-      
       if (result.success) {
          setModalData(result.data);
       } else {
@@ -178,33 +146,17 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
       {/* HEADER & SELECTORS */}
       <div className="p-4 md:p-6 border-b border-gray-800 bg-[#151515] flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-           {/* Week Selector */}
-           <div className="relative w-full md:w-40">
+           <h2 className="text-xl font-black uppercase tracking-wider text-white mr-4">2025-2026 Season</h2>
+           
+           <div className="relative w-full md:w-48">
              <select 
                value={currentWeek} 
                onChange={(e) => fetchWeeklyData(e.target.value)}
-               className="w-full bg-[#111] border border-gray-700 text-white rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-gray-500 appearance-none shadow-inner cursor-pointer"
+               className="w-full bg-[#111] border border-gray-700 text-white rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-gray-500 appearance-none shadow-inner cursor-pointer font-bold"
              >
-               <option value="overall">Overall</option>
-               {[...availableWeeks].sort((a,b) => b-a).map(w => (
+               <option value="overall">Overall Results</option>
+               {availableWeeks.map(w => (
                  <option key={w} value={w}>Week {w}</option>
-               ))}
-             </select>
-             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-               <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-             </div>
-           </div>
-
-           {/* Season Selector */}
-           <div className="relative w-full md:w-40">
-             <select 
-               value={currentSeason} 
-               onChange={(e) => fetchData(e.target.value)}
-               className="w-full bg-[#111] border border-gray-700 text-white rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-gray-500 appearance-none shadow-inner cursor-pointer"
-             >
-               <option value="current">2026</option>
-               {archivedSeasons.map(year => (
-                 <option key={year} value={year}>{year}</option>
                ))}
              </select>
              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
@@ -213,7 +165,6 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
            </div>
         </div>
 
-        {/* Search */}
         <div className="relative w-full md:w-72">
            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
            <input 
@@ -226,12 +177,9 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
         </div>
       </div>
 
-      {/* RE-ARCHITECTED AWARDS KEY DROPDOWN */}
       {showKey && (
         <div className="bg-[#111] px-6 py-4 border-b border-gray-800 flex flex-wrap items-center gap-6 justify-center md:justify-start animate-in fade-in slide-in-from-top-2 duration-300 shadow-inner">
-          <span className="text-gray-500 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest mr-2">
-             Awards Key:
-          </span>
+          <span className="text-gray-500 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest mr-2">Awards Key:</span>
           <span className="flex items-center gap-2 text-xs text-gray-300"><LitchSVG /> <b>LITCH:</b> Overall Points Leader</span>
           <span className="flex items-center gap-2 text-xs text-gray-300"><WeeklyScorerSVG /> <b>Weekly Top:</b> Highest weekly score</span>
           <span className="flex items-center gap-2 text-xs text-gray-300"><Club200SVG /> <b>200+ Club:</b> Scored 200+ points</span>
@@ -244,12 +192,9 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
           <thead>
             <tr className="bg-[#111] text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-800">
               <th className="px-6 py-4 w-16 text-center">Rank</th>
-              <th className="px-6 py-4">Team</th>
+              <th className="px-6 py-4">Manager</th>
               <th className="px-6 py-4 text-center">
-                <button 
-                  onClick={() => setShowKey(!showKey)} 
-                  className="flex items-center justify-center gap-1 mx-auto text-gray-400 hover:text-white transition-colors cursor-pointer group"
-                >
+                <button onClick={() => setShowKey(!showKey)} className="flex items-center justify-center gap-1 mx-auto text-gray-400 hover:text-white transition-colors group">
                   Awards <Info size={12} className="group-hover:scale-110 transition-transform" />
                 </button>
               </th>
@@ -258,26 +203,11 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
           </thead>
           <tbody className="divide-y divide-gray-800/50">
             {loading ? (
-              <tr>
-                <td colSpan="4" className="py-16 text-center">
-                  <Loader2 size={32} className="animate-spin text-gray-600 mx-auto" />
-                </td>
-              </tr>
-            ) : error ? (
-              <tr>
-                <td colSpan="4" className="py-16 text-center text-red-500 font-bold tracking-widest uppercase text-sm">
-                  {error}
-                </td>
-              </tr>
+              <tr><td colSpan="4" className="py-16 text-center"><Loader2 size={32} className="animate-spin text-gray-600 mx-auto" /></td></tr>
             ) : filteredTeams.length === 0 ? (
-              <tr>
-                <td colSpan="4" className="py-16 text-center text-gray-500 font-bold tracking-widest uppercase text-sm">
-                  No matching teams found.
-                </td>
-              </tr>
+              <tr><td colSpan="4" className="py-16 text-center text-gray-500 font-bold uppercase text-sm">{error || "No data found."}</td></tr>
             ) : (
               filteredTeams.map((team) => {
-                
                 let badges = [];
                 if (currentWeek === 'overall') {
                    if (team.badges?.litchAward > 0) badges.push({ icon: <LitchSVG />, count: team.badges.litchAward, title: 'LITCH Award' });
@@ -290,46 +220,22 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
                 }
 
                 return (
-                  <tr 
-                    key={team.teamId} 
-                    onClick={() => handleRowClick(team.teamId)}
-                    className="hover:bg-[#151515] transition-colors group cursor-pointer"
-                  >
-                    <td className="px-6 py-4 text-center">
-                      <span className={`font-black text-lg ${team.rank <= 3 ? 'text-white drop-shadow-md' : 'text-gray-500'}`}>{team.rank}</span>
-                    </td>
+                  <tr key={team.teamId} onClick={() => handleRowClick(team.teamId)} className="hover:bg-[#151515] transition-colors group cursor-pointer">
+                    <td className="px-6 py-4 text-center"><span className={`font-black text-lg ${team.rank <= 3 ? 'text-white drop-shadow-md' : 'text-gray-500'}`}>{team.rank}</span></td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <img src={team.ownerAvatar} alt={team.ownerUsername} className="w-10 h-10 rounded-full border border-gray-700 bg-gray-900 shrink-0 shadow-inner group-hover:border-gray-500 transition-colors" />
-                        <div className="flex flex-col">
-                           <span className="font-bold text-gray-200 text-sm group-hover:text-blue-400 transition-colors">{team.ownerUsername}</span>
-                           <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">{team.leagueName}</span>
-                        </div>
+                        <img src={team.ownerAvatar} alt={team.ownerUsername} className="w-10 h-10 rounded-full border border-gray-700 bg-gray-900 shrink-0" />
+                        <div className="flex flex-col"><span className="font-bold text-gray-200 text-sm group-hover:text-blue-400">{team.ownerUsername}</span><span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{team.leagueName}</span></div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-3">
-                        {badges.length > 0 ? (
-                           badges.map((b, i) => (
-                             <div key={i} className="flex items-center" title={b.title}>
-                               {b.icon}
-                               {b.count && <span className="text-[10px] font-black text-gray-400 ml-1.5">{b.count}</span>}
-                             </div>
-                           ))
-                        ) : (
-                          <span className="text-gray-700">-</span>
-                        )}
+                        {badges.length > 0 ? badges.map((b, i) => (<div key={i} className="flex items-center" title={b.title}>{b.icon}{b.count && <span className="text-[10px] font-black text-gray-400 ml-1.5">{b.count}</span>}</div>)) : <span className="text-gray-700">-</span>}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right flex flex-col items-end justify-center h-full">
-                      <span className="font-black text-white text-base drop-shadow-md">
-                         {parseFloat(currentWeek === 'overall' ? team.totalPoints : team.points).toFixed(2)}
-                      </span>
-                      {team.wins !== undefined && currentWeek === 'overall' && (
-                         <span className="text-[10px] font-bold text-gray-500 tracking-widest mt-1">
-                           {team.wins}-{team.losses}
-                         </span>
-                      )}
+                      <span className="font-black text-white text-base">{parseFloat(currentWeek === 'overall' ? team.totalPoints : team.points).toFixed(2)}</span>
+                      {currentWeek === 'overall' && <span className="text-[10px] font-bold text-gray-500 tracking-widest mt-1">{team.wins}-{team.losses}</span>}
                     </td>
                   </tr>
                 );
@@ -339,151 +245,31 @@ export default function NapkinLeaderboard({ initialTeams = [] }) {
         </table>
       </div>
 
-      {/* PLAYER MODAL */}
+      {/* PLAYER MODAL (STAT ANALYTICS) */}
       {selectedTeam && (
         <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
            <div className="absolute inset-0" onClick={() => setSelectedTeam(null)}></div>
            <div className="relative bg-[#1a1a1a] border border-gray-700 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
-              
-              <button onClick={() => setSelectedTeam(null)} className="absolute top-4 right-4 p-2 bg-gray-900 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white transition-colors z-10">
-                <X size={20} />
-              </button>
-
-              <div className="p-6 md:p-8 border-b border-gray-800 bg-gradient-to-r from-[#111] to-[#1a1a1a] flex items-center gap-6">
-                 <img src={selectedTeam.ownerAvatar} className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-gray-600 shadow-xl" alt="" />
-                 <div>
-                    <h2 className="text-2xl md:text-3xl font-black text-white italic tracking-tighter mb-1">{selectedTeam.ownerUsername}</h2>
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{selectedTeam.leagueName}</span>
-                 </div>
+              <button onClick={() => setSelectedTeam(null)} className="absolute top-4 right-4 p-2 bg-gray-900 hover:bg-gray-800 rounded-full text-gray-400 transition-colors z-10"><X size={20} /></button>
+              <div className="p-6 md:p-8 border-b border-gray-800 bg-[#111] flex items-center gap-6">
+                 <img src={selectedTeam.ownerAvatar} className="w-16 h-16 rounded-full border-2 border-gray-600 shadow-xl" alt="" />
+                 <div><h2 className="text-2xl md:text-3xl font-black text-white italic tracking-tighter">{selectedTeam.ownerUsername}</h2><span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{selectedTeam.leagueName}</span></div>
               </div>
-
               <div className="p-6 md:p-8 overflow-y-auto flex-1 scrollbar-hide">
-                 
                  {modalLoading ? (
-                    <div className="flex flex-col items-center justify-center py-20">
-                       <Loader2 size={40} className="animate-spin text-gray-600 mb-4" />
-                       <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Loading Analytics...</span>
-                    </div>
-                 ) : modalError ? (
-                    <div className="text-center text-red-500 font-bold py-10 uppercase tracking-widest text-sm border border-dashed border-red-900/50 rounded-2xl bg-red-900/10">
-                       {modalError}
-                    </div>
+                    <div className="flex flex-col items-center justify-center py-20"><Loader2 size={40} className="animate-spin text-gray-600 mb-4" /><span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Crunching Numbers...</span></div>
                  ) : modalData ? (
                     <div className="flex flex-col gap-8">
-                       
-                       {/* SUMMARY STATS GRID */}
                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
-                             <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Overall Rank</span>
-                             <span className="text-2xl font-black text-white">{selectedTeam.rank}</span>
-                          </div>
-                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
-                             <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Total Points</span>
-                             <span className="text-2xl font-black text-white">{parseFloat(selectedTeam.totalPoints).toFixed(2)}</span>
-                          </div>
-                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
-                             <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">H2H Wins</span>
-                             <span className="text-2xl font-black text-white">{Object.values(modalData.weekly_results).filter(w => w.h2h === 'W').length}</span>
-                          </div>
-                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
-                             <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Median Wins</span>
-                             <span className="text-2xl font-black text-white">{Object.values(modalData.weekly_results).filter(w => w.median === 'W').length}</span>
-                          </div>
+                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">Rank</span><span className="text-2xl font-black text-white">{selectedTeam.rank}</span></div>
+                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">Points</span><span className="text-2xl font-black text-white">{parseFloat(selectedTeam.totalPoints).toFixed(2)}</span></div>
+                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">H2H Wins</span><span className="text-2xl font-black text-white">{Object.values(modalData.weekly_results).filter(w => w.h2h === 'W').length}</span></div>
+                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center"><span className="text-[10px] font-black uppercase text-gray-500 mb-1">Med Wins</span><span className="text-2xl font-black text-white">{Object.values(modalData.weekly_results).filter(w => w.median === 'W').length}</span></div>
                        </div>
-
-                       {/* PERFORMANCE CHART */}
-                       <div className="w-full h-[300px] bg-[#111] border border-gray-800 rounded-2xl p-4 shadow-inner">
-                          <Line 
-                             data={{
-                               labels: Array.from({length: 17}, (_, i) => `Wk ${i + 1}`),
-                               datasets: [
-                                 {
-                                   label: 'Weekly Points',
-                                   data: Array.from({length: 17}, (_, i) => modalData.weekly_results[i+1]?.points || null),
-                                   borderColor: '#48bb78',
-                                   backgroundColor: 'rgba(72, 187, 120, 0.1)',
-                                   yAxisID: 'yPoints',
-                                   fill: true,
-                                   tension: 0.4,
-                                 },
-                                 {
-                                   label: 'Weekly Rank',
-                                   data: Array.from({length: 17}, (_, i) => modalData.weekly_results[i+1]?.rank || null),
-                                   borderColor: '#27d7ff',
-                                   backgroundColor: 'rgba(39, 215, 255, 0.1)',
-                                   yAxisID: 'yRank',
-                                   fill: true,
-                                   tension: 0.4,
-                                 }
-                               ]
-                             }}
-                             options={{
-                               responsive: true,
-                               maintainAspectRatio: false,
-                               interaction: { mode: 'index', intersect: false },
-                               scales: {
-                                 yPoints: {
-                                   type: 'linear',
-                                   position: 'left',
-                                   grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                                   ticks: { color: '#a0aec0' }
-                                 },
-                                 yRank: {
-                                   type: 'linear',
-                                   position: 'right',
-                                   reverse: true,
-                                   min: 1,
-                                   max: overallTeams.length,
-                                   grid: { drawOnChartArea: false },
-                                   ticks: { color: '#a0aec0' }
-                                 },
-                                 x: {
-                                   grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                                   ticks: { color: '#a0aec0', maxRotation: 0 }
-                                 }
-                               },
-                               plugins: {
-                                 legend: { labels: { color: '#e2e8f0', usePointStyle: true, boxWidth: 8 } }
-                               }
-                             }}
-                          />
-                       </div>
-
-                       {/* WEEKLY BREAKDOWN TABLE */}
-                       <div className="w-full overflow-x-auto bg-[#111] border border-gray-800 rounded-2xl shadow-inner">
-                         <table className="w-full text-center whitespace-nowrap">
-                           <thead>
-                             <tr className="border-b border-gray-800 bg-[#0a0a0a]">
-                               <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase text-left">Week</th>
-                               {Array.from({length: 17}, (_, i) => <th key={i} className="px-3 py-3 text-[10px] font-black text-gray-500">{i + 1}</th>)}
-                             </tr>
-                           </thead>
-                           <tbody className="divide-y divide-gray-800/50 text-xs font-bold text-gray-300">
-                             <tr className="hover:bg-[#151515]">
-                               <td className="px-4 py-3 text-left text-gray-500">PTS</td>
-                               {Array.from({length: 17}, (_, i) => <td key={i} className="px-3 py-3">{modalData.weekly_results[i+1] ? Math.round(modalData.weekly_results[i+1].points) : '-'}</td>)}
-                             </tr>
-                             <tr className="hover:bg-[#151515]">
-                               <td className="px-4 py-3 text-left text-gray-500">H2H</td>
-                               {Array.from({length: 17}, (_, i) => {
-                                 const res = modalData.weekly_results[i+1]?.h2h;
-                                 return <td key={i} className={`px-3 py-3 ${res === 'W' ? 'text-green-500' : res === 'L' ? 'text-red-500' : ''}`}>{res || '-'}</td>
-                               })}
-                             </tr>
-                             <tr className="hover:bg-[#151515]">
-                               <td className="px-4 py-3 text-left text-gray-500">MED</td>
-                               {Array.from({length: 17}, (_, i) => {
-                                 const res = modalData.weekly_results[i+1]?.median;
-                                 return <td key={i} className={`px-3 py-3 ${res === 'W' ? 'text-green-500' : res === 'L' ? 'text-red-500' : ''}`}>{res || '-'}</td>
-                               })}
-                             </tr>
-                           </tbody>
-                         </table>
-                       </div>
-                       
+                       <div className="w-full h-[300px] bg-[#111] border border-gray-800 rounded-2xl p-4"><Line data={{ labels: Array.from({length: 17}, (_, i) => `Wk ${i + 1}`), datasets: [{ label: 'Weekly Points', data: Array.from({length: 17}, (_, i) => modalData.weekly_results[i+1]?.points || null), borderColor: '#48bb78', backgroundColor: 'rgba(72, 187, 120, 0.1)', yAxisID: 'yPoints', fill: true, tension: 0.4 }, { label: 'Weekly Rank', data: Array.from({length: 17}, (_, i) => modalData.weekly_results[i+1]?.rank || null), borderColor: '#27d7ff', backgroundColor: 'rgba(39, 215, 255, 0.1)', yAxisID: 'yRank', fill: true, tension: 0.4 }] }} options={{ responsive: true, maintainAspectRatio: false, scales: { yPoints: { type: 'linear', position: 'left', grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a0aec0' } }, yRank: { type: 'linear', position: 'right', reverse: true, min: 1, max: overallTeams.length, grid: { drawOnChartArea: false }, ticks: { color: '#a0aec0' } }, x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a0aec0' } } }, plugins: { legend: { labels: { color: '#e2e8f0', usePointStyle: true, boxWidth: 8 } } } }} /></div>
+                       <div className="w-full overflow-x-auto bg-[#111] border border-gray-800 rounded-2xl"><table className="w-full text-center whitespace-nowrap"><thead><tr className="border-b border-gray-800 bg-[#0a0a0a]"><th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase text-left">Week</th>{Array.from({length: 17}, (_, i) => <th key={i} className="px-3 py-3 text-[10px] font-black text-gray-500">{i + 1}</th>)}</tr></thead><tbody className="divide-y divide-gray-800/50 text-xs font-bold text-gray-300"><tr className="hover:bg-[#151515]"><td className="px-4 py-3 text-left text-gray-500">PTS</td>{Array.from({length: 17}, (_, i) => <td key={i} className="px-3 py-3">{modalData.weekly_results[i+1] ? Math.round(modalData.weekly_results[i+1].points) : '-'}</td>)}</tr><tr className="hover:bg-[#151515]"><td className="px-4 py-3 text-left text-gray-500">H2H</td>{Array.from({length: 17}, (_, i) => { const res = modalData.weekly_results[i+1]?.h2h; return <td key={i} className={`px-3 py-3 ${res === 'W' ? 'text-green-500' : res === 'L' ? 'text-red-500' : ''}`}>{res || '-'}</td> })}</tr><tr className="hover:bg-[#151515]"><td className="px-4 py-3 text-left text-gray-500">MED</td>{Array.from({length: 17}, (_, i) => { const res = modalData.weekly_results[i+1]?.median; return <td key={i} className={`px-3 py-3 ${res === 'W' ? 'text-green-500' : res === 'L' ? 'text-red-500' : ''}`}>{res || '-'}</td> })}</tr></tbody></table></div>
                     </div>
-                 ) : null}
-
+                 ) : <div className="text-center py-20 text-gray-500 uppercase font-black tracking-widest text-sm">No data recorded for this manager.</div>}
               </div>
            </div>
         </div>
