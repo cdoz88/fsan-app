@@ -120,22 +120,40 @@ const ConsensusRanking = () => {
       
       <div className="mb-8 flex flex-col gap-6">
         
-        {/* NEW HERO HEADER CARD */}
-        <div className="bg-[#111] rounded-3xl border border-gray-800 shadow-2xl p-6 md:p-8 relative overflow-hidden flex flex-col md:flex-row justify-between md:items-end gap-6">
-          {/* Subtle Red Background Glow */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-red-900/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+        {/* REDESIGNED HEADER: Matches the Teams page style */}
+        <div className="relative w-full h-[220px] md:h-[260px] flex items-end overflow-hidden rounded-2xl shadow-2xl bg-[#111]">
+          <div 
+            className="absolute inset-0 opacity-80 z-0" 
+            style={{ background: `linear-gradient(135deg, #e42d38 0%, #8a1a20 100%)` }}
+          />
+          <img 
+            src="https://admin.fsan.com/wp-content/uploads/2026/04/NFL-Logo.webp" 
+            alt="NFL Background" 
+            className="absolute -right-[10%] md:-right-10 top-1/2 transform -translate-y-1/2 h-[200%] w-auto opacity-20 pointer-events-none z-0" 
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent z-0" />
           
-          <div className="relative z-10">
-             <h1 className="text-4xl md:text-5xl font-black italic text-white uppercase tracking-tighter drop-shadow-md mb-2">Consensus Rankings</h1>
-             {/* Updated Subtitle Text */}
-             <p className="text-gray-400 font-medium">Aggregated PPR Redraft rankings from {rankings.length} experts for <span className="text-red-500 font-bold">{currentPosition}</span>.</p>
+          <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col items-start justify-end h-full px-6 md:px-10 pb-8">
+            <div className="flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">
+              <Link href="/football" className="hover:text-white transition-colors">Football</Link>
+              <span>/</span>
+              <span className="text-gray-200">Rankings</span>
+            </div>
+            <div className="flex flex-col md:flex-row w-full justify-between items-start md:items-end gap-4">
+              <div>
+                 <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-2">
+                   Consensus Rankings
+                 </h1>
+                 <p className="text-gray-300 font-medium text-sm md:text-base">Aggregated PPR Redraft rankings from {rankings.length} experts for <span className="text-red-500 font-bold">{currentPosition}</span>.</p>
+              </div>
+              
+              {canRank && (
+                 <Link href="/football/football-consensus-rankings/submit" className="bg-[#111] hover:bg-gray-800 text-white border border-gray-700 flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shrink-0 w-full md:w-auto">
+                    <Edit size={14} /> Submit Rankings
+                 </Link>
+              )}
+            </div>
           </div>
-          
-          {canRank && (
-             <Link href="/football/football-consensus-rankings/submit" className="relative z-10 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(220,38,38,0.4)] shrink-0 w-full md:w-auto">
-                <Edit size={16} /> Submit Rankings
-             </Link>
-          )}
         </div>
 
         {/* Position & Ranker Controls */}
