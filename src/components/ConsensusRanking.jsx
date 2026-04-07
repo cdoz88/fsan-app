@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { FiTrendingUp, FiUsers, FiAward } from 'react-icons/fi';
+import { TrendingUp, Users, Award } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
 const ConsensusRanking = () => {
@@ -10,7 +10,7 @@ const ConsensusRanking = () => {
     return (
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 animate-in fade-in duration-500">
         <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
-          <FiUsers className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+          <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Data Available</h3>
           <p className="text-gray-500">
             Please upload players and collect rankings first.
@@ -24,7 +24,7 @@ const ConsensusRanking = () => {
     return (
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 animate-in fade-in duration-500">
         <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
-          <FiTrendingUp className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+          <TrendingUp className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Rankings Yet</h3>
           <p className="text-gray-500">
             Consensus rankings will appear once users submit their rankings.
@@ -56,7 +56,7 @@ const ConsensusRanking = () => {
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <FiUsers className="h-8 w-8 text-blue-600" />
+              <Users className="h-8 w-8 text-blue-600" />
             </div>
             <div className="ml-4">
               <div className="text-2xl font-bold text-gray-900">{rankings.length}</div>
@@ -68,7 +68,7 @@ const ConsensusRanking = () => {
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <FiTrendingUp className="h-8 w-8 text-green-500" />
+              <TrendingUp className="h-8 w-8 text-green-500" />
             </div>
             <div className="ml-4">
               <div className="text-2xl font-bold text-gray-900">{consensusRanking.length}</div>
@@ -80,7 +80,7 @@ const ConsensusRanking = () => {
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <FiAward className="h-8 w-8 text-yellow-500" />
+              <Award className="h-8 w-8 text-yellow-500" />
             </div>
             <div className="ml-4">
               <div className="text-2xl font-bold text-gray-900">
