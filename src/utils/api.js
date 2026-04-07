@@ -15,7 +15,6 @@ export const formatPost = (post) => {
   const slugString = slugs.join(' ').toLowerCase();
   const titleString = (post.title?.rendered || '').toLowerCase();
   
-  // ABSOLUTE SPORT DETECTION
   let sport = 'All'; 
   
   if (
@@ -152,10 +151,6 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
   }
 };
 
-// ---------------------------------------------------------
-// NEW WPGRAPHQL FETCHERS
-// ---------------------------------------------------------
-
 export async function fetchGraphQL(query, variables = {}) {
   const WP_GRAPHQL_URL = 'https://admin.fsan.com/graphql';
 
@@ -169,7 +164,6 @@ export async function fetchGraphQL(query, variables = {}) {
         query,
         variables,
       }),
-      // This tells Next.js to revalidate the menu every 60 seconds
       next: { revalidate: 60 }, 
     });
 
@@ -204,6 +198,17 @@ export async function getMenuBySlug(slug) {
   const variables = { id: slug };
   const data = await fetchGraphQL(query, variables);
   
-  // Return the array of links, or an empty array if it fails
   return data?.menu?.menuItems?.nodes || [];
 }
+
+// ---------------------------------------------------------
+// UPDATED EXPORT FOR TYPEAHEAD SEARCH
+// ---------------------------------------------------------
+// You can use this regex function anywhere in your app if you need to manually construct a player slug!
+export const generatePlayerSlug = (name) => {
+  return name.toLowerCase()
+             .replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '') // Strips out suffixes
+             .replace(/['.]/g, '')                      // Strips out apostrophes and periods
+             .replace(/[^a-z0-9]+/g, '-')               // Replaces spaces/specials with dashes
+             .replace(/(^-|-$)/g, '');                  // Trims any trailing dashes
+};

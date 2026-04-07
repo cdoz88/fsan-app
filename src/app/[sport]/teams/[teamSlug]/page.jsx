@@ -59,8 +59,8 @@ async function getTeamData(sportSlug, teamSlug) {
                players: group.items.map(p => ({
                    id: p.id,
                    name: p.fullName,
-                   // Clean up periods and apostrophes for roster clicks!
-                   slug: p.fullName.toLowerCase().replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+                   // Clean up suffixes, periods, and apostrophes for roster clicks!
+                   slug: p.fullName.toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
                    position: p.position?.abbreviation || '',
                    jersey: p.jersey || '',
                    headshot: p.headshot?.href || null,
@@ -72,8 +72,8 @@ async function getTeamData(sportSlug, teamSlug) {
                players: rosterData.athletes.map(p => ({
                    id: p.id,
                    name: p.fullName,
-                   // Clean up periods and apostrophes for roster clicks!
-                   slug: p.fullName.toLowerCase().replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+                   // Clean up suffixes, periods, and apostrophes for roster clicks!
+                   slug: p.fullName.toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
                    position: p.position?.abbreviation || '',
                    jersey: p.jersey || '',
                    headshot: p.headshot?.href || null,

@@ -55,8 +55,8 @@ export default async function DynamicPage({ params, searchParams }) {
                }
 
                if (athleteResult) {
-                  // NEW: Removes apostrophes and periods before replacing spaces
-                  playerRedirectSlug = q.trim().toLowerCase().replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                  // Clean up suffixes, periods, and apostrophes to generate the exact matching URL
+                  playerRedirectSlug = q.trim().toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
                }
             }
          } catch(e) {

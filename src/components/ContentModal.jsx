@@ -6,8 +6,6 @@ import { themes } from '../utils/theme.js';
 import { useSession } from 'next-auth/react';
 import AuthModal from './AuthModal';
 
-// --- GLOBAL SUB-COMPONENTS ---
-
 const ShareButtons = ({ handleShare, handleCopy, copied, btnSize = "w-8 h-8", iconSize = 14 }) => (
   <div className="flex gap-2">
     <button onClick={() => handleShare('facebook')} className={`${btnSize} rounded-full bg-[#4267B2]/10 text-[#4267B2] flex items-center justify-center hover:bg-[#4267B2] hover:text-white transition-colors`} title="Share on Facebook"><Facebook size={iconSize} /></button>
@@ -67,7 +65,6 @@ const DynamicAd = ({ ad }) => {
   );
 };
 
-// --- MEMOIZED ARTICLE CONTENT TO PROTECT GETTY IFRAMES & SWAP LINKS ---
 const ArticleContent = React.memo(function ArticleContent({ content, sportThemeHex }) {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -104,8 +101,8 @@ const ArticleContent = React.memo(function ArticleContent({ content, sportThemeH
           const playerName = link.textContent.trim();
           if (!playerName) return;
 
-          // NEW: Removes apostrophes and periods before replacing spaces
-          const slug = playerName.toLowerCase().replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          // NEW: Removes suffixes, apostrophes, and periods before replacing spaces
+          const slug = playerName.toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
           
           if (!seenPlayers.has(slug)) {
             seenPlayers.add(slug);
@@ -155,7 +152,6 @@ const ArticleContent = React.memo(function ArticleContent({ content, sportThemeH
   );
 });
 
-// --- SMART YOUTUBE PLAYER COMPONENT ---
 const YouTubePlayer = ({ videoId, className }) => {
   const containerRef = useRef(null);
   const playerRef = useRef(null);
@@ -243,7 +239,6 @@ const YouTubePlayer = ({ videoId, className }) => {
   return <div className={className} ref={containerRef}></div>;
 };
 
-// --- VIDEO GATING OVERLAY ---
 const VideoGatingOverlay = ({ openAuth, onSkip }) => (
   <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center animate-in fade-in duration-300">
     <div className="p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] max-w-[320px] w-full shadow-2xl">
@@ -266,8 +261,6 @@ const VideoGatingOverlay = ({ openAuth, onSkip }) => (
     </div>
   </div>
 );
-
-// --- MODAL LAYOUTS ---
 
 const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, handleCopy, copied, isAuthed, authStatus, openAuth, videoOverlayActive, setVideoOverlayActive }) => (
   <div className="flex flex-col lg:flex-row h-full min-h-0">
@@ -432,7 +425,6 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
   </div>
 );
 
-// --- ARTICLE GATING IMPLEMENTATION ---
 const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isAuthed, authStatus, openAuth }) => {
 
   if (authStatus === 'loading') {
@@ -507,8 +499,6 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
     </div>
   );
 };
-
-// --- MAIN EXPORT COMPONENT ---
 
 export default function ContentModal({ selectedItem, setSelectedItem, videos }) {
   const [copied, setCopied] = useState(false);

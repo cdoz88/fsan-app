@@ -110,7 +110,6 @@ const ConsensusRanking = () => {
   return (
     <div className="w-full animate-in fade-in duration-500 pb-24">
       
-      {/* FULL WIDTH HERO HEADER (Always Visible) */}
       <div className="relative w-full h-[220px] md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-8 mt-6 shadow-2xl">
         <div 
           className="absolute inset-0 opacity-80 z-0" 
@@ -142,7 +141,6 @@ const ConsensusRanking = () => {
       </div>
 
       <div className="w-full">
-        {/* Position & Ranker Controls (Always Visible) */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div className="flex flex-wrap gap-2 bg-[#1a1a1a] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
              {['QB', 'RB', 'WR', 'TE', 'FLEX', 'K', 'DEF'].map(pos => (
@@ -170,7 +168,6 @@ const ConsensusRanking = () => {
           </div>
         </div>
 
-        {/* CONDITIONAL BODY CONTENT */}
         {loading ? (
            <div className="flex flex-col items-center justify-center py-24 bg-[#111] rounded-3xl border border-gray-800 shadow-2xl">
               <Loader2 className="animate-spin text-red-600 mb-4" size={48} />
@@ -184,7 +181,6 @@ const ConsensusRanking = () => {
            </div>
         ) : (
            <>
-            {/* Rankings Table */}
             <div className="bg-[#111] rounded-3xl shadow-2xl border border-gray-800 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
               <div className="px-6 py-4 border-b border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h2 className="text-lg font-black text-white uppercase tracking-wider flex items-center gap-3">
@@ -230,8 +226,8 @@ const ConsensusRanking = () => {
                   <tbody className="divide-y divide-gray-800/50">
                     {displayData.map((player, index) => {
                       const rank = isIndividualView ? player.currentRank : (index + 1);
-                      // NEW: Generate the clean URL using the explicit stripping regex
-                      const playerUrl = `/player/${player.name.toLowerCase().replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`;
+                      // NEW: Generate the clean URL using the explicit suffix-stripping regex
+                      const playerUrl = `/player/${player.name.toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`;
                       
                       return (
                         <tr key={player.id} className="hover:bg-[#151515] transition-colors group">
