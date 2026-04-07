@@ -4,9 +4,9 @@ import PlayerClient from './PlayerClient';
 
 // --- DATA FETCHING ---
 
-async function getESPNPlayerData(playerName) {
+async function getESPNPlayerData(lossyName, rawSlug) {
   try {
-    const searchRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(playerName)}&limit=10`, { 
+    const searchRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(lossyName)}&limit=10`, { 
       next: { revalidate: 3600 },
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FSAN/1.0)' }
     });
@@ -15,7 +15,30 @@ async function getESPNPlayerData(playerName) {
     
     const allContents = searchData?.results?.flatMap(r => r.contents || []) || [];
     
-    const athleteResult = allContents.find(c => c.uid && c.uid.includes('~a:'));
+    let athleteResult = allContents.find(c => c.uid && c.uid.includes('~a:'));
+
+    // FALLBACK: If ESPN search fails (common for names with apostrophes/initials like D'Andre),
+    // we search just by the Last Name and match against the clean URL slug!
+    if (!athleteResult && lossyName.includes(' ')) {
+      const parts = lossyName.split(' ');
+      const lastName = parts[parts.length - 1];
+      const fallbackRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(lastName)}&limit=30`, {
+        next: { revalidate: 3600 },
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FSAN/1.0)' }
+      });
+      if (fallbackRes.ok) {
+        const fallbackData = await fallbackRes.json();
+        const fallbackContents = fallbackData?.results?.flatMap(r => r.contents || []) || [];
+        const fallbackAthletes = fallbackContents.filter(c => c.uid && c.uid.includes('~a:'));
+        
+        athleteResult = fallbackAthletes.find(a => {
+          // Generate a clean slug from the ESPN result to see if it matches our page URL
+          const cleanSlug = a.displayName.toLowerCase().replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          return cleanSlug === rawSlug;
+        });
+      }
+    }
+
     if (!athleteResult) return null;
 
     const uidParts = athleteResult.uid.split('~');
@@ -67,23 +90,24 @@ async function getESPNPlayerData(playerName) {
       ...playerData.athlete,
       overview: overviewData,
       deepStats: statsData,
-      sportName // Pass this to the client
+      sportName 
     };
 
   } catch (error) {
-    console.error("ESPN API Error for", playerName, ":", error);
+    console.error("ESPN API Error for", lossyName, ":", error);
     return null;
   }
 }
 
-async function getPlayerContent(playerName, sportName) {
-  const exactMatchQuery = `\\"${playerName}\\"`;
+async function getPlayerContent(searchName, sportName) {
+  // Use a soft search phrase. If searchName has apostrophe or period, exact search might fail in WP,
+  // but GraphQL search is pretty robust. 
+  // Let's search with the exact name, and if WP doesn't find it, that's okay, we do our feed search below which is super robust now.
+  const exactMatchQuery = `\\"${searchName}\\"`;
   
-  // Convert sport name to taxonomy slug
   const sportSlug = sportName && sportName !== 'All' ? sportName.toLowerCase() : '';
   const categoryFilter = sportSlug ? `, categoryName: "${sportSlug}"` : '';
 
-  // 1. Fetch Articles Using GraphQL with Category Filter Injection
   const postsQuery = `
     query GetPlayerPosts {
       posts(where: {search: "${exactMatchQuery}"${categoryFilter}}, first: 50) {
@@ -121,7 +145,6 @@ async function getPlayerContent(playerName, sportName) {
     console.error("WP GraphQL Error:", error);
   }
 
-  // 2. Fetch Videos & Podcasts Using the Custom FSAN Feed Endpoint
   let videos = [];
   let podcasts = [];
   try {
@@ -148,19 +171,20 @@ async function getPlayerContent(playerName, sportName) {
     if (p1.ok) allPods = allPods.concat(await p1.json());
     if (p2.ok) allPods = allPods.concat(await p2.json());
 
-    const playerNameLower = playerName.toLowerCase();
+    // ROBUST SEARCH: Strip periods and apostrophes from both the query and the content!
+    const searchNameClean = searchName.toLowerCase().replace(/['.]/g, '');
     
     videos = allVids.filter(v => {
-      const title = (v.title?.rendered || '').toLowerCase();
-      const content = (v.content?.rendered || '').toLowerCase();
-      const desc = (v.youtube_description || '').toLowerCase();
-      return title.includes(playerNameLower) || content.includes(playerNameLower) || desc.includes(playerNameLower);
+      const title = (v.title?.rendered || '').toLowerCase().replace(/['.]/g, '');
+      const content = (v.content?.rendered || '').toLowerCase().replace(/['.]/g, '');
+      const desc = (v.youtube_description || '').toLowerCase().replace(/['.]/g, '');
+      return title.includes(searchNameClean) || content.includes(searchNameClean) || desc.includes(searchNameClean);
     });
 
     podcasts = allPods.filter(p => {
-      const title = (p.title?.rendered || '').toLowerCase();
-      const content = (p.content?.rendered || '').toLowerCase();
-      return title.includes(playerNameLower) || content.includes(playerNameLower);
+      const title = (p.title?.rendered || '').toLowerCase().replace(/['.]/g, '');
+      const content = (p.content?.rendered || '').toLowerCase().replace(/['.]/g, '');
+      return title.includes(searchNameClean) || content.includes(searchNameClean);
     });
   } catch (e) {
     console.error("Feed fetch error:", e);
@@ -187,7 +211,6 @@ async function getPlayerContent(playerName, sportName) {
     const ytMatch = contentHtml.match(ytRegex);
     if (ytMatch && ytMatch[1]) {
         youtubeId = ytMatch[1];
-        // STRIP IFRAME TO PREVENT DOUBLE RENDER IN MODAL
         contentHtml = contentHtml.replace(/<iframe[^>]*>.*?<\/iframe>/gi, '');
     }
 
@@ -233,7 +256,6 @@ async function getPlayerContent(playerName, sportName) {
     const ytMatch = contentHtml.match(ytRegex);
     if (ytMatch && ytMatch[1]) {
         youtubeId = ytMatch[1];
-        // STRIP IFRAME TO PREVENT DOUBLE RENDER IN MODAL
         contentHtml = contentHtml.replace(/<iframe[^>]*>.*?<\/iframe>/gi, '');
     }
 
@@ -299,20 +321,24 @@ async function getPlayerContent(playerName, sportName) {
 
 export async function generateMetadata({ params }) {
   const { slug: rawSlug } = await params;
-  const playerName = rawSlug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  const lossyName = rawSlug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  const espnData = await getESPNPlayerData(lossyName, rawSlug);
+  const officialName = espnData?.fullName || espnData?.displayName || lossyName;
+
   return {
-    title: `${playerName} | FSAN`,
+    title: `${officialName} | FSAN`,
   };
 }
 
 export default async function PlayerPage({ params }) {
   const { slug: rawSlug } = await params;
-  const playerName = rawSlug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  const lossyName = rawSlug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
-  const espnData = await getESPNPlayerData(playerName);
+  const espnData = await getESPNPlayerData(lossyName, rawSlug);
   const playerSport = espnData?.sportName || 'All';
+  const officialName = espnData?.fullName || espnData?.displayName || lossyName;
 
-  const content = await getPlayerContent(playerName, playerSport);
+  const content = await getPlayerContent(officialName, playerSport);
 
   let proToolsMenu = [];
   let connectMenu = [];
@@ -327,7 +353,7 @@ export default async function PlayerPage({ params }) {
 
   return (
     <PlayerClient 
-       playerName={playerName}
+       playerName={officialName}
        rawSlug={rawSlug}
        espnData={espnData}
        content={content}
