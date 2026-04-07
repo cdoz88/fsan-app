@@ -70,7 +70,7 @@ const ConsensusRanking = () => {
       <div className="w-full py-8 animate-in fade-in duration-500">
         {canRank && (
           <div className="flex justify-end mb-4">
-             <Link href="/football/football-consensus-rankings/submit" className="bg-red-600 text-white flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs uppercase tracking-widest font-black hover:bg-red-500 transition-colors shadow-lg">
+             <Link href="/football/rankings/submit" className="bg-red-600 text-white flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs uppercase tracking-widest font-black hover:bg-red-500 transition-colors shadow-lg">
                 <Edit size={16} /> Submit Rankings
              </Link>
           </div>
@@ -164,7 +164,7 @@ const ConsensusRanking = () => {
           </div>
           
           {canRank && (
-             <Link href="/football/football-consensus-rankings/submit" className="bg-[#111] hover:bg-gray-900 border border-gray-700 text-white flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shrink-0 w-full md:w-auto">
+             <Link href="/football/rankings/submit" className="bg-[#111] hover:bg-gray-900 border border-gray-700 text-white flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shrink-0 w-full md:w-auto">
                 <Edit size={16} /> Submit Rankings
              </Link>
           )}
