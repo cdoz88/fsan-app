@@ -119,37 +119,44 @@ const ConsensusRanking = () => {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
       
       <div className="mb-8 flex flex-col gap-6">
-        <div className="flex flex-col md:flex-row justify-between md:items-end gap-6">
-          <div>
-             <h1 className="text-4xl font-black italic text-white uppercase tracking-tighter drop-shadow-md mb-2">Consensus Rankings</h1>
-             <p className="text-gray-400">Aggregated rankings from {rankings.length} experts for <span className="text-red-500 font-bold">{currentPosition}</span>.</p>
+        
+        {/* NEW HERO HEADER CARD */}
+        <div className="bg-[#111] rounded-3xl border border-gray-800 shadow-2xl p-6 md:p-8 relative overflow-hidden flex flex-col md:flex-row justify-between md:items-end gap-6">
+          {/* Subtle Red Background Glow */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-red-900/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+          
+          <div className="relative z-10">
+             <h1 className="text-4xl md:text-5xl font-black italic text-white uppercase tracking-tighter drop-shadow-md mb-2">Consensus Rankings</h1>
+             {/* Updated Subtitle Text */}
+             <p className="text-gray-400 font-medium">Aggregated PPR Redraft rankings from {rankings.length} experts for <span className="text-red-500 font-bold">{currentPosition}</span>.</p>
           </div>
           
           {canRank && (
-             <Link href="/football/football-consensus-rankings/submit" className="bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(220,38,38,0.4)] shrink-0 w-full md:w-auto">
+             <Link href="/football/football-consensus-rankings/submit" className="relative z-10 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(220,38,38,0.4)] shrink-0 w-full md:w-auto">
                 <Edit size={16} /> Submit Rankings
              </Link>
           )}
         </div>
 
+        {/* Position & Ranker Controls */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="flex flex-wrap gap-2 bg-[#111] p-2 rounded-2xl shadow-inner border border-gray-800 w-fit">
+          <div className="flex flex-wrap gap-2 bg-[#111] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
              {['QB', 'RB', 'WR', 'TE', 'FLEX', 'K', 'DEF'].map(pos => (
                 <button 
                    key={pos} onClick={() => setCurrentPosition(pos)}
-                   className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${currentPosition === pos ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'text-gray-500 hover:text-white hover:bg-[#1a1a1a]'}`}
+                   className={`px-4 py-1.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${currentPosition === pos ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'text-gray-500 hover:text-white hover:bg-[#1a1a1a]'}`}
                 >
                    {pos}
                 </button>
              ))}
           </div>
 
-          <div className="flex items-center gap-3 bg-[#111] p-2 rounded-2xl border border-gray-800 shadow-inner w-full md:w-auto">
+          <div className="flex items-center gap-3 bg-[#111] p-1.5 rounded-2xl border border-gray-800 shadow-inner w-full md:w-auto">
              <span className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-3">Ranker:</span>
              <select 
                 value={selectedAnalyst} 
                 onChange={(e) => setSelectedAnalyst(e.target.value)}
-                className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none focus:border-red-500 font-bold cursor-pointer text-sm tracking-wide w-full md:w-auto outline-none"
+                className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-1.5 px-4 shadow-sm focus:outline-none focus:border-red-500 font-bold cursor-pointer text-xs tracking-wide w-full md:w-auto outline-none"
              >
                 <option value="consensus">Consensus</option>
                 {rankings.map(r => (
@@ -160,17 +167,18 @@ const ConsensusRanking = () => {
         </div>
       </div>
 
+      {/* Rankings Table */}
       <div className="bg-[#111] rounded-3xl shadow-2xl border border-gray-800 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div className="px-6 md:px-8 py-6 border-b border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider flex items-center gap-4">
+        <div className="px-6 py-4 border-b border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h2 className="text-lg font-black text-white uppercase tracking-wider flex items-center gap-3">
             {isIndividualView ? (
               <>
                 {currentPosition} Rankings by {activeAnalystData?.display_name}
                 {getAvatarUrl() ? (
-                  <img src={getAvatarUrl()} alt={activeAnalystData.display_name} className="w-8 h-8 rounded-full border border-gray-600 object-cover" />
+                  <img src={getAvatarUrl()} alt={activeAnalystData.display_name} className="w-6 h-6 rounded-full border border-gray-600 object-cover" />
                 ) : (
-                   <div className="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center shrink-0">
-                     <User size={16} className="text-gray-400" />
+                   <div className="w-6 h-6 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center shrink-0">
+                     <User size={12} className="text-gray-400" />
                    </div>
                 )}
               </>
@@ -188,16 +196,16 @@ const ConsensusRanking = () => {
           <table className="min-w-full text-left whitespace-nowrap">
             <thead className="bg-[#1a1a1a] border-b border-gray-800">
               <tr>
-                <th className="px-6 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest w-16 text-center">Rank</th>
-                <th className="px-6 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">Player</th>
-                <th className="px-6 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">Team</th>
-                <th className="px-6 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">Opponent</th>
+                <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest w-16 text-center">Rank</th>
+                <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">Player</th>
+                <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">Team</th>
+                <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">Opponent</th>
                 {isIndividualView ? (
-                   <th className="px-6 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Vs Consensus</th>
+                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Vs Consensus</th>
                 ) : (
                    <>
-                     <th className="px-6 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Avg Rank</th>
-                     <th className="px-6 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">High / Low</th>
+                     <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Avg Rank</th>
+                     <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">High / Low</th>
                    </>
                 )}
               </tr>
@@ -206,36 +214,35 @@ const ConsensusRanking = () => {
               {displayData.map((player, index) => {
                 const rank = isIndividualView ? player.currentRank : (index + 1);
                 return (
-                  <tr key={player.id} className="hover:bg-[#151515] transition-colors">
-                    {/* Vertical padding reduced to py-2 for compression */}
-                    <td className="px-6 py-2">
-                      <div className="w-8 h-8 mx-auto rounded-full flex items-center justify-center text-xs font-black shrink-0 bg-gray-800 text-white border border-gray-700 shadow-inner">
+                  <tr key={player.id} className="hover:bg-[#151515] transition-colors group">
+                    <td className="px-4 py-2.5">
+                      <div className="w-8 h-8 mx-auto rounded-full flex items-center justify-center text-xs font-black shrink-0 bg-gray-800 text-gray-300 border border-gray-700 shadow-inner group-hover:bg-gray-700 group-hover:text-white transition-colors">
                         {rank}
                       </div>
                     </td>
-                    <td className="px-6 py-2">
+                    <td className="px-4 py-2.5">
                        <div className="text-sm font-black text-gray-100 tracking-tight">{player.name}</div>
                     </td>
-                    <td className="px-6 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider">{player.team}</td>
-                    <td className="px-6 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider">{player.opponent}</td>
+                    <td className="px-4 py-2.5 text-xs font-bold text-gray-400 uppercase tracking-wider">{player.team}</td>
+                    <td className="px-4 py-2.5 text-xs font-bold text-gray-400 uppercase tracking-wider">{player.opponent}</td>
                     
                     {isIndividualView ? (
-                       <td className="px-6 py-2">
-                         <div className="text-sm font-black flex items-center justify-center">
-                            {player.diff > 0 ? <span className="text-green-500 bg-green-900/20 px-2 py-0.5 rounded-lg border border-green-500/30">+{player.diff}</span> : 
-                             player.diff < 0 ? <span className="text-red-500 bg-red-900/20 px-2 py-0.5 rounded-lg border border-red-500/30">{player.diff}</span> : 
-                             <span className="text-gray-500">-</span>}
+                       <td className="px-4 py-2.5">
+                         <div className="text-xs font-black flex items-center justify-center">
+                            {player.diff > 0 ? <span className="text-green-500 bg-green-900/20 px-2 py-0.5 rounded border border-green-500/30">+{player.diff}</span> : 
+                             player.diff < 0 ? <span className="text-red-500 bg-red-900/20 px-2 py-0.5 rounded border border-red-500/30">{player.diff}</span> : 
+                             <span className="text-gray-600">-</span>}
                          </div>
                        </td>
                     ) : (
                        <>
-                         <td className="px-6 py-2 text-center">
+                         <td className="px-4 py-2.5 text-center">
                             <div className="text-sm font-black text-white">{player.averageScore?.toFixed(1)}</div>
                          </td>
-                         <td className="px-6 py-2 text-center">
-                           <div className="text-sm text-gray-500 flex items-center justify-center gap-2 font-bold">
+                         <td className="px-4 py-2.5 text-center">
+                           <div className="text-xs text-gray-500 flex items-center justify-center gap-1.5 font-bold">
                              <span className="text-green-500">{player.minRank}</span>
-                             <span className="text-gray-600">/</span>
+                             <span className="text-gray-700">/</span>
                              <span className="text-red-500">{player.maxRank}</span>
                            </div>
                          </td>
@@ -249,9 +256,9 @@ const ConsensusRanking = () => {
         </div>
       </div>
 
-      <div className="mt-8 bg-[#111] border border-gray-800 rounded-3xl p-6 md:p-8 animate-in fade-in duration-700 delay-500 shadow-xl">
-        <h3 className="text-lg font-black text-white uppercase tracking-wider mb-4">Ranking Methodology</h3>
-        <div className="text-sm text-gray-400 space-y-3 font-medium leading-relaxed">
+      <div className="mt-6 bg-[#111] border border-gray-800 rounded-3xl p-6 animate-in fade-in duration-700 delay-500 shadow-xl">
+        <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">Ranking Methodology</h3>
+        <div className="text-xs text-gray-400 space-y-2 font-medium leading-relaxed">
           <p>• Each user ranking assigns points to players based on their position (higher position = more points).</p>
           <p>• Consensus ranking is calculated by averaging all user scores for each player.</p>
           <p>• Players are then sorted by their average score in descending order.</p>
