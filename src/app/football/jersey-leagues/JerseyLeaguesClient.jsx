@@ -37,28 +37,37 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
       setSubmitStatus(null);
 
       try {
-          const res = await fetch('https://admin.fsan.com/wp-json/gf/v2/forms/18/submissions', {
+          // IMPORTANT: We send the data to our secure internal proxy, and tell it which form to submit to
+          const payload = {
+             formId: 18,
+             ...formData
+          };
+
+          const res = await fetch('/api/gravityforms', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(formData)
+              body: JSON.stringify(payload)
           });
           
           const result = await res.json();
+          
+          // Gravity Forms returns is_valid = true if it passed validation and saved
           if (result.is_valid) {
               setSubmitStatus('success');
               setFormData({});
           } else {
               setSubmitStatus('error');
+              console.error("GF Validation Error:", result);
           }
       } catch (error) {
-          console.error(error);
+          console.error("Submission Error:", error);
           setSubmitStatus('error');
       }
       setIsSubmitting(false);
   };
 
   const renderForm = () => {
-      // IF WP REST API FOR GF IS UNAUTHORIZED, WE RENDER A FALLBACK SO THE UI DOESN'T BREAK
+      // IF WP REST API FOR GF IS UNAUTHORIZED OR FAILED, WE RENDER A FALLBACK SO THE UI DOESN'T BREAK
       const hasFields = gfForm && gfForm.fields && gfForm.fields.length > 0;
       
       if (!hasFields) {
@@ -170,7 +179,7 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
         <div className="flex-1 w-full min-w-0 pt-6">
           <main className="w-full animate-in fade-in duration-500">
             
-            {/* HERO SECTION */}
+            {/* HERO SECTION MATCHING TEAMS/RANKINGS */}
             <div className="relative w-full h-[220px] md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-12 shadow-2xl">
               <div 
                 className="absolute inset-0 opacity-80 z-0" 

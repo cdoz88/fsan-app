@@ -18,14 +18,19 @@ export default async function JerseyLeaguesPage() {
       connectMenu = await getMenuBySlug('connect-football');
     }
 
-    // Securely fetch your Gravity Form Schema (Form ID 18)
-    const gfRes = await fetch('https://admin.fsan.com/wp-json/gf/v2/forms/18', { 
-        next: { revalidate: 60 },
-        headers: { 'Content-Type': 'application/json' }
+    // IMPORTANT: We now fetch through our secure internal proxy!
+    // Using an absolute URL because Next.js requires it for internal API fetches during Server-Side Rendering
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+    const host = process.env.VERCEL_URL || process.env.NEXT_PUBLIC_BASE_URL || 'localhost:3000';
+    
+    const gfRes = await fetch(`${protocol}://${host}/api/gravityforms?formId=18`, { 
+        next: { revalidate: 60 }
     });
     
     if (gfRes.ok) {
         gfForm = await gfRes.json();
+    } else {
+        console.warn("Failed to fetch GF Form Structure");
     }
   } catch (e) {
     console.error("Menu or GF fetch error:", e);
