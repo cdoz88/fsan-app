@@ -153,7 +153,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
         <Link 
           href={itemUrl}
           onClick={(e) => { e.preventDefault(); handleSetSelectedItem(item); }} 
-          className={`flex items-stretch bg-[#1e1e1e] border ${itemTheme.border} border-opacity-40 rounded-2xl overflow-hidden ${itemTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg h-[120px] no-underline`}
+          className={`flex items-stretch bg-[#1e1e1e] border ${itemTheme.border} border-opacity-40 rounded-2xl overflow-hidden ${itemTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg h-[120px] no-underline block`}
         >
           <div className="w-28 shrink-0 relative bg-gray-900 flex items-center justify-center overflow-hidden border-r border-gray-800/50">
             {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" /> : <div className="absolute inset-0 bg-gray-800" />}
@@ -184,7 +184,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
           </defs>
         </svg>
 
-        {/* Articles Carousel */}
         {articles.length > 0 && (
           <section className="relative">
             <div className="flex items-center justify-between mb-6">
@@ -204,7 +203,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
           </section>
         )}
 
-        {/* Videos Carousel */}
         {videos.length > 0 && (
           <section className={`relative ${articles.length > 0 ? 'pt-6 border-t border-gray-800/50' : ''}`}>
             <div className="flex items-center justify-between mb-6">
@@ -224,7 +222,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
           </section>
         )}
 
-        {/* Shorts Carousel */}
         {shorts.length > 0 && (
           <section className={`relative ${articles.length > 0 || videos.length > 0 ? 'pt-6 border-t border-gray-800/50' : ''}`}>
             <div className="flex items-center justify-between mb-6">
@@ -244,7 +241,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
           </section>
         )}
 
-        {/* Podcasts Carousel */}
         {podcasts.length > 0 && (
           <section className={`relative ${articles.length > 0 || videos.length > 0 || shorts.length > 0 ? 'pt-6 border-t border-gray-800/50' : ''}`}>
             <div className="flex items-center justify-between mb-6">
@@ -355,7 +351,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
         <div className="flex-1 w-full min-w-0">
           <main className="flex-1 overflow-y-auto relative z-0 scrollbar-hide pb-24">
             
-            {/* THE HERO HEADER */}
             <div className="relative w-full h-[260px] flex items-end overflow-hidden rounded-2xl mb-6 mt-6">
               <div 
                 className="absolute inset-0 opacity-80 z-0" 
@@ -394,7 +389,10 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
 
                 <div className="flex flex-col gap-1 md:gap-2 w-full z-20 justify-end md:h-full pb-4 md:px-0">
                   <div className="flex items-baseline gap-3 md:gap-4 flex-wrap">
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white">{playerName}</h1>
+                    {/* ALWAYS DISPLAY ESPN'S OFFICIAL NAME IF AVAILABLE */}
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white">
+                       {espnData?.fullName || espnData?.displayName || playerName}
+                    </h1>
                     {espnData?.position && (
                       <span className="text-lg sm:text-xl md:text-2xl font-bold text-gray-400 uppercase tracking-widest">{espnData.position.abbreviation || espnData.position.displayName}</span>
                     )}
@@ -445,7 +443,8 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                     <span>/</span>
                   </>
                 )}
-                <span className="text-gray-400 whitespace-nowrap">{playerName}</span>
+                {/* ALSO USE OFFICIAL NAME IN THE BREADCRUMBS */}
+                <span className="text-gray-400 whitespace-nowrap">{espnData?.fullName || espnData?.displayName || playerName}</span>
               </div>
             </div>
 

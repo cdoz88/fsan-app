@@ -24,7 +24,6 @@ async function getTeamData(sportSlug, teamSlug) {
   else return null;
 
   try {
-    // 1. Fetch all teams to find the correct ESPN Team ID based on the slug
     const teamsRes = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sportString}/${leagueString}/teams`, { next: { revalidate: 86400 } });
     if (!teamsRes.ok) return null;
     const teamsData = await teamsRes.json();
@@ -37,7 +36,6 @@ async function getTeamData(sportSlug, teamSlug) {
     if (!matchedTeam) return null;
     const teamId = matchedTeam.team.id;
 
-    // 2. Fetch the specific team's active roster
     const rosterRes = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sportString}/${leagueString}/teams/${teamId}/roster`, { next: { revalidate: 3600 } });
     if (!rosterRes.ok) return null;
     const rosterData = await rosterRes.json();
@@ -53,7 +51,6 @@ async function getTeamData(sportSlug, teamSlug) {
       standingSummary: rosterData.team.standingSummary || ''
     };
 
-    // ESPN returns athletes either as a flat array or grouped by "Offense"/"Defense". We handle both gracefully.
     let rosterGroups = [];
     if (rosterData.athletes && Array.isArray(rosterData.athletes)) {
        if (rosterData.athletes[0]?.items) {
@@ -62,7 +59,8 @@ async function getTeamData(sportSlug, teamSlug) {
                players: group.items.map(p => ({
                    id: p.id,
                    name: p.fullName,
-                   slug: p.fullName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+                   // Clean up periods and apostrophes for roster clicks!
+                   slug: p.fullName.toLowerCase().replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
                    position: p.position?.abbreviation || '',
                    jersey: p.jersey || '',
                    headshot: p.headshot?.href || null,
@@ -74,7 +72,8 @@ async function getTeamData(sportSlug, teamSlug) {
                players: rosterData.athletes.map(p => ({
                    id: p.id,
                    name: p.fullName,
-                   slug: p.fullName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+                   // Clean up periods and apostrophes for roster clicks!
+                   slug: p.fullName.toLowerCase().replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
                    position: p.position?.abbreviation || '',
                    jersey: p.jersey || '',
                    headshot: p.headshot?.href || null,

@@ -74,7 +74,6 @@ const ArticleContent = React.memo(function ArticleContent({ content, sportThemeH
       const container = document.getElementById('article-content-container');
       if (!container) return;
 
-      // 1. RE-EVALUATE SCRIPTS
       const scripts = container.getElementsByTagName('script');
       Array.from(scripts).forEach((oldScript) => {
         const newScript = document.createElement('script');
@@ -87,7 +86,6 @@ const ArticleContent = React.memo(function ArticleContent({ content, sportThemeH
         oldScript.parentNode.replaceChild(newScript, oldScript);
       });
 
-      // 2. TRIGGER GETTY EMBEDS
       if (container.querySelector('.gettyimages-embed') && !document.getElementById('getty-script')) {
         const script = document.createElement('script');
         script.id = 'getty-script';
@@ -98,35 +96,28 @@ const ArticleContent = React.memo(function ArticleContent({ content, sportThemeH
         try { window.getty.Init(); } catch(e) {}
       }
 
-      // 3. SMART INTERNAL LINK AUTOMATION (The PFR Hijack & Stealth Link)
       const seenPlayers = new Set();
       const links = container.querySelectorAll('a');
       
       links.forEach(link => {
-        // If the link goes to the Sports Reference network
         if (link.href.includes('reference.com')) {
           const playerName = link.textContent.trim();
           if (!playerName) return;
 
-          // Convert "Justin Jefferson" to "justin-jefferson"
-          const slug = playerName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          // NEW: Removes apostrophes and periods before replacing spaces
+          const slug = playerName.toLowerCase().replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
           
           if (!seenPlayers.has(slug)) {
-            // First time seeing this player! Let PFR keep the backlink.
             seenPlayers.add(slug);
-            // Ensure it opens in a new tab so they don't leave FSAN
             link.setAttribute('target', '_blank');
             link.setAttribute('rel', 'noopener noreferrer');
-            
-            // STEALTH MODE: Blend the link perfectly into the surrounding text!
             link.style.setProperty('color', 'inherit', 'important');
             link.style.setProperty('text-decoration', 'none', 'important');
             link.style.setProperty('font-weight', 'inherit', 'important');
-            link.style.setProperty('cursor', 'text', 'important'); // Makes the mouse cursor a text selector instead of a pointer hand
+            link.style.setProperty('cursor', 'text', 'important'); 
           } else {
-            // We've already given PFR a backlink for this player. Hijack it!
             link.href = `/player/${slug}`;
-            link.removeAttribute('target'); // Opens internally
+            link.removeAttribute('target'); 
             link.removeAttribute('rel');
             link.title = `View ${playerName}'s Player Profile`;
           }

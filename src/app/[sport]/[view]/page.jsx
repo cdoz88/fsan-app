@@ -55,7 +55,8 @@ export default async function DynamicPage({ params, searchParams }) {
                }
 
                if (athleteResult) {
-                  playerRedirectSlug = q.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                  // NEW: Removes apostrophes and periods before replacing spaces
+                  playerRedirectSlug = q.trim().toLowerCase().replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
                }
             }
          } catch(e) {
@@ -112,7 +113,6 @@ export default async function DynamicPage({ params, searchParams }) {
           const ytMatch = contentHtml.match(ytRegex);
           if (ytMatch && ytMatch[1]) {
               youtubeId = ytMatch[1];
-              // STRIP IFRAME TO PREVENT DOUBLE RENDER IN MODAL
               contentHtml = contentHtml.replace(/<iframe[^>]*>.*?<\/iframe>/gi, '');
           }
 
@@ -187,7 +187,6 @@ export default async function DynamicPage({ params, searchParams }) {
          const ytMatch = contentHtml.match(ytRegex);
          if (ytMatch && ytMatch[1]) {
              youtubeId = ytMatch[1];
-             // STRIP IFRAME TO PREVENT DOUBLE RENDER IN MODAL
              contentHtml = contentHtml.replace(/<iframe[^>]*>.*?<\/iframe>/gi, '');
          }
 

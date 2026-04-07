@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { Users, Loader2, Edit, User } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
-import { themes } from '../utils/theme';
 
 const ConsensusRanking = () => {
   const { consensusRanking, rankings, players, loading, currentPosition, setCurrentPosition, selectedAnalyst, setSelectedAnalyst } = usePlayer();
@@ -106,12 +105,6 @@ const ConsensusRanking = () => {
   const getAvatarUrl = (userId) => {
       if (activeAnalystData?.avatar) return activeAnalystData.avatar;
       return null; 
-  };
-
-  // Helper function to create URL-friendly slugs from player names
-  const generatePlayerSlug = (name) => {
-    if (!name) return '';
-    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   };
 
   return (
@@ -237,6 +230,9 @@ const ConsensusRanking = () => {
                   <tbody className="divide-y divide-gray-800/50">
                     {displayData.map((player, index) => {
                       const rank = isIndividualView ? player.currentRank : (index + 1);
+                      // NEW: Generate the clean URL using the explicit stripping regex
+                      const playerUrl = `/player/${player.name.toLowerCase().replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`;
+                      
                       return (
                         <tr key={player.id} className="hover:bg-[#151515] transition-colors group">
                           <td className="px-4 py-2.5">
@@ -245,8 +241,7 @@ const ConsensusRanking = () => {
                             </div>
                           </td>
                           <td className="px-4 py-2.5">
-                             {/* Wrapped Player Name in Link Component */}
-                             <Link href={`/player/${generatePlayerSlug(player.name)}`} className="text-sm font-black text-gray-100 tracking-tight hover:text-red-500 transition-colors">
+                             <Link href={playerUrl} className="text-sm font-black text-gray-100 tracking-tight hover:text-blue-400 transition-colors no-underline block">
                                {player.name}
                              </Link>
                           </td>
