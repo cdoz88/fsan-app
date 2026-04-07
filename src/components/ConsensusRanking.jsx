@@ -108,6 +108,12 @@ const ConsensusRanking = () => {
       return null; 
   };
 
+  // Helper function to create URL-friendly slugs from player names
+  const generatePlayerSlug = (name) => {
+    if (!name) return '';
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  };
+
   return (
     <div className="w-full animate-in fade-in duration-500 pb-24">
       
@@ -239,7 +245,10 @@ const ConsensusRanking = () => {
                             </div>
                           </td>
                           <td className="px-4 py-2.5">
-                             <div className="text-sm font-black text-gray-100 tracking-tight">{player.name}</div>
+                             {/* Wrapped Player Name in Link Component */}
+                             <Link href={`/player/${generatePlayerSlug(player.name)}`} className="text-sm font-black text-gray-100 tracking-tight hover:text-red-500 transition-colors">
+                               {player.name}
+                             </Link>
                           </td>
                           <td className="px-4 py-2.5 text-xs font-bold text-gray-400 uppercase tracking-wider">{player.team}</td>
                           <td className="px-4 py-2.5 text-xs font-bold text-gray-400 uppercase tracking-wider">{player.opponent}</td>
