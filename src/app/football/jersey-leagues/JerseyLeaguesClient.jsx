@@ -12,9 +12,8 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
   
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState(null); // 'success' or 'error'
+  const [submitStatus, setSubmitStatus] = useState(null); 
 
-  // Pre-fill the email address if they are logged into their Pro+ account
   useEffect(() => {
       if (session?.user?.email && gfForm?.fields) {
           const emailField = gfForm.fields.find(f => f.type === 'email');
@@ -22,7 +21,6 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
               setFormData(prev => ({ ...prev, [`input_${emailField.id}`]: session.user.email }));
           }
       } else if (session?.user?.email) {
-          // Fallback mapping to Field ID 1
           setFormData(prev => ({ ...prev, ['input_1']: session.user.email }));
       }
   }, [session, gfForm]);
@@ -68,24 +66,20 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
       const hasFields = gfForm && gfForm.fields && gfForm.fields.length > 0;
       
       if (!hasFields) {
-          // STRICT FALLBACK WITH YOUR EXACT FIELD IDS (1, 4, 5)
           return (
               <form onSubmit={handleSubmit} className={`w-full flex flex-col gap-4 ${!isAuthed ? 'opacity-30 pointer-events-none blur-[2px]' : ''}`}>
                   <div className="flex flex-col gap-4 sm:flex-row">
                       <div className="flex flex-col flex-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
-                          {/* Mapped to Field ID 1 */}
                           <input type="email" required onChange={(e) => handleInputChange('1', e.target.value)} value={formData['input_1'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder="Enter your email" />
                       </div>
                       <div className="flex flex-col flex-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Sleeper Username</label>
-                          {/* Mapped to Field ID 4 */}
                           <input type="text" required onChange={(e) => handleInputChange('4', e.target.value)} value={formData['input_4'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder="Your Sleeper ID" />
                       </div>
                   </div>
                   <div className="flex flex-col">
                       <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Select League</label>
-                      {/* Mapped to Field ID 5 */}
                       <select required onChange={(e) => handleInputChange('5', e.target.value)} value={formData['input_5'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors appearance-none text-sm cursor-pointer shadow-inner">
                           <option value="">(Waiting for Gravity Forms Sync...)</option>
                           <option value="Tyreek Hill League">Tyreek Hill League</option>
@@ -100,7 +94,6 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
           );
       }
 
-      // DYNAMIC GRAVITY FORMS RENDERER
       return (
           <form onSubmit={handleSubmit} className={`w-full flex flex-col gap-4 ${!isAuthed ? 'opacity-30 pointer-events-none blur-[2px] transition-all duration-300' : ''}`}>
               <div className="flex flex-col gap-4 sm:flex-row">
@@ -228,17 +221,18 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
                         {idx + 1}
                       </div>
                       
-                      <div className="relative z-10 flex w-full gap-4 items-start mb-6">
+                      {/* UPDATED LAYOUT: Icon and Title side-by-side */}
+                      <div className="relative z-10 flex items-center gap-4 w-full mb-4">
                         <div className="w-16 h-16 rounded-2xl bg-[#111] border border-gray-700 flex items-center justify-center shrink-0 shadow-inner">
                           {step.icon}
                         </div>
-                        <div className="flex flex-col justify-center h-16">
-                          <h3 className="text-xl font-black text-white uppercase tracking-wide leading-none mb-2">{step.title}</h3>
-                          <p className="text-xs text-gray-400 font-bold uppercase tracking-widest leading-none">
-                            {step.description}
-                          </p>
-                        </div>
+                        <h3 className="text-xl font-black text-white uppercase tracking-wide leading-tight">{step.title}</h3>
                       </div>
+                      
+                      {/* Paragraph drops full width below */}
+                      <p className="relative z-10 text-xs text-gray-400 font-bold uppercase tracking-widest leading-relaxed mb-6 w-full">
+                        {step.description}
+                      </p>
                       
                       {step.link && (
                         <Link href={step.link} className="relative z-10 text-red-500 font-bold uppercase tracking-widest text-xs flex items-center justify-center w-full gap-2 hover:text-red-400 transition-colors bg-red-900/20 px-4 py-3 rounded-xl border border-red-900/30 mt-auto">
