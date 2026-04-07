@@ -7,7 +7,6 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Save, Loader2, AlertCircle, MinusCircle, ArrowLeft } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
-// Custom modifier to restrict drag to vertical axis without needing the extra npm package!
 const restrictToVerticalAxis = ({ transform }) => {
   return {
     ...transform,
@@ -28,18 +27,18 @@ const SortableItem = ({ item }) => {
     return (
       <div
         ref={setNodeRef} style={style} {...attributes} {...listeners}
-        className={`bg-red-900/20 rounded-2xl shadow-sm border border-red-500/50 p-4 md:p-5 cursor-grab hover:bg-red-900/30 transition-colors flex items-center justify-between my-6 ${isDragging ? 'opacity-80 ring-2 ring-red-500 scale-[1.02]' : ''}`}
+        className={`bg-red-900/20 rounded-xl shadow-sm border border-red-500/50 px-4 py-3 cursor-grab hover:bg-red-900/30 transition-colors flex items-center justify-between my-4 ${isDragging ? 'opacity-80 ring-2 ring-red-500 scale-[1.02]' : ''}`}
       >
-        <div className="flex items-center space-x-4">
-          <div className="w-10 h-10 bg-red-900/50 text-red-500 border border-red-500/50 rounded-full flex items-center justify-center shrink-0">
-            <MinusCircle size={20} />
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-red-900/50 text-red-500 border border-red-500/50 rounded-full flex items-center justify-center shrink-0">
+            <MinusCircle size={16} />
           </div>
           <div>
-            <h3 className="text-sm font-black text-red-400 uppercase tracking-widest">{item.name}</h3>
-            <p className="text-xs text-red-500/70 font-bold mt-0.5">{item.details}</p>
+            <h3 className="text-xs font-black text-red-400 uppercase tracking-widest">{item.name}</h3>
+            <p className="text-[10px] text-red-500/70 font-bold mt-0.5">{item.details}</p>
           </div>
         </div>
-        <GripVertical className="text-red-500/50 hover:text-red-400 transition-colors" size={24} />
+        <GripVertical className="text-red-500/50 hover:text-red-400 transition-colors" size={20} />
       </div>
     );
   }
@@ -47,20 +46,20 @@ const SortableItem = ({ item }) => {
   return (
     <div
       ref={setNodeRef} style={style} {...attributes} {...listeners}
-      className={`bg-[#1a1a1a] rounded-2xl shadow-sm border p-4 cursor-grab flex items-center justify-between 
+      className={`bg-[#1a1a1a] rounded-xl shadow-sm border px-4 py-2 cursor-grab flex items-center justify-between 
       ${isDragging ? 'opacity-90 ring-2 ring-red-500 scale-[1.02] border-red-500 z-10 relative shadow-2xl' : 'border-gray-800 hover:border-gray-600'} 
       ${item.isBelowStopTier ? 'bg-[#151515] opacity-70 grayscale-[0.3]' : ''}`}
     >
-      <div className="flex items-center space-x-4">
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-black shrink-0 ${item.isBelowStopTier ? 'bg-gray-800 text-gray-400 border border-gray-700' : 'bg-red-600/20 text-red-500 border border-red-500/30 shadow-[0_0_10px_rgba(220,38,38,0.2)]'}`}>
+      <div className="flex items-center space-x-3">
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${item.isBelowStopTier ? 'bg-gray-800 text-gray-400 border border-gray-700' : 'bg-red-600/20 text-red-500 border border-red-500/30 shadow-[0_0_10px_rgba(220,38,38,0.2)]'}`}>
           {item.displayRank}
         </div>
         <div>
-          <h3 className={`text-base font-black tracking-tight ${item.isBelowStopTier ? 'text-gray-400' : 'text-gray-100'}`}>{item.name}</h3>
-          <p className={`text-xs font-bold uppercase tracking-wider mt-0.5 ${item.isBelowStopTier ? 'text-gray-600' : 'text-gray-400'}`}>{item.team} <span className="text-gray-600 mx-1">vs</span> {item.opponent}</p>
+          <h3 className={`text-sm font-black tracking-tight ${item.isBelowStopTier ? 'text-gray-400' : 'text-gray-100'}`}>{item.name}</h3>
+          <p className={`text-[10px] font-bold uppercase tracking-wider mt-0.5 ${item.isBelowStopTier ? 'text-gray-600' : 'text-gray-400'}`}>{item.team} <span className="text-gray-600 mx-1">vs</span> {item.opponent}</p>
         </div>
       </div>
-      <GripVertical className="text-gray-600 hover:text-gray-400 transition-colors" size={20} />
+      <GripVertical className="text-gray-600 hover:text-gray-400 transition-colors" size={18} />
     </div>
   );
 };
@@ -190,7 +189,8 @@ const UserRanking = () => {
 
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
                <SortableContext items={itemsToRender} strategy={verticalListSortingStrategy}>
-                   <div className="space-y-3 pb-24 relative">
+                   {/* Vertical space gap tightened here (space-y-1.5) */}
+                   <div className="space-y-1.5 pb-24 relative">
                    {itemsToRender.map((item) => (
                        <SortableItem key={item.id} item={item} />
                    ))}

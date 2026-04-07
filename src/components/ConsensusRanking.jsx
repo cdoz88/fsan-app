@@ -91,11 +91,8 @@ const ConsensusRanking = () => {
       }
   }
 
-  // --- FIXED DATE PARSER ---
-  // Safely parses "YYYY-MM-DD HH:MM:SS" from WP into a valid JS Date object
   const parseWPDate = (dateString) => {
       if (!dateString) return null;
-      // Replace space with 'T' for ISO 8601 compliance, which Safari/iOS requires
       const safeDateString = dateString.replace(' ', 'T');
       const date = new Date(safeDateString);
       return isNaN(date.getTime()) ? null : date;
@@ -106,7 +103,6 @@ const ConsensusRanking = () => {
       return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  // Find the absolute latest update timestamp among all fetched rankings
   const mostRecentUpdate = rankings.reduce((latest, current) => {
       const currentDate = parseWPDate(current.updated_at);
       if (!currentDate) return latest;
@@ -114,15 +110,8 @@ const ConsensusRanking = () => {
       return latest;
   }, null);
 
-  // Grab the correct avatar URL
   const getAvatarUrl = (userId) => {
-      // Because your WP REST API exposes avatars globally (like in your articles archive),
-      // we can construct the default gravatar fallback URL WordPress uses if the custom meta is missing.
-      // If the custom avatar query was added to PHP, it will be in `activeAnalystData.avatar`.
       if (activeAnalystData?.avatar) return activeAnalystData.avatar;
-      
-      // Fallback: If we have an email hash or user ID, we could use gravatar, 
-      // but without exposing user emails in the ranking JSON, we will render the generic user icon.
       return null; 
   };
 
@@ -199,16 +188,16 @@ const ConsensusRanking = () => {
           <table className="min-w-full text-left whitespace-nowrap">
             <thead className="bg-[#1a1a1a] border-b border-gray-800">
               <tr>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest w-20 text-center">Rank</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Player</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Team</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Opponent</th>
+                <th className="px-6 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest w-16 text-center">Rank</th>
+                <th className="px-6 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">Player</th>
+                <th className="px-6 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">Team</th>
+                <th className="px-6 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">Opponent</th>
                 {isIndividualView ? (
-                   <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Vs Consensus</th>
+                   <th className="px-6 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Vs Consensus</th>
                 ) : (
                    <>
-                     <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Avg Rank</th>
-                     <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">High / Low</th>
+                     <th className="px-6 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Avg Rank</th>
+                     <th className="px-6 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">High / Low</th>
                    </>
                 )}
               </tr>
@@ -218,31 +207,32 @@ const ConsensusRanking = () => {
                 const rank = isIndividualView ? player.currentRank : (index + 1);
                 return (
                   <tr key={player.id} className="hover:bg-[#151515] transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="w-10 h-10 mx-auto rounded-full flex items-center justify-center text-sm font-black shrink-0 bg-gray-800 text-white border border-gray-700 shadow-inner">
+                    {/* Vertical padding reduced to py-2 for compression */}
+                    <td className="px-6 py-2">
+                      <div className="w-8 h-8 mx-auto rounded-full flex items-center justify-center text-xs font-black shrink-0 bg-gray-800 text-white border border-gray-700 shadow-inner">
                         {rank}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                       <div className="text-base font-black text-gray-100 tracking-tight">{player.name}</div>
+                    <td className="px-6 py-2">
+                       <div className="text-sm font-black text-gray-100 tracking-tight">{player.name}</div>
                     </td>
-                    <td className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">{player.team}</td>
-                    <td className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">{player.opponent}</td>
+                    <td className="px-6 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider">{player.team}</td>
+                    <td className="px-6 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider">{player.opponent}</td>
                     
                     {isIndividualView ? (
-                       <td className="px-6 py-4">
+                       <td className="px-6 py-2">
                          <div className="text-sm font-black flex items-center justify-center">
-                            {player.diff > 0 ? <span className="text-green-500 bg-green-900/20 px-3 py-1 rounded-lg border border-green-500/30">+{player.diff}</span> : 
-                             player.diff < 0 ? <span className="text-red-500 bg-red-900/20 px-3 py-1 rounded-lg border border-red-500/30">{player.diff}</span> : 
+                            {player.diff > 0 ? <span className="text-green-500 bg-green-900/20 px-2 py-0.5 rounded-lg border border-green-500/30">+{player.diff}</span> : 
+                             player.diff < 0 ? <span className="text-red-500 bg-red-900/20 px-2 py-0.5 rounded-lg border border-red-500/30">{player.diff}</span> : 
                              <span className="text-gray-500">-</span>}
                          </div>
                        </td>
                     ) : (
                        <>
-                         <td className="px-6 py-4 text-center">
+                         <td className="px-6 py-2 text-center">
                             <div className="text-sm font-black text-white">{player.averageScore?.toFixed(1)}</div>
                          </td>
-                         <td className="px-6 py-4 text-center">
+                         <td className="px-6 py-2 text-center">
                            <div className="text-sm text-gray-500 flex items-center justify-center gap-2 font-bold">
                              <span className="text-green-500">{player.minRank}</span>
                              <span className="text-gray-600">/</span>
