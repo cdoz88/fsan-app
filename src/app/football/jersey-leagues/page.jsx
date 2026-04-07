@@ -26,30 +26,30 @@ export default async function JerseyLeaguesPage() {
   const steps = [
     {
       icon: <Star className="text-red-500" size={32} />,
-      title: "Sign Up",
+      title: "Step 1: Sign Up",
       description: "Sign up for the Pro+ membership to gain exclusive entry into the tournament.",
       link: "/subscribe",
       linkText: "Get Pro+"
     },
     {
       icon: <Mail className="text-red-500" size={32} />,
-      title: "Check Your Email",
+      title: "Step 2: Check Your Email",
       description: "You'll receive a message with instructions to choose your preferred league."
     },
     {
       icon: <Shirt className="text-red-500" size={32} />,
-      title: "Join Your League",
+      title: "Step 3: Join Your League",
       description: "Join the league named after your favorite player (Tyreek Hill, James Cook, Garrett Wilson, etc)."
     },
     {
       icon: <Play className="text-red-500" size={32} />,
-      title: "Play All Season",
+      title: "Step 4: Play All Season",
       description: "Draft your team, manage the waiver wire, and track your progress as you climb the standings."
     },
     {
       icon: <Trophy className="text-red-500" size={32} />,
-      title: "Win a Jersey",
-      description: "Dominate your league and win an autographed jersey straight from the player themselves!"
+      title: "Step 5: Win a Jersey",
+      description: "Dominate your league and win an autographed jersey of the player that your league is named after!"
     }
   ];
 
@@ -81,7 +81,7 @@ export default async function JerseyLeaguesPage() {
                   Jersey Leagues
                 </h1>
                 <p className="text-gray-300 font-medium md:text-lg lg:text-xl leading-relaxed drop-shadow-md">
-                  Every matchup, every touchdown, every trade counts toward winning an autographed jersey straight from the player themselves.
+                  Every matchup, every touchdown, every trade counts toward winning an autographed jersey of the player your league is named after.
                 </p>
               </div>
             </div>
