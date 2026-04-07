@@ -3,10 +3,17 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
-import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Save, Loader2, AlertCircle, MinusCircle, ArrowLeft } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
+
+// Custom modifier to restrict drag to vertical axis without needing the extra npm package!
+const restrictToVerticalAxis = ({ transform }) => {
+  return {
+    ...transform,
+    x: 0,
+  };
+};
 
 const SortableItem = ({ item }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
