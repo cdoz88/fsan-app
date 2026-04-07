@@ -18,19 +18,29 @@ export default async function JerseyLeaguesPage() {
       connectMenu = await getMenuBySlug('connect-football');
     }
 
-    // IMPORTANT: We now fetch through our secure internal proxy!
-    // Using an absolute URL because Next.js requires it for internal API fetches during Server-Side Rendering
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-    const host = process.env.VERCEL_URL || process.env.NEXT_PUBLIC_BASE_URL || 'localhost:3000';
+    // DIRECT SERVER FETCH: Because this runs on the server, we can safely use the env keys directly!
+    const consumerKey = process.env.GF_CONSUMER_KEY;
+    const consumerSecret = process.env.GF_CONSUMER_SECRET;
     
-    const gfRes = await fetch(`${protocol}://${host}/api/gravityforms?formId=18`, { 
-        next: { revalidate: 60 }
-    });
-    
-    if (gfRes.ok) {
-        gfForm = await gfRes.json();
+    if (consumerKey && consumerSecret) {
+        // Create the Basic Auth token
+        const token = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
+        
+        const gfRes = await fetch('https://admin.fsan.com/wp-json/gf/v2/forms/18', { 
+            next: { revalidate: 60 },
+            headers: { 
+                'Authorization': `Basic ${token}`,
+                'Content-Type': 'application/json' 
+            }
+        });
+        
+        if (gfRes.ok) {
+            gfForm = await gfRes.json();
+        } else {
+            console.error("GF Fetch failed with status:", gfRes.status);
+        }
     } else {
-        console.warn("Failed to fetch GF Form Structure");
+        console.warn("Missing Gravity Forms environment variables in Vercel.");
     }
   } catch (e) {
     console.error("Menu or GF fetch error:", e);

@@ -22,7 +22,7 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
               setFormData(prev => ({ ...prev, [`input_${emailField.id}`]: session.user.email }));
           }
       } else if (session?.user?.email) {
-          // Fallback if form schema didn't load
+          // Fallback mapping to Field ID 1
           setFormData(prev => ({ ...prev, ['input_1']: session.user.email }));
       }
   }, [session, gfForm]);
@@ -37,7 +37,6 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
       setSubmitStatus(null);
 
       try {
-          // IMPORTANT: We send the data to our secure internal proxy, and tell it which form to submit to
           const payload = {
              formId: 18,
              ...formData
@@ -51,13 +50,12 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
           
           const result = await res.json();
           
-          // Gravity Forms returns is_valid = true if it passed validation and saved
           if (result.is_valid) {
               setSubmitStatus('success');
               setFormData({});
           } else {
               setSubmitStatus('error');
-              console.error("GF Validation Error:", result);
+              console.error("GF Validation Error Details:", result.validation_messages || result);
           }
       } catch (error) {
           console.error("Submission Error:", error);
@@ -67,25 +65,28 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
   };
 
   const renderForm = () => {
-      // IF WP REST API FOR GF IS UNAUTHORIZED OR FAILED, WE RENDER A FALLBACK SO THE UI DOESN'T BREAK
       const hasFields = gfForm && gfForm.fields && gfForm.fields.length > 0;
       
       if (!hasFields) {
+          // STRICT FALLBACK WITH YOUR EXACT FIELD IDS (1, 4, 5)
           return (
               <form onSubmit={handleSubmit} className={`w-full flex flex-col gap-4 ${!isAuthed ? 'opacity-30 pointer-events-none blur-[2px]' : ''}`}>
                   <div className="flex flex-col gap-4 sm:flex-row">
                       <div className="flex flex-col flex-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
+                          {/* Mapped to Field ID 1 */}
                           <input type="email" required onChange={(e) => handleInputChange('1', e.target.value)} value={formData['input_1'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder="Enter your email" />
                       </div>
                       <div className="flex flex-col flex-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Sleeper Username</label>
-                          <input type="text" required onChange={(e) => handleInputChange('2', e.target.value)} value={formData['input_2'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder="Your Sleeper ID" />
+                          {/* Mapped to Field ID 4 */}
+                          <input type="text" required onChange={(e) => handleInputChange('4', e.target.value)} value={formData['input_4'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder="Your Sleeper ID" />
                       </div>
                   </div>
                   <div className="flex flex-col">
                       <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Select League</label>
-                      <select required onChange={(e) => handleInputChange('3', e.target.value)} value={formData['input_3'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors appearance-none text-sm cursor-pointer shadow-inner">
+                      {/* Mapped to Field ID 5 */}
+                      <select required onChange={(e) => handleInputChange('5', e.target.value)} value={formData['input_5'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors appearance-none text-sm cursor-pointer shadow-inner">
                           <option value="">(Waiting for Gravity Forms Sync...)</option>
                           <option value="Tyreek Hill League">Tyreek Hill League</option>
                           <option value="James Cook League">James Cook League</option>
@@ -99,7 +100,7 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
           );
       }
 
-      // DYNAMIC GRAVITY FORMS RENDERER (Maps directly to your live WP settings!)
+      // DYNAMIC GRAVITY FORMS RENDERER
       return (
           <form onSubmit={handleSubmit} className={`w-full flex flex-col gap-4 ${!isAuthed ? 'opacity-30 pointer-events-none blur-[2px] transition-all duration-300' : ''}`}>
               <div className="flex flex-col gap-4 sm:flex-row">
@@ -179,7 +180,6 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
         <div className="flex-1 w-full min-w-0 pt-6">
           <main className="w-full animate-in fade-in duration-500">
             
-            {/* HERO SECTION MATCHING TEAMS/RANKINGS */}
             <div className="relative w-full h-[220px] md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-12 shadow-2xl">
               <div 
                 className="absolute inset-0 opacity-80 z-0" 
@@ -215,7 +215,6 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
                  </p>
               </div>
 
-              {/* HOW IT WORKS DYNAMIC MASONRY GRID */}
               <div className="mb-16">
                 <div className="flex items-center gap-6 mb-8">
                    <h2 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">Here's How It Works</h2>
@@ -247,7 +246,6 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
                         </Link>
                       )}
 
-                      {/* THE GATED REGISTRATION FORM */}
                       {step.isForm && (
                         <div className="relative w-full flex-1 flex flex-col">
                            {!isAuthed && (
@@ -284,7 +282,6 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
                 </div>
               </div>
 
-              {/* NEW THIS YEAR BLOCK */}
               <div className="bg-gradient-to-br from-[#1b1010] to-[#111] rounded-3xl border border-red-900/30 p-8 md:p-12 mb-12 shadow-[0_0_40px_rgba(220,38,38,0.1)] relative overflow-hidden flex flex-col md:flex-row items-center gap-8 md:gap-12">
                 <div className="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-red-600 to-red-900 rounded-full flex items-center justify-center shrink-0 shadow-[0_0_30px_rgba(220,38,38,0.4)] border-4 border-[#111]">
                   <Medal size={48} className="text-white drop-shadow-md" />
