@@ -15,36 +15,34 @@ export const PlayerProvider = ({ children }) => {
   const [players, setPlayers] = useState([]);
   const [rankings, setRankings] = useState([]);
   const [consensusRanking, setConsensusRanking] = useState([]);
+  
+  // Filters
   const [currentPosition, setCurrentPosition] = useState('QB');
   const [currentWeek, setCurrentWeek] = useState('Offseason');
+  const [selectedAnalyst, setSelectedAnalyst] = useState('consensus'); 
+  
   const [loading, setLoading] = useState(true);
 
-  // Fetch data directly from WordPress via the Next.js Proxy
+  // Fetch data from Next.js Proxy
   const fetchData = async (position, week) => {
     setLoading(true);
     try {
-      // 1. Fetch Raw Players (just to know who exists)
+      // 1. Fetch Raw Players
       const playersRes = await fetch(`/api/rankings?action=nfl_get_players&position=${position}&week=${week}`);
       const playersJson = await playersRes.json();
-      
-      if (playersJson.success) {
-        setPlayers(playersJson.data);
-      }
+      if (playersJson.success) setPlayers(playersJson.data);
 
-      // 2. Fetch the actual Consensus Data from WordPress
+      // 2. Fetch Consensus Data
       const consensusRes = await fetch(`/api/rankings?action=nfl_get_consensus&position=${position}&week=${week}`);
       const consensusJson = await consensusRes.json();
 
       if (consensusJson.success && consensusJson.data) {
-         // The WP plugin returns an array of raw ranking submissions. 
-         // We need to parse them just like nfl-ranking-frontend.js does.
          setRankings(consensusJson.data);
          calculateConsensusFromWP(consensusJson.data, playersJson.data || []);
       } else {
          setConsensusRanking([]);
          setRankings([]);
       }
-
     } catch (error) {
       console.error("Error fetching ranking data:", error);
     } finally {
@@ -52,13 +50,11 @@ export const PlayerProvider = ({ children }) => {
     }
   };
 
-  // Automatically fetch when position or week changes
   useEffect(() => {
     fetchData(currentPosition, currentWeek);
   }, [currentPosition, currentWeek]);
 
-
-  // This mimics exactly what your WP frontend JS was doing to calculate the consensus
+  // Processes the raw ranking strings from WordPress into displayable data
   const calculateConsensusFromWP = (allRankings, basePlayers) => {
     if (allRankings.length === 0 || basePlayers.length === 0) {
         setConsensusRanking([]);
@@ -72,15 +68,7 @@ export const PlayerProvider = ({ children }) => {
     const itemStats = {};
     basePlayers.forEach(player => {
         const key = `player-${player.id}`;
-        itemStats[key] = { 
-            ...player, 
-            type: 'player', 
-            positionSum: 0, 
-            rankSum: 0, 
-            minRank: Infinity, 
-            maxRank: -Infinity, 
-            timesRanked: 0 
-        };
+        itemStats[key] = { ...player, type: 'player', positionSum: 0, rankSum: 0, minRank: Infinity, maxRank: -Infinity, timesRanked: 0 };
     });
 
     allRankings.forEach(ranking => {
@@ -124,31 +112,40 @@ export const PlayerProvider = ({ children }) => {
                     item.maxRank = Math.max(item.maxRank, penaltyRank);
                 }
             });
-        } catch(e) { 
-            console.error("Error parsing ranking row:", e); 
-        }
+        } catch(e) { console.error(e); }
     });
 
     const consensusItems = Object.values(itemStats)
         .filter(item => item.type === 'player' && item.timesRanked > 0)
-        .map(item => {
-            return {
-                ...item,
-                averageScore: item.rankSum / totalRankers, // We map averageRank to averageScore so the UI doesn't break
-                averageRank: item.rankSum / totalRankers,
-                rankCount: item.timesRanked
-            };
-        })
-        .sort((a, b) => a.averageRank - b.averageRank); // Sort lowest score to top
+        .map(item => ({ ...item, averageScore: item.rankSum / totalRankers, averageRank: item.rankSum / totalRankers, rankCount: item.timesRanked }))
+        .sort((a, b) => a.averageRank - b.averageRank);
 
     setConsensusRanking(consensusItems);
   };
 
+  // Submit Ranking directly to WP Database
+  const submitRanking = async (rankedItemsData) => {
+    try {
+      const formData = new FormData();
+      formData.append('action', 'nfl_save_ranking');
+      formData.append('position', currentPosition);
+      formData.append('week', currentWeek);
+      formData.append('ranking_data', JSON.stringify(rankedItemsData));
 
-  // Keep these dummy functions so your UI doesn't crash if it tries to call them
-  const addPlayers = () => {};
-  const submitRanking = () => {};
-  const clearAllData = () => {};
+      const response = await fetch('/api/rankings', { method: 'POST', body: formData });
+      const data = await response.json();
+      
+      if (data.success) {
+         fetchData(currentPosition, currentWeek); // Refresh data
+         return { success: true };
+      } else {
+         return { success: false, message: data.data || 'Failed to save' };
+      }
+    } catch (error) {
+      console.error(error);
+      return { success: false, message: 'Network error' };
+    }
+  };
 
   return (
     <PlayerContext.Provider value={{
@@ -156,13 +153,10 @@ export const PlayerProvider = ({ children }) => {
       rankings,
       consensusRanking,
       loading,
-      currentPosition,
-      setCurrentPosition,
-      currentWeek,
-      setCurrentWeek,
-      addPlayers,
-      submitRanking,
-      clearAllData
+      currentPosition, setCurrentPosition,
+      currentWeek, setCurrentWeek,
+      selectedAnalyst, setSelectedAnalyst,
+      submitRanking
     }}>
       {children}
     </PlayerContext.Provider>
