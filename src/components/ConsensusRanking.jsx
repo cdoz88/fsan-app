@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
-import { TrendingUp, Users, Award, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { TrendingUp, Users, Award, Loader2, Edit } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
 const ConsensusRanking = () => {
@@ -26,6 +27,14 @@ const ConsensusRanking = () => {
   if (players.length === 0 || consensusRanking.length === 0) {
     return (
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 animate-in fade-in duration-500">
+        
+        {/* We still want the submit button available even if there are no rankings yet! */}
+        <div className="flex justify-end mb-4">
+           <Link href="/football/football-consensus-rankings/submit" className="bg-gray-900 text-white flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-800 transition-colors shadow-sm">
+              <Edit size={16} /> Submit Rankings
+           </Link>
+        </div>
+
         <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
           <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Data Available</h3>
@@ -82,18 +91,23 @@ const ConsensusRanking = () => {
            ))}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
            <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">Ranker:</span>
            <select 
               value={selectedAnalyst} 
               onChange={(e) => setSelectedAnalyst(e.target.value)}
-              className="bg-white border border-gray-300 text-gray-900 rounded-lg py-2 px-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+              className="bg-white border border-gray-300 text-gray-900 rounded-lg py-2 px-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold cursor-pointer"
            >
               <option value="consensus">Consensus</option>
               {rankings.map(r => (
                  <option key={r.user_id} value={r.user_id}>{r.display_name}</option>
               ))}
            </select>
+
+           {/* LINK TO THE SUBMISSION PAGE */}
+           <Link href="/football/football-consensus-rankings/submit" className="bg-gray-900 text-white flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-800 transition-colors shadow-sm ml-auto md:ml-4">
+              <Edit size={16} /> Submit Rankings
+           </Link>
         </div>
 
       </div>
