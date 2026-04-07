@@ -1,5 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react'; // Add this to grab the user ID
 
 const PlayerContext = createContext();
 
@@ -12,6 +13,8 @@ export const usePlayer = () => {
 };
 
 export const PlayerProvider = ({ children }) => {
+  const { data: session } = useSession(); // Access the active user session
+  
   const [players, setPlayers] = useState([]);
   const [rankings, setRankings] = useState([]);
   const [consensusRanking, setConsensusRanking] = useState([]);
@@ -23,16 +26,13 @@ export const PlayerProvider = ({ children }) => {
   
   const [loading, setLoading] = useState(true);
 
-  // Fetch data from Next.js Proxy
   const fetchData = async (position, week) => {
     setLoading(true);
     try {
-      // 1. Fetch Raw Players
       const playersRes = await fetch(`/api/rankings?action=nfl_get_players&position=${position}&week=${week}`);
       const playersJson = await playersRes.json();
       if (playersJson.success) setPlayers(playersJson.data);
 
-      // 2. Fetch Consensus Data
       const consensusRes = await fetch(`/api/rankings?action=nfl_get_consensus&position=${position}&week=${week}`);
       const consensusJson = await consensusRes.json();
 
@@ -54,7 +54,6 @@ export const PlayerProvider = ({ children }) => {
     fetchData(currentPosition, currentWeek);
   }, [currentPosition, currentWeek]);
 
-  // Processes the raw ranking strings from WordPress into displayable data
   const calculateConsensusFromWP = (allRankings, basePlayers) => {
     if (allRankings.length === 0 || basePlayers.length === 0) {
         setConsensusRanking([]);
@@ -102,7 +101,6 @@ export const PlayerProvider = ({ children }) => {
                 }
             });
 
-            // Apply penalties for unranked players
             Object.keys(itemStats).forEach(key => {
                 const item = itemStats[key];
                 if(item.type === 'player' && !rankedPlayerKeys.has(key)) {
@@ -123,27 +121,42 @@ export const PlayerProvider = ({ children }) => {
     setConsensusRanking(consensusItems);
   };
 
-  // Submit Ranking directly to WP Database
   const submitRanking = async (rankedItemsData) => {
+    // PREVENT SUBMISSION IF NO USER IS LOGGED IN
+    if (!session || !session.user || !session.user.id) {
+       return { success: false, message: 'You must be logged in to submit a ranking.' };
+    }
+
     try {
       const formData = new FormData();
       formData.append('action', 'nfl_save_ranking');
       formData.append('position', currentPosition);
       formData.append('week', currentWeek);
       formData.append('ranking_data', JSON.stringify(rankedItemsData));
+      formData.append('user_id', session.user.id); // Add WP User ID to the request!
 
-      const response = await fetch('/api/rankings', { method: 'POST', body: formData });
+      // Notice we changed this endpoint from /api/rankings (which only allowed GET)
+      // to hit the WP proxy directly, similar to how the old frontend handled it.
+      const wpUrl = `https://admin.fsan.com/wp-admin/admin-ajax.php`;
+
+      const response = await fetch(wpUrl, { 
+         method: 'POST', 
+         body: formData,
+         // Pass the secure token if available so WP knows who is saving this
+         headers: session.user.token ? { 'Authorization': `Bearer ${session.user.token}` } : {}
+      });
+      
       const data = await response.json();
       
       if (data.success) {
-         fetchData(currentPosition, currentWeek); // Refresh data
+         fetchData(currentPosition, currentWeek); 
          return { success: true };
       } else {
          return { success: false, message: data.data || 'Failed to save' };
       }
     } catch (error) {
       console.error(error);
-      return { success: false, message: 'Network error' };
+      return { success: false, message: 'Network error connecting to the database.' };
     }
   };
 
