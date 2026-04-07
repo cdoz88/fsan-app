@@ -50,6 +50,11 @@ export default async function JerseyLeaguesPage() {
       icon: <Trophy className="text-red-500" size={32} />,
       title: "Step 5: Win a Jersey",
       description: "Dominate your league and win an autographed jersey of the player that your league is named after!"
+    },
+    {
+      icon: <Medal className="text-red-500" size={32} />,
+      title: "Step 6: The Playoff Challenge",
+      description: "See below for more details on how to qualify!"
     }
   ];
 
@@ -59,28 +64,31 @@ export default async function JerseyLeaguesPage() {
       <div className="max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-8 w-full pb-24">
         <Sidebar activeSport="Football" proToolsMenu={proToolsMenu} connectMenu={connectMenu} />
         
-        <div className="flex-1 w-full min-w-0">
+        <div className="flex-1 w-full min-w-0 pt-6">
           <main className="w-full animate-in fade-in duration-500">
             
-            {/* HERO SECTION */}
-            <div className="relative w-full h-[300px] md:h-[450px] flex items-center justify-center overflow-hidden rounded-3xl mb-12 mt-6 shadow-2xl border border-gray-800">
-              <div className="absolute inset-0 bg-[#0a0a0a] z-0" />
-              <img 
-                src="https://fsan.com/wp-content/uploads/2025/08/Jersey-Leagues.webp" 
-                alt="Jersey Leagues" 
-                className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-overlay z-0" 
+            {/* HERO SECTION MATCHING TEAMS/RANKINGS */}
+            <div className="relative w-full h-[220px] md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-12 shadow-2xl">
+              <div 
+                className="absolute inset-0 opacity-80 z-0" 
+                style={{ background: `linear-gradient(135deg, #e42d38 0%, #8a1a20 100%)` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-[#111]/60 to-transparent z-0" />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#111]/90 via-transparent to-[#111]/90 z-0" />
+              <img 
+                src="https://admin.fsan.com/wp-content/uploads/2025/08/Jersey-Leagues.webp" 
+                alt="Jersey Leagues" 
+                className="absolute -right-[10%] md:-right-10 top-1/2 transform -translate-y-1/2 h-[150%] md:h-[200%] w-auto opacity-30 pointer-events-none z-0 mix-blend-overlay" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent z-0" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#121212]/50 to-transparent z-0" />
               
-              <div className="relative z-10 text-center px-6 max-w-4xl mx-auto mt-12 md:mt-24">
-                <span className="inline-block py-1.5 px-4 rounded-full bg-red-600/20 border border-red-500/30 text-red-400 font-bold text-[10px] md:text-xs uppercase tracking-widest mb-6 backdrop-blur-sm">
+              <div className="relative z-10 w-full flex flex-col items-start justify-end h-full px-6 md:px-10 pb-8">
+                <span className="inline-block py-1 px-3 rounded-full bg-red-600/20 border border-red-500/30 text-red-400 font-bold text-[10px] uppercase tracking-widest mb-3 backdrop-blur-sm">
                   The Stakes Are Higher Than Ever
                 </span>
-                <h1 className="text-5xl sm:text-6xl md:text-8xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-6">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-2">
                   Jersey Leagues
                 </h1>
-                <p className="text-gray-300 font-medium md:text-lg lg:text-xl leading-relaxed drop-shadow-md">
+                <p className="text-gray-300 font-medium md:text-lg leading-relaxed drop-shadow-md max-w-2xl">
                   Every matchup, every touchdown, every trade counts toward winning an autographed jersey of the player your league is named after.
                 </p>
               </div>
