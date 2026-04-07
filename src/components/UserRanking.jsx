@@ -37,14 +37,14 @@ const SortableItem = ({ item }) => {
       ref={setNodeRef} style={style} {...attributes} {...listeners}
       className={`bg-[#1a1a1a] rounded-2xl shadow-sm border p-4 cursor-grab transition-all flex items-center justify-between 
       ${isDragging ? 'opacity-90 ring-2 ring-red-500 scale-[1.02] border-red-500 z-10 relative shadow-2xl' : 'border-gray-800 hover:border-gray-600'} 
-      ${item.isBelowStopTier ? 'opacity-40 bg-[#111] grayscale-[0.8]' : ''}`}
+      ${item.isBelowStopTier ? 'opacity-70 bg-[#151515] grayscale-[0.3]' : ''}`}
     >
       <div className="flex items-center space-x-4">
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-black shrink-0 ${item.isBelowStopTier ? 'bg-gray-800 text-gray-500 border border-gray-700' : 'bg-red-600/20 text-red-500 border border-red-500/30 shadow-[0_0_10px_rgba(220,38,38,0.2)]'}`}>
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-black shrink-0 ${item.isBelowStopTier ? 'bg-gray-800 text-gray-400 border border-gray-700' : 'bg-red-600/20 text-red-500 border border-red-500/30 shadow-[0_0_10px_rgba(220,38,38,0.2)]'}`}>
           {item.displayRank}
         </div>
         <div>
-          <h3 className={`text-base font-black tracking-tight ${item.isBelowStopTier ? 'text-gray-500 line-through' : 'text-gray-100'}`}>{item.name}</h3>
+          <h3 className={`text-base font-black tracking-tight ${item.isBelowStopTier ? 'text-gray-400 line-through' : 'text-gray-100'}`}>{item.name}</h3>
           <p className={`text-xs font-bold uppercase tracking-wider mt-0.5 ${item.isBelowStopTier ? 'text-gray-600' : 'text-gray-400'}`}>{item.team} <span className="text-gray-600 mx-1">vs</span> {item.opponent}</p>
         </div>
       </div>
@@ -136,13 +136,13 @@ const UserRanking = () => {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
       
-      {/* Header and Position Filters */}
-      <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+      {/* Header and Position Filters - Now Stacked */}
+      <div className="mb-8 flex flex-col gap-6">
         <div>
            <h1 className="text-4xl font-black italic text-white mb-2 uppercase tracking-tighter drop-shadow-md">Submit Rankings</h1>
            <p className="text-gray-400">Drag and drop players above the stop line to set your official ranks for <span className="text-red-500 font-bold">{currentPosition}</span>.</p>
         </div>
-        <div className="flex flex-wrap gap-2 bg-[#111] p-2 rounded-2xl shadow-inner border border-gray-800 w-fit h-fit">
+        <div className="flex flex-wrap gap-2 bg-[#111] p-2 rounded-2xl shadow-inner border border-gray-800 w-fit">
            {['QB', 'RB', 'WR', 'TE', 'FLEX', 'K', 'DEF'].map(pos => (
               <button 
                  key={pos} 
@@ -169,9 +169,9 @@ const UserRanking = () => {
                <button
                    onClick={handleSubmit}
                    disabled={isSubmitting}
-                   className="px-8 py-3.5 bg-red-600 text-white font-black uppercase tracking-widest rounded-xl hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(220,38,38,0.4)] hover:-translate-y-0.5 transition-all"
+                   className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-bold uppercase tracking-widest rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:-translate-y-0.5 transition-all text-xs"
                >
-                   {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                   {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                    {isSubmitting ? 'Saving...' : 'Save Rankings'}
                </button>
             </div>
