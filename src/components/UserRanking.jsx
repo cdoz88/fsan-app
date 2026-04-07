@@ -3,20 +3,25 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
-// Import this modifier to stop the jerky horizontal sliding during the drag!
-import { restrictToVerticalAxis } from '@dnd-kit/modifiers'; 
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Save, Loader2, AlertCircle, MinusCircle, ArrowLeft } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
+// Custom modifier to restrict drag to vertical axis without needing the extra npm package!
+const restrictToVerticalAxis = ({ transform }) => {
+  return {
+    ...transform,
+    x: 0,
+  };
+};
+
 const SortableItem = ({ item }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   
-  // Use Translate instead of Transform for much smoother vertical movement
   const style = { 
      transform: CSS.Translate.toString(transform), 
-     transition: transition || undefined, // Allow dnd-kit to handle the transition directly
-     zIndex: isDragging ? 50 : 1 // Bring dragged item to top
+     transition: transition || undefined, 
+     zIndex: isDragging ? 50 : 1 
   };
 
   if (item.type === 'stop-tier') {
@@ -51,7 +56,6 @@ const SortableItem = ({ item }) => {
           {item.displayRank}
         </div>
         <div>
-          {/* STRIKETHROUGH REMOVED FROM BELOW STOP TIER TEXT */}
           <h3 className={`text-base font-black tracking-tight ${item.isBelowStopTier ? 'text-gray-400' : 'text-gray-100'}`}>{item.name}</h3>
           <p className={`text-xs font-bold uppercase tracking-wider mt-0.5 ${item.isBelowStopTier ? 'text-gray-600' : 'text-gray-400'}`}>{item.team} <span className="text-gray-600 mx-1">vs</span> {item.opponent}</p>
         </div>
@@ -67,7 +71,6 @@ const UserRanking = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
 
-  // Added tolerance to the pointer sensor to prevent accidental drags on click
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -143,7 +146,6 @@ const UserRanking = () => {
       
       <div className="mb-8 flex flex-col gap-6">
         <div>
-           {/* BACK TO CONSENSUS BUTTON */}
            <div className="flex items-center gap-4 mb-2">
                <Link href="/football/football-consensus-rankings" className="text-gray-500 hover:text-white transition-colors p-2 bg-[#111] hover:bg-[#1a1a1a] rounded-xl border border-gray-800 flex items-center justify-center">
                    <ArrowLeft size={18} />
@@ -186,7 +188,6 @@ const UserRanking = () => {
                </button>
             </div>
 
-            {/* RESTRICT DRAG AXIS: Prevents the jittery horizontal layout shift! */}
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
                <SortableContext items={itemsToRender} strategy={verticalListSortingStrategy}>
                    <div className="space-y-3 pb-24 relative">
