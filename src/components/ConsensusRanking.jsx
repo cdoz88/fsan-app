@@ -1,10 +1,27 @@
 "use client";
 import React from 'react';
-import { TrendingUp, Users, Award } from 'lucide-react';
+import { TrendingUp, Users, Award, Loader2 } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
 const ConsensusRanking = () => {
-  const { consensusRanking, rankings, players } = usePlayer();
+  const { consensusRanking, rankings, players, loading, currentPosition, setCurrentPosition } = usePlayer();
+
+  const getRankBadgeColor = (rank) => {
+    if (rank === 1) return 'bg-yellow-500 text-white';
+    if (rank === 2) return 'bg-gray-400 text-white';
+    if (rank === 3) return 'bg-amber-600 text-white';
+    if (rank <= 10) return 'bg-blue-600 text-white';
+    return 'bg-gray-200 text-gray-700';
+  };
+
+  if (loading) {
+     return (
+       <div className="flex flex-col items-center justify-center py-24">
+          <Loader2 className="animate-spin text-blue-600 mb-4" size={48} />
+          <p className="text-gray-500 font-bold uppercase tracking-widest text-sm">Aggregating Consensus...</p>
+       </div>
+     )
+  }
 
   if (players.length === 0) {
     return (
@@ -20,34 +37,26 @@ const ConsensusRanking = () => {
     );
   }
 
-  if (consensusRanking.length === 0) {
-    return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 animate-in fade-in duration-500">
-        <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
-          <TrendingUp className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Rankings Yet</h3>
-          <p className="text-gray-500">
-            Consensus rankings will appear once users submit their rankings.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const getRankBadgeColor = (rank) => {
-    if (rank === 1) return 'bg-yellow-500 text-white';
-    if (rank === 2) return 'bg-gray-400 text-white';
-    if (rank === 3) return 'bg-amber-600 text-white';
-    if (rank <= 10) return 'bg-blue-600 text-white';
-    return 'bg-gray-200 text-gray-700';
-  };
-
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 animate-in fade-in duration-500">
+      
+      {/* Position Filter Buttons */}
+      <div className="flex flex-wrap gap-2 mb-8 bg-white p-2 rounded-xl shadow-sm border border-gray-200 w-fit">
+         {['QB', 'RB', 'WR', 'TE', 'FLEX', 'K', 'DEF'].map(pos => (
+            <button 
+               key={pos}
+               onClick={() => setCurrentPosition(pos)}
+               className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${currentPosition === pos ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+            >
+               {pos}
+            </button>
+         ))}
+      </div>
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Consensus Rankings</h1>
         <p className="text-gray-600">
-          Aggregated rankings from {rankings.length} user submissions
+          Aggregated rankings from {rankings.length} user submissions for {currentPosition}
         </p>
       </div>
 
@@ -86,85 +95,86 @@ const ConsensusRanking = () => {
               <div className="text-2xl font-bold text-gray-900">
                 {consensusRanking[0]?.averageScore.toFixed(1) || 'N/A'}
               </div>
-              <div className="text-sm text-gray-500">Top Score</div>
+              <div className="text-sm text-gray-500">Top Avg Rank</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Rankings Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Consensus Rankings
-          </h2>
-        </div>
+      {consensusRanking.length > 0 ? (
+         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+            <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900">
+               Consensus Rankings
+            </h2>
+            </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Opponent</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Score</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rankings</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {consensusRanking.map((player, index) => {
-                const rank = index + 1;
-                return (
-                  <tr
-                    key={player.id}
-                    className="hover:bg-gray-50 transition-colors animate-in fade-in slide-in-from-left-4"
-                    style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${getRankBadgeColor(rank)}`}>
-                        {rank}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {player.name}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {player.team}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {player.opponent}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {player.averageScore.toFixed(1)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">
-                        {player.rankCount} / {rankings.length}
-                      </div>
-                    </td>
+            <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+               <thead className="bg-gray-50">
+                  <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Opponent</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Rank</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">High / Low</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Methodology */}
-      <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6 animate-in fade-in duration-700 delay-500">
-        <h3 className="text-lg font-medium text-blue-900 mb-3">Ranking Methodology</h3>
-        <div className="text-sm text-blue-800 space-y-2">
-          <p>• Each user ranking assigns points to players based on their position (higher position = more points)</p>
-          <p>• Consensus ranking is calculated by averaging all user scores for each player</p>
-          <p>• Players are then sorted by their average score in descending order</p>
-          <p>• "Rankings" column shows how many users included this player in their rankings</p>
-        </div>
-      </div>
+               </thead>
+               <tbody className="bg-white divide-y divide-gray-200">
+                  {consensusRanking.map((player, index) => {
+                  const rank = index + 1;
+                  return (
+                     <tr
+                        key={player.id}
+                        className="hover:bg-gray-50 transition-colors animate-in fade-in slide-in-from-left-4"
+                        style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
+                     >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                        <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${getRankBadgeColor(rank)}`}>
+                           {rank}
+                        </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                           {player.name}
+                        </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {player.team}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {player.opponent}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-bold text-gray-900">
+                           {player.averageScore.toFixed(1)}
+                        </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500 flex items-center gap-2">
+                           <span className="text-green-600 font-bold">{player.minRank}</span>
+                           <span className="text-gray-300">/</span>
+                           <span className="text-red-500 font-bold">{player.maxRank}</span>
+                        </div>
+                        </td>
+                     </tr>
+                  );
+                  })}
+               </tbody>
+            </table>
+            </div>
+         </div>
+      ) : (
+         <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
+            <TrendingUp className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Consensus Yet</h3>
+            <p className="text-gray-500">
+            Consensus rankings for {currentPosition} will appear once users submit their rankings.
+            </p>
+         </div>
+      )}
     </div>
   );
 };
