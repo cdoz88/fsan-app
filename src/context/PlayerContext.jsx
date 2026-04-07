@@ -15,32 +15,36 @@ export const PlayerProvider = ({ children }) => {
   const [players, setPlayers] = useState([]);
   const [rankings, setRankings] = useState([]);
   const [consensusRanking, setConsensusRanking] = useState([]);
-  const [isMounted, setIsMounted] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false); // Next.js hydration safety
 
   // Load data from localStorage on mount (Next.js Safe)
   useEffect(() => {
-    setIsMounted(true);
-    const savedPlayers = localStorage.getItem('nfl-players');
-    const savedRankings = localStorage.getItem('nfl-rankings');
-    const savedConsensus = localStorage.getItem('nfl-consensus');
+    try {
+      const savedPlayers = localStorage.getItem('nfl-players');
+      const savedRankings = localStorage.getItem('nfl-rankings');
+      const savedConsensus = localStorage.getItem('nfl-consensus');
 
-    if (savedPlayers) setPlayers(JSON.parse(savedPlayers));
-    if (savedRankings) setRankings(JSON.parse(savedRankings));
-    if (savedConsensus) setConsensusRanking(JSON.parse(savedConsensus));
+      if (savedPlayers) setPlayers(JSON.parse(savedPlayers));
+      if (savedRankings) setRankings(JSON.parse(savedRankings));
+      if (savedConsensus) setConsensusRanking(JSON.parse(savedConsensus));
+    } catch(e) {
+      console.error("Error loading local storage data", e);
+    }
+    setIsLoaded(true);
   }, []);
 
-  // Save to localStorage whenever data changes
+  // Save to localStorage whenever data changes (only AFTER initial load)
   useEffect(() => {
-    if (isMounted) localStorage.setItem('nfl-players', JSON.stringify(players));
-  }, [players, isMounted]);
+    if (isLoaded) localStorage.setItem('nfl-players', JSON.stringify(players));
+  }, [players, isLoaded]);
 
   useEffect(() => {
-    if (isMounted) localStorage.setItem('nfl-rankings', JSON.stringify(rankings));
-  }, [rankings, isMounted]);
+    if (isLoaded) localStorage.setItem('nfl-rankings', JSON.stringify(rankings));
+  }, [rankings, isLoaded]);
 
   useEffect(() => {
-    if (isMounted) localStorage.setItem('nfl-consensus', JSON.stringify(consensusRanking));
-  }, [consensusRanking, isMounted]);
+    if (isLoaded) localStorage.setItem('nfl-consensus', JSON.stringify(consensusRanking));
+  }, [consensusRanking, isLoaded]);
 
   const addPlayers = (newPlayers) => {
     setPlayers(newPlayers);
@@ -104,7 +108,7 @@ export const PlayerProvider = ({ children }) => {
     setPlayers([]);
     setRankings([]);
     setConsensusRanking([]);
-    if (isMounted) {
+    if (typeof window !== 'undefined') {
       localStorage.removeItem('nfl-players');
       localStorage.removeItem('nfl-rankings');
       localStorage.removeItem('nfl-consensus');
@@ -112,7 +116,7 @@ export const PlayerProvider = ({ children }) => {
   };
 
   // Prevent hydration mismatch by not rendering context values until mounted
-  if (!isMounted) return null;
+  if (!isLoaded) return null;
 
   return (
     <PlayerContext.Provider value={{
