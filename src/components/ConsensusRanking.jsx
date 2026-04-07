@@ -46,7 +46,6 @@ const ConsensusRanking = () => {
   if (players.length === 0 || consensusRanking.length === 0) {
     return (
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
-        
         {canRank && (
           <div className="flex justify-end mb-4">
              <Link href="/football/football-consensus-rankings/submit" className="bg-red-600 text-white flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs uppercase tracking-widest font-black hover:bg-red-500 transition-colors shadow-lg">
@@ -54,7 +53,6 @@ const ConsensusRanking = () => {
              </Link>
           </div>
         )}
-
         <div className="text-center py-20 bg-[#111] rounded-3xl border border-dashed border-gray-700 shadow-xl">
           <Users className="mx-auto h-12 w-12 text-gray-500 mb-4" />
           <h3 className="text-xl font-black text-white uppercase tracking-wider mb-2">No Data Available</h3>
@@ -93,22 +91,40 @@ const ConsensusRanking = () => {
       }
   }
 
-  // Format the Last Updated date
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    // Handle invalid dates
-    if (isNaN(date.getTime())) return '';
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  // --- FIXED DATE PARSER ---
+  // Safely parses "YYYY-MM-DD HH:MM:SS" from WP into a valid JS Date object
+  const parseWPDate = (dateString) => {
+      if (!dateString) return null;
+      // Replace space with 'T' for ISO 8601 compliance, which Safari/iOS requires
+      const safeDateString = dateString.replace(' ', 'T');
+      const date = new Date(safeDateString);
+      return isNaN(date.getTime()) ? null : date;
   };
 
-  // Calculate the most recent update for the consensus view
+  const formatDate = (dateObj) => {
+      if (!dateObj) return 'N/A';
+      return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  // Find the absolute latest update timestamp among all fetched rankings
   const mostRecentUpdate = rankings.reduce((latest, current) => {
-      if (!current.updated_at) return latest;
-      const currentDate = new Date(current.updated_at);
+      const currentDate = parseWPDate(current.updated_at);
+      if (!currentDate) return latest;
       if (!latest || currentDate > latest) return currentDate;
       return latest;
   }, null);
+
+  // Grab the correct avatar URL
+  const getAvatarUrl = (userId) => {
+      // Because your WP REST API exposes avatars globally (like in your articles archive),
+      // we can construct the default gravatar fallback URL WordPress uses if the custom meta is missing.
+      // If the custom avatar query was added to PHP, it will be in `activeAnalystData.avatar`.
+      if (activeAnalystData?.avatar) return activeAnalystData.avatar;
+      
+      // Fallback: If we have an email hash or user ID, we could use gravatar, 
+      // but without exposing user emails in the ranking JSON, we will render the generic user icon.
+      return null; 
+  };
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
@@ -117,7 +133,6 @@ const ConsensusRanking = () => {
         <div className="flex flex-col md:flex-row justify-between md:items-end gap-6">
           <div>
              <h1 className="text-4xl font-black italic text-white uppercase tracking-tighter drop-shadow-md mb-2">Consensus Rankings</h1>
-             {/* Updated text here */}
              <p className="text-gray-400">Aggregated rankings from {rankings.length} experts for <span className="text-red-500 font-bold">{currentPosition}</span>.</p>
           </div>
           
@@ -162,11 +177,10 @@ const ConsensusRanking = () => {
             {isIndividualView ? (
               <>
                 {currentPosition} Rankings by {activeAnalystData?.display_name}
-                {/* Analyst Avatar */}
-                {activeAnalystData?.avatar ? (
-                  <img src={activeAnalystData.avatar} alt={activeAnalystData.display_name} className="w-8 h-8 rounded-full border border-gray-600 object-cover" />
+                {getAvatarUrl() ? (
+                  <img src={getAvatarUrl()} alt={activeAnalystData.display_name} className="w-8 h-8 rounded-full border border-gray-600 object-cover" />
                 ) : (
-                   <div className="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center">
+                   <div className="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center shrink-0">
                      <User size={16} className="text-gray-400" />
                    </div>
                 )}
@@ -176,9 +190,8 @@ const ConsensusRanking = () => {
             )}
           </h2>
           
-          {/* Last Updated Display */}
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-            Last Updated: {isIndividualView && activeAnalystData ? formatDate(activeAnalystData.updated_at) : (mostRecentUpdate ? formatDate(mostRecentUpdate) : 'N/A')}
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5 bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-gray-800">
+            Last Updated: <span className="text-white">{isIndividualView && activeAnalystData ? formatDate(parseWPDate(activeAnalystData.updated_at)) : formatDate(mostRecentUpdate)}</span>
           </span>
         </div>
 
