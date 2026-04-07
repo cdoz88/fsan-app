@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { Users, Loader2, Edit } from 'lucide-react';
+import { Users, Loader2, Edit, User } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
 const ConsensusRanking = () => {
@@ -10,7 +10,6 @@ const ConsensusRanking = () => {
   const { data: session, status } = useSession();
   const [canRank, setCanRank] = useState(false);
 
-  // Authenticate user against WordPress roles to see if they can submit rankings
   useEffect(() => {
     const checkRole = async () => {
       if (status === 'authenticated' && session?.user?.token) {
@@ -26,7 +25,6 @@ const ConsensusRanking = () => {
           const json = await res.json();
           const roles = json?.data?.viewer?.roles?.nodes?.map(r => r.name.toLowerCase()) || [];
           
-          // Match the exact allowed roles from your WP plugin
           if (roles.some(r => ['administrator', 'editor', 'author', 'player'].includes(r))) {
             setCanRank(true);
           }
@@ -49,7 +47,6 @@ const ConsensusRanking = () => {
     return (
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
         
-        {/* Only show Submit button to authorized roles */}
         {canRank && (
           <div className="flex justify-end mb-4">
              <Link href="/football/football-consensus-rankings/submit" className="bg-red-600 text-white flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs uppercase tracking-widest font-black hover:bg-red-500 transition-colors shadow-lg">
@@ -67,18 +64,18 @@ const ConsensusRanking = () => {
     );
   }
 
-  // Determine what data to display (Consensus vs Individual Analyst)
   let displayData = [];
   let isIndividualView = false;
+  let activeAnalystData = null;
 
   if (selectedAnalyst === 'consensus') {
       displayData = consensusRanking;
   } else {
       isIndividualView = true;
-      const analystSubmission = rankings.find(r => r.user_id == selectedAnalyst);
-      if (analystSubmission) {
+      activeAnalystData = rankings.find(r => r.user_id == selectedAnalyst);
+      if (activeAnalystData) {
           try {
-              const rawData = JSON.parse(analystSubmission.ranking_data);
+              const rawData = JSON.parse(activeAnalystData.ranking_data);
               const stopIndex = rawData.findIndex(i => i.id === 'stop-tier');
               const validData = stopIndex !== -1 ? rawData.slice(0, stopIndex) : rawData;
               
@@ -96,6 +93,23 @@ const ConsensusRanking = () => {
       }
   }
 
+  // Format the Last Updated date
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    // Handle invalid dates
+    if (isNaN(date.getTime())) return '';
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  // Calculate the most recent update for the consensus view
+  const mostRecentUpdate = rankings.reduce((latest, current) => {
+      if (!current.updated_at) return latest;
+      const currentDate = new Date(current.updated_at);
+      if (!latest || currentDate > latest) return currentDate;
+      return latest;
+  }, null);
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
       
@@ -103,10 +117,10 @@ const ConsensusRanking = () => {
         <div className="flex flex-col md:flex-row justify-between md:items-end gap-6">
           <div>
              <h1 className="text-4xl font-black italic text-white uppercase tracking-tighter drop-shadow-md mb-2">Consensus Rankings</h1>
-             <p className="text-gray-400">Aggregated rankings from {rankings.length} user submissions for <span className="text-red-500 font-bold">{currentPosition}</span>.</p>
+             {/* Updated text here */}
+             <p className="text-gray-400">Aggregated rankings from {rankings.length} experts for <span className="text-red-500 font-bold">{currentPosition}</span>.</p>
           </div>
           
-          {/* Only show Submit button to authorized roles */}
           {canRank && (
              <Link href="/football/football-consensus-rankings/submit" className="bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(220,38,38,0.4)] shrink-0 w-full md:w-auto">
                 <Edit size={16} /> Submit Rankings
@@ -115,7 +129,6 @@ const ConsensusRanking = () => {
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          {/* Position Selector */}
           <div className="flex flex-wrap gap-2 bg-[#111] p-2 rounded-2xl shadow-inner border border-gray-800 w-fit">
              {['QB', 'RB', 'WR', 'TE', 'FLEX', 'K', 'DEF'].map(pos => (
                 <button 
@@ -127,7 +140,6 @@ const ConsensusRanking = () => {
              ))}
           </div>
 
-          {/* Ranker Dropdown */}
           <div className="flex items-center gap-3 bg-[#111] p-2 rounded-2xl border border-gray-800 shadow-inner w-full md:w-auto">
              <span className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-3">Ranker:</span>
              <select 
@@ -144,12 +156,30 @@ const ConsensusRanking = () => {
         </div>
       </div>
 
-      {/* Rankings Table */}
       <div className="bg-[#111] rounded-3xl shadow-2xl border border-gray-800 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div className="px-6 md:px-8 py-6 border-b border-gray-800 flex justify-between items-center">
-          <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider">
-            {isIndividualView ? `${currentPosition} Rankings by ${rankings.find(r => r.user_id == selectedAnalyst)?.display_name}` : `Consensus ${currentPosition} Rankings`}
+        <div className="px-6 md:px-8 py-6 border-b border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider flex items-center gap-4">
+            {isIndividualView ? (
+              <>
+                {currentPosition} Rankings by {activeAnalystData?.display_name}
+                {/* Analyst Avatar */}
+                {activeAnalystData?.avatar ? (
+                  <img src={activeAnalystData.avatar} alt={activeAnalystData.display_name} className="w-8 h-8 rounded-full border border-gray-600 object-cover" />
+                ) : (
+                   <div className="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center">
+                     <User size={16} className="text-gray-400" />
+                   </div>
+                )}
+              </>
+            ) : (
+              `Consensus ${currentPosition} Rankings`
+            )}
           </h2>
+          
+          {/* Last Updated Display */}
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+            Last Updated: {isIndividualView && activeAnalystData ? formatDate(activeAnalystData.updated_at) : (mostRecentUpdate ? formatDate(mostRecentUpdate) : 'N/A')}
+          </span>
         </div>
 
         <div className="overflow-x-auto scrollbar-hide">
@@ -176,7 +206,6 @@ const ConsensusRanking = () => {
                 return (
                   <tr key={player.id} className="hover:bg-[#151515] transition-colors">
                     <td className="px-6 py-4">
-                      {/* Uniform Rank Colors */}
                       <div className="w-10 h-10 mx-auto rounded-full flex items-center justify-center text-sm font-black shrink-0 bg-gray-800 text-white border border-gray-700 shadow-inner">
                         {rank}
                       </div>

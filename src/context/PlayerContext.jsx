@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react'; // Add this to grab the user ID
+import { useSession } from 'next-auth/react';
 
 const PlayerContext = createContext();
 
@@ -13,7 +13,7 @@ export const usePlayer = () => {
 };
 
 export const PlayerProvider = ({ children }) => {
-  const { data: session } = useSession(); // Access the active user session
+  const { data: session } = useSession();
   
   const [players, setPlayers] = useState([]);
   const [rankings, setRankings] = useState([]);
@@ -37,6 +37,7 @@ export const PlayerProvider = ({ children }) => {
       const consensusJson = await consensusRes.json();
 
       if (consensusJson.success && consensusJson.data) {
+         // consensusJson.data now includes the 'avatar' and 'updated_at' fields from WP
          setRankings(consensusJson.data);
          calculateConsensusFromWP(consensusJson.data, playersJson.data || []);
       } else {
@@ -101,6 +102,7 @@ export const PlayerProvider = ({ children }) => {
                 }
             });
 
+            // Apply penalties for unranked players (players sitting below the stop-tier line)
             Object.keys(itemStats).forEach(key => {
                 const item = itemStats[key];
                 if(item.type === 'player' && !rankedPlayerKeys.has(key)) {
@@ -133,16 +135,14 @@ export const PlayerProvider = ({ children }) => {
       formData.append('position', currentPosition);
       formData.append('week', currentWeek);
       formData.append('ranking_data', JSON.stringify(rankedItemsData));
-      formData.append('user_id', session.user.id); // Add WP User ID to the request!
+      formData.append('user_id', session.user.id);
 
-      // Notice we changed this endpoint from /api/rankings (which only allowed GET)
-      // to hit the WP proxy directly, similar to how the old frontend handled it.
       const wpUrl = `https://admin.fsan.com/wp-admin/admin-ajax.php`;
 
       const response = await fetch(wpUrl, { 
          method: 'POST', 
          body: formData,
-         // Pass the secure token if available so WP knows who is saving this
+         // Pass the secure token so WordPress authorizes the save
          headers: session.user.token ? { 'Authorization': `Bearer ${session.user.token}` } : {}
       });
       
