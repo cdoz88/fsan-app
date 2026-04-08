@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
-import { User, Mail, Lock, Loader2, CreditCard, ShieldCheck, CheckCircle2, FileText, ShoppingCart, Tag, AlertTriangle, ShieldAlert, Book, Download, Shirt, Users, Settings, Gift, LogOut, ChevronRight } from 'lucide-react';
+import { User, Mail, Lock, Loader2, CreditCard, ShieldCheck, CheckCircle2, FileText, ShoppingCart, Tag, AlertTriangle, ShieldAlert, Book, Download, Shirt, Users, Settings, Gift, LogOut, ChevronRight, Image as ImageIcon } from 'lucide-react';
 
 // Custom SVG Component for the Premium Community Icon (Supports Color and Monochrome)
 const PremiumCommunityIcon = ({ className = "", size = 24, monochrome = false }) => {
@@ -72,7 +72,10 @@ function AccountDashboardContent() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [relayId, setRelayId] = useState('');
+  
+  // Rookie Guide Fetch
   const [rookieGuideUrl, setRookieGuideUrl] = useState(null);
+  const [guideLoading, setGuideLoading] = useState(true);
   
   const [isCopied, setIsCopied] = useState(false);
   
@@ -151,7 +154,6 @@ function AccountDashboardContent() {
           setIsAdmin(true);
         }
 
-        // Broadened the check to catch "pro plus", "pro_plus", and "pro +" which WP commonly uses
         if (roles.some(r => r.includes('pro+') || r.includes('pro plus') || r.includes('pro_plus') || r.includes('pro +'))) {
           setUserTier('pro-plus');
         } else if (roles.some(r => r.includes('pro') || r.includes('pro member') || r.includes('fsan_pro'))) {
@@ -171,6 +173,7 @@ function AccountDashboardContent() {
   };
 
   const fetchRookieGuideLink = async () => {
+    setGuideLoading(true);
     const query = `
       query GetRookieGuide {
         menu(id: "rookie-guide", idType: SLUG) {
@@ -195,6 +198,8 @@ function AccountDashboardContent() {
       }
     } catch (error) {
       console.error("Failed to fetch Rookie Guide link.");
+    } finally {
+      setGuideLoading(false);
     }
   };
 
@@ -542,17 +547,23 @@ function AccountDashboardContent() {
                       <div className="bg-gradient-to-br from-[#301012] to-[#111] border border-red-900/50 rounded-2xl p-6 relative overflow-hidden group hover:border-red-700 transition-all shadow-lg flex flex-col">
                           <div className="absolute -right-4 -top-4 text-red-500/20 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500"><Book size={120} /></div>
                           <div className="relative z-10 flex flex-col h-full">
-                              <div className="w-12 h-12 bg-red-900/20 text-red-500 border border-red-500/30 rounded-xl flex items-center justify-center mb-4 shadow-inner"><Book size={20} /></div>
-                              <h3 className="text-lg font-black text-white uppercase tracking-wide mb-2">Football Rookie Draft Guide</h3>
+                              <div className="flex items-center gap-3 mb-4">
+                                <div className="w-12 h-12 bg-red-900/20 text-red-500 border border-red-500/30 rounded-xl flex items-center justify-center shadow-inner shrink-0"><Book size={20} /></div>
+                                <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Football Rookie Draft Guide</h3>
+                              </div>
                               <p className="text-xs text-gray-300 leading-relaxed mb-6 flex-1 pr-4">Download the official FSAN Rookie Guide to dominate your dynasty rookie drafts with exclusive player grades and tape breakdowns.</p>
                               
-                              {rookieGuideUrl ? (
+                              {guideLoading ? (
+                                  <button disabled className="w-full bg-gray-800 text-gray-500 font-black uppercase tracking-widest text-[10px] py-3.5 rounded-xl cursor-not-allowed flex items-center justify-center gap-2">
+                                      <Loader2 size={16} className="animate-spin" /> Syncing File...
+                                  </button>
+                              ) : rookieGuideUrl ? (
                                   <a href={rookieGuideUrl} target="_blank" rel="noopener noreferrer" className="w-full bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] hover:opacity-90 text-white font-black uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
                                       <Download size={16} /> Download PDF
                                   </a>
                               ) : (
                                   <button disabled className="w-full bg-gray-800 text-gray-500 font-black uppercase tracking-widest text-[10px] py-3.5 rounded-xl cursor-not-allowed flex items-center justify-center gap-2">
-                                      <Loader2 size={16} className="animate-spin" /> Syncing File...
+                                      Not Available
                                   </button>
                               )}
                           </div>
@@ -561,7 +572,10 @@ function AccountDashboardContent() {
                       <div className="bg-gradient-to-br from-[#301012] to-[#111] border border-red-900/50 rounded-2xl p-6 relative overflow-hidden flex flex-col">
                           <div className="absolute -right-4 -top-4 text-red-500/20 z-0 pointer-events-none"><Book size={120} /></div>
                           <div className="relative z-10 flex flex-col h-full">
-                              <h3 className="text-lg font-black text-white uppercase tracking-wide mb-2">Football Rookie Draft Guide</h3>
+                              <div className="flex items-center gap-3 mb-4">
+                                <div className="w-12 h-12 bg-red-900/20 text-red-500 border border-red-500/30 rounded-xl flex items-center justify-center shadow-inner shrink-0"><Book size={20} /></div>
+                                <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Football Rookie Draft Guide</h3>
+                              </div>
                               <p className="text-xs text-gray-300 leading-relaxed mb-6 flex-1 pr-4">The ultimate 150-page breakdown of this year's draft class. Exclusive for Pro+ members.</p>
                               
                               <button onClick={() => router.push('/subscribe')} className="w-full bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 font-bold uppercase tracking-widest py-3 px-6 rounded-xl text-xs relative z-10 shadow-inner transition-colors">Locked: Pro+ Only</button>
@@ -574,7 +588,10 @@ function AccountDashboardContent() {
                    <div className={`absolute -right-4 -top-4 transition-transform duration-500 pointer-events-none ${(userTier === 'pro-plus' || userTier === 'pro') ? 'text-gray-700/30 group-hover:scale-110' : 'text-gray-800/20'}`}><ShoppingCart size={120} /></div>
                    
                    <div className="relative z-10 flex flex-col h-full">
-                     <h3 className={`text-lg font-black uppercase tracking-wider mb-2 ${(userTier === 'pro-plus' || userTier === 'pro') ? 'text-white' : 'text-gray-300'}`}>Merch Shop Discount</h3>
+                     <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 bg-gray-800 text-gray-400 border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0"><ShoppingCart size={20} /></div>
+                        <h3 className={`text-lg font-black uppercase tracking-wide leading-tight ${(userTier === 'pro-plus' || userTier === 'pro') ? 'text-white' : 'text-gray-300'}`}>Merch Shop Discount</h3>
+                     </div>
                      <p className={`text-xs leading-relaxed mb-6 flex-1 pr-4 ${(userTier === 'pro-plus' || userTier === 'pro') ? 'text-gray-400' : 'text-gray-500'}`}>Get 20% off all apparel in the FSAN shop. Exclusive for Premium members.</p>
                      
                      {(userTier === 'pro-plus' || userTier === 'pro') ? (
@@ -596,12 +613,14 @@ function AccountDashboardContent() {
                       <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-gray-600 transition-all shadow-lg flex flex-col">
                           <div className="absolute -right-4 -top-4 text-gray-800/20 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500"><Shirt size={120} /></div>
                           <div className="relative z-10 flex flex-col h-full">
-                              <div className="w-12 h-12 bg-orange-900/20 text-orange-500 border border-orange-500/30 rounded-xl flex items-center justify-center mb-4 shadow-inner"><Shirt size={20} /></div>
-                              <h3 className="text-lg font-black text-white uppercase tracking-wide mb-2">Jersey Leagues</h3>
+                              <div className="flex items-center gap-3 mb-4">
+                                <div className="w-12 h-12 bg-gray-800 text-gray-400 border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0"><Shirt size={20} /></div>
+                                <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Jersey Leagues</h3>
+                              </div>
                               <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">Compete in an exclusive redraft tournament to win an autographed jersey from your favorite NFL player and a championship ring.</p>
                               
                               <Link href="/football/jersey-leagues" className="w-full bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-white font-black uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2">
-                                  Submit Registration <ChevronRight size={14} />
+                                  Submit Your Entry <ChevronRight size={14} />
                               </Link>
                           </div>
                       </div>
@@ -612,13 +631,13 @@ function AccountDashboardContent() {
                       <div className="absolute -right-4 -top-4 text-gray-700/30 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500">
                           <PremiumCommunityIcon size={120} monochrome={true} />
                       </div>
+                      
                       <div className="relative z-10 flex flex-col h-full">
-                          
                           <div className="flex items-center gap-3 mb-4">
                              <div className="w-12 h-12 bg-gray-800 text-white border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0">
                                  <PremiumCommunityIcon size={24} monochrome={false} />
                              </div>
-                             <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Premium Community</h3>
+                             <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Exclusive Community</h3>
                           </div>
 
                           <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">Get direct access to our analysts and chat with other premium members in our exclusive Sellout Crowds community boards.</p>
