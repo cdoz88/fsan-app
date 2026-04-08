@@ -212,8 +212,8 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
                   {steps.map((step, idx) => (
                     <div key={idx} className={`${step.colSpan} ${step.isForm ? 'border-red-900/30 shadow-[0_0_20px_rgba(220,38,38,0.05)]' : 'border-gray-800'} bg-[#1a1a1a] rounded-3xl border p-8 flex flex-col items-start relative overflow-hidden group transition-colors shadow-lg`}>
                       
-                      {/* FIX 1: FADED NUMBER ALWAYS VISIBLE (even on Mobile), AND FADED FOR FORM */}
-                      <div className={`absolute -right-4 -top-4 text-[120px] font-black text-[#222] z-0 select-none transition-colors leading-none ${step.isForm ? 'opacity-30 text-red-900/10' : 'group-hover:text-[#2a2a2a]'}`}>
+                      {/* FIX 1: Removed conditional styling so the number always shows exactly like the others */}
+                      <div className="absolute -right-4 -top-4 text-[120px] font-black text-[#222] z-0 select-none group-hover:text-[#2a2a2a] transition-colors leading-none pointer-events-none">
                         {idx + 1}
                       </div>
                       
@@ -270,10 +270,8 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
                 </div>
               </div>
 
-              {/* FIX 2: MOVED PREVIOUS STEP 6 CONTENT HERE, REMOVED BADGE, AND ADDED BACKGROUND 6 */}
               <div className="bg-gradient-to-br from-[#1b1010] to-[#111] rounded-3xl border border-red-900/30 p-8 md:p-12 mb-12 shadow-[0_0_40px_rgba(220,38,38,0.1)] relative overflow-hidden flex flex-col md:flex-row items-center gap-8 md:gap-12">
                 
-                {/* LARGE FADED BACKGROUND 6 */}
                 <div className="absolute -right-4 -top-4 text-[120px] md:text-[180px] font-black text-red-900/10 z-0 select-none transition-colors leading-none pointer-events-none">
                     6
                 </div>
@@ -283,14 +281,13 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
                 </div>
                 <div className="flex-1 text-center md:text-left relative z-10">
                   
-                  {/* "New This Year" badge REMOVED */}
-
-                  {/* Title changed to "Step 6: The Playoff Challenge" */}
                   <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter mb-4 italic">
                     Step 6: The Playoff Challenge
                   </h2>
+                  
+                  {/* FIX 2: Updated the text to precisely match your request */}
                   <p className="text-gray-300 text-base md:text-lg leading-relaxed">
-                    This year, all regular-season winners will face off in an ultimate showdown. The overall Jersey League champion will take home a <strong>championship ring or belt</strong>, proving them as the undisputed tournament champ!
+                    All regular-season winners will face off in an ultimate showdown. The winner of The Playoff Challenge will take home a <strong>championship ring or belt</strong>, proving them as the undisputed tournament champ!
                   </p>
                 </div>
               </div>
