@@ -226,7 +226,6 @@ export default function SubscribePage() {
               <Sparkles size={14} className="text-yellow-400" /> Upgrade Your Game
             </div>
             
-            {/* UPDATED: Network 3-Color Gradient applied to the main title */}
             <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] mb-2 drop-shadow-2xl">
               Dominate Your League
             </h1>
@@ -239,7 +238,7 @@ export default function SubscribePage() {
             <span className={`text-sm font-black uppercase tracking-widest transition-colors ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-600'}`}>Yearly <span className="text-green-500 lowercase tracking-normal font-bold ml-1">(Save over 30%)</span></span>
             <button 
               onClick={() => setBillingCycle(billingCycle === 'yearly' ? 'monthly' : 'yearly')}
-              className={`relative w-16 h-8 rounded-full transition-colors duration-300 shadow-inner ${billingCycle === 'yearly' ? 'bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623]' : 'bg-gray-700'}`}
+              className={`relative w-16 h-8 rounded-full transition-colors duration-300 shadow-inner ${billingCycle === 'yearly' ? 'bg-gradient-to-r from-red-600 to-orange-500' : 'bg-gray-700'}`}
             >
               <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-transform duration-300 shadow-md ${billingCycle === 'yearly' ? 'left-1' : 'translate-x-9'}`}></div>
             </button>
@@ -290,18 +289,17 @@ export default function SubscribePage() {
 
             {/* PRO+ PLAN (FAN FAVORITE HIGHLIGHT) */}
             <div className="relative bg-[#1a1a1a] rounded-3xl p-[2px] flex flex-col h-full shadow-[0_0_40px_rgba(195,11,22,0.3)] transform lg:-translate-y-6 z-10 animate-in fade-in slide-in-from-bottom-8 bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)]">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] text-white text-[11px] font-black uppercase tracking-widest py-1.5 px-6 rounded-full flex items-center gap-1.5 shadow-xl whitespace-nowrap z-20">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[11px] font-black uppercase tracking-widest py-1.5 px-6 rounded-full flex items-center gap-1.5 shadow-xl whitespace-nowrap z-20">
                  <Flame size={14} className="fill-white" /> Fan Favorite
               </div>
 
               <div className="bg-gradient-to-b from-[#151515] to-[#0a0a0a] rounded-[22px] p-8 flex flex-col h-full relative z-10">
                 <div className="text-center mb-8 pb-8 border-b border-gray-800">
-                  <div className="w-16 h-16 bg-gradient-to-r from-[#1b75bb]/20 via-[#c30b16]/20 to-[#f5a623]/20 rounded-full flex items-center justify-center mx-auto mb-4 scale-110">
+                  <div className="w-16 h-16 bg-red-600/20 rounded-full flex items-center justify-center mx-auto mb-4 scale-110">
                     <Flame size={32} className="text-red-500 fill-red-500/20" />
                   </div>
-                  <h3 className="text-3xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] mb-2 tracking-wider drop-shadow-md">PRO+</h3>
+                  <h3 className="text-3xl font-black italic text-white mb-2 tracking-wider drop-shadow-md">PRO+</h3>
                   
-                  {/* SAVINGS BADGE INTEGRATED */}
                   <div className="h-5 flex items-center justify-center gap-2">
                     <p className="text-gray-300 text-xs font-bold uppercase tracking-widest">{billingCycle === 'yearly' ? 'Billed $59.88 Annually' : 'Billed Monthly'}</p>
                     {billingCycle === 'yearly' && <span className="bg-green-500/20 text-green-500 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border border-green-500/30 shrink-0">Save 38%</span>}
@@ -322,7 +320,6 @@ export default function SubscribePage() {
                   ))}
                 </div>
 
-                {/* UPDATED: Network Gradient applied to the PRO+ button */}
                 <button 
                   onClick={() => handleCheckout('pro-plus')}
                   disabled={isCheckingOut === 'pro-plus' || userTier === 'pro-plus'}
@@ -341,7 +338,6 @@ export default function SubscribePage() {
                 </div>
                 <h3 className="text-2xl font-black italic text-white mb-2 tracking-wider">PRO</h3>
                 
-                {/* SAVINGS BADGE INTEGRATED */}
                 <div className="h-5 flex items-center justify-center gap-2">
                   <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">{billingCycle === 'yearly' ? 'Billed $23.88 Annually' : 'Billed Monthly'}</p>
                   {billingCycle === 'yearly' && <span className="bg-green-500/20 text-green-500 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border border-green-500/30 shrink-0">Save 33%</span>}
