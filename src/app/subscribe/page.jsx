@@ -16,7 +16,7 @@ export default function SubscribePage() {
   const [billingCycle, setBillingCycle] = useState('yearly');
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingOut, setIsCheckingOut] = useState(null); 
-  const [isPortalLoading, setIsPortalLoading] = useState(false); // Track portal loading state
+  const [isPortalLoading, setIsPortalLoading] = useState(false);
   const [userTier, setUserTier] = useState('free'); 
   
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -174,7 +174,6 @@ export default function SubscribePage() {
     }
   };
 
-  // Launch the Stripe Portal for downgrades
   const handleManageBilling = async () => {
     setIsPortalLoading(true);
     try {
@@ -226,7 +225,9 @@ export default function SubscribePage() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800/50 border border-gray-700 text-gray-300 text-xs font-bold uppercase tracking-widest mb-6">
               <Sparkles size={14} className="text-yellow-400" /> Upgrade Your Game
             </div>
-            <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 mb-2 drop-shadow-2xl">
+            
+            {/* UPDATED: Network 3-Color Gradient applied to the main title */}
+            <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] mb-2 drop-shadow-2xl">
               Dominate Your League
             </h1>
             <p className="text-gray-400 max-w-2xl mx-auto text-lg md:text-xl leading-relaxed">
@@ -235,10 +236,10 @@ export default function SubscribePage() {
           </div>
           
           <div className="flex justify-center items-center gap-4 mb-16 animate-in fade-in duration-700 delay-150">
-            <span className={`text-sm font-black uppercase tracking-widest transition-colors ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-600'}`}>Yearly <span className="text-green-500 lowercase tracking-normal font-bold ml-1">(Save 33%)</span></span>
+            <span className={`text-sm font-black uppercase tracking-widest transition-colors ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-600'}`}>Yearly <span className="text-green-500 lowercase tracking-normal font-bold ml-1">(Save over 30%)</span></span>
             <button 
               onClick={() => setBillingCycle(billingCycle === 'yearly' ? 'monthly' : 'yearly')}
-              className={`relative w-16 h-8 rounded-full transition-colors duration-300 shadow-inner ${billingCycle === 'yearly' ? 'bg-gradient-to-r from-red-600 to-orange-500' : 'bg-gray-700'}`}
+              className={`relative w-16 h-8 rounded-full transition-colors duration-300 shadow-inner ${billingCycle === 'yearly' ? 'bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623]' : 'bg-gray-700'}`}
             >
               <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-transform duration-300 shadow-md ${billingCycle === 'yearly' ? 'left-1' : 'translate-x-9'}`}></div>
             </button>
@@ -254,7 +255,9 @@ export default function SubscribePage() {
                   <Shield size={24} className="text-blue-500" />
                 </div>
                 <h3 className="text-2xl font-black italic text-white mb-2 tracking-wider">FREE</h3>
-                <p className="text-gray-500 text-xs font-bold uppercase tracking-widest h-5">Zero Cost Perks</p>
+                <div className="h-5 flex items-center justify-center">
+                  <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">Zero Cost Perks</p>
+                </div>
                 <div className="mt-6 flex justify-center items-start gap-1">
                   <span className="text-5xl font-black text-white">$0</span>
                 </div>
@@ -270,7 +273,6 @@ export default function SubscribePage() {
                 ))}
               </div>
 
-              {/* UPDATED: Launches Portal to cancel/downgrade */}
               <button 
                 onClick={() => {
                   if (status === 'authenticated' && userTier !== 'free') {
@@ -287,39 +289,48 @@ export default function SubscribePage() {
             </div>
 
             {/* PRO+ PLAN (FAN FAVORITE HIGHLIGHT) */}
-            <div className="relative bg-gradient-to-b from-[#2a1c11] to-[#111] border-2 border-[#f5a623] rounded-3xl p-8 flex flex-col h-full shadow-[0_0_40px_rgba(245,166,35,0.15)] transform lg:-translate-y-6 z-10 animate-in fade-in slide-in-from-bottom-8">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-[#f5a623] text-black text-[11px] font-black uppercase tracking-widest py-1.5 px-6 rounded-full flex items-center gap-1.5 shadow-xl whitespace-nowrap">
-                 <Flame size={14} className="fill-black" /> Fan Favorite
+            <div className="relative bg-[#1a1a1a] rounded-3xl p-[2px] flex flex-col h-full shadow-[0_0_40px_rgba(195,11,22,0.3)] transform lg:-translate-y-6 z-10 animate-in fade-in slide-in-from-bottom-8 bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)]">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] text-white text-[11px] font-black uppercase tracking-widest py-1.5 px-6 rounded-full flex items-center gap-1.5 shadow-xl whitespace-nowrap z-20">
+                 <Flame size={14} className="fill-white" /> Fan Favorite
               </div>
 
-              <div className="text-center mb-8 pb-8 border-b border-[#f5a623]/20">
-                <div className="w-16 h-16 bg-[#f5a623]/20 rounded-full flex items-center justify-center mx-auto mb-4 scale-110">
-                  <Flame size={32} className="text-[#f5a623] fill-[#f5a623]/20" />
-                </div>
-                <h3 className="text-3xl font-black italic text-white mb-2 tracking-wider drop-shadow-md">PRO+</h3>
-                <p className="text-[#f5a623] text-xs font-bold uppercase tracking-widest h-5">{billingCycle === 'yearly' ? 'Billed $59.88 Annually' : 'Billed Monthly'}</p>
-                <div className="mt-6 flex justify-center items-start gap-1">
-                  <span className="text-6xl font-black text-white drop-shadow-lg">{billingCycle === 'yearly' ? '$4.99' : '$7.99'}</span>
-                </div>
-                <span className="text-gray-500 text-xs font-bold uppercase tracking-widest block mt-2">/ Month</span>
-              </div>
-
-              <div className="flex flex-col gap-4 mb-8 flex-1">
-                {isLoading ? <Loader2 size={24} className="animate-spin text-[#f5a623] mx-auto my-auto" /> : perks.proPlus.map((perk, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <CheckCircle2 size={20} className="text-[#f5a623] shrink-0" />
-                    <span className="text-sm font-bold text-gray-200 leading-snug">{perk}</span>
+              <div className="bg-gradient-to-b from-[#151515] to-[#0a0a0a] rounded-[22px] p-8 flex flex-col h-full relative z-10">
+                <div className="text-center mb-8 pb-8 border-b border-gray-800">
+                  <div className="w-16 h-16 bg-gradient-to-r from-[#1b75bb]/20 via-[#c30b16]/20 to-[#f5a623]/20 rounded-full flex items-center justify-center mx-auto mb-4 scale-110">
+                    <Flame size={32} className="text-red-500 fill-red-500/20" />
                   </div>
-                ))}
-              </div>
+                  <h3 className="text-3xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] mb-2 tracking-wider drop-shadow-md">PRO+</h3>
+                  
+                  {/* SAVINGS BADGE INTEGRATED */}
+                  <div className="h-5 flex items-center justify-center gap-2">
+                    <p className="text-gray-300 text-xs font-bold uppercase tracking-widest">{billingCycle === 'yearly' ? 'Billed $59.88 Annually' : 'Billed Monthly'}</p>
+                    {billingCycle === 'yearly' && <span className="bg-green-500/20 text-green-500 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border border-green-500/30 shrink-0">Save 38%</span>}
+                  </div>
+                  
+                  <div className="mt-6 flex justify-center items-start gap-1">
+                    <span className="text-6xl font-black text-white drop-shadow-lg">{billingCycle === 'yearly' ? '$4.99' : '$7.99'}</span>
+                  </div>
+                  <span className="text-gray-500 text-xs font-bold uppercase tracking-widest block mt-2">/ Month</span>
+                </div>
 
-              <button 
-                onClick={() => handleCheckout('pro-plus')}
-                disabled={isCheckingOut === 'pro-plus' || userTier === 'pro-plus'}
-                className="w-full bg-gradient-to-r from-orange-500 to-[#f5a623] hover:from-orange-400 hover:to-[#ffb732] text-black font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(245,166,35,0.4)] hover:shadow-[0_0_25px_rgba(245,166,35,0.6)] text-sm flex items-center justify-center gap-2 disabled:opacity-75 disabled:from-gray-700 disabled:to-gray-800 disabled:text-gray-500 disabled:shadow-none"
-              >
-                {isCheckingOut === 'pro-plus' ? <Loader2 size={18} className="animate-spin text-black" /> : userTier === 'pro-plus' ? 'Current Plan' : 'Get Pro+ Now'}
-              </button>
+                <div className="flex flex-col gap-4 mb-8 flex-1">
+                  {isLoading ? <Loader2 size={24} className="animate-spin text-red-500 mx-auto my-auto" /> : perks.proPlus.map((perk, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <CheckCircle2 size={20} className="text-red-500 shrink-0" />
+                      <span className="text-sm font-bold text-gray-200 leading-snug">{perk}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* UPDATED: Network Gradient applied to the PRO+ button */}
+                <button 
+                  onClick={() => handleCheckout('pro-plus')}
+                  disabled={isCheckingOut === 'pro-plus' || userTier === 'pro-plus'}
+                  className="w-full bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] hover:opacity-90 text-white font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(195,11,22,0.4)] text-sm flex items-center justify-center gap-2 disabled:opacity-75 disabled:from-gray-700 disabled:to-gray-800 disabled:text-gray-500 disabled:shadow-none"
+                >
+                  {isCheckingOut === 'pro-plus' ? <Loader2 size={18} className="animate-spin text-white" /> : userTier === 'pro-plus' ? 'Current Plan' : 'Get Pro+ Now'}
+                </button>
+              </div>
             </div>
 
             {/* PRO PLAN */}
@@ -329,7 +340,13 @@ export default function SubscribePage() {
                   <Trophy size={24} className="text-[#f87171]" />
                 </div>
                 <h3 className="text-2xl font-black italic text-white mb-2 tracking-wider">PRO</h3>
-                <p className="text-gray-500 text-xs font-bold uppercase tracking-widest h-5">{billingCycle === 'yearly' ? 'Billed $23.88 Annually' : 'Billed Monthly'}</p>
+                
+                {/* SAVINGS BADGE INTEGRATED */}
+                <div className="h-5 flex items-center justify-center gap-2">
+                  <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">{billingCycle === 'yearly' ? 'Billed $23.88 Annually' : 'Billed Monthly'}</p>
+                  {billingCycle === 'yearly' && <span className="bg-green-500/20 text-green-500 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border border-green-500/30 shrink-0">Save 33%</span>}
+                </div>
+                
                 <div className="mt-6 flex justify-center items-start gap-1">
                   <span className="text-5xl font-black text-white">{billingCycle === 'yearly' ? '$1.99' : '$2.99'}</span>
                 </div>
