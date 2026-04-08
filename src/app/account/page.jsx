@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
-import { User, Mail, Lock, Loader2, CreditCard, ShieldCheck, CheckCircle2, FileText, ShoppingCart, Tag, AlertTriangle, ShieldAlert, Book, Download, Shirt, Users, Settings, Gift, LogOut, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import { User, Mail, Lock, Loader2, CreditCard, ShieldCheck, CheckCircle2, FileText, ShoppingCart, Tag, AlertTriangle, ShieldAlert, Book, Download, Shirt, Users, Settings, Gift, LogOut, ChevronRight } from 'lucide-react';
 
 // Custom SVG Component for the Premium Community Icon (Supports Color and Monochrome)
 const PremiumCommunityIcon = ({ className = "", size = 24, monochrome = false }) => {
@@ -151,7 +151,8 @@ function AccountDashboardContent() {
           setIsAdmin(true);
         }
 
-        if (roles.some(r => r.includes('pro+') || r.includes('pro+ member') || r.includes('fsan_pro_plus'))) {
+        // Broadened the check to catch "pro plus", "pro_plus", and "pro +" which WP commonly uses
+        if (roles.some(r => r.includes('pro+') || r.includes('pro plus') || r.includes('pro_plus') || r.includes('pro +'))) {
           setUserTier('pro-plus');
         } else if (roles.some(r => r.includes('pro') || r.includes('pro member') || r.includes('fsan_pro'))) {
           setUserTier('pro');
@@ -218,7 +219,6 @@ function AccountDashboardContent() {
           }
         }
       }
-    }
     `;
 
     try {
@@ -343,6 +343,7 @@ function AccountDashboardContent() {
   const renderTabContent = () => {
     return (
       <div className="bg-[#111] rounded-3xl border border-gray-800 p-6 md:p-10 shadow-2xl relative overflow-hidden min-h-[400px]">
+        {/* Subtle Background Glow */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-red-900/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
 
         {activeTab === 'Profile' && (
@@ -608,14 +609,12 @@ function AccountDashboardContent() {
 
                   {/* Community Card - PRO & PRO+ */}
                   <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-gray-600 transition-all shadow-lg flex flex-col">
-                      {/* FIX 2: Background SVG is now monochrome and heavily faded */}
                       <div className="absolute -right-4 -top-4 text-gray-700/30 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500">
                           <PremiumCommunityIcon size={120} monochrome={true} />
                       </div>
-                      
                       <div className="relative z-10 flex flex-col h-full">
+                          
                           <div className="flex items-center gap-3 mb-4">
-                             {/* FIX 1 & 5: Icon is the full-color SVG and its background is gray */}
                              <div className="w-12 h-12 bg-gray-800 text-white border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0">
                                  <PremiumCommunityIcon size={24} monochrome={false} />
                              </div>
