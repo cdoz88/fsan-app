@@ -74,7 +74,8 @@ function AccountDashboardContent() {
   const [relayId, setRelayId] = useState('');
   
   const [rookieGuideUrl, setRookieGuideUrl] = useState(null);
-  const [guideLoading, setGuideLoading] = useState(true); 
+  const [merchDiscountCode, setMerchDiscountCode] = useState('FSAN20X');
+  const [perksLoading, setPerksLoading] = useState(true); 
   
   const [isCopied, setIsCopied] = useState(false);
   
@@ -103,7 +104,7 @@ function AccountDashboardContent() {
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.token) {
       fetchUserData();
-      fetchRookieGuideLink();
+      fetchDynamicPerks();
     }
   }, [status, session]);
 
@@ -171,12 +172,11 @@ function AccountDashboardContent() {
     }
   };
 
-  const fetchRookieGuideLink = async () => {
-    setGuideLoading(true);
+  const fetchDynamicPerks = async () => {
+    setPerksLoading(true);
     
-    // We query BOTH by the Location Enum and the Slug to be absolutely certain we find it
     const query = `
-      query GetRookieGuide {
+      query GetDynamicPerks {
         menuItems(where: {location: ROOKIE_GUIDE}) {
           nodes {
             url
@@ -184,12 +184,19 @@ function AccountDashboardContent() {
             uri
           }
         }
-        menu(id: "rookie-guide", idType: SLUG) {
+        rookieGuide: menu(id: "rookie-guide", idType: SLUG) {
           menuItems {
             nodes {
               url
               path
               uri
+            }
+          }
+        }
+        merchDiscount: menu(id: "merch-discount", idType: SLUG) {
+          menuItems {
+            nodes {
+              label
             }
           }
         }
@@ -204,25 +211,30 @@ function AccountDashboardContent() {
       });
       const json = await res.json();
       
-      // 1. Try to find it via the Location assignment first
-      let nodes = json?.data?.menuItems?.nodes;
-      
-      // 2. If not found, try the menu slug fallback
-      if (!nodes || nodes.length === 0) {
-        nodes = json?.data?.menu?.menuItems?.nodes;
+      // Rookie Guide
+      let guideNodes = json?.data?.menuItems?.nodes;
+      if (!guideNodes || guideNodes.length === 0) {
+        guideNodes = json?.data?.rookieGuide?.menuItems?.nodes;
       }
-
-      if (nodes && nodes.length > 0) {
-        // WPGraphQL might put custom links in url, path, or uri. We check them all.
-        const guideNode = nodes.find(n => n.url || n.path || n.uri);
+      if (guideNodes && guideNodes.length > 0) {
+        const guideNode = guideNodes.find(n => n.url || n.path || n.uri);
         if (guideNode) {
             setRookieGuideUrl(guideNode.url || guideNode.path || guideNode.uri);
         }
       }
+
+      // Merch Discount Code
+      const merchNodes = json?.data?.merchDiscount?.menuItems?.nodes;
+      if (merchNodes && merchNodes.length > 0) {
+        const codeNode = merchNodes.find(n => n.label);
+        if (codeNode) {
+            setMerchDiscountCode(codeNode.label);
+        }
+      }
     } catch (error) {
-      console.error("Failed to fetch Rookie Guide link.");
+      console.error("Failed to fetch dynamic perks.");
     } finally {
-      setGuideLoading(false);
+      setPerksLoading(false);
     }
   };
 
@@ -339,7 +351,7 @@ function AccountDashboardContent() {
   };
 
   const copyDiscountCode = () => {
-    navigator.clipboard.writeText('FSAN20X');
+    navigator.clipboard.writeText(merchDiscountCode);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
   };
@@ -576,13 +588,13 @@ function AccountDashboardContent() {
                               </div>
                               <p className="text-xs text-gray-300 leading-relaxed mb-6 flex-1 pr-4">Download the official FSAN Rookie Guide to dominate your dynasty rookie drafts with exclusive player grades and tape breakdowns.</p>
                               
-                              {guideLoading ? (
+                              {perksLoading ? (
                                   <button disabled className="w-full bg-gray-800 text-gray-500 font-black uppercase tracking-widest text-[10px] py-3.5 rounded-xl cursor-not-allowed flex items-center justify-center gap-2">
                                       <Loader2 size={16} className="animate-spin" /> Syncing File...
                                   </button>
                               ) : rookieGuideUrl ? (
-                                  <a href={rookieGuideUrl} target="_blank" rel="noopener noreferrer" className="w-full bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] hover:opacity-90 text-white font-black uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
-                                      <Download size={16} /> Download PDF
+                                  <a href={rookieGuideUrl} target="_blank" rel="noopener noreferrer" className="w-full bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-white font-black uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2">
+                                      <Download size={14} /> Download PDF
                                   </a>
                               ) : (
                                   <button disabled className="w-full bg-gray-800 text-gray-500 font-black uppercase tracking-widest text-[10px] py-3.5 rounded-xl cursor-not-allowed flex items-center justify-center gap-2">
@@ -606,7 +618,7 @@ function AccountDashboardContent() {
                       </div>
                   )}
 
-                  {/* Merch Shop Discount - PRO & PRO+ (Standard Grey formatting) */}
+                  {/* Merch Shop Discount - PRO & PRO+ */}
                   <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl shadow-xl p-6 relative overflow-hidden group transition-all flex flex-col h-full">
                    <div className={`absolute -right-4 -top-4 transition-transform duration-500 pointer-events-none ${(userTier === 'pro-plus' || userTier === 'pro') ? 'text-gray-700/30 group-hover:scale-110' : 'text-gray-800/20'}`}><ShoppingCart size={120} /></div>
                    
@@ -620,10 +632,19 @@ function AccountDashboardContent() {
                      {(userTier === 'pro-plus' || userTier === 'pro') ? (
                        <button 
                           onClick={copyDiscountCode}
-                          className="w-full bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-gray-300 hover:text-white font-mono py-3 px-6 rounded-xl text-lg font-bold tracking-widest relative z-10 shadow-sm transition-colors flex items-center justify-between"
+                          disabled={perksLoading}
+                          className="w-full bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-gray-300 hover:text-white font-mono py-3 px-6 rounded-xl text-lg font-bold tracking-widest relative z-10 shadow-sm transition-colors flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
                        >
-                         FSAN20X 
-                         {isCopied ? <CheckCircle2 size={18} className="text-green-500"/> : <Tag size={18} className="text-gray-500"/>}
+                         {perksLoading ? (
+                             <span className="flex items-center gap-2 text-sm text-gray-500 font-sans tracking-widest uppercase m-auto">
+                                 <Loader2 size={16} className="animate-spin" /> Syncing...
+                             </span>
+                         ) : (
+                             <>
+                                 {merchDiscountCode} 
+                                 {isCopied ? <CheckCircle2 size={18} className="text-green-500"/> : <Tag size={18} className="text-gray-500"/>}
+                             </>
+                         )}
                        </button>
                      ) : (
                        <button onClick={() => router.push('/subscribe')} className="w-full bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 font-bold uppercase tracking-widest py-3 px-6 rounded-xl text-xs relative z-10 shadow-inner transition-colors">Locked: Premium Only</button>
@@ -634,7 +655,7 @@ function AccountDashboardContent() {
                   {/* Jersey Leagues Card - PRO+ ONLY */}
                   {userTier === 'pro-plus' && (
                       <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-gray-600 transition-all shadow-lg flex flex-col">
-                          <div className="absolute -right-4 -top-4 text-gray-800/20 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500"><Shirt size={120} /></div>
+                          <div className="absolute -right-4 -top-4 text-gray-700/30 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500"><Shirt size={120} /></div>
                           <div className="relative z-10 flex flex-col h-full">
                               <div className="flex items-center gap-3 mb-4">
                                 <div className="w-12 h-12 bg-gray-800 text-gray-400 border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0"><Shirt size={20} /></div>
