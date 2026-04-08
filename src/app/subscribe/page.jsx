@@ -226,7 +226,8 @@ export default function SubscribePage() {
               <Sparkles size={14} className="text-yellow-400" /> Upgrade Your Game
             </div>
             
-            <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] mb-2 drop-shadow-2xl">
+            {/* UPDATED: Unique custom gradient just for this header text */}
+            <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-[#0045ff] via-[#a50710] to-[#f5a623] mb-2 drop-shadow-2xl">
               Dominate Your League
             </h1>
             <p className="text-gray-400 max-w-2xl mx-auto text-lg md:text-xl leading-relaxed">
@@ -320,10 +321,11 @@ export default function SubscribePage() {
                   ))}
                 </div>
 
+                {/* UPDATED: Blue to Orange strict gradient */}
                 <button 
                   onClick={() => handleCheckout('pro-plus')}
                   disabled={isCheckingOut === 'pro-plus' || userTier === 'pro-plus'}
-                  className="w-full bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] hover:opacity-90 text-white font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(195,11,22,0.4)] text-sm flex items-center justify-center gap-2 disabled:opacity-75 disabled:from-gray-700 disabled:to-gray-800 disabled:text-gray-500 disabled:shadow-none"
+                  className="w-full bg-gradient-to-r from-[#1b75bb] to-[#f5a623] hover:opacity-90 text-white font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(27,117,187,0.4)] text-sm flex items-center justify-center gap-2 disabled:opacity-75 disabled:from-gray-700 disabled:to-gray-800 disabled:text-gray-500 disabled:shadow-none"
                 >
                   {isCheckingOut === 'pro-plus' ? <Loader2 size={18} className="animate-spin text-white" /> : userTier === 'pro-plus' ? 'Current Plan' : 'Get Pro+ Now'}
                 </button>
