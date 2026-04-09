@@ -21,12 +21,14 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
 
   const [isMobileOpen, setIsMobileMenuOpen] = useState(false);
   const [hoveredSocial, setHoveredSocial] = useState(null);
+  
+  // Initialize tier as free, but add a loading state so we don't flash the wrong button
   const [userTier, setUserTier] = useState('free');
+  const [isTierLoading, setIsTierLoading] = useState(true);
 
   const theme = themes[activeSport] || themes.All;
   const accentColor = theme.text;
 
-  // Fixed the sportGradients! When 'All' is active, the border is completely removed to show the conic gradient ring!
   const sportGradients = {
     All: 'bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border-transparent',
     Football: 'bg-gradient-to-r from-[#e42d38] to-[#8a1a20] hover:from-[#f03a45] hover:to-[#a3222a] border-[#e42d38]',
@@ -53,6 +55,16 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
 
   // Fetch the user's role to control the Go Pro button
   useEffect(() => {
+    // If next-auth is still figuring out if the user is logged in, wait.
+    if (status === 'loading') return;
+
+    // If we know they aren't logged in, they are free. Stop loading.
+    if (status === 'unauthenticated') {
+      setUserTier('free');
+      setIsTierLoading(false);
+      return;
+    }
+
     if (status === 'authenticated' && session?.user?.token) {
       const fetchUserRole = async () => {
         const query = `
@@ -91,13 +103,21 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
             } else {
               setUserTier('free');
             }
+          } else {
+            setUserTier('free');
           }
         } catch (error) {
           console.error("Failed to fetch user role on sidebar.");
+          setUserTier('free');
+        } finally {
+          // Whether it succeeds or fails, stop loading so a button can render
+          setIsTierLoading(false);
         }
       };
       
       fetchUserRole();
+    } else if (status === 'authenticated') {
+      setIsTierLoading(false);
     }
   }, [status, session]);
 
@@ -248,7 +268,7 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
 
           {/* DYNAMIC PRO TOOLS */}
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-3 shadow-xl">
-             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Tools</h4>
+             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Pro Tools</h4>
              <div className="flex flex-col gap-1">
                 {proToolsMenu && proToolsMenu.length > 0 ? (
                   proToolsMenu.map((item) => {
@@ -324,8 +344,8 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
           </div>
 
           {/* GO PRO BUTTON */}
-          {userTier !== 'pro-plus' && (
-            <div className="mt-2 mb-4">
+          {!isTierLoading && userTier !== 'pro-plus' && (
+            <div className="mt-2 mb-4 animate-in fade-in duration-300">
               {activeSport === 'All' ? (
                 <div className="p-[2px] rounded-[14px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] transition-shadow">
                   <Link 
