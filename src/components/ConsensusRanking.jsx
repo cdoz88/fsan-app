@@ -114,7 +114,7 @@ const ConsensusRanking = () => {
       }
   }
 
-  // FIX: Slicing exactly at 20 so only 20 players render before the fade/box takes over
+  // Slicing exactly at 20 so only 20 players render before the fade/box takes over for free users
   const hasAccess = userTier !== 'free' || canRank;
   const visibleData = hasAccess ? displayData : displayData.slice(0, 20);
 
@@ -142,6 +142,19 @@ const ConsensusRanking = () => {
       return null; 
   };
 
+  // Determine the display week based on rankings data
+  let weekDisplay = 'Offseason';
+  if (rankings && rankings.length > 0 && rankings[0].week) {
+     const rawWeek = rankings[0].week;
+     if (String(rawWeek).toLowerCase() === 'offseason') {
+         weekDisplay = 'Offseason';
+     } else if (!isNaN(rawWeek)) {
+         weekDisplay = `Week ${rawWeek}`;
+     } else {
+         weekDisplay = rawWeek;
+     }
+  }
+
   return (
     <div className="w-full animate-in fade-in duration-500 pb-24">
       
@@ -159,8 +172,9 @@ const ConsensusRanking = () => {
         
         <div className="relative z-10 w-full flex flex-col md:flex-row items-start md:items-end justify-between h-full px-6 md:px-10 pb-8 gap-4">
           <div>
+            {/* UPDATED: Dynamic Week Header */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-2">
-              Consensus Rankings
+              {weekDisplay} Rankings
             </h1>
             <p className="text-gray-300 font-medium md:text-lg">
               Aggregated PPR Redraft rankings from {rankings.length} experts for <span className="text-white font-bold">{currentPosition}</span>.
