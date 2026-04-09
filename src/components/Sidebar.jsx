@@ -21,8 +21,6 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
 
   const [isMobileOpen, setIsMobileMenuOpen] = useState(false);
   const [hoveredSocial, setHoveredSocial] = useState(null);
-  
-  // Initialize tier as free, but add a loading state so we don't flash the wrong button
   const [userTier, setUserTier] = useState('free');
   const [isTierLoading, setIsTierLoading] = useState(true);
 
@@ -53,12 +51,9 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
     }
   }, [isMobileOpen]);
 
-  // Fetch the user's role to control the Go Pro button
   useEffect(() => {
-    // If next-auth is still figuring out if the user is logged in, wait.
     if (status === 'loading') return;
 
-    // If we know they aren't logged in, they are free. Stop loading.
     if (status === 'unauthenticated') {
       setUserTier('free');
       setIsTierLoading(false);
@@ -110,7 +105,6 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
           console.error("Failed to fetch user role on sidebar.");
           setUserTier('free');
         } finally {
-          // Whether it succeeds or fails, stop loading so a button can render
           setIsTierLoading(false);
         }
       };
@@ -121,11 +115,12 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
     }
   }, [status, session]);
 
+  // Dynamically adjust vertical padding based on screen size (py-2 vs py-2.5)
   const getNavStyle = (viewName) => {
     const isActive = currentView === viewName;
     return isActive
-      ? "flex items-center gap-3 text-[13px] font-bold transition-colors px-3 py-2.5 rounded-xl w-full text-left bg-[#252525] text-white shadow-inner border border-gray-700/50 no-underline"
-      : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline";
+      ? "flex items-center gap-3 text-[13px] font-bold transition-colors px-3 py-2 xl:py-2.5 rounded-xl w-full text-left bg-[#252525] text-white shadow-inner border border-gray-700/50 no-underline"
+      : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2 xl:py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline";
   };
 
   const isDynamicActive = (url) => {
@@ -245,11 +240,16 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
            </button>
         </div>
 
-        <div className="lg:sticky lg:top-20 flex flex-col gap-4 pb-24 lg:pb-0">
+        {/* NEW FIX: 
+          1) lg:h-[calc(100vh-6rem)] combined with lg:overflow-y-auto enables safe inner scrolling.
+          2) [&::-webkit-scrollbar]:hidden hides the ugly scrollbars when it scrolls.
+          3) gap-3 xl:gap-4 shrinks vertical gaps on smaller screens. 
+        */}
+        <div className="lg:sticky lg:top-20 flex flex-col gap-3 xl:gap-4 pb-24 lg:pb-4 lg:h-[calc(100vh-6rem)] lg:overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           
           {/* BROWSE NETWORK */}
-          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-3 shadow-xl">
-             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Content</h4>
+          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-2.5 xl:p-3 shadow-xl shrink-0">
+             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-2 xl:mb-3 px-1 italic">Content</h4>
              <div className="flex flex-col gap-1">
                 <Link href={`${basePath}/home`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('home')}>
                   <Flame size={18} className={currentView === 'home' ? 'text-white' : accentColor} /> The Wire
@@ -267,8 +267,8 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
           </div>
 
           {/* DYNAMIC PRO TOOLS */}
-          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-3 shadow-xl">
-             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Tools</h4>
+          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-2.5 xl:p-3 shadow-xl shrink-0">
+             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-2 xl:mb-3 px-1 italic">Tools</h4>
              <div className="flex flex-col gap-1">
                 {proToolsMenu && proToolsMenu.length > 0 ? (
                   proToolsMenu.map((item) => {
@@ -281,7 +281,7 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
                         onClick={() => setIsMobileMenuOpen(false)}
                         target={item.url.startsWith('http') ? "_blank" : undefined}
                         rel={item.url.startsWith('http') ? "noopener noreferrer" : undefined}
-                        className={active ? getNavStyle('home') : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline group"}
+                        className={active ? getNavStyle('home') : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2 xl:py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline group"}
                       >
                         <Icon size={18} className={`${active ? 'text-white' : theme.text} group-hover:text-white transition-colors`} /> {item.label}
                       </Link>
@@ -292,7 +292,7 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
                     const Icon = tool.icon;
                     const active = isDynamicActive(tool.href);
                     return (
-                      <Link key={idx} href={tool.href} onClick={() => setIsMobileMenuOpen(false)} className={active ? getNavStyle('home') : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline group"}>
+                      <Link key={idx} href={tool.href} onClick={() => setIsMobileMenuOpen(false)} className={active ? getNavStyle('home') : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2 xl:py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline group"}>
                         <Icon size={18} className={`${active ? 'text-white' : theme.text} group-hover:text-white transition-colors`} /> {tool.name}
                       </Link>
                     );
@@ -302,8 +302,8 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
           </div>
           
           {/* DYNAMIC CONNECT */}
-          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-3 shadow-xl">
-             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Connect</h4>
+          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-2.5 xl:p-3 shadow-xl shrink-0">
+             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-2 xl:mb-3 px-1 italic">Connect</h4>
              <div className="flex flex-col gap-1">
                 {connectMenu && connectMenu.length > 0 ? (
                   connectMenu.map((item) => {
@@ -316,7 +316,7 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
                         onClick={() => setIsMobileMenuOpen(false)}
                         target={item.url.startsWith('http') ? "_blank" : undefined}
                         rel={item.url.startsWith('http') ? "noopener noreferrer" : undefined}
-                        className={active ? getNavStyle('home') : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline group"}
+                        className={active ? getNavStyle('home') : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2 xl:py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline group"}
                       >
                         <Icon size={18} className={`${active ? 'text-white' : theme.text} group-hover:text-white transition-colors`} /> {item.label}
                       </Link>
@@ -333,7 +333,7 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
                         onClick={() => setIsMobileMenuOpen(false)}
                         target={item.external ? "_blank" : undefined}
                         rel={item.external ? "noopener noreferrer" : undefined}
-                        className={active ? getNavStyle('home') : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline group"}
+                        className={active ? getNavStyle('home') : "flex items-center gap-3 text-[13px] font-bold text-gray-400 hover:text-white transition-colors px-3 py-2 xl:py-2.5 hover:bg-gray-800/30 rounded-xl w-full text-left no-underline group"}
                       >
                         <Icon size={18} className={`${active ? 'text-white' : theme.text} group-hover:text-white transition-colors`} /> {item.name}
                       </Link>
@@ -345,13 +345,13 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
 
           {/* GO PRO BUTTON */}
           {!isTierLoading && userTier !== 'pro-plus' && (
-            <div className="mt-2 mb-4 animate-in fade-in duration-300">
+            <div className="mt-1 xl:mt-2 mb-2 xl:mb-4 animate-in fade-in duration-300 shrink-0">
               {activeSport === 'All' ? (
                 <div className="p-[2px] rounded-[14px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] transition-shadow">
                   <Link 
                     href="/subscribe" 
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`w-full flex justify-center items-center py-3.5 rounded-xl text-white font-black uppercase tracking-widest text-sm transition-all no-underline ${currentGradient} border-none`}
+                    className={`w-full flex justify-center items-center py-3 xl:py-3.5 rounded-xl text-white font-black uppercase tracking-widest text-sm transition-all no-underline ${currentGradient} border-none`}
                   >
                     {userTier === 'pro' ? 'UPGRADE TO PRO+' : 'GO PRO'}
                   </Link>
@@ -360,7 +360,7 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
                 <Link 
                   href="/subscribe" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`w-full flex justify-center items-center py-3.5 rounded-xl text-white font-black uppercase tracking-widest text-sm shadow-lg border transition-all no-underline ${currentGradient}`}
+                  className={`w-full flex justify-center items-center py-3 xl:py-3.5 rounded-xl text-white font-black uppercase tracking-widest text-sm shadow-lg border transition-all no-underline ${currentGradient}`}
                 >
                   {userTier === 'pro' ? 'UPGRADE TO PRO+' : 'GO PRO'}
                 </Link>
@@ -368,8 +368,10 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
             </div>
           )}
 
-          {/* FOOTER / SOCIALS */}
-          <div className="flex flex-col items-center justify-center gap-3 mt-1 mb-4">
+          {/* FOOTER / SOCIALS 
+              NEW FIX: mt-auto pushes the footer to the bottom of the flex container!
+          */}
+          <div className="flex flex-col items-center justify-center gap-2 xl:gap-3 mt-auto mb-4 pt-4 shrink-0">
              <div className="flex flex-wrap items-center justify-center gap-4 px-2">
                 {currentLinks.sellout && <SocialIcon id="sellout" href={currentLinks.sellout} IconComponent={SelloutCrowds} />}
                 {currentLinks.facebook && <SocialIcon id="fb" href={currentLinks.facebook} IconComponent={Facebook} />}
