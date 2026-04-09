@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
-import { User, Mail, Lock, Loader2, CreditCard, ShieldCheck, CheckCircle2, FileText, ShoppingCart, Tag, AlertTriangle, ShieldAlert, Book, Download, Shirt, Users, Settings, Gift, LogOut, ChevronRight, Image as ImageIcon } from 'lucide-react';
+// FIX: Added Zap and Star back to the import list!
+import { User, Mail, Lock, Loader2, CreditCard, ShieldCheck, CheckCircle2, FileText, ShoppingCart, Tag, AlertTriangle, ShieldAlert, Book, Download, Shirt, Users, Settings, Gift, LogOut, ChevronRight, Image as ImageIcon, Zap, Star } from 'lucide-react';
 
 // Custom SVG Component for the Premium Community Icon (Supports Color and Monochrome)
 const PremiumCommunityIcon = ({ className = "", size = 24, monochrome = false }) => {
@@ -723,14 +724,14 @@ function AccountDashboardContent() {
                           </div>
                       </div>
                   ) : (
-                      <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl p-6 relative overflow-hidden flex flex-col h-full">
-                          <div className="absolute -right-4 -top-4 text-gray-700/30 z-0 pointer-events-none"><Shirt size={120} /></div>
+                      <div className="bg-gradient-to-br from-[#301012] to-[#111] border border-red-900/50 rounded-2xl p-6 relative overflow-hidden flex flex-col h-full">
+                          <div className="absolute -right-4 -top-4 text-red-500/20 z-0 pointer-events-none"><Shirt size={120} /></div>
                           <div className="relative z-10 flex flex-col h-full">
                               <div className="flex items-center gap-3 mb-4">
-                                <div className="w-12 h-12 bg-gray-800 text-gray-400 border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0"><Shirt size={20} /></div>
+                                <div className="w-12 h-12 bg-red-900/20 text-red-500 border border-red-500/30 rounded-xl flex items-center justify-center shadow-inner shrink-0"><Shirt size={20} /></div>
                                 <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Jersey Leagues</h3>
                               </div>
-                              <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">Compete in an exclusive redraft tournament to win an autographed jersey from your favorite NFL player and a championship ring.</p>
+                              <p className="text-xs text-gray-300 leading-relaxed mb-6 flex-1 pr-4">Compete in an exclusive redraft tournament to win an autographed jersey from your favorite NFL player and a championship ring. Exclusive for Pro+ members.</p>
                               
                               <button onClick={() => router.push('/subscribe')} className="w-full mt-auto bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 font-bold uppercase tracking-widest py-3 px-6 rounded-xl text-xs relative z-10 shadow-inner transition-colors">Locked: Pro+ Only</button>
                           </div>
