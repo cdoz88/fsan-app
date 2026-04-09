@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { Users, Loader2, Edit, User, Lock, ChevronRight } from 'lucide-react';
+import { Users, Loader2, Edit, User, Lock } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
 const ConsensusRanking = () => {
@@ -114,9 +114,9 @@ const ConsensusRanking = () => {
       }
   }
 
-  // ENFORCE PAYWALL: Free users only see the first 20 items.
   const hasAccess = userTier !== 'free' || canRank;
-  const visibleData = hasAccess ? displayData : displayData.slice(0, 20);
+  // Slicing at 22 allows players 21 and 22 to render under the gradient fade, keeping 1-20 in perfect view!
+  const visibleData = hasAccess ? displayData : displayData.slice(0, 22);
 
   const parseWPDate = (dateString) => {
       if (!dateString) return null;
@@ -216,7 +216,7 @@ const ConsensusRanking = () => {
            </div>
         ) : (
            <>
-            <div className="bg-[#111] rounded-3xl shadow-2xl border border-gray-800 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="bg-[#111] rounded-3xl shadow-2xl border border-gray-800 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
               <div className="px-6 py-4 border-b border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h2 className="text-lg font-black text-white uppercase tracking-wider flex items-center gap-3">
                   {isIndividualView ? (
@@ -240,7 +240,7 @@ const ConsensusRanking = () => {
                 </span>
               </div>
 
-              <div className="overflow-x-auto scrollbar-hide relative">
+              <div className="overflow-x-auto scrollbar-hide">
                 <table className="min-w-full text-left whitespace-nowrap">
                   <thead className="bg-[#1a1a1a] border-b border-gray-800">
                     <tr>
@@ -303,33 +303,30 @@ const ConsensusRanking = () => {
                         </tr>
                       );
                     })}
-
-                    {/* PAYWALL ROW */}
-                    {!hasAccess && displayData.length > 20 && (
-                      <tr>
-                        <td colSpan={isIndividualView ? 5 : 6} className="p-0 border-t-0">
-                          <div className="relative w-full h-56 flex flex-col items-center justify-end pb-8 overflow-hidden mt-[-20px]">
-                            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#111]/80 to-[#111] z-0"></div>
-                            
-                            <div className="relative z-10 flex flex-col items-center text-center px-4 mt-12 bg-[#1a1a1a] border border-gray-800 rounded-2xl p-6 shadow-2xl max-w-md mx-auto">
-                               <div className="w-12 h-12 bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mb-3 border border-red-500/30">
-                                 <Lock size={20} />
-                               </div>
-                               <h3 className="text-lg font-black text-white uppercase tracking-wider mb-2">Unlock Full Rankings</h3>
-                               <p className="text-xs text-gray-400 mb-5 leading-relaxed">
-                                 Free users can only view the top 20 players. Upgrade to Premium to unlock full {currentPosition} rankings, expert consensus, and advanced trade tools.
-                               </p>
-                               <Link href="/subscribe" className="w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 hover:-translate-y-0.5">
-                                 Upgrade to Premium <ChevronRight size={14} />
-                               </Link>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
                   </tbody>
                 </table>
               </div>
+
+              {/* PAYWALL OVERLAY APPLIED OVER THE BOTTOM OF THE TABLE CONTAINER */}
+              {!hasAccess && displayData.length > 20 && (
+                <div className="relative w-full flex flex-col items-center justify-center pt-24 pb-8 -mt-20 z-20">
+                   {/* Fade out backdrop */}
+                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#111] to-[#111] pointer-events-none z-0"></div>
+
+                   {/* Gradient Outline Wrapper */}
+                   <div className="p-[2px] rounded-2xl bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 shadow-[0_0_40px_rgba(220,38,38,0.2)] max-w-md w-[calc(100%-2rem)] mx-auto relative z-10">
+                       <div className="flex flex-col items-center text-center bg-[#1a1a1a] rounded-[14px] p-6 md:p-8">
+                          <div className="w-12 h-12 bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mb-4 border border-red-500/30 shadow-inner">
+                            <Lock size={20} />
+                          </div>
+                          <h3 className="text-xl font-black text-white uppercase tracking-wider mb-2 whitespace-normal">Unlock Full Rankings</h3>
+                          <p className="text-sm text-gray-400 leading-relaxed whitespace-normal mb-0">
+                            Visitors can only view the top 20 players. <Link href="/subscribe" className="text-white hover:text-gray-300 underline font-bold transition-colors">Sign up now</Link> to unlock our full rankings!
+                          </p>
+                       </div>
+                   </div>
+                </div>
+              )}
             </div>
 
             <div className="mt-6 bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 animate-in fade-in duration-700 delay-500 shadow-xl">
