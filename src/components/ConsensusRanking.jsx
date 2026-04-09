@@ -240,7 +240,7 @@ const ConsensusRanking = () => {
                 </span>
               </div>
 
-              <div className="overflow-x-auto scrollbar-hide relative">
+              <div className="overflow-x-auto scrollbar-hide">
                 <table className="min-w-full text-left whitespace-nowrap">
                   <thead className="bg-[#1a1a1a] border-b border-gray-800">
                     <tr>
@@ -313,7 +313,7 @@ const ConsensusRanking = () => {
                    {/* Fade out backdrop */}
                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#111] to-[#111] pointer-events-none z-0"></div>
 
-                   {/* FIX: New 3-color network gradient outline & updated box content */}
+                   {/* Gradient Outline Wrapper */}
                    <div className="p-[2px] rounded-2xl bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] shadow-[0_0_40px_rgba(195,11,22,0.2)] max-w-md w-[calc(100%-2rem)] mx-auto relative z-10">
                        <div className="flex flex-col items-center text-center bg-[#1a1a1a] rounded-[14px] p-6 md:p-8">
                           <div className="w-12 h-12 bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mb-4 border border-red-500/30 shadow-inner">
@@ -325,7 +325,8 @@ const ConsensusRanking = () => {
                             Visitors can only view the top 20 players.
                           </p>
                           
-                          <Link href="/subscribe" className="w-full bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] hover:opacity-90 text-white font-black uppercase tracking-widest py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(195,11,22,0.3)] text-sm flex items-center justify-center gap-2 hover:-translate-y-0.5">
+                          {/* UPDATED: Sleek gray gradient button */}
+                          <Link href="/subscribe" className="w-full bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border border-gray-600 text-white font-black uppercase tracking-widest py-3.5 rounded-xl transition-all shadow-lg text-sm flex items-center justify-center gap-2 hover:-translate-y-0.5">
                             Unlock Rankings <ChevronRight size={16} />
                           </Link>
                        </div>
