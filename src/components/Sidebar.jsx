@@ -2,12 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { FileText, Video, Mic, Flame, Users, Calculator, ArrowLeftRight, Shirt, HeartHandshake, ShoppingCart, X } from 'lucide-react';
 import { Facebook, XIcon, Youtube, Instagram, TikTok, LinkedIn, SelloutCrowds } from './Icons';
 import { themes } from '../utils/theme';
 
 export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connectMenu = [] }) {
-  const theme = themes[activeSport] || themes.All;
+  const { data: session, status } = useSession();
   const pathname = usePathname() || '';
   const pathParts = pathname.split('/').filter(Boolean);
   
@@ -20,9 +21,10 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
 
   const [isMobileOpen, setIsMobileMenuOpen] = useState(false);
   const [hoveredSocial, setHoveredSocial] = useState(null);
+  const [userTier, setUserTier] = useState('free');
 
+  const theme = themes[activeSport] || themes.All;
   const accentColor = theme.text;
-  const hoverAccentColor = theme.hoverText;
 
   // Fixed the sportGradients! When 'All' is active, the border is completely removed to show the conic gradient ring!
   const sportGradients = {
@@ -48,6 +50,56 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
       document.body.style.overflow = 'unset';
     }
   }, [isMobileOpen]);
+
+  // Fetch the user's role to control the Go Pro button
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.token) {
+      const fetchUserRole = async () => {
+        const query = `
+          query GetViewerRole {
+            viewer {
+              roles {
+                nodes {
+                  name
+                }
+              }
+            }
+          }
+        `;
+        try {
+          const res = await fetch('https://admin.fsan.com/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.user.token}`,
+            },
+            body: JSON.stringify({ query }),
+            cache: 'no-store' 
+          });
+          const json = await res.json();
+          if (json?.data?.viewer) {
+            const roles = json.data.viewer.roles?.nodes?.map(r => {
+                let roleName = r.name.toLowerCase();
+                roleName = roleName.replace(/&#043;/g, '+');
+                return roleName;
+            }) || [];
+            
+            if (roles.some(r => r.includes('pro+') || r.includes('pro plus') || r.includes('pro_plus') || r.includes('pro-plus'))) {
+              setUserTier('pro-plus');
+            } else if (roles.some(r => r.includes('pro') || r.includes('pro member') || r.includes('fsan_pro'))) {
+              setUserTier('pro');
+            } else {
+              setUserTier('free');
+            }
+          }
+        } catch (error) {
+          console.error("Failed to fetch user role on sidebar.");
+        }
+      };
+      
+      fetchUserRole();
+    }
+  }, [status, session]);
 
   const getNavStyle = (viewName) => {
     const isActive = currentView === viewName;
@@ -196,7 +248,7 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
 
           {/* DYNAMIC PRO TOOLS */}
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-3 shadow-xl">
-             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Pro Tools</h4>
+             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Tools</h4>
              <div className="flex flex-col gap-1">
                 {proToolsMenu && proToolsMenu.length > 0 ? (
                   proToolsMenu.map((item) => {
@@ -272,27 +324,29 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
           </div>
 
           {/* GO PRO BUTTON */}
-          <div className="mt-2 mb-4">
-            {activeSport === 'All' ? (
-              <div className="p-[2px] rounded-[14px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] transition-shadow">
+          {userTier !== 'pro-plus' && (
+            <div className="mt-2 mb-4">
+              {activeSport === 'All' ? (
+                <div className="p-[2px] rounded-[14px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] transition-shadow">
+                  <Link 
+                    href="/subscribe" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`w-full flex justify-center items-center py-3.5 rounded-xl text-white font-black uppercase tracking-widest text-sm transition-all no-underline ${currentGradient} border-none`}
+                  >
+                    {userTier === 'pro' ? 'UPGRADE TO PRO+' : 'GO PRO'}
+                  </Link>
+                </div>
+              ) : (
                 <Link 
                   href="/subscribe" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`w-full flex justify-center items-center py-3.5 rounded-xl text-white font-black uppercase tracking-widest text-sm transition-all no-underline ${currentGradient} border-none`}
+                  className={`w-full flex justify-center items-center py-3.5 rounded-xl text-white font-black uppercase tracking-widest text-sm shadow-lg border transition-all no-underline ${currentGradient}`}
                 >
-                  GO PRO
+                  {userTier === 'pro' ? 'UPGRADE TO PRO+' : 'GO PRO'}
                 </Link>
-              </div>
-            ) : (
-              <Link 
-                href="/subscribe" 
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`w-full flex justify-center items-center py-3.5 rounded-xl text-white font-black uppercase tracking-widest text-sm shadow-lg border transition-all no-underline ${currentGradient}`}
-              >
-                GO PRO
-              </Link>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* FOOTER / SOCIALS */}
           <div className="flex flex-col items-center justify-center gap-3 mt-1 mb-4">
