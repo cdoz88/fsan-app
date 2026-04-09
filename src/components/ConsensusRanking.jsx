@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { Users, Loader2, Edit, User, Lock } from 'lucide-react';
+import { Users, Loader2, Edit, User, Lock, ChevronRight } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
 const ConsensusRanking = () => {
@@ -114,9 +114,9 @@ const ConsensusRanking = () => {
       }
   }
 
+  // FIX: Slicing exactly at 20 so only 20 players render before the fade/box takes over
   const hasAccess = userTier !== 'free' || canRank;
-  // Slicing at 22 allows players 21 and 22 to render under the gradient fade, keeping 1-20 in perfect view!
-  const visibleData = hasAccess ? displayData : displayData.slice(0, 22);
+  const visibleData = hasAccess ? displayData : displayData.slice(0, 20);
 
   const parseWPDate = (dateString) => {
       if (!dateString) return null;
@@ -240,7 +240,7 @@ const ConsensusRanking = () => {
                 </span>
               </div>
 
-              <div className="overflow-x-auto scrollbar-hide">
+              <div className="overflow-x-auto scrollbar-hide relative">
                 <table className="min-w-full text-left whitespace-nowrap">
                   <thead className="bg-[#1a1a1a] border-b border-gray-800">
                     <tr>
@@ -309,20 +309,25 @@ const ConsensusRanking = () => {
 
               {/* PAYWALL OVERLAY APPLIED OVER THE BOTTOM OF THE TABLE CONTAINER */}
               {!hasAccess && displayData.length > 20 && (
-                <div className="relative w-full flex flex-col items-center justify-center pt-24 pb-8 -mt-20 z-20">
+                <div className="relative w-full flex flex-col items-center justify-center pt-24 pb-8 -mt-16 z-20">
                    {/* Fade out backdrop */}
                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#111] to-[#111] pointer-events-none z-0"></div>
 
-                   {/* Gradient Outline Wrapper */}
-                   <div className="p-[2px] rounded-2xl bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 shadow-[0_0_40px_rgba(220,38,38,0.2)] max-w-md w-[calc(100%-2rem)] mx-auto relative z-10">
+                   {/* FIX: New 3-color network gradient outline & updated box content */}
+                   <div className="p-[2px] rounded-2xl bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] shadow-[0_0_40px_rgba(195,11,22,0.2)] max-w-md w-[calc(100%-2rem)] mx-auto relative z-10">
                        <div className="flex flex-col items-center text-center bg-[#1a1a1a] rounded-[14px] p-6 md:p-8">
                           <div className="w-12 h-12 bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mb-4 border border-red-500/30 shadow-inner">
                             <Lock size={20} />
                           </div>
                           <h3 className="text-xl font-black text-white uppercase tracking-wider mb-2 whitespace-normal">Unlock Full Rankings</h3>
-                          <p className="text-sm text-gray-400 leading-relaxed whitespace-normal mb-0">
-                            Visitors can only view the top 20 players. <Link href="/subscribe" className="text-white hover:text-gray-300 underline font-bold transition-colors">Sign up now</Link> to unlock our full rankings!
+                          
+                          <p className="text-sm text-gray-400 leading-relaxed whitespace-normal mb-6">
+                            Visitors can only view the top 20 players.
                           </p>
+                          
+                          <Link href="/subscribe" className="w-full bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] hover:opacity-90 text-white font-black uppercase tracking-widest py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(195,11,22,0.3)] text-sm flex items-center justify-center gap-2 hover:-translate-y-0.5">
+                            Unlock Rankings <ChevronRight size={16} />
+                          </Link>
                        </div>
                    </div>
                 </div>
