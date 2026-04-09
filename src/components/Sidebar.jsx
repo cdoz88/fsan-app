@@ -249,7 +249,7 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
           
           {/* BROWSE NETWORK */}
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-3 shadow-xl">
-             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Browse Network</h4>
+             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Content</h4>
              <div className="flex flex-col gap-1">
                 <Link href={`${basePath}/home`} onClick={() => setIsMobileMenuOpen(false)} className={getNavStyle('home')}>
                   <Flame size={18} className={currentView === 'home' ? 'text-white' : accentColor} /> The Wire
