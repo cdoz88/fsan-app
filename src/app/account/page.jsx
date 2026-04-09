@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
-import { User, Mail, Lock, Loader2, CreditCard, ShieldCheck, CheckCircle2, FileText, ShoppingCart, Tag, AlertTriangle, ShieldAlert, Book, Download, Shirt, Users, Settings, Gift, LogOut, ChevronRight, Image as ImageIcon, Zap, Star } from 'lucide-react';
+import { User, Mail, Lock, Loader2, CreditCard, ShieldCheck, CheckCircle2, FileText, ShoppingCart, Tag, AlertTriangle, ShieldAlert, Book, Download, Shirt, Users, Settings, Gift, LogOut, ChevronRight, Image as ImageIcon } from 'lucide-react';
 
 // Custom SVG Component for the Premium Community Icon (Supports Color and Monochrome)
 const PremiumCommunityIcon = ({ className = "", size = 24, monochrome = false }) => {
@@ -75,6 +75,9 @@ function AccountDashboardContent() {
   
   const [rookieGuideUrl, setRookieGuideUrl] = useState(null);
   const [merchCodes, setMerchCodes] = useState({ pro: '', proPlus: '' });
+  
+  // NEW: State variables to hold the dynamic links from WP
+  const [spaceLinks, setSpaceLinks] = useState({ football: '', baseball: '', basketball: '' });
   const [perksLoading, setPerksLoading] = useState(true); 
   
   const [isCopied, setIsCopied] = useState(false);
@@ -193,6 +196,15 @@ function AccountDashboardContent() {
         proPlusMerch: menu(id: "pro-plus-merch-discount", idType: SLUG) {
           menuItems { nodes { label } }
         }
+        spaceFootball: menu(id: "pro-plus-space-football", idType: SLUG) {
+          menuItems { nodes { url } }
+        }
+        spaceBaseball: menu(id: "pro-plus-space-baseball", idType: SLUG) {
+          menuItems { nodes { url } }
+        }
+        spaceBasketball: menu(id: "pro-plus-space-basketball", idType: SLUG) {
+          menuItems { nodes { url } }
+        }
       }
     `;
     try {
@@ -232,6 +244,13 @@ function AccountDashboardContent() {
       }
 
       setMerchCodes({ pro: pCode, proPlus: pPlusCode });
+
+      // Parse the Space Links
+      setSpaceLinks({
+        football: json?.data?.spaceFootball?.menuItems?.nodes?.[0]?.url || '',
+        baseball: json?.data?.spaceBaseball?.menuItems?.nodes?.[0]?.url || '',
+        basketball: json?.data?.spaceBasketball?.menuItems?.nodes?.[0]?.url || ''
+      });
 
     } catch (error) {
       console.error("Failed to fetch dynamic perks.");
@@ -711,7 +730,7 @@ function AccountDashboardContent() {
                                 <div className="w-12 h-12 bg-gray-800 text-gray-400 border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0"><Shirt size={20} /></div>
                                 <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Jersey Leagues</h3>
                               </div>
-                              <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">Compete in an exclusive redraft tournament to win an autographed jersey from your favorite NFL player and a championship ring. Exclusive for Pro+ members.</p>
+                              <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">Compete in an exclusive redraft tournament to win an autographed jersey from your favorite NFL player and a championship ring.</p>
                               
                               <button onClick={() => router.push('/subscribe')} className="w-full mt-auto bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 font-bold uppercase tracking-widest py-3 px-6 rounded-xl text-xs relative z-10 shadow-inner transition-colors">Locked: Pro+ Only</button>
                           </div>
@@ -740,11 +759,65 @@ function AccountDashboardContent() {
                               </p>
                           )}
                           
-                          <a href="https://selloutcrowds.com/" target="_blank" rel="noopener noreferrer" className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-white font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
+                          <a href="https://www.selloutcrowds.com/crowd/fsan" target="_blank" rel="noopener noreferrer" className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-white font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
                               Join the Conversation <ChevronRight size={14} />
                           </a>
                       </div>
                   </div>
+                  
+                  {/* Pro+ Space Access Card - PRO & PRO+ */}
+                  {(userTier === 'pro' || userTier === 'pro-plus') && (
+                    <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-gray-600 transition-all shadow-lg flex flex-col h-full">
+                        <div className="absolute -right-4 -top-4 text-gray-700/30 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500">
+                            <PremiumCommunityIcon size={120} monochrome={true} />
+                        </div>
+                        
+                        <div className="relative z-10 flex flex-col h-full">
+                            <div className="flex items-center gap-3 mb-4">
+                               <div className="w-12 h-12 bg-gray-800 text-white border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0">
+                                   <PremiumCommunityIcon size={24} monochrome={false} />
+                               </div>
+                               <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Pro+ Space Access</h3>
+                            </div>
+
+                            <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">
+                                Jump into our dedicated sport-specific Spaces. Get first priority answers from our experts, exclusive content, and advanced strategy discussions.
+                            </p>
+                            
+                            <div className="flex flex-col gap-2 mt-auto">
+                                {userTier === 'pro-plus' ? (
+                                    <>
+                                        {/* Football */}
+                                        <a href={spaceLinks.football || "#"} target={spaceLinks.football ? "_blank" : "_self"} className={`w-full bg-[#1a1a1a] hover:bg-red-900/20 border border-red-500/50 hover:border-red-500 text-red-500 font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 ${!spaceLinks.football && 'opacity-50 cursor-not-allowed'}`}>
+                                            Football Space <ChevronRight size={14} />
+                                        </a>
+                                        {/* Baseball */}
+                                        <a href={spaceLinks.baseball || "#"} target={spaceLinks.baseball ? "_blank" : "_self"} className={`w-full bg-[#1a1a1a] hover:bg-blue-900/20 border border-blue-500/50 hover:border-blue-500 text-blue-500 font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 ${!spaceLinks.baseball && 'opacity-50 cursor-not-allowed'}`}>
+                                            Baseball Space <ChevronRight size={14} />
+                                        </a>
+                                        {/* Basketball */}
+                                        <a href={spaceLinks.basketball || "#"} target={spaceLinks.basketball ? "_blank" : "_self"} className={`w-full bg-[#1a1a1a] hover:bg-orange-900/20 border border-orange-500/50 hover:border-orange-500 text-orange-500 font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 ${!spaceLinks.basketball && 'opacity-50 cursor-not-allowed'}`}>
+                                            Basketball Space <ChevronRight size={14} />
+                                        </a>
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* Locked Buttons for Pro */}
+                                        <button onClick={() => router.push('/subscribe')} className="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-400 hover:text-white font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-colors shadow-inner flex items-center justify-center gap-2">
+                                            <Lock size={12} /> Football (Pro+ Only)
+                                        </button>
+                                        <button onClick={() => router.push('/subscribe')} className="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-400 hover:text-white font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-colors shadow-inner flex items-center justify-center gap-2">
+                                            <Lock size={12} /> Baseball (Pro+ Only)
+                                        </button>
+                                        <button onClick={() => router.push('/subscribe')} className="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-400 hover:text-white font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-colors shadow-inner flex items-center justify-center gap-2">
+                                            <Lock size={12} /> Basketball (Pro+ Only)
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                  )}
 
                </div>
             )}
