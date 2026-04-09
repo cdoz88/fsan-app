@@ -268,7 +268,7 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
 
           {/* DYNAMIC PRO TOOLS */}
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-3 shadow-xl">
-             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Pro Tools</h4>
+             <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-3 px-1 italic">Tools</h4>
              <div className="flex flex-col gap-1">
                 {proToolsMenu && proToolsMenu.length > 0 ? (
                   proToolsMenu.map((item) => {

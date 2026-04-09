@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Loader2, Mail, Lock, User } from 'lucide-react';
+import { X, Loader2, Mail, Lock, User, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 
 export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
@@ -9,6 +9,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
   const [view, setView] = useState(initialView); 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [resetMessage, setResetMessage] = useState(''); // NEW: Success message for password reset
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -18,6 +19,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
     if (isOpen) {
       setView(initialView);
       setError('');
+      setResetMessage('');
       setUsername('');
       setPassword('');
       setEmail('');
@@ -47,6 +49,48 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
     } else {
       setIsLoading(false);
       onClose(true); // Pass true to signal a SUCCESSFUL auth event
+    }
+  };
+
+  // NEW: Forgot Password GraphQL Mutation
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setResetMessage('');
+
+    const query = `
+      mutation SendPasswordResetEmail($username: String!) {
+        sendPasswordResetEmail(input: { username: $username }) {
+          user {
+            databaseId
+          }
+        }
+      }
+    `;
+
+    try {
+      const res = await fetch('https://admin.fsan.com/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query,
+          variables: { username: email } // WPGraphQL accepts email in the username field for this mutation
+        })
+      });
+
+      const json = await res.json();
+
+      if (json.errors) {
+        setError(json.errors[0].message);
+      } else {
+        setResetMessage('If an account exists, a password reset link has been sent to your email.');
+        setEmail(''); // Clear the email field on success
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -122,16 +166,22 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
         <div className="p-6 md:p-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-black text-white uppercase tracking-wider mb-2">
-              {view === 'login' ? 'TIME TO WIN' : 'Join The Network'}
+              {view === 'login' ? 'TIME TO WIN' : view === 'forgotPassword' ? 'RESET PASSWORD' : 'Join The Network'}
             </h2>
             <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">
-              {view === 'login' ? 'Log in to your account' : 'Create your account'}
+              {view === 'login' ? 'Log in to your account' : view === 'forgotPassword' ? 'Enter your email to get a reset link' : 'Create your account'}
             </p>
           </div>
 
           {error && (
-            <div className="mb-6 p-3 bg-gray-800/50 border border-gray-600 rounded-xl text-gray-300 text-sm text-center font-bold">
-              {error}
+            <div className="mb-6 p-3 bg-red-900/30 border border-red-900 rounded-xl text-red-400 flex items-center gap-3 text-sm font-bold">
+              <AlertCircle size={18} className="shrink-0" /> {error}
+            </div>
+          )}
+
+          {resetMessage && (
+            <div className="mb-6 p-3 bg-green-900/30 border border-green-900 rounded-xl text-green-400 flex items-start gap-3 text-sm font-bold">
+              <CheckCircle2 size={18} className="shrink-0 mt-0.5" /> <span className="leading-snug">{resetMessage}</span>
             </div>
           )}
 
@@ -148,13 +198,47 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
                   className="w-full bg-[#111] border border-gray-700 text-white rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-gray-400 transition-colors text-sm"
                 />
               </div>
+              <div className="relative flex flex-col gap-2">
+                <div className="relative">
+                  <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                  <input 
+                    type="password" 
+                    placeholder="Password" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full bg-[#111] border border-gray-700 text-white rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-gray-400 transition-colors text-sm"
+                  />
+                </div>
+                {/* NEW: Forgot Password Trigger */}
+                <div className="flex justify-end">
+                  <button 
+                    type="button" 
+                    onClick={() => { setView('forgotPassword'); setError(''); setResetMessage(''); }} 
+                    className="text-[10px] text-gray-500 hover:text-gray-300 font-bold uppercase tracking-widest transition-colors"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              </div>
+              <button 
+                type="submit" 
+                disabled={isLoading}
+                className="w-full mt-2 bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border border-gray-600 text-white font-black uppercase tracking-widest py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 text-sm shadow-lg disabled:opacity-50"
+              >
+                {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'Log In'}
+              </button>
+            </form>
+          ) : view === 'forgotPassword' ? (
+            // NEW: Forgot Password Form
+            <form onSubmit={handleForgotPassword} className="flex flex-col gap-4">
               <div className="relative">
-                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input 
-                  type="password" 
-                  placeholder="Password" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  type="email" 
+                  placeholder="Account Email Address" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   className="w-full bg-[#111] border border-gray-700 text-white rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-gray-400 transition-colors text-sm"
                 />
@@ -162,9 +246,9 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
               <button 
                 type="submit" 
                 disabled={isLoading}
-                className="w-full mt-2 bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border border-gray-600 text-white font-black uppercase tracking-widest py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 text-sm shadow-lg"
+                className="w-full mt-2 bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border border-gray-600 text-white font-black uppercase tracking-widest py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 text-sm shadow-lg disabled:opacity-50"
               >
-                {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'Log In'}
+                {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'Send Reset Link'}
               </button>
             </form>
           ) : (
@@ -205,26 +289,33 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
               <button 
                 type="submit" 
                 disabled={isLoading}
-                className="w-full mt-2 bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border border-gray-600 text-white font-black uppercase tracking-widest py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 text-sm shadow-lg"
+                className="w-full mt-2 bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border border-gray-600 text-white font-black uppercase tracking-widest py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 text-sm shadow-lg disabled:opacity-50"
               >
                 {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'Create Account'}
               </button>
             </form>
           )}
 
-          {/* Toggle View Button */}
+          {/* Toggle View Buttons */}
           <div className="mt-6 pt-6 border-t border-gray-800 text-center">
             {view === 'login' ? (
-              <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">
+              <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">
                 Don't have an account?{' '}
                 <button onClick={() => { onClose(false); router.push('/subscribe'); }} className="text-white hover:text-gray-300 font-black transition-colors ml-1">
                   SUBSCRIBE NOW!
                 </button>
               </p>
+            ) : view === 'forgotPassword' ? (
+              <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">
+                Remember your password?{' '}
+                <button onClick={() => { setView('login'); setError(''); setResetMessage(''); }} className="text-white hover:text-gray-300 font-black transition-colors ml-1">
+                  LOG IN
+                </button>
+              </p>
             ) : (
-              <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">
+              <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">
                 Already have an account?{' '}
-                <button onClick={() => { setView('login'); setError(''); }} className="text-white hover:text-gray-300 font-black transition-colors ml-1">
+                <button onClick={() => { setView('login'); setError(''); setResetMessage(''); }} className="text-white hover:text-gray-300 font-black transition-colors ml-1">
                   LOG IN
                 </button>
               </p>
