@@ -2,13 +2,16 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { Users, Loader2, Edit, User } from 'lucide-react';
+import { Users, Loader2, Edit, User, Lock, ChevronRight } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
 const ConsensusRanking = () => {
   const { consensusRanking, rankings, players, loading, currentPosition, setCurrentPosition, selectedAnalyst, setSelectedAnalyst } = usePlayer();
   const { data: session, status } = useSession();
+  
   const [canRank, setCanRank] = useState(false);
+  const [userTier, setUserTier] = useState('free');
+  const [isRoleLoading, setIsRoleLoading] = useState(true);
 
   const activeSport = 'Football'; 
   
@@ -32,6 +35,12 @@ const ConsensusRanking = () => {
 
   useEffect(() => {
     const checkRole = async () => {
+      if (status === 'unauthenticated') {
+         setUserTier('free');
+         setIsRoleLoading(false);
+         return;
+      }
+
       if (status === 'authenticated' && session?.user?.token) {
         try {
           const res = await fetch('https://admin.fsan.com/graphql', {
@@ -40,18 +49,40 @@ const ConsensusRanking = () => {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${session.user.token}`,
             },
-            body: JSON.stringify({ query: `query { viewer { roles { nodes { name } } } }` })
+            body: JSON.stringify({ query: `query { viewer { roles { nodes { name } } } }` }),
+            cache: 'no-store'
           });
           const json = await res.json();
-          const roles = json?.data?.viewer?.roles?.nodes?.map(r => r.name.toLowerCase()) || [];
+          
+          const roles = json?.data?.viewer?.roles?.nodes?.map(r => {
+              let roleName = r.name.toLowerCase();
+              roleName = roleName.replace(/&#043;/g, '+');
+              return roleName;
+          }) || [];
           
           if (roles.some(r => ['administrator', 'editor', 'author', 'player'].includes(r))) {
             setCanRank(true);
           }
-        } catch (e) { console.error("Failed to fetch user roles", e); }
+
+          if (roles.some(r => r.includes('pro+') || r.includes('pro plus') || r.includes('pro_plus') || r.includes('pro-plus'))) {
+            setUserTier('pro-plus');
+          } else if (roles.some(r => r.includes('pro') || r.includes('pro member') || r.includes('fsan_pro'))) {
+            setUserTier('pro');
+          } else {
+            setUserTier('free');
+          }
+        } catch (e) { 
+            console.error("Failed to fetch user roles", e); 
+            setUserTier('free');
+        } finally {
+            setIsRoleLoading(false);
+        }
       }
     };
-    checkRole();
+    
+    if (status !== 'loading') {
+       checkRole();
+    }
   }, [status, session]);
 
   let displayData = [];
@@ -82,6 +113,10 @@ const ConsensusRanking = () => {
           } catch(e) { console.error("Error parsing analyst data", e); }
       }
   }
+
+  // ENFORCE PAYWALL: Free users only see the first 20 items.
+  const hasAccess = userTier !== 'free' || canRank;
+  const visibleData = hasAccess ? displayData : displayData.slice(0, 20);
 
   const parseWPDate = (dateString) => {
       if (!dateString) return null;
@@ -168,7 +203,7 @@ const ConsensusRanking = () => {
           </div>
         </div>
 
-        {loading ? (
+        {loading || isRoleLoading ? (
            <div className="flex flex-col items-center justify-center py-24 bg-[#111] rounded-3xl border border-gray-800 shadow-2xl">
               <Loader2 className="animate-spin text-red-600 mb-4" size={48} />
               <p className="text-gray-500 font-bold uppercase tracking-widest text-sm">Aggregating Consensus...</p>
@@ -205,7 +240,7 @@ const ConsensusRanking = () => {
                 </span>
               </div>
 
-              <div className="overflow-x-auto scrollbar-hide">
+              <div className="overflow-x-auto scrollbar-hide relative">
                 <table className="min-w-full text-left whitespace-nowrap">
                   <thead className="bg-[#1a1a1a] border-b border-gray-800">
                     <tr>
@@ -224,9 +259,8 @@ const ConsensusRanking = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800/50">
-                    {displayData.map((player, index) => {
+                    {visibleData.map((player, index) => {
                       const rank = isIndividualView ? player.currentRank : (index + 1);
-                      // NEW: Generate the clean URL using the explicit suffix-stripping regex
                       const playerUrl = `/player/${player.name.toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`;
                       
                       return (
@@ -269,6 +303,30 @@ const ConsensusRanking = () => {
                         </tr>
                       );
                     })}
+
+                    {/* PAYWALL ROW */}
+                    {!hasAccess && displayData.length > 20 && (
+                      <tr>
+                        <td colSpan={isIndividualView ? 5 : 6} className="p-0 border-t-0">
+                          <div className="relative w-full h-56 flex flex-col items-center justify-end pb-8 overflow-hidden mt-[-20px]">
+                            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#111]/80 to-[#111] z-0"></div>
+                            
+                            <div className="relative z-10 flex flex-col items-center text-center px-4 mt-12 bg-[#1a1a1a] border border-gray-800 rounded-2xl p-6 shadow-2xl max-w-md mx-auto">
+                               <div className="w-12 h-12 bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mb-3 border border-red-500/30">
+                                 <Lock size={20} />
+                               </div>
+                               <h3 className="text-lg font-black text-white uppercase tracking-wider mb-2">Unlock Full Rankings</h3>
+                               <p className="text-xs text-gray-400 mb-5 leading-relaxed">
+                                 Free users can only view the top 20 players. Upgrade to Premium to unlock full {currentPosition} rankings, expert consensus, and advanced trade tools.
+                               </p>
+                               <Link href="/subscribe" className="w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 hover:-translate-y-0.5">
+                                 Upgrade to Premium <ChevronRight size={14} />
+                               </Link>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
