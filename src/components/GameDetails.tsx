@@ -68,7 +68,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
       return (
         <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-          <div className="sticky top-0 z-10 bg-[#121212] pt-0 pb-2">
+          <div className="sticky top-0 z-20 bg-[#121212] pt-3 pb-2">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <button 
@@ -85,7 +85,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                 </button>
               </div>
             </div>
-            <div className="mb-6 text-center">
+            <div className="my-3 text-center">
               <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">{eventName}</h2>
               <p className="text-sm font-normal text-[#9df01c] uppercase tracking-wider">{statusDetail}</p>
             </div>
@@ -149,7 +149,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
     return (
       <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-        <div className="sticky top-0 z-10 bg-[#121212] pt-0 pb-2">
+        <div className="sticky top-0 z-20 bg-[#121212] pt-3 pb-2">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <button 
@@ -166,7 +166,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               </button>
             </div>
           </div>
-          <div className="mb-6 text-center">
+          <div className="my-3 text-center">
             <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">{eventName}</h2>
             <p className="text-sm font-normal text-[#9df01c] uppercase tracking-wider">{statusDetail}</p>
           </div>
@@ -264,19 +264,28 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
       />
     );
 
-    if (sportSlug && teamData.team.abbreviation) {
-      return (
-        <Link href={`/${sportSlug}/teams/${teamData.team.abbreviation.toLowerCase()}`}>
-          {imgEl}
-        </Link>
-      );
+    if (sportSlug && teamData.team) {
+      // Build the full team name from available ESPN data properties
+      const fullName = teamData.team.displayName || 
+                       [teamData.team.location, teamData.team.name].filter(Boolean).join(' ') || 
+                       teamData.team.abbreviation || '';
+      
+      if (fullName) {
+        // Slugify the full name (e.g. "Boston Celtics" -> "boston-celtics")
+        const fullSlug = fullName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        return (
+          <Link href={`/${sportSlug}/teams/${fullSlug}`}>
+            {imgEl}
+          </Link>
+        );
+      }
     }
     return imgEl;
   };
 
   return (
     <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-      <div className="sticky top-0 z-10 bg-[#121212] pt-0 pb-2">
+      <div className="sticky top-0 z-20 bg-[#121212] pt-3 pb-2 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.8)]">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <button 
@@ -374,7 +383,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
           transition={{ duration: 0.2 }}
         >
           {activeTab === 'summary' && (
-            <div className="space-y-3">
+            <div className="space-y-3 pt-4">
               {/* Game Info Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                 <div className="bg-gray-800/30 border border-gray-700/50 p-2.5 sm:p-3 rounded-2xl">
@@ -391,17 +400,17 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                 {weather && (
                   <div className="bg-gray-800/30 border border-gray-700/50 p-2.5 sm:p-3 rounded-2xl">
                     <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
-                      <div className="p-1 sm:p-1.5 bg-yellow-500/10 rounded-lg text-yellow-400">
+                      <div className="p-1 sm:p-1.5 bg-sky-500/10 rounded-lg text-sky-400">
                         <Cloud size={14} className="sm:w-[16px] sm:h-[16px]" />
                       </div>
                       <h4 className="font-bold text-[10px] sm:text-xs uppercase tracking-widest">Weather</h4>
                     </div>
-                    <p className="text-sm sm:text-base font-bold leading-tight">{weather.temperature}°F</p>
-                    <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">{weather.displayValue}</p>
+                    <p className="text-sm sm:text-base font-bold leading-tight">{weather.temperature ? `${weather.temperature}°F` : 'N/A'}</p>
+                    <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">{weather.displayValue || 'N/A'}</p>
                   </div>
                 )}
 
-                <div className="bg-gray-800/30 border border-gray-700/50 p-2.5 sm:p-3 rounded-2xl">
+                <div className="bg-gray-800/30 border border-gray-700/50 p-2.5 sm:p-3 rounded-2xl sm:col-span-2 lg:col-span-1">
                   <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
                     <div className="p-1 sm:p-1.5 bg-purple-500/10 rounded-lg text-purple-400">
                       <Tv size={14} className="sm:w-[16px] sm:h-[16px]" />
@@ -422,26 +431,19 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               {oddsList && oddsList.length > 0 && (
                 <div className="space-y-2 sm:space-y-3">
                   {oddsList.map((oddsItem: any, i: number) => (
-                    <div key={i} className="bg-gray-800/30 border border-gray-700/50 p-3 sm:p-4 rounded-2xl">
-                      <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-bold text-[10px] sm:text-xs uppercase tracking-widest flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 bg-[#9df01c] rounded-full" />
-                          Betting Odds
-                        </h4>
-                        {oddsItem.provider?.name && (
-                          <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-800 px-1.5 py-0.5 rounded">
-                            {oddsItem.provider.name}
-                          </span>
-                        )}
+                    <div key={i} className="bg-gray-800/30 border border-gray-700/50 p-3 sm:p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4">
+                      <div>
+                        <div className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Provider</div>
+                        <div className="font-bold text-sm sm:text-base text-white">{oddsItem.provider?.name || 'Odds'}</div>
                       </div>
-                      <div className="grid grid-cols-2 gap-3 sm:gap-6">
+                      <div className="flex items-center gap-4 sm:gap-6">
                         <div>
-                          <p className="text-[9px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">Spread</p>
-                          <p className="text-base sm:text-lg font-black leading-tight">{oddsItem.details || 'N/A'}</p>
+                          <div className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-gray-400 mb-1 text-center">Spread</div>
+                          <div className="font-bold text-sm sm:text-base text-[#9df01c]">{oddsItem.details || 'N/A'}</div>
                         </div>
                         <div>
-                          <p className="text-[9px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">Over/Under</p>
-                          <p className="text-base sm:text-lg font-black leading-tight">{oddsItem.overUnder || 'N/A'}</p>
+                          <div className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-gray-400 mb-1 text-center">O/U</div>
+                          <div className="font-bold text-sm sm:text-base text-[#9df01c]">{oddsItem.overUnder || 'N/A'}</div>
                         </div>
                       </div>
                     </div>
@@ -452,39 +454,46 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
           )}
 
           {activeTab === 'boxscore' && (
-            <div className="space-y-4">
-              {/* Boxscore Sub-tabs */}
-              <div className="flex bg-gray-800/50 p-1 rounded-xl">
+            <div className="space-y-4 pt-4">
+              <div className="flex gap-2 p-1 bg-gray-800/50 rounded-xl mb-4 sm:mb-6 overflow-x-auto scrollbar-hide">
                 <button
                   onClick={() => setBoxscoreTab('team')}
                   className={cn(
-                    "flex-1 py-2 text-xs sm:text-sm font-bold uppercase tracking-widest rounded-lg transition-all",
-                    boxscoreTab === 'team' ? "bg-gray-700 text-white shadow-sm" : "text-gray-400 hover:text-gray-200"
+                    "flex-1 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-lg transition-colors whitespace-nowrap px-3",
+                    boxscoreTab === 'team' ? "bg-gray-700 text-white" : "text-gray-400 hover:text-gray-200"
                   )}
                 >
-                  Team
+                  Team Stats
                 </button>
                 <button
                   onClick={() => setBoxscoreTab('away')}
                   className={cn(
-                    "flex-1 py-2 text-xs sm:text-sm font-bold uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2",
-                    boxscoreTab === 'away' ? "bg-gray-700 text-white shadow-sm" : "text-gray-400 hover:text-gray-200"
+                    "flex-1 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-lg transition-colors whitespace-nowrap px-3 flex items-center justify-center gap-2",
+                    boxscoreTab === 'away' ? "bg-gray-700 text-white" : "text-gray-400 hover:text-gray-200"
                   )}
                 >
-                  <img src={getTeamLogo(away.team)} className="w-4 h-4 object-contain hidden sm:block" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${away.team.abbreviation || '?'}` }} />
-                  <span className="hidden sm:inline">{away.team.displayName || away.team.name || away.team.abbreviation}</span>
-                  <span className="sm:hidden">{away.team.name || away.team.abbreviation}</span>
+                  <img 
+                    src={getTeamLogo(away.team)} 
+                    className="w-3 h-3 sm:w-4 sm:h-4 object-contain" 
+                    referrerPolicy="no-referrer"
+                    onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${away.team.abbreviation || '?'}` }}
+                  />
+                  {away.team.abbreviation}
                 </button>
                 <button
                   onClick={() => setBoxscoreTab('home')}
                   className={cn(
-                    "flex-1 py-2 text-xs sm:text-sm font-bold uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2",
-                    boxscoreTab === 'home' ? "bg-gray-700 text-white shadow-sm" : "text-gray-400 hover:text-gray-200"
+                    "flex-1 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-lg transition-colors whitespace-nowrap px-3 flex items-center justify-center gap-2",
+                    boxscoreTab === 'home' ? "bg-gray-700 text-white" : "text-gray-400 hover:text-gray-200"
                   )}
                 >
-                  <img src={getTeamLogo(home.team)} className="w-4 h-4 object-contain hidden sm:block" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${home.team.abbreviation || '?'}` }} />
-                  <span className="hidden sm:inline">{home.team.displayName || home.team.name || home.team.abbreviation}</span>
-                  <span className="sm:hidden">{home.team.name || home.team.abbreviation}</span>
+                  <img 
+                    src={getTeamLogo(home.team)} 
+                    className="w-3 h-3 sm:w-4 sm:h-4 object-contain" 
+                    referrerPolicy="no-referrer"
+                    onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${home.team.abbreviation || '?'}` }}
+                  />
+                  {home.team.abbreviation}
                 </button>
               </div>
 
@@ -519,110 +528,110 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                     <>
                       <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-800">
                         <div className="flex items-center gap-2 sm:gap-3 w-1/3">
-                          <img src={getTeamLogo(away.team)} className="w-6 h-6 sm:w-8 sm:h-8 object-contain" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${away.team.abbreviation || '?'}` }} />
-                          <span className="font-black text-base sm:text-lg uppercase hidden sm:block">{away.team.abbreviation}</span>
+                          <img 
+                            src={getTeamLogo(away.team)} 
+                            className="w-6 h-6 sm:w-8 sm:h-8 object-contain" 
+                            referrerPolicy="no-referrer"
+                            onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${away.team.abbreviation || '?'}` }}
+                          />
+                          <span className="font-bold text-sm sm:text-base uppercase truncate">{away.team.abbreviation}</span>
                         </div>
-                        <div className="w-1/3 text-center text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest">
-                          Team Stats
-                        </div>
+                        <div className="text-xs font-bold text-gray-500 uppercase tracking-widest w-1/3 text-center">Team Stats</div>
                         <div className="flex items-center justify-end gap-2 sm:gap-3 w-1/3">
-                          <span className="font-black text-base sm:text-lg uppercase hidden sm:block">{home.team.abbreviation}</span>
-                          <img src={getTeamLogo(home.team)} className="w-6 h-6 sm:w-8 sm:h-8 object-contain" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${home.team.abbreviation || '?'}` }} />
+                          <span className="font-bold text-sm sm:text-base uppercase truncate">{home.team.abbreviation}</span>
+                          <img 
+                            src={getTeamLogo(home.team)} 
+                            className="w-6 h-6 sm:w-8 sm:h-8 object-contain" 
+                            referrerPolicy="no-referrer"
+                            onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${home.team.abbreviation || '?'}` }}
+                          />
                         </div>
                       </div>
-                      
-                      <div className="space-y-3">
-                        {boxscore?.teams?.find((t: any) => t.homeAway === 'away')?.statistics?.map((stat: any, index: number, allAwayStats: any[]) => {
-                      if (stat.name?.toLowerCase().includes('pct') || stat.label?.includes('%')) return null;
-                      
-                      const allHomeStats = boxscore.teams.find((t: any) => t.homeAway === 'home')?.statistics || [];
-                      const homeStat = allHomeStats.find((s: any) => s.name === stat.name);
-                      if (!homeStat) return null;
-                      
-                      const parseStatValue = (val: string) => {
-                        if (!val) return 0;
-                        const match = val.match(/^(\d+)[-/]/);
-                        if (match) return parseFloat(match[1]);
-                        return parseFloat(val) || 0;
-                      };
 
-                      const awayVal = parseStatValue(stat.displayValue);
-                      const homeVal = parseStatValue(homeStat.displayValue);
-                      const total = awayVal + homeVal;
-                      const awayPct = total > 0 ? (awayVal / total) * 100 : 50;
-                      const homePct = total > 0 ? (homeVal / total) * 100 : 50;
+                      {boxscore?.teams?.[0]?.statistics?.map((stat: any, index: number) => {
+                        const allAwayStats = boxscore.teams.find((t: any) => t.team.id === away.team.id)?.statistics;
+                        const allHomeStats = boxscore.teams.find((t: any) => t.team.id === home.team.id)?.statistics;
+                        const homeStat = allHomeStats?.find((s: any) => s.name === stat.name);
+                        
+                        // Handle stats like "15-20" or "10/12" which need percentage bars
+                        let pctStatName = null;
+                        if (stat.name === 'fieldGoalsMade-fieldGoalsAttempted' || stat.name === 'fieldGoals') pctStatName = 'fieldGoalPct';
+                        else if (stat.name === 'threePointFieldGoalsMade-threePointFieldGoalsAttempted' || stat.name === 'threePointFieldGoals') pctStatName = 'threePointFieldGoalPct';
+                        else if (stat.name === 'freeThrowsMade-freeThrowsAttempted' || stat.name === 'freeThrows') pctStatName = 'freeThrowPct';
+                        else if (stat.name === 'completionAttempts' || stat.name === 'completions-passingAttempts') pctStatName = 'completionPct';
+                        
+                        let pctAwayStat = null;
+                        let pctHomeStat = null;
 
-                      const formatDisplayValue = (val: string) => val ? val.replace(/^(\d+)-(\d+)$/, '$1/$2') : '';
-                      
-                      const awayDisplay = formatDisplayValue(stat.displayValue);
-                      const homeDisplay = formatDisplayValue(homeStat.displayValue);
-                      
-                      let awayPctDisplay = null;
-                      let homePctDisplay = null;
-                      
-                      // Safely find corresponding percentage stat
-                      let pctStatName = '';
-                      if (stat.name === 'fieldGoalsMade-fieldGoalsAttempted' || stat.name === 'fieldGoals') pctStatName = 'fieldGoalPct';
-                      else if (stat.name === 'threePointFieldGoalsMade-threePointFieldGoalsAttempted' || stat.name === 'threePointFieldGoals') pctStatName = 'threePointFieldGoalPct';
-                      else if (stat.name === 'freeThrowsMade-freeThrowsAttempted' || stat.name === 'freeThrows') pctStatName = 'freeThrowPct';
-                      else if (stat.name === 'completionAttempts' || stat.name === 'completions-passingAttempts') pctStatName = 'completionPct';
-                      
-                      let pctAwayStat = null;
-                      let pctHomeStat = null;
-                      
-                      if (pctStatName) {
-                        pctAwayStat = allAwayStats.find((s: any) => s.name === pctStatName);
-                        pctHomeStat = allHomeStats.find((s: any) => s.name === pctStatName);
-                      } else {
-                        // Fallback to next stat if it's a percentage and current stat is a ratio
-                        const isRatio = stat.displayValue?.includes('-');
-                        const nextAwayStat = allAwayStats[index + 1];
-                        if (isRatio && nextAwayStat && (nextAwayStat.name?.toLowerCase().includes('pct') || nextAwayStat.label?.includes('%'))) {
-                          pctAwayStat = nextAwayStat;
-                          pctHomeStat = allHomeStats.find((s: any) => s.name === nextAwayStat.name);
+                        if (pctStatName) {
+                           pctAwayStat = allAwayStats.find((s: any) => s.name === pctStatName);
+                           pctHomeStat = allHomeStats.find((s: any) => s.name === pctStatName);
+                        } else {
+                           // Fallback to next stat if it's a percentage and current stat is a ratio
+                           const isRatio = stat.displayValue?.includes('-');
+                           const nextAwayStat = allAwayStats[index + 1];
+                           if (isRatio && nextAwayStat && (nextAwayStat.name?.toLowerCase().includes('pct') || nextAwayStat.label?.includes('%'))) {
+                               pctAwayStat = nextAwayStat;
+                               pctHomeStat = allHomeStats[index + 1];
+                           }
                         }
-                      }
-                      
-                      if (pctAwayStat && pctAwayStat.displayValue) {
-                        awayPctDisplay = `(${pctAwayStat.displayValue}${pctAwayStat.displayValue.includes('%') ? '' : '%'})`;
-                      }
-                      if (pctHomeStat && pctHomeStat.displayValue) {
-                        homePctDisplay = `(${pctHomeStat.displayValue}${pctHomeStat.displayValue.includes('%') ? '' : '%'})`;
-                      }
 
-                      return (
-                        <div key={index} className="flex flex-col gap-1">
-                          <div className="flex justify-between items-center px-1">
-                            <span className="font-bold text-xs sm:text-sm text-white w-1/3 text-left flex items-center gap-1.5">
-                              {awayDisplay}
-                              {awayPctDisplay && <span className="text-gray-500 text-[10px] sm:text-xs font-normal">{awayPctDisplay}</span>}
-                            </span>
-                            <span className="text-[9px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-widest w-1/3 text-center">
-                              {stat.label}
-                            </span>
-                            <span className="font-bold text-xs sm:text-sm text-white w-1/3 text-right flex items-center justify-end gap-1.5">
-                              {homePctDisplay && <span className="text-gray-500 text-[10px] sm:text-xs font-normal">{homePctDisplay}</span>}
-                              {homeDisplay}
-                            </span>
+                        const aValRaw = pctAwayStat ? parseFloat(pctAwayStat.displayValue) : parseFloat(stat.displayValue);
+                        const hValRaw = pctHomeStat ? parseFloat(pctHomeStat.displayValue) : parseFloat(homeStat?.displayValue || '0');
+                        
+                        const aVal = isNaN(aValRaw) ? 0 : aValRaw;
+                        const hVal = isNaN(hValRaw) ? 0 : hValRaw;
+                        const total = aVal + hVal;
+                        
+                        // Calculate percentage carefully to avoid NaN and ensure minimum visible width
+                        let awayPct = total === 0 ? 50 : (aVal / total) * 100;
+                        let homePct = total === 0 ? 50 : (hVal / total) * 100;
+                        
+                        // Enforce minimum width so bars don't disappear entirely if they have some value
+                        if (aVal > 0 && awayPct < 2) awayPct = 2;
+                        if (hVal > 0 && homePct < 2) homePct = 2;
+
+                        // Identify the highlighted value
+                        const isAwayHigher = aVal > hVal;
+                        const isHomeHigher = hVal > aVal;
+
+                        // Only skip rendering if the stat is a pure percentage that we already attached to a ratio stat
+                        if ((stat.name.toLowerCase().includes('pct') || stat.label.includes('%')) && 
+                            allAwayStats[index - 1]?.displayValue?.includes('-')) {
+                            return null;
+                        }
+
+                        return (
+                          <div key={index} className="py-2.5 sm:py-3 border-b border-gray-800/50 hover:bg-gray-800/20 px-2 rounded-lg transition-colors group">
+                            <div className="flex justify-between items-end mb-2">
+                               <span className={cn("text-xs sm:text-sm font-bold w-16", isAwayHigher ? "text-white" : "text-gray-400")}>
+                                 {stat.displayValue}
+                                 {pctAwayStat && <span className="text-[9px] text-gray-500 ml-1 font-medium block sm:inline">({pctAwayStat.displayValue}%)</span>}
+                               </span>
+                               
+                               <span className="text-[9px] sm:text-[10px] uppercase font-bold text-gray-500 tracking-widest px-2 text-center group-hover:text-gray-300 transition-colors">
+                                 {stat.label}
+                               </span>
+                               
+                               <span className={cn("text-xs sm:text-sm font-bold text-right w-16", isHomeHigher ? "text-white" : "text-gray-400")}>
+                                 {homeStat?.displayValue || '0'}
+                                 {pctHomeStat && <span className="text-[9px] text-gray-500 ml-1 font-medium block sm:inline">({pctHomeStat.displayValue}%)</span>}
+                               </span>
+                            </div>
+                            
+                            <div className="flex h-1.5 bg-gray-800 rounded-full overflow-hidden w-full gap-0.5">
+                              <div 
+                                className={cn("h-full rounded-l-full transition-all duration-500", isAwayHigher ? "bg-[#9df01c]" : "bg-[#9df01c]/50")}
+                                style={{ width: `${awayPct}%` }}
+                              />
+                              <div 
+                                className={cn("h-full rounded-r-full transition-all duration-500", isHomeHigher ? "bg-white" : "bg-gray-500")}
+                                style={{ width: `${homePct}%` }}
+                              />
+                            </div>
                           </div>
-                          <div className="flex h-1.5 rounded-full overflow-hidden bg-gray-800">
-                            <div 
-                              style={{ 
-                                width: `${awayPct}%`, 
-                                backgroundColor: `#${away.team.color || '3b82f6'}` 
-                              }} 
-                            />
-                            <div 
-                              style={{ 
-                                width: `${homePct}%`, 
-                                backgroundColor: `#${home.team.color || 'ef4444'}` 
-                              }} 
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                      </div>
+                        );
+                      })}
                     </>
                   )}
                 </div>
@@ -633,23 +642,22 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   {boxscore.players.filter((t: any) => t.team.id === away.team.id).map((teamBox: any, i: number) => (
                     <div key={i} className="space-y-4">
                       {teamBox.statistics?.map((statGroup: any, statIdx: number) => (
-                        <div key={statIdx} className="overflow-x-auto">
-                          <h3 className="px-3 pt-3 text-sm sm:text-base font-bold text-white mb-1">{statGroup.name || statGroup.label || ''}</h3>
-                          <table className="w-full text-left text-xs">
-                            <thead>
-                              <tr className="text-gray-500 font-bold uppercase tracking-widest border-b border-gray-700/30">
-                                <th className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10">Player</th>
+                        <div key={statIdx} className="overflow-x-auto scrollbar-hide">
+                          <table className="w-full text-sm text-left whitespace-nowrap">
+                            <thead className="text-xs text-gray-400 uppercase bg-[#333] border-b border-gray-600">
+                              <tr>
+                                <th className="px-3 py-2.5 sm:p-3 w-40 sm:w-48 sticky left-0 bg-[#333] z-10">{statGroup.name}</th>
                                 {statGroup.labels?.map((label: string, j: number) => (
-                                  <th key={j} className="px-3 py-2 sm:p-3 text-center whitespace-nowrap">{label}</th>
+                                  <th key={j} className="px-3 py-2.5 sm:p-3 text-center">{label}</th>
                                 ))}
                               </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-gray-700/50 bg-[#2A2A2A]">
                               {statGroup.athletes?.map((athlete: any, j: number) => (
-                                <tr key={j} className="border-b border-gray-700/10 hover:bg-gray-700/20 transition-colors">
-                                  <td className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10 border-r border-gray-700/30">
-                                    <div className="flex items-baseline gap-2 whitespace-nowrap">
-                                      <span className="font-bold text-white">{athlete.athlete?.displayName || athlete.athlete?.shortName || 'Player'}</span>
+                                <tr key={j} className="hover:bg-[#3e3e3e] transition-colors">
+                                  <td className="px-3 py-2 sm:p-3 font-semibold text-white sticky left-0 bg-[#2A2A2A] z-10 border-r border-gray-700/50">
+                                    <div className="flex flex-col">
+                                      <span className="truncate">{athlete.athlete?.shortName || athlete.athlete?.displayName || 'Player'}</span>
                                       <span className="text-[9px] sm:text-[10px] text-gray-500 uppercase">{athlete.athlete?.position?.abbreviation}</span>
                                     </div>
                                   </td>
@@ -672,23 +680,22 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   {boxscore.players.filter((t: any) => t.team.id === home.team.id).map((teamBox: any, i: number) => (
                     <div key={i} className="space-y-4">
                       {teamBox.statistics?.map((statGroup: any, statIdx: number) => (
-                        <div key={statIdx} className="overflow-x-auto">
-                          <h3 className="px-3 pt-3 text-sm sm:text-base font-bold text-white mb-1">{statGroup.name || statGroup.label || ''}</h3>
-                          <table className="w-full text-left text-xs">
-                            <thead>
-                              <tr className="text-gray-500 font-bold uppercase tracking-widest border-b border-gray-700/30">
-                                <th className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10">Player</th>
+                        <div key={statIdx} className="overflow-x-auto scrollbar-hide">
+                          <table className="w-full text-sm text-left whitespace-nowrap">
+                            <thead className="text-xs text-gray-400 uppercase bg-[#333] border-b border-gray-600">
+                              <tr>
+                                <th className="px-3 py-2.5 sm:p-3 w-40 sm:w-48 sticky left-0 bg-[#333] z-10">{statGroup.name}</th>
                                 {statGroup.labels?.map((label: string, j: number) => (
-                                  <th key={j} className="px-3 py-2 sm:p-3 text-center whitespace-nowrap">{label}</th>
+                                  <th key={j} className="px-3 py-2.5 sm:p-3 text-center">{label}</th>
                                 ))}
                               </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-gray-700/50 bg-[#2A2A2A]">
                               {statGroup.athletes?.map((athlete: any, j: number) => (
-                                <tr key={j} className="border-b border-gray-700/10 hover:bg-gray-700/20 transition-colors">
-                                  <td className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10 border-r border-gray-700/30">
-                                    <div className="flex items-baseline gap-2 whitespace-nowrap">
-                                      <span className="font-bold text-white">{athlete.athlete?.displayName || athlete.athlete?.shortName || 'Player'}</span>
+                                <tr key={j} className="hover:bg-[#3e3e3e] transition-colors">
+                                  <td className="px-3 py-2 sm:p-3 font-semibold text-white sticky left-0 bg-[#2A2A2A] z-10 border-r border-gray-700/50">
+                                    <div className="flex flex-col">
+                                      <span className="truncate">{athlete.athlete?.shortName || athlete.athlete?.displayName || 'Player'}</span>
                                       <span className="text-[9px] sm:text-[10px] text-gray-500 uppercase">{athlete.athlete?.position?.abbreviation}</span>
                                     </div>
                                   </td>
@@ -709,7 +716,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
           )}
 
           {activeTab === 'plays' && (
-            <div className="space-y-4 sm:space-y-6">
+            <div className="space-y-4 sm:space-y-6 pt-4">
               {/* Line Score Table */}
               {away.linescores && home.linescores && (
                 <div className="bg-gray-800/50 rounded-2xl border border-gray-700/50 p-2 sm:p-3 overflow-x-auto">
@@ -764,69 +771,43 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               {/* Scoring Plays */}
               {isSoccer ? (
                 soccerEvents && soccerEvents.length > 0 ? (
-                  <div className="space-y-2 sm:space-y-3">
-                    <h3 className="text-base sm:text-lg font-black uppercase mb-2 sm:mb-3">Match Timeline</h3>
-                    {soccerEvents.map((event: any, i: number) => {
-                      const teamData = competition.competitors?.find((c: any) => c.id === event.team?.id);
-                      const teamColor = teamData ? `#${teamData.team.color || 'ffffff'}` : '#9ca3af';
+                  <div className="bg-gray-800/30 border border-gray-700/50 rounded-2xl overflow-hidden p-2 sm:p-4">
+                    {soccerEvents.slice().reverse().map((event: any, i: number) => {
+                      const isGoal = event.type?.text?.toLowerCase().includes('goal') || event.scoringPlay;
+                      const isCard = event.type?.text?.toLowerCase().includes('card');
+                      const isYellow = isCard && event.type?.text?.toLowerCase().includes('yellow');
+                      const isRed = isCard && event.type?.text?.toLowerCase().includes('red');
+                      const teamData = event.team || (event.participants && event.participants[0]?.athlete?.team);
                       
-                      let Icon = Circle;
-                      let iconColor = "text-gray-500";
-                      let eventTypeClass = "text-gray-300";
-                      const typeText = event.type?.text?.toLowerCase() || '';
-                      
-                      if (typeText.includes('goal')) {
-                        Icon = Circle;
-                        iconColor = "text-[#9df01c] fill-[#9df01c]";
-                        eventTypeClass = "text-white font-bold";
-                      } else if (typeText.includes('yellow card')) {
-                        Icon = Square;
-                        iconColor = "text-yellow-400 fill-yellow-400";
-                      } else if (typeText.includes('red card')) {
-                        Icon = Square;
-                        iconColor = "text-red-500 fill-red-500";
-                      } else if (typeText.includes('substitution')) {
-                        Icon = ArrowLeftRight;
-                        iconColor = "text-blue-400";
-                      } else if (typeText.includes('penalty')) {
-                        Icon = AlertCircle;
-                        iconColor = "text-orange-400";
-                      }
-                      
-                      let playersHtml = '';
-                      if (event.participants) {
-                        playersHtml = event.participants.map((p: any) => p.athlete?.displayName).join(', ');
-                      } else if (event.text) {
-                        playersHtml = event.text;
-                      }
-
                       return (
-                        <div 
-                          key={i} 
-                          className={cn(
-                            "bg-gray-800/30 p-2 sm:p-3 rounded-r-lg flex items-center gap-3 sm:gap-4",
-                            teamData && "border-l-4"
-                          )}
-                          style={teamData ? { borderLeftColor: teamColor } : {}}
-                        >
-                          <div className="w-10 sm:w-12 text-center flex flex-col items-center justify-center border-r border-gray-700/50 pr-2 sm:pr-3">
-                            <span className="font-bold text-base sm:text-lg text-white">{event.clock?.displayValue || '-'}</span>
+                        <div key={i} className="flex gap-3 sm:gap-4 p-3 sm:p-4 border-b border-gray-800 hover:bg-gray-800/50 transition-colors last:border-0 rounded-xl items-center">
+                          <div className="w-10 sm:w-12 text-center shrink-0">
+                            <span className="text-[10px] sm:text-xs font-bold text-gray-400 block">{event.clock?.displayValue || event.time || "FT"}</span>
                           </div>
-                          <div className="flex-shrink-0 w-5 sm:w-6 flex justify-center">
-                            <Icon className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4", iconColor)} />
+                          
+                          <div className="flex-1 min-w-0">
+                             <div className="flex items-center gap-2 mb-1">
+                               {isGoal ? <div className="w-2.5 h-2.5 rounded-full bg-[#9df01c]" /> : 
+                                isYellow ? <div className="w-2 sm:w-2.5 h-3 sm:h-3.5 bg-yellow-400 rounded-sm" /> : 
+                                isRed ? <div className="w-2 sm:w-2.5 h-3 sm:h-3.5 bg-red-500 rounded-sm" /> : 
+                                <div className="w-2 h-2 rounded-full border-2 border-gray-500" />}
+                               <span className={cn(
+                                 "font-bold text-[10px] sm:text-xs uppercase tracking-widest",
+                                 isGoal ? "text-[#9df01c]" : isCard ? "text-white" : "text-gray-400"
+                               )}>
+                                 {event.type?.text || 'Event'}
+                               </span>
+                             </div>
+                             <p className="text-sm sm:text-base font-medium text-white leading-tight">{event.text}</p>
                           </div>
-                          <div className="flex-grow">
-                            <p className={cn("text-xs sm:text-sm uppercase tracking-wide", eventTypeClass)}>
-                              {event.type?.text || 'Event'}
-                            </p>
-                            <p className="text-gray-400 text-[10px] sm:text-xs">{playersHtml}</p>
-                          </div>
+
                           {teamData && (
                             <img 
-                              src={getTeamLogo(teamData.team)} 
-                              className="w-5 h-5 sm:w-6 sm:h-6 object-contain opacity-50" 
+                              src={getTeamLogo(teamData)} 
+                              alt="" 
+                              className="w-6 h-6 sm:w-8 sm:h-8 object-contain opacity-50"
                               referrerPolicy="no-referrer"
-                              onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${teamData.team.abbreviation || '?'}` }}
+                              onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${teamData.team?.abbreviation || teamData.abbreviation || '?'}` }}
                             />
                           )}
                         </div>
