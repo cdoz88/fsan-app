@@ -4,8 +4,9 @@ import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
-// Make sure this path points to wherever you dropped your Scoreboard component!
-import Scoreboard from '../../components/Scoreboard'; 
+
+// FIX: Added curly brackets here because Scoreboard is a "named" export!
+import { Scoreboard } from '../../components/Scoreboard'; 
 
 // Initialize the React Query Client for the Scoreboard data fetching
 const queryClient = new QueryClient();
