@@ -67,7 +67,6 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
       return (
         <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-          {/* FIX: Raised z-index and added solid background to prevent overlapping issues */}
           <div className="sticky top-0 z-20 bg-[#121212] pt-4 pb-2">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -149,7 +148,6 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
     return (
       <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-        {/* FIX: Raised z-index and added solid background */}
         <div className="sticky top-0 z-20 bg-[#121212] pt-4 pb-2">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -253,7 +251,6 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
   return (
     <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-      {/* FIX: Raised z-index and added solid background */}
       <div className="sticky top-0 z-20 bg-[#121212] pt-4 pb-2 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.8)]">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
@@ -746,36 +743,6 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               ) : (
                 <div className="text-center py-10 sm:py-20 text-sm text-gray-500 font-bold uppercase tracking-widest">
                   Match timeline not available
-                </div>
-              )
-              ) : (scoringPlays && scoringPlays.length > 0) || (plays && plays.filter((p: any) => p.scoringPlay).length > 0) ? (
-                <div className="space-y-2 sm:space-y-3">
-                  <h3 className="text-base sm:text-lg font-black uppercase mb-2 sm:mb-3">Scoring Plays</h3>
-                  {(scoringPlays || plays.filter((p: any) => p.scoringPlay)).slice().reverse().map((play: any, i: number) => (
-                    <div key={i} className="flex gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-800/30 border border-gray-700/50 rounded-xl hover:border-gray-600 transition-colors">
-                      <div className="flex flex-col items-center justify-center shrink-0 w-10 sm:w-14">
-                        <img 
-                          src={getPlayTeamLogo(play.team)} 
-                          className="w-6 h-6 sm:w-8 sm:h-8 object-contain mb-1" 
-                          referrerPolicy="no-referrer"
-                          onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=?` }}
-                        />
-                        <span className="text-[9px] sm:text-[10px] font-bold text-gray-400">{play.clock?.displayValue || ''} Q{play.period?.number || ''}</span>
-                      </div>
-                      <div className="flex-1 flex flex-col justify-center min-w-0 pr-2">
-                         <div className="text-[10px] sm:text-xs font-bold text-[#9df01c] uppercase tracking-widest mb-0.5">{play.type?.text}</div>
-                         <p className="text-xs sm:text-sm text-gray-200 leading-snug">{play.text}</p>
-                      </div>
-                      <div className="flex flex-col items-end justify-center shrink-0 font-mono text-sm sm:text-base border-l border-gray-700/50 pl-2 sm:pl-3 min-w-[50px]">
-                         <div className={cn("font-bold", play.awayScore > play.homeScore ? "text-white" : "text-gray-400")}>{play.awayScore}</div>
-                         <div className={cn("font-bold", play.homeScore > play.awayScore ? "text-white" : "text-gray-400")}>{play.homeScore}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-10 sm:py-20 text-sm text-gray-500 font-bold uppercase tracking-widest">
-                  Scoring data not available
                 </div>
               )}
             </div>
