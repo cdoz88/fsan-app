@@ -5,9 +5,21 @@ import { redirect } from 'next/navigation';
 export async function generateMetadata({ params }) {
   const { sport, view } = await params;
   const activeSport = sport.charAt(0).toUpperCase() + sport.slice(1);
-  const viewName = view.charAt(0).toUpperCase() + view.slice(1);
+  
+  if (activeSport === 'All') {
+    if (view === 'home') return { title: 'The Wire | FSAN' };
+    if (view === 'articles') return { title: 'Articles | FSAN' };
+    if (view === 'videos') return { title: 'Videos | FSAN' };
+    if (view === 'podcasts') return { title: 'Podcasts | FSAN' };
+    
+    // Fallback for any other custom views
+    const viewName = view.charAt(0).toUpperCase() + view.slice(1);
+    return { title: `${viewName} | FSAN` };
+  }
+
+  // Fallback for specific sports (e.g., Football | FSAN)
   return {
-    title: activeSport === 'All' ? `FSAN | The ${viewName}` : `${activeSport} | FSAN`,
+    title: `${activeSport} | FSAN`,
   };
 }
 

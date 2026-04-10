@@ -6,7 +6,7 @@ import { PlayerProvider } from '../../../context/PlayerContext';
 import { getMenuBySlug } from '../../../utils/api';
 
 export const metadata = {
-  title: 'Football Consensus Rankings | FSAN',
+  title: 'Rankings | FSAN',
   description: 'View the latest NFL consensus rankings aggregated from user submissions.',
 };
 
