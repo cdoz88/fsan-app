@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, MapPin, Tv, Info, Users, List, RefreshCw, Cloud, Circle, Square, ArrowLeftRight, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
 import { fetchGameSummary } from '../services/espnService';
 import { cn, getTeamLogo } from '../lib/utils';
 
@@ -67,7 +68,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
       return (
         <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-          <div className="sticky top-0 z-10 bg-[#121212] pt-3 pb-2">
+          <div className="sticky top-0 z-10 bg-[#121212] pt-0 pb-2">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <button 
@@ -84,7 +85,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                 </button>
               </div>
             </div>
-            <div className="my-3 text-center">
+            <div className="mb-6 text-center">
               <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">{eventName}</h2>
               <p className="text-sm font-normal text-[#9df01c] uppercase tracking-wider">{statusDetail}</p>
             </div>
@@ -148,7 +149,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
     return (
       <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-        <div className="sticky top-0 z-10 bg-[#121212] pt-3 pb-2">
+        <div className="sticky top-0 z-10 bg-[#121212] pt-0 pb-2">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <button 
@@ -165,7 +166,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               </button>
             </div>
           </div>
-          <div className="my-3 text-center">
+          <div className="mb-6 text-center">
             <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">{eventName}</h2>
             <p className="text-sm font-normal text-[#9df01c] uppercase tracking-wider">{statusDetail}</p>
           </div>
@@ -236,7 +237,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
   };
   
   // Handle odds as an array
-  let oddsList = [];
+  let oddsList: any[] = [];
   if (summary.pickcenter && summary.pickcenter.length > 0) {
     oddsList = summary.pickcenter;
   } else if (competition.odds && competition.odds.length > 0) {
@@ -249,10 +250,33 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
   const broadcasts = competition.broadcasts || summary.broadcasts || competition.geoBroadcasts || summary.geoBroadcasts || fallbackGame?.broadcasts || [];
   const lastPlayText = summary.drives?.current?.plays?.slice(-1)[0]?.text || summary.plays?.slice(-1)[0]?.text || '';
 
+  // Determine valid sport slugs for Internal Linking
+  const sportSlug = leagueId === 'NFL' ? 'football' : leagueId === 'NBA' ? 'basketball' : leagueId === 'MLB' ? 'baseball' : null;
+
+  const renderTeamLogoWithLink = (teamData: any) => {
+    const imgEl = (
+      <img
+        src={getTeamLogo(teamData.team)}
+        alt={teamData.team.name}
+        className={cn("w-16 h-16 sm:w-20 sm:h-20 object-contain", sportSlug ? "transition-transform hover:scale-105 cursor-pointer" : "")}
+        referrerPolicy="no-referrer"
+        onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${teamData.team.abbreviation || '?'}` }}
+      />
+    );
+
+    if (sportSlug && teamData.team.abbreviation) {
+      return (
+        <Link href={`/${sportSlug}/teams/${teamData.team.abbreviation.toLowerCase()}`}>
+          {imgEl}
+        </Link>
+      );
+    }
+    return imgEl;
+  };
+
   return (
     <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#121212] pt-3 pb-2">
+      <div className="sticky top-0 z-10 bg-[#121212] pt-0 pb-2">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <button 
@@ -277,13 +301,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
         <div className="flex items-center justify-center gap-4 sm:gap-8 mb-4">
           {/* Away Team */}
           <div className="flex flex-col items-center gap-1 sm:gap-2 flex-1">
-            <img 
-              src={getTeamLogo(away.team)} 
-              alt={away.team.name} 
-              className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
-              referrerPolicy="no-referrer"
-              onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${away.team.abbreviation || '?'}` }}
-            />
+            {renderTeamLogoWithLink(away)}
             <p className="text-[10px] sm:text-xs text-gray-400 font-bold">{away.record?.[0]?.summary || '0-0'}</p>
           </div>
 
@@ -306,13 +324,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
           {/* Home Team */}
           <div className="flex flex-col items-center gap-1 sm:gap-2 flex-1">
-            <img 
-              src={getTeamLogo(home.team)} 
-              alt={home.team.name} 
-              className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
-              referrerPolicy="no-referrer"
-              onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${home.team.abbreviation || '?'}` }}
-            />
+            {renderTeamLogoWithLink(home)}
             <p className="text-[10px] sm:text-xs text-gray-400 font-bold">{home.record?.[0]?.summary || '0-0'}</p>
           </div>
         </div>
@@ -693,12 +705,6 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   ))}
                 </div>
               )}
-
-              {!boxscore?.players && !boxscore?.teams && (
-                <div className="text-center py-20 text-gray-500 font-bold uppercase tracking-widest">
-                  Box score not available yet
-                </div>
-              )}
             </div>
           )}
 
@@ -837,20 +843,22 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   <h3 className="text-base sm:text-lg font-black uppercase mb-2 sm:mb-3">Scoring Plays</h3>
                   {(scoringPlays || plays.filter((p: any) => p.scoringPlay)).slice().reverse().map((play: any, i: number) => (
                     <div key={i} className="flex gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-800/30 border border-gray-700/50 rounded-xl hover:border-gray-600 transition-colors">
-                      <div className="flex flex-col items-center gap-1 min-w-[45px] sm:min-w-[55px]">
-                        <div className="text-[10px] sm:text-xs font-black text-[#9df01c]">{play.clock?.displayValue}</div>
-                        <div className="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase">{play.period?.number}Q</div>
+                      <div className="flex flex-col items-center justify-center shrink-0 w-10 sm:w-14">
+                        <img 
+                          src={getPlayTeamLogo(play.team)} 
+                          className="w-6 h-6 sm:w-8 sm:h-8 object-contain mb-1" 
+                          referrerPolicy="no-referrer"
+                          onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=?` }}
+                        />
+                        <span className="text-[9px] sm:text-[10px] font-bold text-gray-400">{play.clock?.displayValue || ''} Q{play.period?.number || ''}</span>
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          {play.team && (
-                            <img src={getPlayTeamLogo(play.team)} className="w-5 h-5 sm:w-6 sm:h-6 object-contain" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${play.team.abbreviation || '?'}` }} />
-                          )}
-                          <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                            {play.type?.text || play.scoringType?.displayName}
-                          </span>
-                        </div>
-                        <p className="text-[11px] sm:text-sm leading-relaxed">{play.text}</p>
+                      <div className="flex-1 flex flex-col justify-center min-w-0 pr-2">
+                         <div className="text-[10px] sm:text-xs font-bold text-[#9df01c] uppercase tracking-widest mb-0.5">{play.type?.text}</div>
+                         <p className="text-xs sm:text-sm text-gray-200 leading-snug">{play.text}</p>
+                      </div>
+                      <div className="flex flex-col items-end justify-center shrink-0 font-mono text-sm sm:text-base border-l border-gray-700/50 pl-2 sm:pl-3 min-w-[50px]">
+                         <div className={cn("font-bold", play.awayScore > play.homeScore ? "text-white" : "text-gray-400")}>{play.awayScore}</div>
+                         <div className={cn("font-bold", play.homeScore > play.awayScore ? "text-white" : "text-gray-400")}>{play.homeScore}</div>
                       </div>
                     </div>
                   ))}
