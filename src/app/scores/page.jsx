@@ -1,12 +1,24 @@
 "use client";
-import React, { Suspense } from 'react';
+import React from 'react';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 
-// FIX: Added curly brackets here because Scoreboard is a "named" export!
-import { Scoreboard } from '../../components/Scoreboard'; 
+// FIX: Dynamically import the Scoreboard and disable Server-Side Rendering (SSR).
+// This prevents "Invalid time value" and browser-specific errors during the Vercel build!
+const Scoreboard = dynamic(
+  () => import('../../components/Scoreboard').then((mod) => mod.Scoreboard),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="animate-spin text-red-600" size={48} />
+      </div>
+    )
+  }
+);
 
 // Initialize the React Query Client for the Scoreboard data fetching
 const queryClient = new QueryClient();
@@ -24,16 +36,7 @@ export default function ScoresPage() {
         
         <div className="flex-1 w-full min-w-0 pt-6">
           <div className="animate-in fade-in duration-500">
-             
-             {/* A clean fallback loader while the scoreboard initializes */}
-             <Suspense fallback={
-               <div className="flex items-center justify-center min-h-[50vh]">
-                 <Loader2 className="animate-spin text-red-600" size={48} />
-               </div>
-             }>
-                <Scoreboard />
-             </Suspense>
-
+             <Scoreboard />
           </div>
         </div>
       </div>
