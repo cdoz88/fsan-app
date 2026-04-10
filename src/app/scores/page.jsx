@@ -66,45 +66,51 @@ export default function ScoresPage() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Header activeSport={activeSport} />
-      
-      <div className="max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-8 w-full pb-24">
-        <Sidebar activeSport={activeSport} />
+      <div className="h-screen flex flex-col overflow-hidden bg-[#121212]">
+        <Header activeSport={activeSport} />
         
-        <div className="flex-1 w-full min-w-0 pt-6">
-          <div className="animate-in fade-in duration-500">
-             
-             {/* THE TAB SWITCHER */}
-             <div className="flex flex-col items-center mb-6">
-                <SegmentedControl
-                  activeTab={activeTab}
-                  onTabChange={handleTabChange}
-                  tabs={tabs}
-                />
-             </div>
+        <div className="flex-1 max-w-[1600px] w-full mx-auto flex flex-col lg:flex-row overflow-hidden">
+          <Sidebar activeSport={activeSport} />
+          
+          {/* FIX: Added flex-1, relative, and overflow-y-auto!
+            This creates an isolated scroll box. The page will not scroll, only the content inside this div will scroll.
+            This ensures the main header stays visible, and the GameDetails sticky header stops directly beneath it! 
+          */}
+          <main className="flex-1 relative overflow-y-auto w-full px-4 md:px-8 lg:px-10 pt-6 pb-24 scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="animate-in fade-in duration-500 max-w-7xl mx-auto w-full">
+               
+               {/* THE TAB SWITCHER */}
+               <div className="flex flex-col items-center mb-6">
+                  <SegmentedControl
+                    activeTab={activeTab}
+                    onTabChange={handleTabChange}
+                    tabs={tabs}
+                  />
+               </div>
 
-             {/* MAIN CONTENT AREA */}
-             {selectedGame ? (
-                <GameDetails 
-                  gameId={selectedGame.id} 
-                  leagueId={selectedGame.league} 
-                  onBack={() => setSelectedGame(null)} 
-                />
-             ) : activeTab === 'scores' ? (
-                <Scoreboard 
-                  date={date}
-                  setDate={setDate}
-                  selectedSport={selectedSport}
-                  setSelectedSport={setSelectedSport}
-                  selectedLeague={selectedLeague}
-                  setSelectedLeague={setSelectedLeague}
-                  onSelectGame={handleSelectGame}
-                />
-             ) : (
-                <Fantasy />
-             )}
+               {/* MAIN CONTENT AREA */}
+               {selectedGame ? (
+                  <GameDetails 
+                    gameId={selectedGame.id} 
+                    leagueId={selectedGame.league} 
+                    onBack={() => setSelectedGame(null)} 
+                  />
+               ) : activeTab === 'scores' ? (
+                  <Scoreboard 
+                    date={date}
+                    setDate={setDate}
+                    selectedSport={selectedSport}
+                    setSelectedSport={setSelectedSport}
+                    selectedLeague={selectedLeague}
+                    setSelectedLeague={setSelectedLeague}
+                    onSelectGame={handleSelectGame}
+                  />
+               ) : (
+                  <Fantasy />
+               )}
 
-          </div>
+            </div>
+          </main>
         </div>
       </div>
     </QueryClientProvider>
