@@ -1,13 +1,12 @@
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
-// FIX: Dynamically import the Scoreboard and disable Server-Side Rendering (SSR).
-// This prevents "Invalid time value" and browser-specific errors during the Vercel build!
+// Dynamically import the Scoreboard and disable Server-Side Rendering (SSR)
 const Scoreboard = dynamic(
   () => import('../../components/Scoreboard').then((mod) => mod.Scoreboard),
   { 
@@ -27,6 +26,16 @@ export default function ScoresPage() {
   // Sets the active sport state for the Header/Sidebar
   const activeSport = 'All'; 
 
+  // FIX: We need to manage the Scoreboard's state here and pass it down!
+  const [date, setDate] = useState(new Date());
+  const [selectedSport, setSelectedSport] = useState('ALL SPORTS');
+  const [selectedLeague, setSelectedLeague] = useState('ALL');
+
+  const handleSelectGame = (id, league) => {
+    // You can expand this later if you want to open the GameDetails modal!
+    console.log('Selected game:', id, league);
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <Header activeSport={activeSport} />
@@ -36,7 +45,18 @@ export default function ScoresPage() {
         
         <div className="flex-1 w-full min-w-0 pt-6">
           <div className="animate-in fade-in duration-500">
-             <Scoreboard />
+             
+             {/* Pass the state variables into the Scoreboard */}
+             <Scoreboard 
+                date={date}
+                setDate={setDate}
+                selectedSport={selectedSport}
+                setSelectedSport={setSelectedSport}
+                selectedLeague={selectedLeague}
+                setSelectedLeague={setSelectedLeague}
+                onSelectGame={handleSelectGame}
+             />
+
           </div>
         </div>
       </div>
