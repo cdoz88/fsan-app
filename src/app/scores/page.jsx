@@ -6,16 +6,32 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
-// Dynamically import the Scoreboard and disable Server-Side Rendering (SSR)
+// Standard import for the tab switcher
+import { SegmentedControl } from '../../components/SegmentedControl';
+
+// Dynamically import the heavy data components and disable Server-Side Rendering (SSR)
+// This prevents Vercel build crashes for components using dates, localStorage, or window objects.
 const Scoreboard = dynamic(
   () => import('../../components/Scoreboard').then((mod) => mod.Scoreboard),
   { 
     ssr: false,
-    loading: () => (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="animate-spin text-red-600" size={48} />
-      </div>
-    )
+    loading: () => <div className="flex items-center justify-center py-20"><Loader2 className="animate-spin text-red-600" size={48} /></div>
+  }
+);
+
+const GameDetails = dynamic(
+  () => import('../../components/GameDetails').then((mod) => mod.GameDetails),
+  { 
+    ssr: false,
+    loading: () => <div className="flex items-center justify-center py-20"><Loader2 className="animate-spin text-red-600" size={48} /></div>
+  }
+);
+
+const Fantasy = dynamic(
+  () => import('../../components/Fantasy').then((mod) => mod.Fantasy),
+  { 
+    ssr: false,
+    loading: () => <div className="flex items-center justify-center py-20"><Loader2 className="animate-spin text-red-600" size={48} /></div>
   }
 );
 
@@ -23,17 +39,29 @@ const Scoreboard = dynamic(
 const queryClient = new QueryClient();
 
 export default function ScoresPage() {
-  // Sets the active sport state for the Header/Sidebar
   const activeSport = 'All'; 
 
-  // FIX: We need to manage the Scoreboard's state here and pass it down!
+  // --- TAB & VIEW STATE ---
+  const [activeTab, setActiveTab] = useState('scores');
+  const [selectedGame, setSelectedGame] = useState(null); // { id: string; league: string }
+
+  // --- SCOREBOARD STATE ---
   const [date, setDate] = useState(new Date());
   const [selectedSport, setSelectedSport] = useState('ALL SPORTS');
   const [selectedLeague, setSelectedLeague] = useState('ALL');
 
+  const tabs = [
+    { id: 'scores', label: 'Scores' },
+    { id: 'fantasy', label: 'Fantasy' },
+  ];
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSelectedGame(null); // Reset detail view when switching tabs
+  };
+
   const handleSelectGame = (id, league) => {
-    // You can expand this later if you want to open the GameDetails modal!
-    console.log('Selected game:', id, league);
+    setSelectedGame({ id, league });
   };
 
   return (
@@ -46,16 +74,35 @@ export default function ScoresPage() {
         <div className="flex-1 w-full min-w-0 pt-6">
           <div className="animate-in fade-in duration-500">
              
-             {/* Pass the state variables into the Scoreboard */}
-             <Scoreboard 
-                date={date}
-                setDate={setDate}
-                selectedSport={selectedSport}
-                setSelectedSport={setSelectedSport}
-                selectedLeague={selectedLeague}
-                setSelectedLeague={setSelectedLeague}
-                onSelectGame={handleSelectGame}
-             />
+             {/* THE TAB SWITCHER */}
+             <div className="flex flex-col items-center mb-6">
+                <SegmentedControl
+                  activeTab={activeTab}
+                  onTabChange={handleTabChange}
+                  tabs={tabs}
+                />
+             </div>
+
+             {/* MAIN CONTENT AREA */}
+             {selectedGame ? (
+                <GameDetails 
+                  gameId={selectedGame.id} 
+                  leagueId={selectedGame.league} 
+                  onBack={() => setSelectedGame(null)} 
+                />
+             ) : activeTab === 'scores' ? (
+                <Scoreboard 
+                  date={date}
+                  setDate={setDate}
+                  selectedSport={selectedSport}
+                  setSelectedSport={setSelectedSport}
+                  selectedLeague={selectedLeague}
+                  setSelectedLeague={setSelectedLeague}
+                  onSelectGame={handleSelectGame}
+                />
+             ) : (
+                <Fantasy />
+             )}
 
           </div>
         </div>
