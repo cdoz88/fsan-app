@@ -53,7 +53,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <div className="w-12 h-12 border-4 border-[#9df01c] border-t-transparent rounded-full animate-spin" />
+        <div className="w-12 h-12 border-4 border-gray-400 border-t-transparent rounded-full animate-spin" />
         <p className="text-gray-400 font-bold uppercase tracking-widest animate-pulse">Loading Game Data...</p>
       </div>
     );
@@ -68,7 +68,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
       return (
         <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-          <div className="sticky top-0 z-10 bg-[#121212] pt-0 pb-2">
+          <div className="sticky top-0 z-10 bg-[#121212] pt-3 pb-2">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <button 
@@ -85,9 +85,9 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                 </button>
               </div>
             </div>
-            <div className="mb-6 text-center">
+            <div className="my-3 text-center">
               <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">{eventName}</h2>
-              <p className="text-sm font-normal text-[#9df01c] uppercase tracking-wider">{statusDetail}</p>
+              <p className="text-sm font-normal text-gray-300 uppercase tracking-wider">{statusDetail}</p>
             </div>
           </div>
 
@@ -118,7 +118,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                       <tr key={index} className="border-b border-gray-700 hover:bg-[#3e3e3e] transition-colors">
                         <td className="px-4 py-3 font-bold text-gray-300 w-16 text-center">{rank}</td>
                         <td className="px-4 py-3 font-semibold text-white">{flagImg}{name}</td>
-                        <td className="px-4 py-3 font-bold text-right text-[#9df01c]">{score}</td>
+                        <td className="px-4 py-3 font-bold text-right text-gray-300">{score}</td>
                       </tr>
                     );
                   })
@@ -133,7 +133,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
         <p className="text-gray-400 font-bold uppercase tracking-widest">Game Data Unavailable</p>
-        <button onClick={onBack} className="text-[#9df01c] font-bold">Go Back</button>
+        <button onClick={onBack} className="text-gray-300 font-bold">Go Back</button>
       </div>
     );
   }
@@ -149,7 +149,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
     return (
       <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-        <div className="sticky top-0 z-10 bg-[#121212] pt-0 pb-2">
+        <div className="sticky top-0 z-10 bg-[#121212] pt-3 pb-2">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <button 
@@ -166,9 +166,9 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               </button>
             </div>
           </div>
-          <div className="mb-6 text-center">
+          <div className="my-3 text-center">
             <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">{eventName}</h2>
-            <p className="text-sm font-normal text-[#9df01c] uppercase tracking-wider">{statusDetail}</p>
+            <p className="text-sm font-normal text-gray-300 uppercase tracking-wider">{statusDetail}</p>
           </div>
         </div>
 
@@ -199,7 +199,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                     <tr key={index} className="border-b border-gray-700 hover:bg-[#3e3e3e] transition-colors">
                       <td className="px-4 py-3 font-bold text-gray-300 w-16 text-center">{rank}</td>
                       <td className="px-4 py-3 font-semibold text-white">{flagImg}{name}</td>
-                      <td className="px-4 py-3 font-bold text-right text-[#9df01c]">{score}</td>
+                      <td className="px-4 py-3 font-bold text-right text-gray-300">{score}</td>
                     </tr>
                   );
                 })
@@ -214,7 +214,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
   if (!competition) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
       <p className="text-gray-400 font-bold uppercase tracking-widest">Game Data Unavailable</p>
-      <button onClick={onBack} className="text-[#9df01c] font-bold">Go Back</button>
+      <button onClick={onBack} className="text-gray-300 font-bold">Go Back</button>
     </div>
   );
 
@@ -285,7 +285,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
   return (
     <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-      <div className="sticky top-0 z-10 bg-[#121212] pt-0 pb-2">
+      <div className="sticky top-0 z-10 bg-[#121212] pt-3 pb-2">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <button 
@@ -301,7 +301,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               <RefreshCw size={20} className={cn("transition-transform", isFetching && "animate-spin")} />
             </button>
           </div>
-          <div className="text-[#9df01c] text-xs font-bold uppercase tracking-widest">
+          <div className="text-gray-300 text-xs font-bold uppercase tracking-widest">
             {competition.status.type.detail}
           </div>
         </div>
@@ -366,7 +366,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
             >
               {tab.label}
               {activeTab === tab.id && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#9df01c] rounded-t-full" />
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-400 rounded-t-full" />
               )}
             </button>
           ))}
@@ -434,7 +434,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                     <div key={i} className="bg-gray-800/30 border border-gray-700/50 p-3 sm:p-4 rounded-2xl">
                       <div className="flex justify-between items-center mb-2">
                         <h4 className="font-bold text-[10px] sm:text-xs uppercase tracking-widest flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 bg-[#9df01c] rounded-full" />
+                          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
                           Betting Odds
                         </h4>
                         {oddsItem.provider?.name && (
@@ -753,7 +753,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                         {away.linescores.map((ls: any, i: number) => (
                           <td key={i} className="py-1.5 sm:py-2 px-1 sm:px-2 text-gray-400">{ls.displayValue || ls.value}</td>
                         ))}
-                        <td className="py-1.5 sm:py-2 px-1 sm:px-2 font-black text-[#9df01c] text-xs sm:text-sm">{away.score}</td>
+                        <td className="py-1.5 sm:py-2 px-1 sm:px-2 font-black text-gray-300 text-xs sm:text-sm">{away.score}</td>
                       </tr>
                       <tr>
                         <td className="py-1.5 sm:py-2 px-1 text-left flex items-center gap-2">
@@ -763,7 +763,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                         {home.linescores.map((ls: any, i: number) => (
                           <td key={i} className="py-1.5 sm:py-2 px-1 sm:px-2 text-gray-400">{ls.displayValue || ls.value}</td>
                         ))}
-                        <td className="py-1.5 sm:py-2 px-1 sm:px-2 font-black text-[#9df01c] text-xs sm:text-sm">{home.score}</td>
+                        <td className="py-1.5 sm:py-2 px-1 sm:px-2 font-black text-gray-300 text-xs sm:text-sm">{home.score}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -786,7 +786,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                       
                       if (typeText.includes('goal')) {
                         Icon = Circle;
-                        iconColor = "text-[#9df01c] fill-[#9df01c]";
+                        iconColor = "text-gray-400 fill-[#9df01c]";
                         eventTypeClass = "text-white font-bold";
                       } else if (typeText.includes('yellow card')) {
                         Icon = Square;
@@ -862,7 +862,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                         <span className="text-[9px] sm:text-[10px] font-bold text-gray-400">{play.clock?.displayValue || ''} Q{play.period?.number || ''}</span>
                       </div>
                       <div className="flex-1 flex flex-col justify-center min-w-0 pr-2">
-                         <div className="text-[10px] sm:text-xs font-bold text-[#9df01c] uppercase tracking-widest mb-0.5">{play.type?.text}</div>
+                         <div className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest mb-0.5">{play.type?.text}</div>
                          <p className="text-xs sm:text-sm text-gray-200 leading-snug">{play.text}</p>
                       </div>
                       <div className="flex flex-col items-end justify-center shrink-0 font-mono text-sm sm:text-base border-l border-gray-700/50 pl-2 sm:pl-3 min-w-[50px]">
@@ -877,8 +877,8 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   <h3 className="text-base sm:text-lg font-black uppercase mb-2 sm:mb-3">Play-by-Play</h3>
                   {plays.slice().reverse().map((play: any, i: number) => (
                     <div key={i} className="flex gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-800/30 border border-gray-700/50 rounded-xl hover:border-gray-600 transition-colors">
-                      <div className="flex flex-col items-center gap-1 min-w-[45px] sm:minw-[55px]">
-                        <div className="text-[10px] sm:text-xs font-black text-[#9df01c]">{play.clock?.displayValue}</div>
+                      <div className="flex flex-col items-center gap-1 min-w-[45px] sm:min-w-[55px]">
+                        <div className="text-[10px] sm:text-xs font-black text-gray-300">{play.clock?.displayValue}</div>
                         <div className="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase">{play.period?.number}Q</div>
                       </div>
                       <div className="flex-1">
