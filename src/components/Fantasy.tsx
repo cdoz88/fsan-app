@@ -269,7 +269,7 @@ export const Fantasy = () => {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Enter username..."
-                    className="w-full bg-[#383838] border border-gray-600 rounded-lg px-4 py-3 text-white mb-6 focus:outline-none focus:border-[#9df01c]"
+                    className="w-full bg-[#383838] border border-gray-600 rounded-lg px-4 py-3 text-white mb-6 focus:outline-none focus:border-gray-400"
                     autoFocus
                   />
                   {error && <p className="text-red-400 text-xs font-bold mb-4">{error}</p>}
@@ -301,7 +301,7 @@ export const Fantasy = () => {
                             setSelectedPlatform(null);
                             setIsSyncing(false);
                           }}
-                          className="px-3 py-1 bg-[#9df01c] text-black text-xs font-bold rounded-md hover:bg-[#8ce01b]"
+                          className="px-3 py-1 bg-gradient-to-r from-gray-600 to-gray-800 text-white text-xs font-bold rounded-md hover:from-gray-500 hover:to-gray-700"
                         >
                           Sync
                         </button>

@@ -45,14 +45,14 @@ export const HoopsGame = ({ onBack }: HoopsGameProps) => {
       ctx.clearRect(0, 0, width, height);
 
       // Draw Hoop
-      ctx.strokeStyle = '#9df01c';
+      ctx.strokeStyle = '#9ca3af';
       ctx.lineWidth = 5;
       ctx.strokeRect(hoop.x, hoop.y, hoop.width, hoop.height);
 
       // Draw Ball
       ctx.beginPath();
       ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-      ctx.fillStyle = '#afed50';
+      ctx.fillStyle = '#d1d5db';
       ctx.fill();
       ctx.closePath();
 
@@ -114,7 +114,7 @@ export const HoopsGame = ({ onBack }: HoopsGameProps) => {
           <ArrowLeft size={24} />
         </button>
         <div className="bg-gray-900/50 backdrop-blur-xl px-6 py-2 rounded-full border border-gray-800">
-          <span className="text-2xl font-black text-[#9df01c] tracking-tighter">
+          <span className="text-2xl font-black text-gray-300 tracking-tighter">
             SCORE: {score}
           </span>
         </div>

@@ -54,9 +54,6 @@ export const FantasyMatchupDetails: React.FC<Props> = ({ league, matchups, roste
     return `${parts[0].charAt(0)}. ${parts.slice(1).join(' ')}`;
   };
 
-  // Sleeper API doesn't return roster_positions in the league object directly sometimes, 
-  // but we can infer starters from the matchup.starters array length.
-  // Actually, we should fetch league details if we want exact positions, but for now we can just list starters then bench.
   const team1Starters = myMatchup.starters || [];
   const team2Starters = opponentMatchup?.starters || [];
 
@@ -117,7 +114,7 @@ export const FantasyMatchupDetails: React.FC<Props> = ({ league, matchups, roste
 
       <div className="bg-[#2A2A2A] rounded-xl p-4 mb-6 flex items-center justify-between shadow-lg border border-gray-700">
         <div className="flex items-center gap-4">
-          <img src={team1Avatar} className="w-12 h-12 rounded-full border-2 border-[#9df01c]" alt="" />
+          <img src={team1Avatar} className="w-12 h-12 rounded-full border-2 border-gray-400" alt="" />
           <div>
             <div className="text-2xl font-bold text-white leading-none">{myMatchup.points?.toFixed(2) || '0.00'}</div>
             <div className="text-sm text-gray-400 font-semibold max-w-[100px] truncate">{team1Name}</div>

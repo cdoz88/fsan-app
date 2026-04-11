@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Dribbble, Trophy, Play } from 'lucide-react';
 import { HoopsGame } from './games/HoopsGame';
 import { GridironGame } from './games/GridironGame';
+import { cn } from '../lib/utils';
 
 export const Halftime = () => {
   const [activeGame, setActiveGame] = useState<string | null>(null);
@@ -21,7 +22,7 @@ export const Halftime = () => {
           Halftime Games
         </h2>
         <div className="flex items-center gap-2 text-gray-500 text-[10px] font-bold uppercase tracking-widest">
-          <Trophy size={14} className="text-[#9df01c]" />
+          <Trophy size={14} className="text-gray-400" />
           Win Coins & Rewards
         </div>
       </div>
@@ -30,16 +31,16 @@ export const Halftime = () => {
         <GameCard
           title="Pro Hoops"
           description="Test your shooting skills in this fast-paced basketball challenge."
-          icon={<Dribbble size={40} className="text-[#9df01c]" />}
+          icon={<Dribbble size={40} className="text-gray-400" />}
           onClick={() => setActiveGame('hoops')}
-          color="bg-orange-500/10 border-orange-500/20"
+          color="bg-gray-800/50 border-gray-700 hover:border-gray-500"
         />
         <GameCard
           title="Gridiron Kick"
           description="Master the field goal in our realistic football kicking simulator."
-          icon={<Trophy size={40} className="text-[#9df01c]" />}
+          icon={<Trophy size={40} className="text-gray-400" />}
           onClick={() => setActiveGame('gridiron')}
-          color="bg-green-500/10 border-green-500/20"
+          color="bg-gray-800/50 border-gray-700 hover:border-gray-500"
         />
       </div>
     </div>
@@ -67,23 +68,21 @@ const GameCard = ({ title, description, icon, onClick, color }: GameCardProps) =
     </div>
     
     <div className="relative z-10 space-y-4">
-      <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center border border-gray-800 group-hover:border-[#9df01c] transition-colors">
+      <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center border border-gray-800 group-hover:border-gray-400 transition-colors">
         {icon}
       </div>
       <div>
-        <h3 className="text-2xl font-black uppercase tracking-tighter text-white group-hover:text-[#9df01c] transition-colors">
+        <h3 className="text-2xl font-black uppercase tracking-tighter text-white group-hover:text-gray-300 transition-colors">
           {title}
         </h3>
         <p className="text-sm text-gray-500 font-medium leading-relaxed max-w-[200px]">
           {description}
         </p>
       </div>
-      <button className="flex items-center gap-2 bg-white text-gray-900 px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest group-hover:bg-[#9df01c] transition-colors">
+      <button className="flex items-center gap-2 bg-white text-gray-900 px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest group-hover:bg-gray-200 transition-colors">
         <Play size={14} fill="currentColor" />
         Play Now
       </button>
     </div>
   </div>
 );
-
-import { cn } from '../lib/utils';

@@ -72,8 +72,6 @@ const fetchNFLScoringPlays = async ({ pageParam }: { pageParam: number }) => {
     });
   }
   
-  // Sort plays by some logic if needed, but usually they are returned in order.
-  // We want newest first, so we reverse.
   return {
     week: pageParam,
     plays: plays.reverse()
@@ -122,7 +120,6 @@ export const FantasyTicker: React.FC<FantasyTickerProps> = ({
 
   const currentSlide = slides[currentSlideIndex];
 
-  // Highlight logic
   useEffect(() => {
     if (!currentSlide || currentSlide.type === 'intro' || currentSlide.type === 'divider' || currentSlide.type === 'loading') {
       onHighlightLeagues(new Set());
@@ -166,11 +163,9 @@ export const FantasyTicker: React.FC<FantasyTickerProps> = ({
     setCurrentSlideIndex(0);
   };
 
-  // Helper to render highlighted text
   const renderHighlightedText = (text: string) => {
     let parts = [{ text, isHighlight: false }];
     
-    // Sort names by length descending to match longer names first (e.g. "Amon-Ra St. Brown" before "Brown")
     const sortedNames = Array.from(mySyncedPlayerNames).sort((a, b) => b.length - a.length);
 
     sortedNames.forEach(fullName => {
@@ -197,7 +192,7 @@ export const FantasyTicker: React.FC<FantasyTickerProps> = ({
 
     return parts.map((part, i) => 
       part.isHighlight ? (
-        <span key={i} className="text-[#9df01c] font-extrabold">{part.text}</span>
+        <span key={i} className="text-transparent bg-clip-text bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] font-extrabold drop-shadow-md">{part.text}</span>
       ) : (
         <span key={i}>{part.text}</span>
       )
@@ -210,7 +205,7 @@ export const FantasyTicker: React.FC<FantasyTickerProps> = ({
         <button 
           onClick={handleReset} 
           disabled={currentSlideIndex === 0}
-          className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-[#9df01c] disabled:opacity-20 transition-colors"
+          className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-200 disabled:opacity-20 transition-colors"
           title="Back to Beginning"
         >
           <ChevronsLeft size={20} />
@@ -218,7 +213,7 @@ export const FantasyTicker: React.FC<FantasyTickerProps> = ({
         <button 
           onClick={handlePrev} 
           disabled={currentSlideIndex === 0}
-          className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-[#9df01c] disabled:opacity-20 transition-colors"
+          className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-200 disabled:opacity-20 transition-colors"
         >
           <ChevronLeft size={20} />
         </button>
@@ -228,7 +223,7 @@ export const FantasyTicker: React.FC<FantasyTickerProps> = ({
         {currentSlide?.type === 'intro' ? (
           <div className="text-base font-semibold text-gray-200">{currentSlide.text}</div>
         ) : currentSlide?.type === 'divider' ? (
-          <div className="text-lg font-bold text-[#9df01c] uppercase tracking-widest">{currentSlide.text}</div>
+          <div className="text-lg font-bold text-gray-300 uppercase tracking-widest">{currentSlide.text}</div>
         ) : currentSlide?.type === 'loading' ? (
           <div className="text-base font-semibold text-gray-400 animate-pulse">{currentSlide.text}</div>
         ) : (
@@ -257,7 +252,7 @@ export const FantasyTicker: React.FC<FantasyTickerProps> = ({
         <button 
           onClick={handleNext} 
           disabled={currentSlideIndex >= slides.length - 1 && !hasNextPage}
-          className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-[#9df01c] disabled:opacity-20 transition-colors"
+          className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-200 disabled:opacity-20 transition-colors"
         >
           <ChevronRight size={20} />
         </button>

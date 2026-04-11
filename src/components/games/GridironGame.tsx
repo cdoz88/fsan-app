@@ -57,7 +57,7 @@ export const GridironGame = ({ onBack }: GridironGameProps) => {
       }
 
       // Draw Goal
-      ctx.strokeStyle = '#9df01c';
+      ctx.strokeStyle = '#9ca3af';
       ctx.lineWidth = 8;
       ctx.beginPath();
       ctx.moveTo(goal.x, goal.y);
@@ -71,7 +71,7 @@ export const GridironGame = ({ onBack }: GridironGameProps) => {
       // Draw Ball
       ctx.beginPath();
       ctx.ellipse(ball.x, ball.y, ball.radius, ball.radius * 1.5, Math.PI / 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#afed50';
+      ctx.fillStyle = '#d1d5db';
       ctx.fill();
       ctx.closePath();
 
@@ -137,7 +137,7 @@ export const GridironGame = ({ onBack }: GridironGameProps) => {
           <ArrowLeft size={24} />
         </button>
         <div className="bg-gray-900/50 backdrop-blur-xl px-6 py-2 rounded-full border border-gray-800">
-          <span className="text-2xl font-black text-[#9df01c] tracking-tighter">
+          <span className="text-2xl font-black text-gray-300 tracking-tighter">
             SCORE: {score}
           </span>
         </div>
