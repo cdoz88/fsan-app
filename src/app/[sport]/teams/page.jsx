@@ -6,21 +6,26 @@ export async function generateMetadata({ params }) {
   const { sport } = await params;
   const activeSport = sport.charAt(0).toUpperCase() + sport.slice(1);
   return {
-    title: activeSport === 'All' ? `All Teams | FSAN` : `${activeSport} Teams | FSAN`,
+    title: activeSport === 'All' ? `Team Rosters | FSAN` : `${activeSport} Teams | FSAN`,
     description: `Browse the official FSAN ${activeSport} team directory to find active rosters, depth charts, and player news.`,
   };
 }
 
 async function getTeams(sportSlug) {
+  // Performance Boost: Don't fetch any teams if we are on the 'All' landing page!
+  if (sportSlug === 'all') {
+    return [];
+  }
+
   const endpoints = [];
   
-  if (sportSlug === 'football' || sportSlug === 'all') {
+  if (sportSlug === 'football') {
     endpoints.push({ sport: 'Football', url: 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams' });
   }
-  if (sportSlug === 'basketball' || sportSlug === 'all') {
+  if (sportSlug === 'basketball') {
     endpoints.push({ sport: 'Basketball', url: 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams' });
   }
-  if (sportSlug === 'baseball' || sportSlug === 'all') {
+  if (sportSlug === 'baseball') {
     endpoints.push({ sport: 'Baseball', url: 'https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams' });
   }
 
