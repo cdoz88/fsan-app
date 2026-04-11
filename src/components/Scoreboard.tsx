@@ -84,12 +84,27 @@ export const Scoreboard = ({
   const groupedGames = useMemo(() => {
     if (!games) return {};
     const groups: Record<string, Game[]> = {};
+    
+    // Step 1: Group games into their respective leagues
     games.forEach(game => {
       if (!groups[game.league]) {
         groups[game.league] = [];
       }
       groups[game.league].push(game);
     });
+
+    // Step 2: Sort the games inside each league bucket!
+    // Live ('in') goes first, Upcoming ('pre') goes second, Final ('post') goes to the bottom.
+    const stateRank: Record<string, number> = { 'in': 1, 'pre': 2, 'post': 3 };
+    
+    Object.keys(groups).forEach(league => {
+      groups[league].sort((a, b) => {
+        const rankA = stateRank[a.status.state] || 4;
+        const rankB = stateRank[b.status.state] || 4;
+        return rankA - rankB;
+      });
+    });
+
     return groups;
   }, [games]);
 

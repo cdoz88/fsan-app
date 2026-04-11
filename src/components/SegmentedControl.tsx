@@ -13,7 +13,7 @@ const Tab = ({ active, onClick, children }: TabProps) => (
     onClick={onClick}
     className={cn(
       "flex-1 py-2 text-sm font-bold uppercase tracking-wider transition-all duration-300 rounded-full z-10",
-      active ? "text-gray-900" : "text-gray-400 hover:text-gray-200"
+      active ? "text-white drop-shadow-md" : "text-gray-400 hover:text-gray-200"
     )}
   >
     {children}
@@ -32,7 +32,7 @@ export const SegmentedControl = ({ activeTab, onTabChange, tabs }: SegmentedCont
   return (
     <div className="relative flex bg-gray-800/50 p-1 rounded-full w-full max-w-md mx-auto mb-6 border border-gray-700/50">
       <div
-        className="absolute top-1 bottom-1 left-1 bg-[#9df01c] rounded-full transition-transform duration-300 ease-out"
+        className="absolute top-1 bottom-1 left-1 bg-gradient-to-r from-gray-600 to-gray-800 border border-gray-500/50 rounded-full transition-transform duration-300 ease-out shadow-lg"
         style={{
           width: `calc(${100 / tabs.length}% - 4px)`,
           transform: `translateX(${activeIndex * 100}%)`,

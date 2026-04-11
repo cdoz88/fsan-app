@@ -42,7 +42,7 @@ export const Dropdown = ({ value, options, onChange, disabled, className, placeh
         className={cn(
           "w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-bold uppercase tracking-wide transition-all duration-200",
           "bg-[#2c2c2c] border",
-          isOpen ? "border-[#9df01c]" : "border-transparent",
+          isOpen ? "border-gray-500" : "border-transparent",
           !disabled && "hover:bg-[#374151]",
           disabled && "opacity-60 cursor-not-allowed",
           selectedOption ? "text-gray-200" : "text-gray-400"
@@ -50,7 +50,7 @@ export const Dropdown = ({ value, options, onChange, disabled, className, placeh
       >
         <span className="flex items-center gap-2 truncate">
           {selectedOption?.icon && (
-            <span className="w-6 h-6 flex-shrink-0 flex items-center justify-center text-[#afed50]">
+            <span className="w-6 h-6 flex-shrink-0 flex items-center justify-center text-gray-400">
               {selectedOption.icon}
             </span>
           )}
@@ -77,11 +77,11 @@ export const Dropdown = ({ value, options, onChange, disabled, className, placeh
               className={cn(
                 "px-4 py-3 cursor-pointer flex items-center gap-3 border-b border-gray-700 last:border-0 transition-colors duration-200",
                 "hover:bg-[#374151] hover:text-white",
-                option.value === value ? "text-[#9df01c] font-bold" : "text-gray-300 font-semibold"
+                option.value === value ? "text-gray-100 font-bold bg-gray-800/50" : "text-gray-300 font-semibold"
               )}
             >
               {option.icon && (
-                <div className="w-6 h-6 flex items-center justify-center text-[#afed50]">
+                <div className="w-6 h-6 flex items-center justify-center text-gray-400">
                   {option.icon}
                 </div>
               )}
