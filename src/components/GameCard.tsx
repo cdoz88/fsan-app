@@ -40,18 +40,35 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
   // Helper to stack and format the live status strings
   const formatLiveStatus = (detail: string) => {
     if (!detail) return null;
+    
+    const lowerDetail = detail.toLowerCase();
+    const isBaseball = lowerDetail.startsWith('top ') || lowerDetail.startsWith('bottom ') || lowerDetail.startsWith('mid ') || lowerDetail.startsWith('end ');
+    
+    if (isBaseball && !detail.includes(' - ')) {
+      const parts = detail.split(' ');
+      const prefix = parts[0]; 
+      const suffix = parts.slice(1).join(' ').replace(/Inning/gi, 'INN').trim();
+      
+      return (
+        <div className="flex flex-col items-end text-right">
+          <span className="text-[9px] text-[#99a1b0] leading-none mb-0.5">{prefix}</span>
+          <span className="leading-none">{suffix}</span>
+        </div>
+      );
+    }
+
     if (detail.includes(' - ')) {
       const parts = detail.split(' - ');
       return (
         <div className="flex flex-col items-end text-right">
-          <span>{parts[0]}</span>
-          <span className="text-[9px] text-gray-500 mt-0.5 leading-none">
+          <span className="leading-none mb-0.5">{parts[0]}</span>
+          <span className="text-[9px] text-[#99a1b0] leading-none">
             {parts[1].replace(/Quarter/gi, 'QTR').replace(/Inning/gi, 'INN')}
           </span>
         </div>
       );
     }
-    return <span className="block text-center">{detail.replace(/Quarter/gi, 'QTR').replace(/Inning/gi, 'INN')}</span>;
+    return <span className="block text-center leading-none">{detail.replace(/Quarter/gi, 'QTR').replace(/Inning/gi, 'INN')}</span>;
   };
 
   if (game.league === 'PGA' && game.golfCompetitors) {
@@ -92,13 +109,13 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
     >
       <div className="p-3 flex items-center justify-between">
         <div className="space-y-2 flex-1 min-w-0">
-          <TeamRow team={game.awayTeam} isWinner={isPost && parseInt(game.awayTeam.score || '0') > parseInt(game.homeTeam.score || '0')} isPre={isPre} spread={awaySpread} />
-          <TeamRow team={game.homeTeam} isWinner={isPost && parseInt(game.homeTeam.score || '0') > parseInt(game.awayTeam.score || '0')} isPre={isPre} spread={homeSpread} />
+          <TeamRow team={game.awayTeam} isWinner={isPost && parseInt(game.awayTeam.score || '0') > parseInt(game.homeTeam.score || '0')} isPre={isPre} isLive={isLive} spread={awaySpread} />
+          <TeamRow team={game.homeTeam} isWinner={isPost && parseInt(game.homeTeam.score || '0') > parseInt(game.awayTeam.score || '0')} isPre={isPre} isLive={isLive} spread={homeSpread} />
         </div>
         <div className="ml-3 flex flex-col items-end justify-center min-w-[50px] shrink-0">
           <div className={cn(
             "text-xs font-bold uppercase tracking-widest text-right",
-            isLive ? "text-gray-200 animate-pulse" : isPre ? "text-gray-300" : "text-gray-500"
+            isLive ? "text-[#99a1b0] animate-pulse" : isPre ? "text-gray-300" : "text-gray-500"
           )}>
             {isPre ? formatGameTime(game.date) : formatLiveStatus(game.status.detail)}
           </div>
@@ -118,13 +135,13 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
   );
 };
 
-const TeamRow = ({ team, isWinner, isPre, spread }: { team: any, isWinner: boolean, isPre: boolean, spread: string | null }) => (
+const TeamRow = ({ team, isWinner, isPre, isLive, spread }: { team: any, isWinner: boolean, isPre: boolean, isLive: boolean, spread: string | null }) => (
   <div className="flex items-center justify-between min-w-0 pr-1">
     <div className="flex items-center gap-3 min-w-0">
       <img src={team.logo} alt={team.name} className="w-6 h-6 object-contain shrink-0" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${team.abbreviation || '?'}` }} />
       <span className={cn(
         "font-bold text-sm tracking-tight truncate",
-        isWinner ? "text-white" : "text-gray-400"
+        isWinner ? "text-white" : isLive ? "text-[#99a1b0]" : "text-gray-400"
       )}>
         {team.abbreviation}
       </span>
@@ -138,7 +155,7 @@ const TeamRow = ({ team, isWinner, isPre, spread }: { team: any, isWinner: boole
       {!isPre && (
         <span className={cn(
           "font-black text-lg w-8 text-right",
-          isWinner ? "text-white" : "text-gray-500"
+          isWinner ? "text-white" : isLive ? "text-[#99a1b0]" : "text-gray-500"
         )}>
           {team.score}
         </span>

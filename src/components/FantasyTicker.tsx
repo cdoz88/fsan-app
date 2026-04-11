@@ -192,7 +192,7 @@ export const FantasyTicker: React.FC<FantasyTickerProps> = ({
 
     return parts.map((part, i) => 
       part.isHighlight ? (
-        <span key={i} className="text-transparent bg-clip-text bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] font-extrabold drop-shadow-md">{part.text}</span>
+        <span key={i} className="text-[#c30b16] font-extrabold drop-shadow-md">{part.text}</span>
       ) : (
         <span key={i}>{part.text}</span>
       )
