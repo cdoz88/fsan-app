@@ -283,9 +283,27 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
     return imgEl;
   };
 
+  // Helper to render player names with SEO links for NFL, NBA, MLB
+  const isLinkableLeague = ['NFL', 'NBA', 'MLB'].includes(leagueId);
+
+  const renderPlayerName = (athleteData: any) => {
+    const name = athleteData.athlete?.displayName || athleteData.athlete?.shortName || 'Player';
+    
+    if (isLinkableLeague && name !== 'Player') {
+      const slug = name.toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      return (
+        <Link href={`/player/${slug}`} className="font-bold text-white hover:text-gray-300 transition-colors no-underline">
+          {name}
+        </Link>
+      );
+    }
+    
+    return <span className="font-bold text-white">{name}</span>;
+  };
+
   return (
     <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-      <div className="sticky top-0 z-10 bg-[#121212] pt-3 pb-2">
+      <div className="sticky top-0 z-10 bg-[#121212] pt-0 pb-2">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <button 
@@ -658,7 +676,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                                 <tr key={j} className="border-b border-gray-700/10 hover:bg-gray-700/20 transition-colors">
                                   <td className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10 border-r border-gray-700/30">
                                     <div className="flex items-baseline gap-2 whitespace-nowrap">
-                                      <span className="font-bold text-white">{athlete.athlete?.displayName || athlete.athlete?.shortName || 'Player'}</span>
+                                      {renderPlayerName(athlete)}
                                       <span className="text-[9px] sm:text-[10px] text-gray-500 uppercase">{athlete.athlete?.position?.abbreviation}</span>
                                     </div>
                                   </td>
@@ -697,7 +715,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                                 <tr key={j} className="border-b border-gray-700/10 hover:bg-gray-700/20 transition-colors">
                                   <td className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10 border-r border-gray-700/30">
                                     <div className="flex items-baseline gap-2 whitespace-nowrap">
-                                      <span className="font-bold text-white">{athlete.athlete?.displayName || athlete.athlete?.shortName || 'Player'}</span>
+                                      {renderPlayerName(athlete)}
                                       <span className="text-[9px] sm:text-[10px] text-gray-500 uppercase">{athlete.athlete?.position?.abbreviation}</span>
                                     </div>
                                   </td>
@@ -714,11 +732,17 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   ))}
                 </div>
               )}
+
+              {!boxscore?.players && !boxscore?.teams && (
+                <div className="text-center py-20 text-gray-500 font-bold uppercase tracking-widest">
+                  Box score not available yet
+                </div>
+              )}
             </div>
           )}
 
           {activeTab === 'plays' && (
-            <div className="space-y-4 sm:space-y-6">
+            <div className="space-y-4 sm:space-y-6 pt-4">
               {/* Line Score Table */}
               {away.linescores && home.linescores && (
                 <div className="bg-gray-800/50 rounded-2xl border border-gray-700/50 p-2 sm:p-3 overflow-x-auto">
@@ -773,69 +797,43 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               {/* Scoring Plays */}
               {isSoccer ? (
                 soccerEvents && soccerEvents.length > 0 ? (
-                  <div className="space-y-2 sm:space-y-3">
-                    <h3 className="text-base sm:text-lg font-black uppercase mb-2 sm:mb-3">Match Timeline</h3>
-                    {soccerEvents.map((event: any, i: number) => {
-                      const teamData = competition.competitors?.find((c: any) => c.id === event.team?.id);
-                      const teamColor = teamData ? `#${teamData.team.color || 'ffffff'}` : '#9ca3af';
+                  <div className="bg-gray-800/30 border border-gray-700/50 rounded-2xl overflow-hidden p-2 sm:p-4">
+                    {soccerEvents.slice().reverse().map((event: any, i: number) => {
+                      const isGoal = event.type?.text?.toLowerCase().includes('goal') || event.scoringPlay;
+                      const isCard = event.type?.text?.toLowerCase().includes('card');
+                      const isYellow = isCard && event.type?.text?.toLowerCase().includes('yellow');
+                      const isRed = isCard && event.type?.text?.toLowerCase().includes('red');
+                      const teamData = event.team || (event.participants && event.participants[0]?.athlete?.team);
                       
-                      let Icon = Circle;
-                      let iconColor = "text-gray-500";
-                      let eventTypeClass = "text-gray-300";
-                      const typeText = event.type?.text?.toLowerCase() || '';
-                      
-                      if (typeText.includes('goal')) {
-                        Icon = Circle;
-                        iconColor = "text-gray-400 fill-[#9df01c]";
-                        eventTypeClass = "text-white font-bold";
-                      } else if (typeText.includes('yellow card')) {
-                        Icon = Square;
-                        iconColor = "text-yellow-400 fill-yellow-400";
-                      } else if (typeText.includes('red card')) {
-                        Icon = Square;
-                        iconColor = "text-red-500 fill-red-500";
-                      } else if (typeText.includes('substitution')) {
-                        Icon = ArrowLeftRight;
-                        iconColor = "text-blue-400";
-                      } else if (typeText.includes('penalty')) {
-                        Icon = AlertCircle;
-                        iconColor = "text-orange-400";
-                      }
-                      
-                      let playersHtml = '';
-                      if (event.participants) {
-                        playersHtml = event.participants.map((p: any) => p.athlete?.displayName).join(', ');
-                      } else if (event.text) {
-                        playersHtml = event.text;
-                      }
-
                       return (
-                        <div 
-                          key={i} 
-                          className={cn(
-                            "bg-gray-800/30 p-2 sm:p-3 rounded-r-lg flex items-center gap-3 sm:gap-4",
-                            teamData && "border-l-4"
-                          )}
-                          style={teamData ? { borderLeftColor: teamColor } : {}}
-                        >
-                          <div className="w-10 sm:w-12 text-center flex flex-col items-center justify-center border-r border-gray-700/50 pr-2 sm:pr-3">
-                            <span className="font-bold text-base sm:text-lg text-white">{event.clock?.displayValue || '-'}</span>
+                        <div key={i} className="flex gap-3 sm:gap-4 p-3 sm:p-4 border-b border-gray-800 hover:bg-gray-800/50 transition-colors last:border-0 rounded-xl items-center">
+                          <div className="w-10 sm:w-12 text-center shrink-0">
+                            <span className="text-[10px] sm:text-xs font-bold text-gray-400 block">{event.clock?.displayValue || event.time || "FT"}</span>
                           </div>
-                          <div className="flex-shrink-0 w-5 sm:w-6 flex justify-center">
-                            <Icon className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4", iconColor)} />
+                          
+                          <div className="flex-1 min-w-0">
+                             <div className="flex items-center gap-2 mb-1">
+                               {isGoal ? <div className="w-2.5 h-2.5 rounded-full bg-gray-400" /> : 
+                                isYellow ? <div className="w-2 sm:w-2.5 h-3 sm:h-3.5 bg-yellow-400 rounded-sm" /> : 
+                                isRed ? <div className="w-2 sm:w-2.5 h-3 sm:h-3.5 bg-red-500 rounded-sm" /> : 
+                                <div className="w-2 h-2 rounded-full border-2 border-gray-500" />}
+                               <span className={cn(
+                                 "font-bold text-[10px] sm:text-xs uppercase tracking-widest",
+                                 isGoal ? "text-gray-300" : isCard ? "text-white" : "text-gray-400"
+                               )}>
+                                 {event.type?.text || 'Event'}
+                               </span>
+                             </div>
+                             <p className="text-sm sm:text-base font-medium text-white leading-tight">{event.text}</p>
                           </div>
-                          <div className="flex-grow">
-                            <p className={cn("text-xs sm:text-sm uppercase tracking-wide", eventTypeClass)}>
-                              {event.type?.text || 'Event'}
-                            </p>
-                            <p className="text-gray-400 text-[10px] sm:text-xs">{playersHtml}</p>
-                          </div>
+
                           {teamData && (
                             <img 
-                              src={getTeamLogo(teamData.team)} 
-                              className="w-5 h-5 sm:w-6 sm:h-6 object-contain opacity-50" 
+                              src={getTeamLogo(teamData)} 
+                              alt="" 
+                              className="w-6 h-6 sm:w-8 sm:h-8 object-contain opacity-50"
                               referrerPolicy="no-referrer"
-                              onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${teamData.team.abbreviation || '?'}` }}
+                              onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${teamData.team?.abbreviation || teamData.abbreviation || '?'}` }}
                             />
                           )}
                         </div>
@@ -872,32 +870,9 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                     </div>
                   ))}
                 </div>
-              ) : plays && plays.length > 0 ? (
-                <div className="space-y-2 sm:space-y-3">
-                  <h3 className="text-base sm:text-lg font-black uppercase mb-2 sm:mb-3">Play-by-Play</h3>
-                  {plays.slice().reverse().map((play: any, i: number) => (
-                    <div key={i} className="flex gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-800/30 border border-gray-700/50 rounded-xl hover:border-gray-600 transition-colors">
-                      <div className="flex flex-col items-center gap-1 min-w-[45px] sm:min-w-[55px]">
-                        <div className="text-[10px] sm:text-xs font-black text-gray-300">{play.clock?.displayValue}</div>
-                        <div className="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase">{play.period?.number}Q</div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          {play.team && (
-                            <img src={getPlayTeamLogo(play.team)} className="w-5 h-5 sm:w-6 sm:h-6 object-contain" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${play.team.abbreviation || '?'}` }} />
-                          )}
-                          <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                            {play.type?.text}
-                          </span>
-                        </div>
-                        <p className="text-[11px] sm:text-sm leading-relaxed">{play.text}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               ) : (
-                <div className="text-center py-20 text-gray-500 font-bold uppercase tracking-widest">
-                  Plays not available yet
+                <div className="text-center py-10 sm:py-20 text-sm text-gray-500 font-bold uppercase tracking-widest">
+                  Scoring data not available
                 </div>
               )}
             </div>
