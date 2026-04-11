@@ -28,11 +28,11 @@ export default async function ScoresPage() {
       <div className="h-screen flex flex-col overflow-hidden bg-[#121212]">
         <Header activeSport={activeSport} />
         
-        <div className="flex-1 max-w-[1600px] w-full mx-auto flex flex-col lg:flex-row overflow-hidden">
+        <div className="flex-1 max-w-[1600px] w-full mx-auto px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-8 overflow-hidden">
           <Sidebar activeSport={activeSport} proToolsMenu={proToolsMenu} connectMenu={connectMenu} />
           
-          <main className="flex-1 relative overflow-y-auto w-full px-4 md:px-8 lg:px-10 pt-0 pb-24 scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="animate-in fade-in duration-500 max-w-7xl mx-auto w-full">
+          <main className="flex-1 w-full min-w-0 relative overflow-y-auto pb-24 scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="animate-in fade-in duration-500 w-full">
                <ScoresClient />
             </div>
           </main>

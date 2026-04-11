@@ -66,6 +66,7 @@ export default function ScoresClient() {
 
   return (
     <QueryClientProvider client={queryClient}>
+        {/* FIX: Ensure the tab switcher has top padding to distance it from the header! */}
         <div className="flex flex-col items-center mb-6 pt-6">
             <SegmentedControl
             activeTab={activeTab}
