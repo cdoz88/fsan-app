@@ -37,6 +37,23 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
   const isLive = game.status.state === 'in';
   const isPost = game.status.state === 'post';
 
+  // Helper to stack and format the live status strings
+  const formatLiveStatus = (detail: string) => {
+    if (!detail) return null;
+    if (detail.includes(' - ')) {
+      const parts = detail.split(' - ');
+      return (
+        <div className="flex flex-col items-end text-right">
+          <span>{parts[0]}</span>
+          <span className="text-[9px] text-gray-500 mt-0.5 leading-none">
+            {parts[1].replace(/Quarter/gi, 'QTR').replace(/Inning/gi, 'INN')}
+          </span>
+        </div>
+      );
+    }
+    return <span className="block text-center">{detail.replace(/Quarter/gi, 'QTR').replace(/Inning/gi, 'INN')}</span>;
+  };
+
   if (game.league === 'PGA' && game.golfCompetitors) {
     const eventName = game.shortName || game.name || 'Event';
     const top3Competitors = game.golfCompetitors.slice(0, 3);
@@ -49,7 +66,7 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
         <div className="p-3 flex flex-col h-full">
           <div className="flex justify-between items-start text-xs uppercase font-bold mb-2">
             <span className="text-gray-500">{game.league}</span>
-            <span className="text-[#9df01c] text-right">{game.status.detail}</span>
+            <span className="text-gray-300 text-right">{game.status.detail}</span>
           </div>
           <div className="font-bold text-white text-base leading-tight mb-3">{eventName}</div>
           <div className="space-y-1.5">
@@ -74,17 +91,17 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
       className="bg-[#2A2A2A] rounded-xl border border-gray-800 hover:border-gray-600 transition-all duration-300 cursor-pointer overflow-hidden group"
     >
       <div className="p-3 flex items-center justify-between">
-        <div className="space-y-2 flex-1">
+        <div className="space-y-2 flex-1 min-w-0">
           <TeamRow team={game.awayTeam} isWinner={isPost && parseInt(game.awayTeam.score || '0') > parseInt(game.homeTeam.score || '0')} isPre={isPre} spread={awaySpread} />
           <TeamRow team={game.homeTeam} isWinner={isPost && parseInt(game.homeTeam.score || '0') > parseInt(game.awayTeam.score || '0')} isPre={isPre} spread={homeSpread} />
         </div>
-        <div className="ml-4 flex flex-col items-end justify-center min-w-[60px]">
-          <span className={cn(
+        <div className="ml-3 flex flex-col items-end justify-center min-w-[50px] shrink-0">
+          <div className={cn(
             "text-xs font-bold uppercase tracking-widest text-right",
-            isLive ? "text-[#9df01c] animate-pulse" : isPre ? "text-[#9df01c]" : "text-gray-400"
+            isLive ? "text-gray-200 animate-pulse" : isPre ? "text-gray-300" : "text-gray-500"
           )}>
-            {isPre ? formatGameTime(game.date) : game.status.detail}
-          </span>
+            {isPre ? formatGameTime(game.date) : formatLiveStatus(game.status.detail)}
+          </div>
         </div>
       </div>
 
@@ -102,17 +119,17 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
 };
 
 const TeamRow = ({ team, isWinner, isPre, spread }: { team: any, isWinner: boolean, isPre: boolean, spread: string | null }) => (
-  <div className="flex items-center justify-between">
-    <div className="flex items-center gap-3">
-      <img src={team.logo} alt={team.name} className="w-6 h-6 object-contain" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${team.abbreviation || '?'}` }} />
+  <div className="flex items-center justify-between min-w-0 pr-1">
+    <div className="flex items-center gap-3 min-w-0">
+      <img src={team.logo} alt={team.name} className="w-6 h-6 object-contain shrink-0" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${team.abbreviation || '?'}` }} />
       <span className={cn(
-        "font-bold text-sm tracking-tight",
+        "font-bold text-sm tracking-tight truncate",
         isWinner ? "text-white" : "text-gray-400"
       )}>
         {team.abbreviation}
       </span>
     </div>
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 shrink-0">
       {spread && (
         <span className="text-xs font-bold text-gray-500 w-12 text-right">
           {spread}
