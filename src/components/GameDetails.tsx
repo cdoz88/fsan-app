@@ -60,7 +60,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
   }
 
   if (!summary) {
-    if (leagueId === 'PGA' && fallbackGame && fallbackGame.golfCompetitors) {
+    if (['PGA', 'NASCAR'].includes(leagueId) && fallbackGame && fallbackGame.golfCompetitors) {
       // Use fallback game data to render the leaderboard
       const eventName = fallbackGame.name || fallbackGame.shortName || 'Event Details';
       const statusDetail = fallbackGame.status?.detail || 'Status Unavailable';
@@ -96,7 +96,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               <thead className="text-xs text-gray-400 uppercase bg-[#333] border-b border-gray-600">
                 <tr>
                   <th className="px-4 py-3 text-center">Rank</th>
-                  <th className="px-4 py-3">Athlete</th>
+                  <th className="px-4 py-3">{leagueId === 'NASCAR' ? 'Driver' : 'Athlete'}</th>
                   <th className="px-4 py-3 text-right">Score</th>
                 </tr>
               </thead>
@@ -141,7 +141,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
   const header = summary.header;
   const competition = header?.competitions?.[0];
   
-  if (leagueId === 'PGA') {
+  if (['PGA', 'NASCAR'].includes(leagueId)) {
     const eventName = header?.name || header?.shortName || 'Event Details';
     const statusDetail = competition?.status?.type?.detail || 'Status Unavailable';
     const competitors = competition?.competitors || [];
@@ -177,7 +177,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
             <thead className="text-xs text-gray-400 uppercase bg-[#333] border-b border-gray-600">
               <tr>
                 <th className="px-4 py-3 text-center">Rank</th>
-                <th className="px-4 py-3">Athlete</th>
+                <th className="px-4 py-3">{leagueId === 'NASCAR' ? 'Driver' : 'Athlete'}</th>
                 <th className="px-4 py-3 text-right">Score</th>
               </tr>
             </thead>

@@ -15,6 +15,7 @@ export const LEAGUES: League[] = [
   { id: 'CBASE', name: 'CBASE', sport: 'baseball', endpoint: 'baseball/college-baseball/scoreboard' },
   { id: 'NHL', name: 'NHL', sport: 'hockey', endpoint: 'hockey/nhl/scoreboard' },
   { id: 'PGA', name: 'PGA', sport: 'golf', endpoint: 'golf/pga/scoreboard' },
+  { id: 'NASCAR', name: 'NASCAR', sport: 'racing', endpoint: 'racing/nascar/scoreboard' },
   { id: 'EPL', name: 'EPL', sport: 'soccer', endpoint: 'soccer/eng.1/scoreboard' },
   { id: 'MLS', name: 'MLS', sport: 'soccer', endpoint: 'soccer/usa.1/scoreboard' },
   { id: 'UCL', name: 'UCL', sport: 'soccer', endpoint: 'soccer/uefa.champions/scoreboard' },
@@ -39,8 +40,8 @@ export async function fetchScoreboard(leagueId: string, date: string): Promise<G
     const competition = event.competitions?.[0];
     if (!competition) return null;
     
-    // Handle Golf (PGA) differently as it doesn't have away/home teams
-    if (leagueId === 'PGA') {
+    // Handle Golf (PGA) and Racing (NASCAR) differently as they don't have away/home teams
+    if (leagueId === 'PGA' || leagueId === 'NASCAR') {
       const competitors = competition.competitors || [];
       const sortedCompetitors = competitors
         .sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
@@ -57,21 +58,19 @@ export async function fetchScoreboard(leagueId: string, date: string): Promise<G
           clock: competition.status.clock,
           period: competition.status.period,
         },
-        // For golf, we'll store all competitors in a special field
-        // and provide dummy away/home teams to satisfy the type
-        golfCompetitors: sortedCompetitors,
+        golfCompetitors: sortedCompetitors, 
         awayTeam: {
-          id: 'golf-dummy-1',
-          name: 'Golf',
-          abbreviation: 'GLF',
-          displayName: 'Golf',
+          id: `${leagueId.toLowerCase()}-dummy-1`,
+          name: leagueId,
+          abbreviation: leagueId.substring(0, 3),
+          displayName: leagueId,
           logo: '',
         },
         homeTeam: {
-          id: 'golf-dummy-2',
-          name: 'Golf',
-          abbreviation: 'GLF',
-          displayName: 'Golf',
+          id: `${leagueId.toLowerCase()}-dummy-2`,
+          name: leagueId,
+          abbreviation: leagueId.substring(0, 3),
+          displayName: leagueId,
           logo: '',
         },
         lastPlay: competition.situation?.lastPlay?.text,
@@ -131,9 +130,9 @@ export async function fetchGameSummary(leagueId: string, gameId: string, date?: 
   const response = await fetch(url);
   
   if (!response.ok) {
-    if (leagueId === 'PGA') {
-      // For PGA, the summary endpoint might not exist or return 404.
-      // We can fallback to the scoreboard endpoint to get the leaderboard data for this specific event.
+    // For PGA and NASCAR, the summary endpoint might not exist or return 404.
+    // We can fallback to the scoreboard endpoint to get the leaderboard data for this specific event.
+    if (leagueId === 'PGA' || leagueId === 'NASCAR') {
       let fallbackUrl = `${API_BASE}${league.endpoint}`;
       if (date) {
         // Format date to YYYYMMDD
@@ -145,7 +144,7 @@ export async function fetchGameSummary(leagueId: string, gameId: string, date?: 
         const data = await fallbackResponse.json();
         const event = data.events?.find((e: any) => e.id === gameId);
         if (event) {
-          return { header: event }; // Wrap it in a 'header' object to match the expected structure in GameDetails
+          return { header: event }; 
         }
       }
     }

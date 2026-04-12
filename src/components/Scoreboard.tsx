@@ -7,7 +7,7 @@ import { format, addDays, subDays, isToday } from 'date-fns';
 import { CalendarPicker } from './CalendarPicker';
 import { Game } from '../types';
 import { Dropdown } from './Dropdown';
-import { AllSportsIcon, FootballIcon, BasketballIcon, BaseballIcon, HockeyIcon, GolfIcon, SoccerIcon } from './icons';
+import { AllSportsIcon, FootballIcon, BasketballIcon, BaseballIcon, HockeyIcon, GolfIcon, SoccerIcon, RacingIcon } from './icons';
 
 interface ScoreboardProps {
   onSelectGame: (id: string, league: string) => void;
@@ -26,6 +26,7 @@ const SPORT_OPTIONS = [
   { value: 'BASEBALL', label: 'Baseball', icon: <BaseballIcon /> },
   { value: 'HOCKEY', label: 'Hockey', icon: <HockeyIcon /> },
   { value: 'GOLF', label: 'Golf', icon: <GolfIcon /> },
+  { value: 'RACING', label: 'Racing', icon: <RacingIcon /> },
   { value: 'SOCCER', label: 'Soccer', icon: <SoccerIcon /> },
 ];
 
