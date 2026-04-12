@@ -15,7 +15,7 @@ export const LEAGUES: League[] = [
   { id: 'CBASE', name: 'CBASE', sport: 'baseball', endpoint: 'baseball/college-baseball/scoreboard' },
   { id: 'NHL', name: 'NHL', sport: 'hockey', endpoint: 'hockey/nhl/scoreboard' },
   { id: 'PGA', name: 'PGA', sport: 'golf', endpoint: 'golf/pga/scoreboard' },
-  { id: 'NASCAR', name: 'NASCAR', sport: 'racing', endpoint: 'racing/nascar/scoreboard' },
+  { id: 'NASCAR', name: 'NASCAR', sport: 'racing', endpoint: 'racing/nascar-premier/scoreboard' },
   { id: 'EPL', name: 'EPL', sport: 'soccer', endpoint: 'soccer/eng.1/scoreboard' },
   { id: 'MLS', name: 'MLS', sport: 'soccer', endpoint: 'soccer/usa.1/scoreboard' },
   { id: 'UCL', name: 'UCL', sport: 'soccer', endpoint: 'soccer/uefa.champions/scoreboard' },
