@@ -137,12 +137,12 @@ export const PlayerProvider = ({ children }) => {
       formData.append('ranking_data', JSON.stringify(rankedItemsData));
       formData.append('user_id', session.user.id);
 
-      const wpUrl = `https://admin.fsan.com/wp-admin/admin-ajax.php`;
+      // Route the request through our Next.js API proxy to avoid CORS
+      const proxyUrl = `/api/rankings`;
 
-      const response = await fetch(wpUrl, { 
+      const response = await fetch(proxyUrl, { 
          method: 'POST', 
          body: formData,
-         // Pass the secure token so WordPress authorizes the save
          headers: session.user.token ? { 'Authorization': `Bearer ${session.user.token}` } : {}
       });
       

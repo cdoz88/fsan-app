@@ -25,3 +25,29 @@ export async function GET(request) {
     return NextResponse.json({ success: false, message: 'Proxy Error', data: [] }, { status: 500 });
   }
 }
+
+export async function POST(request) {
+  try {
+    const formData = await request.formData();
+    const wpUrl = `https://admin.fsan.com/wp-admin/admin-ajax.php`;
+    
+    // Extract token if present
+    const authHeader = request.headers.get('authorization');
+    const headers = {};
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+
+    const res = await fetch(wpUrl, {
+      method: 'POST',
+      body: formData,
+      headers: headers
+    });
+
+    const data = await res.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error("Rankings Submit Proxy Error:", error);
+    return NextResponse.json({ success: false, message: 'Failed to proxy request.' }, { status: 500 });
+  }
+}
