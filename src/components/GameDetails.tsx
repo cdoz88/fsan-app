@@ -660,20 +660,21 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   {boxscore.players.filter((t: any) => t.team.id === away.team.id).map((teamBox: any, i: number) => (
                     <div key={i} className="space-y-4">
                       {teamBox.statistics?.map((statGroup: any, statIdx: number) => (
-                        <div key={statIdx} className="overflow-x-auto scrollbar-hide">
-                          <table className="w-full text-sm text-left whitespace-nowrap">
-                            <thead className="text-xs text-gray-400 uppercase bg-[#333] border-b border-gray-600">
-                              <tr>
-                                <th className="px-3 py-2.5 sm:p-3 w-40 sm:w-48 sticky left-0 bg-[#333] z-20">{statGroup.name}</th>
+                        <div key={statIdx} className="overflow-x-auto">
+                          <h3 className="px-3 pt-3 text-sm sm:text-base font-bold text-white mb-1">{statGroup.name || statGroup.label || ''}</h3>
+                          <table className="w-full text-left text-xs">
+                            <thead>
+                              <tr className="text-gray-500 font-bold uppercase tracking-widest border-b border-gray-700/30">
+                                <th className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10">Player</th>
                                 {statGroup.labels?.map((label: string, j: number) => (
-                                  <th key={j} className="px-3 py-2.5 sm:p-3 text-center">{label}</th>
+                                  <th key={j} className="px-3 py-2 sm:p-3 text-center whitespace-nowrap">{label}</th>
                                 ))}
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-700/50 bg-[#2A2A2A]">
+                            <tbody>
                               {statGroup.athletes?.map((athlete: any, j: number) => (
-                                <tr key={j} className="hover:bg-[#3e3e3e] transition-colors">
-                                  <td className="px-3 py-2 sm:p-3 font-semibold text-white sticky left-0 bg-[#2A2A2A] z-10 border-r border-gray-700/50">
+                                <tr key={j} className="border-b border-gray-700/10 hover:bg-gray-700/20 transition-colors">
+                                  <td className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10 border-r border-gray-700/30">
                                     <div className="flex items-baseline gap-2 whitespace-nowrap">
                                       {renderPlayerName(athlete)}
                                       <span className="text-[9px] sm:text-[10px] text-gray-500 uppercase">{athlete.athlete?.position?.abbreviation}</span>
@@ -698,20 +699,21 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   {boxscore.players.filter((t: any) => t.team.id === home.team.id).map((teamBox: any, i: number) => (
                     <div key={i} className="space-y-4">
                       {teamBox.statistics?.map((statGroup: any, statIdx: number) => (
-                        <div key={statIdx} className="overflow-x-auto scrollbar-hide">
-                          <table className="w-full text-sm text-left whitespace-nowrap">
-                            <thead className="text-xs text-gray-400 uppercase bg-[#333] border-b border-gray-600">
-                              <tr>
-                                <th className="px-3 py-2.5 sm:p-3 w-40 sm:w-48 sticky left-0 bg-[#333] z-20">{statGroup.name}</th>
+                        <div key={statIdx} className="overflow-x-auto">
+                          <h3 className="px-3 pt-3 text-sm sm:text-base font-bold text-white mb-1">{statGroup.name || statGroup.label || ''}</h3>
+                          <table className="w-full text-left text-xs">
+                            <thead>
+                              <tr className="text-gray-500 font-bold uppercase tracking-widest border-b border-gray-700/30">
+                                <th className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10">Player</th>
                                 {statGroup.labels?.map((label: string, j: number) => (
-                                  <th key={j} className="px-3 py-2.5 sm:p-3 text-center">{label}</th>
+                                  <th key={j} className="px-3 py-2 sm:p-3 text-center whitespace-nowrap">{label}</th>
                                 ))}
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-700/50 bg-[#2A2A2A]">
+                            <tbody>
                               {statGroup.athletes?.map((athlete: any, j: number) => (
-                                <tr key={j} className="hover:bg-[#3e3e3e] transition-colors">
-                                  <td className="px-3 py-2 sm:p-3 font-semibold text-white sticky left-0 bg-[#2A2A2A] z-10 border-r border-gray-700/50">
+                                <tr key={j} className="border-b border-gray-700/10 hover:bg-gray-700/20 transition-colors">
+                                  <td className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10 border-r border-gray-700/30">
                                     <div className="flex items-baseline gap-2 whitespace-nowrap">
                                       {renderPlayerName(athlete)}
                                       <span className="text-[9px] sm:text-[10px] text-gray-500 uppercase">{athlete.athlete?.position?.abbreviation}</span>
@@ -862,9 +864,32 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                     </div>
                   ))}
                 </div>
+              ) : plays && plays.length > 0 ? (
+                <div className="space-y-2 sm:space-y-3">
+                  <h3 className="text-base sm:text-lg font-black uppercase mb-2 sm:mb-3">Play-by-Play</h3>
+                  {plays.slice().reverse().map((play: any, i: number) => (
+                    <div key={i} className="flex gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-800/30 border border-gray-700/50 rounded-xl hover:border-gray-600 transition-colors">
+                      <div className="flex flex-col items-center gap-1 min-w-[45px] sm:min-w-[55px]">
+                        <div className="text-[10px] sm:text-xs font-black text-gray-300">{play.clock?.displayValue}</div>
+                        <div className="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase">{play.period?.number}Q</div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          {play.team && (
+                            <img src={getPlayTeamLogo(play.team)} className="w-5 h-5 sm:w-6 sm:h-6 object-contain" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${play.team.abbreviation || '?'}` }} />
+                          )}
+                          <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            {play.type?.text}
+                          </span>
+                        </div>
+                        <p className="text-[11px] sm:text-sm leading-relaxed">{play.text}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <div className="text-center py-10 sm:py-20 text-sm text-gray-500 font-bold uppercase tracking-widest">
-                  Scoring data not available
+                <div className="text-center py-20 text-gray-500 font-bold uppercase tracking-widest">
+                  Plays not available yet
                 </div>
               )}
             </div>
