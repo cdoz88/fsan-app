@@ -56,41 +56,18 @@ export const Fantasy = () => {
 
   const [highlightedLeagueIds, setHighlightedLeagueIds] = useState<Set<string>>(new Set());
 
-  const handleYahooSync = async () => {
-    try {
-      // PREPARE THE UI: Show the loading state so the user knows something is happening when they return
-      setIsFetchingYahoo(true);
-      setSelectedPlatform('YahooSelect');
-
-      const response = await fetch('/api/yahoo/auth/url');
-      if (!response.ok) {
-        throw new Error('Failed to get auth URL');
-      }
-      const { url } = await response.json();
-
-      const authWindow = window.open(
-        url,
-        'oauth_popup',
-        'width=600,height=700'
-      );
-
-      if (!authWindow) {
-        alert('Please allow popups for this site to connect your account.');
-        setIsFetchingYahoo(false);
-        setSelectedPlatform(null);
-      }
-    } catch (error) {
-      console.error('OAuth error:', error);
-      setIsFetchingYahoo(false);
-      setSelectedPlatform(null);
-    }
-  };
-
   const [yahooLeagues, setYahooLeagues] = useState<any[]>([]);
   const [isFetchingYahoo, setIsFetchingYahoo] = useState(false);
+  
+  // Use a ref to prevent double-fetching if the window closes AND the success message fires simultaneously
+  const isFetchingRef = React.useRef(false);
 
   const fetchYahooLeagues = async () => {
+    if (isFetchingRef.current) return;
+    
+    isFetchingRef.current = true;
     setIsFetchingYahoo(true);
+    
     try {
       const response = await fetch('/api/yahoo/proxy/users;use_login=1/games;game_keys=nfl/leagues?format=json');
       if (response.ok) {
@@ -111,9 +88,52 @@ export const Fantasy = () => {
       console.error('Failed to fetch Yahoo leagues:', error);
       setYahooLeagues([]);
     } finally {
-      // KEEP MODAL OPEN SO THEY CAN DISCONNECT OR SEE THE ERROR
       setSelectedPlatform('YahooSelect');
       setIsFetchingYahoo(false);
+      
+      // Add a tiny cooldown before allowing another fetch
+      setTimeout(() => {
+        isFetchingRef.current = false;
+      }, 1000);
+    }
+  };
+
+  const handleYahooSync = async () => {
+    try {
+      setIsFetchingYahoo(true);
+      setSelectedPlatform('YahooSelect');
+
+      const response = await fetch('/api/yahoo/auth/url');
+      if (!response.ok) {
+        throw new Error('Failed to get auth URL');
+      }
+      const { url } = await response.json();
+
+      const authWindow = window.open(
+        url,
+        'oauth_popup',
+        'width=600,height=700'
+      );
+
+      if (!authWindow) {
+        alert('Please allow popups for this site to connect your account.');
+        setIsFetchingYahoo(false);
+        setSelectedPlatform(null);
+        return;
+      }
+
+      // Fallback Polling: Watch the popup window so we never get stuck spinning if it closes or crashes
+      const timer = setInterval(() => {
+        if (authWindow.closed) {
+          clearInterval(timer);
+          fetchYahooLeagues();
+        }
+      }, 500);
+
+    } catch (error) {
+      console.error('OAuth error:', error);
+      setIsFetchingYahoo(false);
+      setSelectedPlatform(null);
     }
   };
 
@@ -132,11 +152,12 @@ export const Fantasy = () => {
   React.useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const origin = event.origin;
-      if (!origin.endsWith('.run.app') && !origin.includes('localhost') && !origin.includes('.vercel.app')) {
+      // Ensure cross-origin safety but allow our standard host environments
+      if (origin !== window.location.origin && !origin.includes('.run.app') && !origin.includes('localhost') && !origin.includes('.vercel.app')) {
         return;
       }
       if (event.data?.type === 'YAHOO_AUTH_SUCCESS') {
-        console.log("Yahoo Auth Success!");
+        console.log("Yahoo Auth Success Message Received!");
         fetchYahooLeagues();
       }
     };
@@ -243,7 +264,6 @@ export const Fantasy = () => {
             </button>
             <button onClick={handleYahooSync} disabled={isFetchingYahoo} className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity disabled:opacity-50">
               <div className="w-16 h-16 rounded-2xl overflow-hidden bg-[#121212] relative flex items-center justify-center">
-                {/* Visual feedback if they double click before modal opens */}
                 {isFetchingYahoo ? <RefreshCw className="animate-spin text-white" size={24} /> : <img src={PLATFORM_ICONS['Yahoo']} alt="Yahoo" className="w-full h-full object-cover" />}
               </div>
               <span className="text-sm font-medium">{isFetchingYahoo ? 'Syncing...' : 'Yahoo'}</span>
@@ -277,7 +297,6 @@ export const Fantasy = () => {
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-[#2A2A2A] rounded-2xl p-6 w-full max-w-sm border border-gray-800 text-center">
             
-            {/* Show a massive loading state if Yahoo is actively fetching so the user is forced to wait */}
             {selectedPlatform === 'YahooSelect' && isFetchingYahoo ? (
                 <div className="flex flex-col items-center justify-center py-10">
                    <RefreshCw className="animate-spin text-gray-400 mb-4" size={40} />
