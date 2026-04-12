@@ -71,7 +71,7 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
     return <span className="block text-center leading-none">{detail.replace(/Quarter/gi, 'QTR').replace(/Inning/gi, 'INN')}</span>;
   };
 
-  // FIX: Render leaderboard card for both PGA and NASCAR
+  // Render leaderboard card for both PGA and NASCAR
   if (['PGA', 'NASCAR'].includes(game.league) && game.golfCompetitors) {
     const eventName = game.shortName || game.name || 'Event';
     const top3Competitors = game.golfCompetitors.slice(0, 3);
@@ -87,15 +87,35 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
             <span className="text-gray-300 text-right">{game.status.detail}</span>
           </div>
           <div className="font-bold text-white text-base leading-tight mb-3">{eventName}</div>
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 mt-auto">
             {top3Competitors.map((c: any, i: number) => {
-              // FIX: ESPN uses various keys for NASCAR points vs Golf scores. This securely hunts down the value!
-              const pointsStat = c.statistics?.find((s: any) => s.name === 'points');
-              const score = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';
+              const carNum = c.athlete?.jersey ? `#${c.athlete.jersey}` : '';
+              const getStat = (name: string) => c.statistics?.find((s: any) => s.name === name || s.abbreviation?.toLowerCase() === name.toLowerCase())?.displayValue;
+              
+              let rightSide = '-';
+              if (game.league === 'NASCAR') {
+                 const pts = getStat('points') || c.score || c.points;
+                 const laps = getStat('laps') || getStat('lapsCompleted');
+                 if (isPre) {
+                     rightSide = carNum || '-';
+                 } else if (isLive) {
+                     rightSide = laps ? `L: ${laps}` : 'Running';
+                 } else {
+                     rightSide = pts ? `${pts} pts` : (c.reason?.displayValue || 'Finished');
+                 }
+              } else {
+                 const pointsStat = c.statistics?.find((s: any) => s.name === 'points');
+                 rightSide = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';
+              }
+
               return (
                 <div key={i} className="flex justify-between text-sm items-center">
-                  <span className="text-gray-300 truncate pr-2">{c.athlete?.displayName || c.team?.displayName}</span>
-                  <span className="font-bold text-white bg-[#1f2937] px-1.5 rounded">{score}</span>
+                  <div className="flex items-center gap-1.5 truncate pr-2">
+                     <span className="text-gray-500 font-bold text-xs w-4">{c.order || i+1}.</span>
+                     <span className="text-gray-200 font-bold truncate">{c.athlete?.shortName || c.athlete?.displayName || c.team?.displayName}</span>
+                     {game.league === 'NASCAR' && carNum && <span className="text-[10px] text-gray-500 font-mono ml-1">{carNum}</span>}
+                  </div>
+                  <span className="font-bold text-white bg-[#1f2937] px-1.5 py-0.5 text-xs rounded whitespace-nowrap">{rightSide}</span>
                 </div>
               );
             })}

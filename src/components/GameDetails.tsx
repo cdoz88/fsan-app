@@ -68,7 +68,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
       const sortedCompetitors = fallbackGame.golfCompetitors;
 
       return (
-        <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
+        <div className="max-w-5xl mx-auto pb-16 sm:pb-24">
           <div className="sticky top-0 z-20 bg-[#121212] pt-6 pb-2">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -100,35 +100,71 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-lg border border-gray-700">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs text-gray-400 uppercase bg-[#333] border-b border-gray-600">
+          <div className="overflow-x-auto rounded-lg border border-gray-700 shadow-xl mt-4">
+            <table className="w-full text-sm text-left whitespace-nowrap">
+              <thead className="text-xs text-gray-400 uppercase bg-[#222] border-b border-gray-800 font-black tracking-widest">
                 <tr>
-                  <th className="px-4 py-3 text-center">Rank</th>
-                  <th className="px-4 py-3">{leagueId === 'NASCAR' ? 'Driver' : 'Athlete'}</th>
-                  <th className="px-4 py-3 text-right">Score</th>
+                  <th className="px-4 py-3.5 text-center w-16">Pos</th>
+                  <th className="px-4 py-3.5">{leagueId === 'NASCAR' ? 'Driver' : 'Athlete'}</th>
+                  {leagueId === 'NASCAR' && (
+                     <>
+                       <th className="px-4 py-3.5 text-center border-l border-gray-800">Car</th>
+                       <th className="px-4 py-3.5 text-center border-l border-gray-800">Laps</th>
+                       <th className="px-4 py-3.5 text-center border-l border-gray-800 hidden sm:table-cell">Led</th>
+                       <th className="px-4 py-3.5 border-l border-gray-800 hidden md:table-cell">Status</th>
+                     </>
+                  )}
+                  <th className="px-4 py-3.5 text-right border-l border-gray-800">{leagueId === 'NASCAR' ? 'Points' : 'Score'}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-700 bg-[#2A2A2A]">
+              <tbody className="divide-y divide-gray-800/50 bg-[#1a1a1a]">
                 {sortedCompetitors.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="p-4 text-center text-gray-400">Leaderboard data not available.</td>
+                    <td colSpan={leagueId === 'NASCAR' ? 7 : 3} className="p-8 text-center text-gray-500 font-bold uppercase tracking-widest">Leaderboard data not available.</td>
                   </tr>
                 ) : (
-                  sortedCompetitors.slice(0, 20).map((c: any, index: number) => {
+                  sortedCompetitors.slice(0, 40).map((c: any, index: number) => {
                     const rank = c.order || (index + 1);
                     const name = c.athlete?.displayName || c.team?.displayName || 'Unknown';
-                    const pointsStat = c.statistics?.find((s: any) => s.name === 'points');
-                    const score = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';
                     const flagImg = c.athlete?.flag?.href ? (
-                      <img src={c.athlete.flag.href} className="w-4 h-3 inline-block mr-2" alt="flag" />
+                      <img src={c.athlete.flag.href} className="w-4 h-3 inline-block mr-2 rounded-sm shadow-sm" alt="flag" />
                     ) : null;
                     
+                    if (leagueId === 'NASCAR') {
+                       const getStat = (nameOrLabel: string) => {
+                          if (!c.statistics) return '-';
+                          const stat = c.statistics.find((s: any) => s.name === nameOrLabel || s.label?.toLowerCase() === nameOrLabel.toLowerCase() || s.abbreviation?.toLowerCase() === nameOrLabel.toLowerCase());
+                          return stat ? (stat.displayValue || stat.value) : '-';
+                       };
+                       
+                       const carNum = c.athlete?.jersey || c.car || '-';
+                       const laps = getStat('laps') !== '-' ? getStat('laps') : getStat('lapsCompleted');
+                       const lapsLed = getStat('lapsLed') !== '-' ? getStat('lapsLed') : getStat('led');
+                       const points = getStat('points') !== '-' ? getStat('points') : (c.score || c.points || '-');
+                       const statusText = c.reason?.displayValue || c.status?.displayValue || c.status?.type?.detail || (rank === 1 ? 'Winner' : 'Finished');
+                       
+                       return (
+                         <tr key={index} className="hover:bg-[#252525] transition-colors group">
+                           <td className="px-4 py-3 font-black text-gray-300 w-16 text-center">{rank}</td>
+                           <td className="px-4 py-3 font-bold text-white group-hover:text-blue-400 transition-colors flex items-center gap-2">{flagImg}{name}</td>
+                           <td className="px-4 py-3 text-center border-l border-gray-800/50 text-gray-400 font-mono text-xs">{carNum}</td>
+                           <td className="px-4 py-3 text-center border-l border-gray-800/50 text-gray-300 font-medium">{laps}</td>
+                           <td className="px-4 py-3 text-center border-l border-gray-800/50 text-gray-400 hidden sm:table-cell">{lapsLed}</td>
+                           <td className="px-4 py-3 border-l border-gray-800/50 text-gray-500 text-xs uppercase hidden md:table-cell tracking-widest">{statusText}</td>
+                           <td className="px-4 py-3 font-black text-right border-l border-gray-800/50 text-white">{points}</td>
+                         </tr>
+                       );
+                    }
+
+                    // Default Golf Render
+                    const pointsStat = c.statistics?.find((s: any) => s.name === 'points');
+                    const score = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';
+                    
                     return (
-                      <tr key={index} className="border-b border-gray-700 hover:bg-[#3e3e3e] transition-colors">
-                        <td className="px-4 py-3 font-bold text-gray-300 w-16 text-center">{rank}</td>
-                        <td className="px-4 py-3 font-semibold text-white">{flagImg}{name}</td>
-                        <td className="px-4 py-3 font-bold text-right text-gray-300">{score}</td>
+                      <tr key={index} className="hover:bg-[#252525] transition-colors group">
+                        <td className="px-4 py-3 font-black text-gray-300 w-16 text-center">{rank}</td>
+                        <td className="px-4 py-3 font-bold text-white group-hover:text-blue-400 transition-colors">{flagImg}{name}</td>
+                        <td className="px-4 py-3 font-black text-right border-l border-gray-800/50 text-white">{score}</td>
                       </tr>
                     );
                   })
@@ -159,7 +195,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
     const eventDate = header?.date ? new Date(header.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
 
     return (
-      <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
+      <div className="max-w-5xl mx-auto pb-16 sm:pb-24">
         <div className="sticky top-0 z-20 bg-[#121212] pt-6 pb-2">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -191,35 +227,71 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-lg border border-gray-700">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs text-gray-400 uppercase bg-[#333] border-b border-gray-600">
+        <div className="overflow-x-auto rounded-lg border border-gray-700 shadow-xl mt-4">
+          <table className="w-full text-sm text-left whitespace-nowrap">
+            <thead className="text-xs text-gray-400 uppercase bg-[#222] border-b border-gray-800 font-black tracking-widest">
               <tr>
-                <th className="px-4 py-3 text-center">Rank</th>
-                <th className="px-4 py-3">{leagueId === 'NASCAR' ? 'Driver' : 'Athlete'}</th>
-                <th className="px-4 py-3 text-right">Score</th>
+                <th className="px-4 py-3.5 text-center w-16">Pos</th>
+                <th className="px-4 py-3.5">{leagueId === 'NASCAR' ? 'Driver' : 'Athlete'}</th>
+                {leagueId === 'NASCAR' && (
+                   <>
+                     <th className="px-4 py-3.5 text-center border-l border-gray-800">Car</th>
+                     <th className="px-4 py-3.5 text-center border-l border-gray-800">Laps</th>
+                     <th className="px-4 py-3.5 text-center border-l border-gray-800 hidden sm:table-cell">Led</th>
+                     <th className="px-4 py-3.5 border-l border-gray-800 hidden md:table-cell">Status</th>
+                   </>
+                )}
+                <th className="px-4 py-3.5 text-right border-l border-gray-800">{leagueId === 'NASCAR' ? 'Points' : 'Score'}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-700 bg-[#2A2A2A]">
+            <tbody className="divide-y divide-gray-800/50 bg-[#1a1a1a]">
               {sortedCompetitors.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="p-4 text-center text-gray-400">Leaderboard data not available.</td>
+                  <td colSpan={leagueId === 'NASCAR' ? 7 : 3} className="p-8 text-center text-gray-500 font-bold uppercase tracking-widest">Leaderboard data not available.</td>
                 </tr>
               ) : (
-                sortedCompetitors.slice(0, 20).map((c: any, index: number) => {
+                sortedCompetitors.slice(0, 40).map((c: any, index: number) => {
                   const rank = c.order || (index + 1);
                   const name = c.athlete?.displayName || c.team?.displayName || 'Unknown';
-                  const pointsStat = c.statistics?.find((s: any) => s.name === 'points');
-                  const score = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';
                   const flagImg = c.athlete?.flag?.href ? (
-                    <img src={c.athlete.flag.href} className="w-4 h-3 inline-block mr-2" alt="flag" />
+                    <img src={c.athlete.flag.href} className="w-4 h-3 inline-block mr-2 rounded-sm shadow-sm" alt="flag" />
                   ) : null;
                   
+                  if (leagueId === 'NASCAR') {
+                     const getStat = (nameOrLabel: string) => {
+                        if (!c.statistics) return '-';
+                        const stat = c.statistics.find((s: any) => s.name === nameOrLabel || s.label?.toLowerCase() === nameOrLabel.toLowerCase() || s.abbreviation?.toLowerCase() === nameOrLabel.toLowerCase());
+                        return stat ? (stat.displayValue || stat.value) : '-';
+                     };
+                     
+                     const carNum = c.athlete?.jersey || c.car || '-';
+                     const laps = getStat('laps') !== '-' ? getStat('laps') : getStat('lapsCompleted');
+                     const lapsLed = getStat('lapsLed') !== '-' ? getStat('lapsLed') : getStat('led');
+                     const points = getStat('points') !== '-' ? getStat('points') : (c.score || c.points || '-');
+                     const statusText = c.reason?.displayValue || c.status?.displayValue || c.status?.type?.detail || (rank === 1 ? 'Winner' : 'Finished');
+                     
+                     return (
+                       <tr key={index} className="hover:bg-[#252525] transition-colors group">
+                         <td className="px-4 py-3 font-black text-gray-300 w-16 text-center">{rank}</td>
+                         <td className="px-4 py-3 font-bold text-white group-hover:text-blue-400 transition-colors flex items-center gap-2">{flagImg}{name}</td>
+                         <td className="px-4 py-3 text-center border-l border-gray-800/50 text-gray-400 font-mono text-xs">{carNum}</td>
+                         <td className="px-4 py-3 text-center border-l border-gray-800/50 text-gray-300 font-medium">{laps}</td>
+                         <td className="px-4 py-3 text-center border-l border-gray-800/50 text-gray-400 hidden sm:table-cell">{lapsLed}</td>
+                         <td className="px-4 py-3 border-l border-gray-800/50 text-gray-500 text-xs uppercase hidden md:table-cell tracking-widest">{statusText}</td>
+                         <td className="px-4 py-3 font-black text-right border-l border-gray-800/50 text-white">{points}</td>
+                       </tr>
+                     );
+                  }
+
+                  // Default Golf Render
+                  const pointsStat = c.statistics?.find((s: any) => s.name === 'points');
+                  const score = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';
+                  
                   return (
-                    <tr key={index} className="border-b border-gray-700 hover:bg-[#3e3e3e] transition-colors">
-                      <td className="px-4 py-3 font-bold text-gray-300 w-16 text-center">{rank}</td>
-                      <td className="px-4 py-3 font-semibold text-white">{flagImg}{name}</td>
-                      <td className="px-4 py-3 font-bold text-right text-gray-300">{score}</td>
+                    <tr key={index} className="hover:bg-[#252525] transition-colors group">
+                      <td className="px-4 py-3 font-black text-gray-300 w-16 text-center">{rank}</td>
+                      <td className="px-4 py-3 font-bold text-white group-hover:text-blue-400 transition-colors">{flagImg}{name}</td>
+                      <td className="px-4 py-3 font-black text-right border-l border-gray-800/50 text-white">{score}</td>
                     </tr>
                   );
                 })
