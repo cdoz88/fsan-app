@@ -68,7 +68,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
       return (
         <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-          <div className="sticky top-0 z-20 bg-[#121212] pt-6 pb-2 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.8)]">
+          <div className="sticky top-0 z-20 bg-[#121212] pt-6 pb-2">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <button 
@@ -149,7 +149,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
     return (
       <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-        <div className="sticky top-0 z-20 bg-[#121212] pt-6 pb-2 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.8)]">
+        <div className="sticky top-0 z-20 bg-[#121212] pt-6 pb-2">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <button 
@@ -303,7 +303,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
   return (
     <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-      <div className="sticky top-0 z-20 bg-[#121212] pt-6 pb-2 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.8)]">
+      <div className="sticky top-0 z-20 bg-[#121212] pt-6 pb-2">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <button 
@@ -660,21 +660,20 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   {boxscore.players.filter((t: any) => t.team.id === away.team.id).map((teamBox: any, i: number) => (
                     <div key={i} className="space-y-4">
                       {teamBox.statistics?.map((statGroup: any, statIdx: number) => (
-                        <div key={statIdx} className="overflow-x-auto">
-                          <h3 className="px-3 pt-3 text-sm sm:text-base font-bold text-white mb-1">{statGroup.name || statGroup.label || ''}</h3>
-                          <table className="w-full text-left text-xs">
-                            <thead>
-                              <tr className="text-gray-500 font-bold uppercase tracking-widest border-b border-gray-700/30">
-                                <th className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10">Player</th>
+                        <div key={statIdx} className="overflow-x-auto scrollbar-hide">
+                          <table className="w-full text-sm text-left whitespace-nowrap">
+                            <thead className="text-xs text-gray-400 uppercase bg-[#333] border-b border-gray-600">
+                              <tr>
+                                <th className="px-3 py-2.5 sm:p-3 w-40 sm:w-48 sticky left-0 bg-[#333] z-10 border-r border-gray-700/50">{statGroup.name}</th>
                                 {statGroup.labels?.map((label: string, j: number) => (
-                                  <th key={j} className="px-3 py-2 sm:p-3 text-center whitespace-nowrap">{label}</th>
+                                  <th key={j} className="px-3 py-2.5 sm:p-3 text-center">{label}</th>
                                 ))}
                               </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-gray-700/50 bg-[#2A2A2A]">
                               {statGroup.athletes?.map((athlete: any, j: number) => (
-                                <tr key={j} className="border-b border-gray-700/10 hover:bg-gray-700/20 transition-colors">
-                                  <td className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10 border-r border-gray-700/30">
+                                <tr key={j} className="hover:bg-[#3e3e3e] transition-colors">
+                                  <td className="px-3 py-2 sm:p-3 font-semibold text-white sticky left-0 bg-[#2A2A2A] z-10 border-r border-gray-700/50">
                                     <div className="flex items-baseline gap-2 whitespace-nowrap">
                                       {renderPlayerName(athlete)}
                                       <span className="text-[9px] sm:text-[10px] text-gray-500 uppercase">{athlete.athlete?.position?.abbreviation}</span>
@@ -699,21 +698,20 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   {boxscore.players.filter((t: any) => t.team.id === home.team.id).map((teamBox: any, i: number) => (
                     <div key={i} className="space-y-4">
                       {teamBox.statistics?.map((statGroup: any, statIdx: number) => (
-                        <div key={statIdx} className="overflow-x-auto">
-                          <h3 className="px-3 pt-3 text-sm sm:text-base font-bold text-white mb-1">{statGroup.name || statGroup.label || ''}</h3>
-                          <table className="w-full text-left text-xs">
-                            <thead>
-                              <tr className="text-gray-500 font-bold uppercase tracking-widest border-b border-gray-700/30">
-                                <th className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10">Player</th>
+                        <div key={statIdx} className="overflow-x-auto scrollbar-hide">
+                          <table className="w-full text-sm text-left whitespace-nowrap">
+                            <thead className="text-xs text-gray-400 uppercase bg-[#333] border-b border-gray-600">
+                              <tr>
+                                <th className="px-3 py-2.5 sm:p-3 w-40 sm:w-48 sticky left-0 bg-[#333] z-10 border-r border-gray-700/50">{statGroup.name}</th>
                                 {statGroup.labels?.map((label: string, j: number) => (
-                                  <th key={j} className="px-3 py-2 sm:p-3 text-center whitespace-nowrap">{label}</th>
+                                  <th key={j} className="px-3 py-2.5 sm:p-3 text-center">{label}</th>
                                 ))}
                               </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-gray-700/50 bg-[#2A2A2A]">
                               {statGroup.athletes?.map((athlete: any, j: number) => (
-                                <tr key={j} className="border-b border-gray-700/10 hover:bg-gray-700/20 transition-colors">
-                                  <td className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10 border-r border-gray-700/30">
+                                <tr key={j} className="hover:bg-[#3e3e3e] transition-colors">
+                                  <td className="px-3 py-2 sm:p-3 font-semibold text-white sticky left-0 bg-[#2A2A2A] z-10 border-r border-gray-700/50">
                                     <div className="flex items-baseline gap-2 whitespace-nowrap">
                                       {renderPlayerName(athlete)}
                                       <span className="text-[9px] sm:text-[10px] text-gray-500 uppercase">{athlete.athlete?.position?.abbreviation}</span>
@@ -730,6 +728,12 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                       ))}
                     </div>
                   ))}
+                </div>
+              )}
+
+              {!boxscore?.players && !boxscore?.teams && (
+                <div className="text-center py-20 text-gray-500 font-bold uppercase tracking-widest">
+                  Box score not available yet
                 </div>
               )}
             </div>
