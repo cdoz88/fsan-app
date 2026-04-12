@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import axios from 'axios';
 
-export async function GET(req) {
-  const { searchParams } = new URL(req.url);
-  const code = searchParams.get('code');
+export async function GET(request) {
+  const url = new URL(request.url);
+  const code = url.searchParams.get('code');
+  const error = url.searchParams.get('error');
 
+  // 1. Check if Yahoo threw an error back at us
+  if (error) {
+    return new NextResponse(`Error: ${error}`, { status: 400 });
+  }
+
+  // 2. Check if a code was actually provided
   if (!code) {
-    return new NextResponse('Missing authorization code', { status: 400 });
+    return new NextResponse('No authorization code provided', { status: 400 });
   }
 
   const YAHOO_CLIENT_ID = process.env.YAHOO_CLIENT_ID;
@@ -15,45 +20,80 @@ export async function GET(req) {
   const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const REDIRECT_URI = `${APP_URL}/api/yahoo/callback`;
 
+  if (!YAHOO_CLIENT_ID || !YAHOO_CLIENT_SECRET) {
+    console.error('Yahoo credentials are missing in environment variables.');
+    return new NextResponse('Server configuration error. Check Vercel environment variables.', { status: 500 });
+  }
+
   try {
-    const tokenResponse = await axios.post('https://api.login.yahoo.com/oauth2/get_token', new URLSearchParams({
-      client_id: YAHOO_CLIENT_ID,
-      client_secret: YAHOO_CLIENT_SECRET,
-      redirect_uri: REDIRECT_URI,
-      code,
-      grant_type: 'authorization_code'
-    }).toString(), {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    // FIX: Use btoa() instead of Buffer for Vercel compatibility
+    const credentials = btoa(`${YAHOO_CLIENT_ID}:${YAHOO_CLIENT_SECRET}`);
+    
+    // Exchange the code for the actual access token
+    const tokenResponse = await fetch('https://api.login.yahoo.com/oauth2/get_token', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${credentials}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        client_id: YAHOO_CLIENT_ID,
+        client_secret: YAHOO_CLIENT_SECRET,
+        redirect_uri: REDIRECT_URI,
+        code: code,
+        grant_type: 'authorization_code'
+      }).toString()
     });
 
-    const { access_token, refresh_token, expires_in } = tokenResponse.data;
-    const expires_at = Date.now() + expires_in * 1000;
+    if (!tokenResponse.ok) {
+      const errData = await tokenResponse.text();
+      console.error('Yahoo Token Error:', errData);
+      return new NextResponse(`Failed to exchange Yahoo token: ${errData}`, { status: 500 });
+    }
 
-    // Securely store the token in an encrypted HTTP-only cookie
-    cookies().set('yahoo_auth', JSON.stringify({ access_token, refresh_token, expires_at }), {
+    const tokenData = await tokenResponse.json();
+
+    // Return HTML to send message to the parent window and automatically close this popup
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head><title>Yahoo Authentication Successful</title></head>
+      <body>
+        <p>Authentication successful. You can safely close this window.</p>
+        <script>
+          if (window.opener) {
+            window.opener.postMessage({ type: 'YAHOO_AUTH_SUCCESS' }, '*');
+          }
+          window.close();
+        </script>
+      </body>
+      </html>
+    `;
+
+    const response = new NextResponse(html, {
+      headers: { 'Content-Type': 'text/html' },
+    });
+
+    // Safely set the tokens into the user's cookies
+    response.cookies.set('yahoo_access_token', tokenData.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30 // 30 days
+      maxAge: tokenData.expires_in,
+      path: '/',
     });
+    
+    if (tokenData.refresh_token) {
+        response.cookies.set('yahoo_refresh_token', tokenData.refresh_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 30 * 24 * 60 * 60, // ~30 days
+            path: '/',
+        });
+    }
 
-    return new NextResponse(`
-      <html>
-        <body>
-          <script>
-            if (window.opener) {
-              window.opener.postMessage({ type: 'YAHOO_AUTH_SUCCESS' }, '*');
-              window.close();
-            } else {
-              window.location.href = '/scores';
-            }
-          </script>
-          <p>Authentication successful. This window should close automatically.</p>
-        </body>
-      </html>
-    `, { headers: { 'Content-Type': 'text/html' } });
-  } catch (error) {
-    console.error('Yahoo Auth Error:', error.response?.data || error.message);
-    return new NextResponse('Failed to authenticate with Yahoo', { status: 500 });
+    return response;
+  } catch (err) {
+    console.error('Yahoo Callback Exception:', err);
+    return new NextResponse('Internal Server Error while parsing Yahoo callback.', { status: 500 });
   }
 }

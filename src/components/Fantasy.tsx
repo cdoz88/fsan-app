@@ -58,7 +58,6 @@ export const Fantasy = () => {
 
   const handleYahooSync = async () => {
     try {
-      // FIX: Bypassing NextAuth by pointing directly to the /api/yahoo endpoint
       const response = await fetch('/api/yahoo/auth/url');
       if (!response.ok) {
         throw new Error('Failed to get auth URL');
@@ -106,7 +105,6 @@ export const Fantasy = () => {
 
   const handleYahooDisconnect = async () => {
     try {
-      // FIX: Bypassing NextAuth for the disconnect route as well
       await fetch('/api/yahoo/auth/logout', { method: 'POST' });
       setYahooLeagues([]);
       setSelectedPlatform(null);
@@ -118,7 +116,8 @@ export const Fantasy = () => {
   React.useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const origin = event.origin;
-      if (!origin.endsWith('.run.app') && !origin.includes('localhost')) {
+      // FIX: Ensure Vercel domains are allowed to send messages to the parent window!
+      if (!origin.endsWith('.run.app') && !origin.includes('localhost') && !origin.includes('.vercel.app')) {
         return;
       }
       if (event.data?.type === 'YAHOO_AUTH_SUCCESS') {
