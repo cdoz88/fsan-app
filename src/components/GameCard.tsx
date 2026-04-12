@@ -71,7 +71,8 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
     return <span className="block text-center leading-none">{detail.replace(/Quarter/gi, 'QTR').replace(/Inning/gi, 'INN')}</span>;
   };
 
-  if (game.league === 'PGA' && game.golfCompetitors) {
+  // FIX: Render leaderboard card for both PGA and NASCAR
+  if (['PGA', 'NASCAR'].includes(game.league) && game.golfCompetitors) {
     const eventName = game.shortName || game.name || 'Event';
     const top3Competitors = game.golfCompetitors.slice(0, 3);
     
@@ -87,12 +88,17 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
           </div>
           <div className="font-bold text-white text-base leading-tight mb-3">{eventName}</div>
           <div className="space-y-1.5">
-            {top3Competitors.map((c: any, i: number) => (
-              <div key={i} className="flex justify-between text-sm items-center">
-                <span className="text-gray-300 truncate pr-2">{c.athlete?.displayName || c.team?.displayName}</span>
-                <span className="font-bold text-white bg-[#1f2937] px-1.5 rounded">{c.score || '-'}</span>
-              </div>
-            ))}
+            {top3Competitors.map((c: any, i: number) => {
+              // FIX: ESPN uses various keys for NASCAR points vs Golf scores. This securely hunts down the value!
+              const pointsStat = c.statistics?.find((s: any) => s.name === 'points');
+              const score = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';
+              return (
+                <div key={i} className="flex justify-between text-sm items-center">
+                  <span className="text-gray-300 truncate pr-2">{c.athlete?.displayName || c.team?.displayName}</span>
+                  <span className="font-bold text-white bg-[#1f2937] px-1.5 rounded">{score}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

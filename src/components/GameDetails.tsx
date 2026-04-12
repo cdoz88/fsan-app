@@ -64,6 +64,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
       // Use fallback game data to render the leaderboard
       const eventName = fallbackGame.name || fallbackGame.shortName || 'Event Details';
       const statusDetail = fallbackGame.status?.detail || 'Status Unavailable';
+      const eventDate = fallbackGame.date ? new Date(fallbackGame.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
       const sortedCompetitors = fallbackGame.golfCompetitors;
 
       return (
@@ -87,7 +88,15 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
             </div>
             <div className="my-3 text-center">
               <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">{eventName}</h2>
-              <p className="text-sm font-normal text-gray-300 uppercase tracking-wider">{statusDetail}</p>
+              <div className="flex items-center justify-center gap-2">
+                <p className="text-xs font-bold text-gray-300 uppercase tracking-wider">{statusDetail}</p>
+                {eventDate && (
+                  <>
+                    <span className="text-gray-600">•</span>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{eventDate}</p>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
@@ -109,7 +118,8 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   sortedCompetitors.slice(0, 20).map((c: any, index: number) => {
                     const rank = c.order || (index + 1);
                     const name = c.athlete?.displayName || c.team?.displayName || 'Unknown';
-                    const score = c.score || c.statistics?.[0]?.displayValue || c.linescores?.[0]?.value || '-';
+                    const pointsStat = c.statistics?.find((s: any) => s.name === 'points');
+                    const score = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';
                     const flagImg = c.athlete?.flag?.href ? (
                       <img src={c.athlete.flag.href} className="w-4 h-3 inline-block mr-2" alt="flag" />
                     ) : null;
@@ -146,6 +156,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
     const statusDetail = competition?.status?.type?.detail || 'Status Unavailable';
     const competitors = competition?.competitors || [];
     const sortedCompetitors = [...competitors].sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
+    const eventDate = header?.date ? new Date(header.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
 
     return (
       <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
@@ -168,7 +179,15 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
           </div>
           <div className="my-3 text-center">
             <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">{eventName}</h2>
-            <p className="text-sm font-normal text-gray-300 uppercase tracking-wider">{statusDetail}</p>
+            <div className="flex items-center justify-center gap-2">
+              <p className="text-xs font-bold text-gray-300 uppercase tracking-wider">{statusDetail}</p>
+              {eventDate && (
+                <>
+                  <span className="text-gray-600">•</span>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{eventDate}</p>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
@@ -190,7 +209,8 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                 sortedCompetitors.slice(0, 20).map((c: any, index: number) => {
                   const rank = c.order || (index + 1);
                   const name = c.athlete?.displayName || c.team?.displayName || 'Unknown';
-                  const score = c.score || c.statistics?.[0]?.displayValue || c.linescores?.[0]?.value || '-';
+                  const pointsStat = c.statistics?.find((s: any) => s.name === 'points');
+                  const score = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';
                   const flagImg = c.athlete?.flag?.href ? (
                     <img src={c.athlete.flag.href} className="w-4 h-3 inline-block mr-2" alt="flag" />
                   ) : null;
