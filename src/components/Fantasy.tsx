@@ -94,30 +94,29 @@ export const Fantasy = () => {
             .map(key => leagues[key].league[0]);
           setYahooLeagues(parsedLeagues);
         } else {
-          // Even if empty, open the modal so they can see the disconnect button
           setYahooLeagues([]);
         }
-        setSelectedPlatform('YahooSelect');
+      } else {
+        // If Yahoo returns a 404/400 because the user has never played NFL fantasy, catch it safely
+        setYahooLeagues([]);
       }
     } catch (error) {
       console.error('Failed to fetch Yahoo leagues:', error);
-      // Still open modal so they can disconnect
       setYahooLeagues([]);
-      setSelectedPlatform('YahooSelect');
     } finally {
+      // Guarantee the modal opens so the user can access the Disconnect button
+      setSelectedPlatform('YahooSelect');
       setIsFetchingYahoo(false);
     }
   };
 
   const handleYahooDisconnect = async () => {
     try {
-      // FIX: Hit your specific Yahoo backend route to clear cookies
       await fetch('/api/yahoo/auth/logout', { method: 'POST' });
       setYahooLeagues([]);
       setSelectedPlatform(null);
     } catch (error) {
       console.error('Failed to logout from Yahoo:', error);
-      // Failsafe state clear
       setYahooLeagues([]);
       setSelectedPlatform(null);
     }
@@ -235,11 +234,11 @@ export const Fantasy = () => {
               </div>
               <span className="text-sm font-medium">Sleeper</span>
             </button>
-            <button onClick={handleYahooSync} className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity">
-              <div className="w-16 h-16 rounded-2xl overflow-hidden bg-[#121212]">
-                <img src={PLATFORM_ICONS['Yahoo']} alt="Yahoo" className="w-full h-full object-cover" />
+            <button onClick={handleYahooSync} disabled={isFetchingYahoo} className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity disabled:opacity-50">
+              <div className="w-16 h-16 rounded-2xl overflow-hidden bg-[#121212] relative flex items-center justify-center">
+                {isFetchingYahoo ? <RefreshCw className="animate-spin text-white" size={24} /> : <img src={PLATFORM_ICONS['Yahoo']} alt="Yahoo" className="w-full h-full object-cover" />}
               </div>
-              <span className="text-sm font-medium">Yahoo</span>
+              <span className="text-sm font-medium">{isFetchingYahoo ? 'Syncing...' : 'Yahoo'}</span>
             </button>
           </div>
 
@@ -265,7 +264,7 @@ export const Fantasy = () => {
         </div>
       )}
 
-      {/* Modal for Username */}
+      {/* Modal for Username / Yahoo Leagues */}
       {selectedPlatform && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-[#2A2A2A] rounded-2xl p-6 w-full max-w-sm border border-gray-800 text-center">
