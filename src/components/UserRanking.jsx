@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Save, Loader2, AlertCircle, MinusCircle, ArrowLeft, RotateCcw, Upload, Archive, Eye, Users } from 'lucide-react';
+import { GripVertical, Save, Loader2, AlertCircle, MinusCircle, ArrowLeft, RotateCcw, Upload, Archive, Eye, Users, X } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
 const restrictToVerticalAxis = ({ transform }) => {
@@ -55,6 +55,7 @@ const UserRanking = () => {
   const [rankedPlayers, setRankedPlayers] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
+  const [isConsensusModalOpen, setIsConsensusModalOpen] = useState(false);
   
   const fileInputRef = useRef(null);
 
@@ -97,7 +98,8 @@ const UserRanking = () => {
   }, [players, rankings, session]);
 
   const handleResetToDefault = () => {
-      if (confirm("Are you sure you want to reset your rankings to the default order? This will wipe your current progress.")) {
+      // FIX: Use window.confirm so it doesn't get swallowed by Next.js strict mode
+      if (window.confirm("Are you sure you want to reset your rankings to the default order? This will wipe your current progress.")) {
           const formattedPlayers = players.map(p => ({ ...p, type: 'player' }));
           const stopTier = { type: 'stop-tier', id: 'stop-tier', name: 'Stop my rankings here', details: 'Drag players above this line to rank them.' };
           setRankedPlayers([stopTier, ...formattedPlayers]);
@@ -105,15 +107,16 @@ const UserRanking = () => {
   };
 
   const handlePrefillConsensus = () => {
-      if (confirm("Are you sure you want to replace your current order with the consensus rankings?")) {
+      // FIX: Use window.confirm here as well
+      if (window.confirm("Are you sure you want to replace your current order with the consensus rankings?")) {
           const consensusOrder = consensusRanking.map(c => String(c.id));
           const sortedPlayers = [...players].sort((a, b) => {
               const idxA = consensusOrder.indexOf(String(a.id));
               const idxB = consensusOrder.indexOf(String(b.id));
-              if (idxA === -1 && idxB === -1) return 0;
-              if (idxA === -1) return 1;
-              if (idxB === -1) return -1;
-              return idxA - idxB;
+              if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+              if (idxA !== -1) return -1;
+              if (idxB !== -1) return 1;
+              return 0; // maintain original unsorted order if neither is in consensus
           }).map(p => ({ ...p, type: 'player' }));
 
           const stopTier = { type: 'stop-tier', id: 'stop-tier', name: 'Stop my rankings here', details: 'Drag players above this line to rank them.' };
@@ -297,16 +300,16 @@ const UserRanking = () => {
                 className="flex items-center gap-3 px-5 py-3.5 rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all bg-[#111] border border-gray-800 text-gray-400 hover:text-white hover:border-gray-600"
             >
                 <RotateCcw size={16} className="text-gray-500" />
-                Reset to Default
+                Reset/Start Over
             </button>
 
-            <Link 
-                href="/football/rankings" 
-                className="flex items-center gap-3 px-5 py-3.5 rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all bg-[#111] border border-gray-800 text-gray-400 hover:text-white hover:border-gray-600 mt-2"
+            <button 
+                onClick={() => setIsConsensusModalOpen(true)}
+                className="flex items-center gap-3 px-5 py-3.5 rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all bg-[#111] border border-gray-800 text-gray-400 hover:text-white hover:border-gray-600 mt-2 w-full text-left"
             >
                 <Eye size={16} className="text-green-500" />
                 View Consensus
-            </Link>
+            </button>
         </div>
 
         {/* MAIN CONTENT AREA */}
@@ -384,6 +387,46 @@ const UserRanking = () => {
           )}
         </div>
       </div>
+
+      {/* CONSENSUS MODAL */}
+      {isConsensusModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-[#111] border border-gray-800 rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-6 border-b border-gray-800">
+              <div>
+                <h2 className="text-2xl font-black text-white uppercase italic tracking-tight leading-none mb-1">Consensus Rankings</h2>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{currentPosition} • {currentWeek}</p>
+              </div>
+              <button onClick={() => setIsConsensusModalOpen(false)} className="p-2 bg-gray-800/50 hover:bg-gray-700 rounded-full text-gray-400 hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto custom-scroll flex-1">
+              {consensusRanking.length > 0 ? (
+                <div className="space-y-2">
+                  {consensusRanking.map((player, idx) => (
+                    <div key={player.id} className="flex items-center gap-4 bg-[#1a1a1a] p-3 rounded-xl border border-gray-800 hover:border-gray-600 transition-colors">
+                      <div className="w-8 h-8 rounded-full bg-green-900/20 text-green-500 border border-green-500/30 flex items-center justify-center font-black text-xs shrink-0 shadow-[0_0_10px_rgba(34,197,94,0.1)]">
+                        {idx + 1}
+                      </div>
+                      <div className="flex flex-col">
+                        <h4 className="font-black text-white text-sm leading-none mb-1">{player.name}</h4>
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest leading-none">{player.team} • AVG: {player.averageRank.toFixed(1)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <p className="text-gray-500 font-bold uppercase tracking-widest text-sm mb-2">No consensus data available yet.</p>
+                  <p className="text-gray-600 text-xs font-medium">Be the first to submit your {currentPosition} rankings for {currentWeek}!</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
