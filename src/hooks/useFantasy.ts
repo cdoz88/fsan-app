@@ -1,21 +1,96 @@
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { SleeperLeague, SleeperUser, SleeperMatchup, SleeperRoster } from '../types';
 import { fetchSleeperUser, fetchSleeperLeagues, fetchSleeperMatchups, fetchSleeperRosters, fetchSleeperUsers, fetchSleeperState } from '../services/sleeperService';
 
 const STORAGE_KEY = 'synced_leagues';
 
 export function useFantasy() {
+  const { data: session, status } = useSession();
+  const [hasInitialFetched, setHasInitialFetched] = useState(false);
+
   const [syncedLeagues, setSyncedLeagues] = useState<SleeperLeague[]>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    }
+    return [];
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 1. Fetch from WordPress on initial load if logged in
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(syncedLeagues));
-  }, [syncedLeagues]);
+    if (status === 'authenticated' && session?.user?.id && !hasInitialFetched) {
+      const fetchFromWP = async () => {
+        try {
+          const res = await fetch(`/api/scl?action=get_synced_leagues&user_id=${session.user.id}`);
+          const json = await res.json();
+          
+          if (json.success && json.data) {
+            const wpLeagues = typeof json.data === 'string' ? JSON.parse(json.data) : json.data;
+            
+            // Merge WP leagues with any existing local leagues (deduplicated by league_id)
+            const merged = [...syncedLeagues];
+            let addedFromWP = false;
+
+            wpLeagues.forEach((wpLg: SleeperLeague) => {
+              if (!merged.some(l => l.league_id === wpLg.league_id)) {
+                merged.push(wpLg);
+                addedFromWP = true;
+              }
+            });
+            
+            if (addedFromWP) {
+              setSyncedLeagues(merged);
+            }
+
+            // If we had local leagues that WP didn't know about, push the combined list back to WP
+            if (merged.length > wpLeagues.length) {
+               saveToWP(merged, session.user.id, (session.user as any).token);
+            }
+          }
+        } catch (e) {
+          console.error('Failed to fetch synced leagues from WP:', e);
+        } finally {
+          setHasInitialFetched(true);
+        }
+      };
+      fetchFromWP();
+    } else if (status === 'unauthenticated') {
+      setHasInitialFetched(true);
+    }
+  }, [status, session, hasInitialFetched, syncedLeagues]);
+
+  // 2. Save to LocalStorage AND WordPress whenever syncedLeagues changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(syncedLeagues));
+    }
+    
+    // Only push to WP if we've already done our initial fetch to avoid overwriting the DB with an empty array
+    if (hasInitialFetched && session?.user?.id) {
+       saveToWP(syncedLeagues, session.user.id, (session.user as any).token);
+    }
+  }, [syncedLeagues, hasInitialFetched, session]);
+
+  const saveToWP = async (leagues: SleeperLeague[], userId: string, token?: string) => {
+    try {
+      const formData = new FormData();
+      formData.append('action', 'save_synced_leagues');
+      formData.append('user_id', userId);
+      formData.append('leagues_data', JSON.stringify(leagues));
+
+      await fetch('/api/scl', {
+        method: 'POST',
+        body: formData,
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+    } catch (e) {
+      console.error('Failed to save leagues to WP:', e);
+    }
+  };
 
   const syncLeague = async (username: string) => {
     setIsLoading(true);
