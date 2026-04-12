@@ -104,7 +104,7 @@ const UserRanking = () => {
       setConfirmDialog({
           isOpen: true,
           title: "Reset to Default?",
-          message: "Are you sure you want to reset your rankings to the default order? This will wipe your current progress.",
+          message: "Are you sure you want to reset your rankings and start over? This will wipe your current progress.",
           onConfirm: () => {
               const formattedPlayers = players.map(p => ({ ...p, type: 'player' }));
               const stopTier = { type: 'stop-tier', id: 'stop-tier', name: 'Stop my rankings here', details: 'Drag players above this line to rank them.' };
@@ -118,7 +118,7 @@ const UserRanking = () => {
       setConfirmDialog({
           isOpen: true,
           title: "Pre-fill with Consensus?",
-          message: "Are you sure you want to replace your current order with the consensus rankings?",
+          message: "Are you sure you want to replace your current order with the current consensus rankings?",
           onConfirm: () => {
               const consensusOrder = consensusRanking.map(c => String(c.id));
               const sortedPlayers = [...players].sort((a, b) => {
@@ -274,7 +274,7 @@ const UserRanking = () => {
             <button 
                 onClick={() => handleSubmit('draft')} 
                 disabled={isSubmitting}
-                className="flex items-center gap-3 px-5 py-4 rounded-xl font-bold uppercase tracking-widest text-xs transition-all bg-[#111] border border-gray-800 text-gray-400 hover:text-white hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-3 px-5 py-4 rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all bg-[#111] border border-yellow-900/30 text-yellow-500/70 hover:text-yellow-400 hover:border-yellow-500/50 hover:bg-yellow-900/10 disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 {isSubmitting === 'draft' ? <Loader2 size={18} className="animate-spin" /> : <Archive size={18} />}
                 Save for Later
@@ -321,7 +321,7 @@ const UserRanking = () => {
                 className="flex items-center gap-3 px-5 py-3.5 rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all bg-[#111] border border-gray-800 text-gray-400 hover:text-white hover:border-gray-600 mt-2 w-full text-left"
             >
                 <Eye size={16} className="text-green-500" />
-                View Consensus
+                Preview Consensus
             </button>
         </div>
 
