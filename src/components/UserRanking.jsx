@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Save, Loader2, AlertCircle, MinusCircle, ArrowLeft, RotateCcw, Upload, Archive, Eye, Users, X } from 'lucide-react';
+import { GripVertical, Save, Loader2, AlertCircle, MinusCircle, ArrowLeft, RotateCcw, Upload, Archive, Eye, Users, X, AlertTriangle } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
 const restrictToVerticalAxis = ({ transform }) => {
@@ -57,6 +57,9 @@ const UserRanking = () => {
   const [message, setMessage] = useState(null);
   const [isConsensusModalOpen, setIsConsensusModalOpen] = useState(false);
   
+  // Custom Confirmation Modal State
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
+
   const fileInputRef = useRef(null);
 
   const sensors = useSensors(
@@ -98,39 +101,49 @@ const UserRanking = () => {
   }, [players, rankings, session]);
 
   const handleResetToDefault = () => {
-      // FIX: Use window.confirm so it doesn't get swallowed by Next.js strict mode
-      if (window.confirm("Are you sure you want to reset your rankings to the default order? This will wipe your current progress.")) {
-          const formattedPlayers = players.map(p => ({ ...p, type: 'player' }));
-          const stopTier = { type: 'stop-tier', id: 'stop-tier', name: 'Stop my rankings here', details: 'Drag players above this line to rank them.' };
-          setRankedPlayers([stopTier, ...formattedPlayers]);
-      }
+      setConfirmDialog({
+          isOpen: true,
+          title: "Reset to Default?",
+          message: "Are you sure you want to reset your rankings to the default order? This will wipe your current progress.",
+          onConfirm: () => {
+              const formattedPlayers = players.map(p => ({ ...p, type: 'player' }));
+              const stopTier = { type: 'stop-tier', id: 'stop-tier', name: 'Stop my rankings here', details: 'Drag players above this line to rank them.' };
+              setRankedPlayers([stopTier, ...formattedPlayers]);
+              setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null });
+          }
+      });
   };
 
   const handlePrefillConsensus = () => {
-      // FIX: Use window.confirm here as well
-      if (window.confirm("Are you sure you want to replace your current order with the consensus rankings?")) {
-          const consensusOrder = consensusRanking.map(c => String(c.id));
-          const sortedPlayers = [...players].sort((a, b) => {
-              const idxA = consensusOrder.indexOf(String(a.id));
-              const idxB = consensusOrder.indexOf(String(b.id));
-              if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-              if (idxA !== -1) return -1;
-              if (idxB !== -1) return 1;
-              return 0; // maintain original unsorted order if neither is in consensus
-          }).map(p => ({ ...p, type: 'player' }));
+      setConfirmDialog({
+          isOpen: true,
+          title: "Pre-fill with Consensus?",
+          message: "Are you sure you want to replace your current order with the consensus rankings?",
+          onConfirm: () => {
+              const consensusOrder = consensusRanking.map(c => String(c.id));
+              const sortedPlayers = [...players].sort((a, b) => {
+                  const idxA = consensusOrder.indexOf(String(a.id));
+                  const idxB = consensusOrder.indexOf(String(b.id));
+                  if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                  if (idxA !== -1) return -1;
+                  if (idxB !== -1) return 1;
+                  return 0; // maintain original unsorted order if neither is in consensus
+              }).map(p => ({ ...p, type: 'player' }));
 
-          const stopTier = { type: 'stop-tier', id: 'stop-tier', name: 'Stop my rankings here', details: 'Drag players above this line to rank them.' };
-          
-          // Insert the stop tier right after the players that have a consensus rank!
-          const rankedCount = consensusRanking.length;
-          const newOrder = [
-              ...sortedPlayers.slice(0, rankedCount),
-              stopTier,
-              ...sortedPlayers.slice(rankedCount)
-          ];
+              const stopTier = { type: 'stop-tier', id: 'stop-tier', name: 'Stop my rankings here', details: 'Drag players above this line to rank them.' };
+              
+              // Insert the stop tier right after the players that have a consensus rank!
+              const rankedCount = consensusRanking.length;
+              const newOrder = [
+                  ...sortedPlayers.slice(0, rankedCount),
+                  stopTier,
+                  ...sortedPlayers.slice(rankedCount)
+              ];
 
-          setRankedPlayers(newOrder);
-      }
+              setRankedPlayers(newOrder);
+              setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null });
+          }
+      });
   };
 
   const handleCsvUpload = (event) => {
@@ -387,6 +400,33 @@ const UserRanking = () => {
           )}
         </div>
       </div>
+
+      {/* CONFIRMATION MODAL */}
+      {confirmDialog.isOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
+            <div className="w-12 h-12 bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mb-4 border border-red-500/30 shadow-inner">
+              <AlertTriangle size={24} />
+            </div>
+            <h3 className="text-xl font-black text-white uppercase tracking-wider mb-2">{confirmDialog.title}</h3>
+            <p className="text-gray-400 text-sm mb-6 leading-relaxed">{confirmDialog.message}</p>
+            <div className="flex gap-3 w-full">
+              <button 
+                onClick={() => setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null })} 
+                className="flex-1 py-3 px-4 bg-[#111] hover:bg-gray-800 border border-gray-700 text-white font-bold uppercase tracking-widest text-xs rounded-xl transition-colors shadow-inner"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDialog.onConfirm} 
+                className="flex-1 py-3 px-4 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest text-xs rounded-xl transition-all shadow-lg hover:-translate-y-0.5"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CONSENSUS MODAL */}
       {isConsensusModalOpen && (
