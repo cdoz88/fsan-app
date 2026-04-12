@@ -70,7 +70,8 @@ const UserRanking = () => {
         // 1. Check if the user is logged in
         if (session?.user?.id && rankings && rankings.length > 0) {
             // 2. Check if this specific user has a saved ranking in the current database pull
-            const userSavedRanking = rankings.find(r => r.user_id === session.user.id);
+            // FIX: Use String() to ensure type mismatch doesn't cause find to return undefined!
+            const userSavedRanking = rankings.find(r => String(r.user_id) === String(session.user.id));
             
             if (userSavedRanking) {
                 try {
@@ -79,9 +80,9 @@ const UserRanking = () => {
                     
                     // 4. To be extremely safe, we should merge in any NEW players that might have been 
                     // added to the database since they last saved (e.g. late free agent signings).
-                    const savedPlayerIds = new Set(savedData.map(item => item.id));
+                    const savedPlayerIds = new Set(savedData.map(item => String(item.id)));
                     const newPlayers = players
-                        .filter(p => !savedPlayerIds.has(p.id))
+                        .filter(p => !savedPlayerIds.has(String(p.id)))
                         .map(p => ({ ...p, type: 'player' }));
 
                     // Append any brand new players to the very bottom of their saved list!
