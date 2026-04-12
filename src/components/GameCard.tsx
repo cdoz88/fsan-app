@@ -89,15 +89,24 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
           <div className="font-bold text-white text-base leading-tight mb-3">{eventName}</div>
           <div className="space-y-1.5 mt-auto">
             {top3Competitors.map((c: any, i: number) => {
-              const carNum = c.athlete?.jersey ? `#${c.athlete.jersey}` : '';
-              const getStat = (name: string) => c.statistics?.find((s: any) => s.name === name || s.abbreviation?.toLowerCase() === name.toLowerCase())?.displayValue;
+              
+              // FIX: Sweep through all possible arrays to extract the data regardless of how ESPN nested it!
+              const getStat = (name: string) => {
+                 const statsArr = c.statistics || c.stats || c.athlete?.statistics || c.athlete?.stats || c.linescores || [];
+                 const stat = statsArr.find((s: any) => s.name?.toLowerCase() === name.toLowerCase() || s.abbreviation?.toLowerCase() === name.toLowerCase() || s.label?.toLowerCase() === name.toLowerCase());
+                 return stat?.displayValue ?? stat?.value;
+              };
+              
+              let carNum = c.athlete?.jersey || c.car || getStat('car') || getStat('carNumber') || '';
+              if (carNum === '-') carNum = '';
+              const displayCar = carNum ? `#${carNum}` : '';
               
               let rightSide = '-';
               if (game.league === 'NASCAR') {
-                 const pts = getStat('points') || c.score || c.points;
+                 const pts = getStat('points') || getStat('championshipPts') || c.score || c.points;
                  const laps = getStat('laps') || getStat('lapsCompleted');
                  if (isPre) {
-                     rightSide = carNum || '-';
+                     rightSide = displayCar || '-';
                  } else if (isLive) {
                      rightSide = laps ? `L: ${laps}` : 'Running';
                  } else {
@@ -113,7 +122,7 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
                   <div className="flex items-center gap-1.5 truncate pr-2">
                      <span className="text-gray-500 font-bold text-xs w-4">{c.order || i+1}.</span>
                      <span className="text-gray-200 font-bold truncate">{c.athlete?.shortName || c.athlete?.displayName || c.team?.displayName}</span>
-                     {game.league === 'NASCAR' && carNum && <span className="text-[10px] text-gray-500 font-mono ml-1">{carNum}</span>}
+                     {game.league === 'NASCAR' && displayCar && <span className="text-[10px] text-gray-500 font-mono ml-1">{displayCar}</span>}
                   </div>
                   <span className="font-bold text-white bg-[#1f2937] px-1.5 py-0.5 text-xs rounded whitespace-nowrap">{rightSide}</span>
                 </div>

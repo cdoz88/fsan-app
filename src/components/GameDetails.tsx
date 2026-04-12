@@ -131,16 +131,30 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                     ) : null;
                     
                     if (leagueId === 'NASCAR') {
+                       
+                       // FIX: Aggressively search through all array structures to find the hidden stats
                        const getStat = (nameOrLabel: string) => {
-                          if (!c.statistics) return '-';
-                          const stat = c.statistics.find((s: any) => s.name === nameOrLabel || s.label?.toLowerCase() === nameOrLabel.toLowerCase() || s.abbreviation?.toLowerCase() === nameOrLabel.toLowerCase());
-                          return stat ? (stat.displayValue || stat.value) : '-';
+                          const statsArray = c.statistics || c.stats || c.athlete?.statistics || c.athlete?.stats || c.linescores || [];
+                          const nameLower = nameOrLabel.toLowerCase();
+                          const stat = statsArray.find((s: any) => 
+                             s.name?.toLowerCase() === nameLower || 
+                             s.label?.toLowerCase() === nameLower || 
+                             s.abbreviation?.toLowerCase() === nameLower
+                          );
+                          return stat ? (stat.displayValue ?? stat.value ?? '-') : '-';
                        };
                        
-                       const carNum = c.athlete?.jersey || c.car || '-';
+                       let carNum = c.athlete?.jersey || c.car || '-';
+                       if (carNum === '-') {
+                           const statCar = getStat('car') !== '-' ? getStat('car') : getStat('carNumber');
+                           if (statCar !== '-') carNum = statCar;
+                       }
+                       
                        const laps = getStat('laps') !== '-' ? getStat('laps') : getStat('lapsCompleted');
                        const lapsLed = getStat('lapsLed') !== '-' ? getStat('lapsLed') : getStat('led');
-                       const points = getStat('points') !== '-' ? getStat('points') : (c.score || c.points || '-');
+                       let points = getStat('points') !== '-' ? getStat('points') : getStat('championshipPts');
+                       if (points === '-') points = c.score ?? c.points ?? '-';
+                       
                        const statusText = c.reason?.displayValue || c.status?.displayValue || c.status?.type?.detail || (rank === 1 ? 'Winner' : 'Finished');
                        
                        return (
@@ -258,16 +272,30 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   ) : null;
                   
                   if (leagueId === 'NASCAR') {
+
+                     // FIX: Aggressively search through all array structures to find the hidden stats
                      const getStat = (nameOrLabel: string) => {
-                        if (!c.statistics) return '-';
-                        const stat = c.statistics.find((s: any) => s.name === nameOrLabel || s.label?.toLowerCase() === nameOrLabel.toLowerCase() || s.abbreviation?.toLowerCase() === nameOrLabel.toLowerCase());
-                        return stat ? (stat.displayValue || stat.value) : '-';
+                        const statsArray = c.statistics || c.stats || c.athlete?.statistics || c.athlete?.stats || c.linescores || [];
+                        const nameLower = nameOrLabel.toLowerCase();
+                        const stat = statsArray.find((s: any) => 
+                           s.name?.toLowerCase() === nameLower || 
+                           s.label?.toLowerCase() === nameLower || 
+                           s.abbreviation?.toLowerCase() === nameLower
+                        );
+                        return stat ? (stat.displayValue ?? stat.value ?? '-') : '-';
                      };
                      
-                     const carNum = c.athlete?.jersey || c.car || '-';
+                     let carNum = c.athlete?.jersey || c.car || '-';
+                     if (carNum === '-') {
+                         const statCar = getStat('car') !== '-' ? getStat('car') : getStat('carNumber');
+                         if (statCar !== '-') carNum = statCar;
+                     }
+                     
                      const laps = getStat('laps') !== '-' ? getStat('laps') : getStat('lapsCompleted');
                      const lapsLed = getStat('lapsLed') !== '-' ? getStat('lapsLed') : getStat('led');
-                     const points = getStat('points') !== '-' ? getStat('points') : (c.score || c.points || '-');
+                     let points = getStat('points') !== '-' ? getStat('points') : getStat('championshipPts');
+                     if (points === '-') points = c.score ?? c.points ?? '-';
+                     
                      const statusText = c.reason?.displayValue || c.status?.displayValue || c.status?.type?.detail || (rank === 1 ? 'Winner' : 'Finished');
                      
                      return (
