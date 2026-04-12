@@ -58,7 +58,8 @@ export const Fantasy = () => {
 
   const handleYahooSync = async () => {
     try {
-      const response = await fetch('/api/auth/yahoo/url');
+      // FIX: Bypassing NextAuth by pointing directly to the /api/yahoo endpoint
+      const response = await fetch('/api/yahoo/auth/url');
       if (!response.ok) {
         throw new Error('Failed to get auth URL');
       }
@@ -105,7 +106,8 @@ export const Fantasy = () => {
 
   const handleYahooDisconnect = async () => {
     try {
-      await fetch('/api/auth/yahoo/logout', { method: 'POST' });
+      // FIX: Bypassing NextAuth for the disconnect route as well
+      await fetch('/api/yahoo/auth/logout', { method: 'POST' });
       setYahooLeagues([]);
       setSelectedPlatform(null);
     } catch (error) {
