@@ -9,11 +9,11 @@ export async function GET() {
     return NextResponse.json({ error: 'YAHOO_CLIENT_ID is not configured' }, { status: 500 });
   }
 
-  // Yahoo expects specific URL parameters for their OAuth 2.0 flow
   const params = new URLSearchParams({
     client_id: YAHOO_CLIENT_ID,
     redirect_uri: REDIRECT_URI,
     response_type: 'code',
+    prompt: 'login', // Forces the Yahoo login screen to appear
   });
 
   return NextResponse.json({ url: `https://api.login.yahoo.com/oauth2/request_auth?${params.toString()}` });

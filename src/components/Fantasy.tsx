@@ -14,7 +14,7 @@ const PLATFORM_ICONS: Record<string, string> = {
 };
 
 export const Fantasy = () => {
-  const { syncedLeagues, syncLeague, removeLeague, isLoading, error } = useFantasy();
+  const { syncedLeagues, syncLeague, addYahooLeague, removeLeague, isLoading, error } = useFantasy();
   const [username, setUsername] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
@@ -84,7 +84,7 @@ export const Fantasy = () => {
   const fetchYahooLeagues = async () => {
     setIsFetchingYahoo(true);
     try {
-      const response = await fetch('/api/yahoo/users;use_login=1/games;game_keys=nfl/leagues?format=json');
+      const response = await fetch('/api/yahoo/proxy/users;use_login=1/games;game_keys=nfl/leagues?format=json');
       if (response.ok) {
         const data = await response.json();
         const leagues = data?.fantasy_content?.users?.[0]?.user?.[1]?.games?.[0]?.game?.[1]?.leagues;
@@ -93,11 +93,17 @@ export const Fantasy = () => {
             .filter(key => key !== 'count')
             .map(key => leagues[key].league[0]);
           setYahooLeagues(parsedLeagues);
-          setSelectedPlatform('YahooSelect');
+        } else {
+          // Even if empty, open the modal so they can see the disconnect button
+          setYahooLeagues([]);
         }
+        setSelectedPlatform('YahooSelect');
       }
     } catch (error) {
       console.error('Failed to fetch Yahoo leagues:', error);
+      // Still open modal so they can disconnect
+      setYahooLeagues([]);
+      setSelectedPlatform('YahooSelect');
     } finally {
       setIsFetchingYahoo(false);
     }
@@ -105,18 +111,21 @@ export const Fantasy = () => {
 
   const handleYahooDisconnect = async () => {
     try {
+      // FIX: Hit your specific Yahoo backend route to clear cookies
       await fetch('/api/yahoo/auth/logout', { method: 'POST' });
       setYahooLeagues([]);
       setSelectedPlatform(null);
     } catch (error) {
       console.error('Failed to logout from Yahoo:', error);
+      // Failsafe state clear
+      setYahooLeagues([]);
+      setSelectedPlatform(null);
     }
   };
 
   React.useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const origin = event.origin;
-      // FIX: Ensure Vercel domains are allowed to send messages to the parent window!
       if (!origin.endsWith('.run.app') && !origin.includes('localhost') && !origin.includes('.vercel.app')) {
         return;
       }
@@ -310,10 +319,13 @@ export const Fantasy = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-400 text-sm mb-6">No active NFL leagues found on this Yahoo account.</p>
+                  <div className="mb-6 flex flex-col items-center justify-center py-6 bg-gray-900/50 rounded-xl border border-dashed border-gray-700">
+                     <p className="text-gray-300 font-bold mb-1">No Active Leagues Found</p>
+                     <p className="text-xs text-gray-500 px-4">There are no active NFL fantasy leagues associated with the logged-in Yahoo account.</p>
+                  </div>
                 )}
                 <div className="flex border-t border-gray-800 pt-4 gap-2">
-                  <button type="button" onClick={() => setSelectedPlatform(null)} className="flex-1 py-2 text-gray-400 font-semibold hover:text-white">Cancel</button>
+                  <button type="button" onClick={() => setSelectedPlatform(null)} className="flex-1 py-2 text-gray-400 font-semibold hover:text-white">Close</button>
                   <button type="button" onClick={handleYahooDisconnect} className="flex-1 py-2 text-red-500 font-semibold hover:text-red-400">Disconnect Yahoo</button>
                 </div>
               </>
