@@ -51,7 +51,7 @@ const SortableItem = ({ item }) => {
 
 const UserRanking = () => {
   const { data: session } = useSession();
-  const { players, rankings, consensusRanking, loading, currentPosition, setCurrentPosition, currentWeek, submitRanking } = usePlayer();
+  const { players, rankings, consensusRanking, loading, currentPosition, setCurrentPosition, currentWeek, setCurrentWeek, submitRanking } = usePlayer();
   const [rankedPlayers, setRankedPlayers] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
@@ -219,6 +219,21 @@ const UserRanking = () => {
       return { ...item, displayRank, isBelowStopTier };
   });
 
+  // Determine the current submission status of the user
+  let currentStatus = 'Not Submitted';
+  if (session?.user?.id && rankings && rankings.length > 0) {
+      const userSavedRanking = rankings.find(r => String(r.user_id) === String(session.user.id));
+      if (userSavedRanking) {
+          try {
+              const savedData = JSON.parse(userSavedRanking.ranking_data);
+              const metaTag = savedData.find(item => item.type === 'meta');
+              if (!metaTag || metaTag.status === 'published') {
+                  currentStatus = 'Submitted';
+              }
+          } catch(e) {}
+      }
+  }
+
   return (
     <div className="max-w-[1600px] mx-auto animate-in fade-in duration-500">
       <div className="flex flex-col lg:flex-row gap-8">
@@ -302,13 +317,30 @@ const UserRanking = () => {
                <p className="text-sm text-gray-400 max-w-2xl">Drag and drop players above the stop line to set your official ranks for <span className="text-red-500 font-bold">{currentPosition}</span>. Your submitted rankings directly impact the global FSAN consensus.</p>
             </div>
             
-            {/* Position Tabs */}
-            <div className="flex flex-wrap gap-2 bg-[#111] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit mt-2">
-               {['QB', 'RB', 'WR', 'TE', 'FLEX', 'K', 'DEF'].map(pos => (
-                  <button key={pos} onClick={() => setCurrentPosition(pos)} className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${currentPosition === pos ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'text-gray-500 hover:text-white hover:bg-[#1a1a1a]'}`}>
-                     {pos}
-                  </button>
-               ))}
+            {/* Position and Week Controls */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
+                <div className="flex flex-wrap gap-2 bg-[#111] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-full sm:w-fit mt-2">
+                   {['QB', 'RB', 'WR', 'TE', 'FLEX', 'K', 'DEF'].map(pos => (
+                      <button key={pos} onClick={() => setCurrentPosition(pos)} className={`flex-1 sm:flex-none px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${currentPosition === pos ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'text-gray-500 hover:text-white hover:bg-[#1a1a1a]'}`}>
+                         {pos}
+                      </button>
+                   ))}
+                </div>
+
+                <div className="flex items-center gap-3 bg-[#111] p-1.5 rounded-2xl border border-gray-800 shadow-inner w-full sm:w-auto">
+                   <span className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-3 shrink-0">Week:</span>
+                   <select 
+                      value={currentWeek} 
+                      onChange={(e) => setCurrentWeek(e.target.value)}
+                      className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none focus:border-red-500 font-bold cursor-pointer text-xs tracking-wider w-full sm:w-auto outline-none"
+                   >
+                      <option value="Offseason">Offseason</option>
+                      <option value="Rookies">Rookies</option>
+                      {Array.from({length: 18}).map((_, i) => (
+                         <option key={`week-${i+1}`} value={`Week ${i + 1}`}>Week {i + 1}</option>
+                      ))}
+                   </select>
+                </div>
             </div>
           </div>
 
@@ -329,8 +361,8 @@ const UserRanking = () => {
 
                 <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-800 relative z-10">
                    <h2 className="text-lg font-black text-white uppercase tracking-wider">Your {currentPosition} Order</h2>
-                   <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest bg-gray-900 px-3 py-1 rounded-full border border-gray-700">
-                       {itemsToRender.filter(i => !i.isBelowStopTier && i.type === 'player').length} Ranked
+                   <span className={`text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full border ${currentStatus === 'Submitted' ? 'bg-green-900/20 text-green-400 border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.1)]' : 'bg-gray-900 text-gray-500 border-gray-700'}`}>
+                       {currentStatus}
                    </span>
                 </div>
 
