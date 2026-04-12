@@ -1,10 +1,11 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Save, Loader2, AlertCircle, MinusCircle, ArrowLeft } from 'lucide-react';
+import { GripVertical, Save, Loader2, AlertCircle, MinusCircle, ArrowLeft, RotateCcw } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
 // Custom modifier to restrict drag to vertical axis without needing the extra npm package!
@@ -53,7 +54,8 @@ const SortableItem = ({ item }) => {
 };
 
 const UserRanking = () => {
-  const { players, loading, currentPosition, setCurrentPosition, submitRanking } = usePlayer();
+  const { data: session } = useSession();
+  const { players, rankings, loading, currentPosition, setCurrentPosition, submitRanking } = usePlayer();
   const [rankedPlayers, setRankedPlayers] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
@@ -65,13 +67,49 @@ const UserRanking = () => {
 
   useEffect(() => {
     if (players && players.length > 0) {
+        // 1. Check if the user is logged in
+        if (session?.user?.id && rankings && rankings.length > 0) {
+            // 2. Check if this specific user has a saved ranking in the current database pull
+            const userSavedRanking = rankings.find(r => r.user_id === session.user.id);
+            
+            if (userSavedRanking) {
+                try {
+                    // 3. If they do, parse their saved JSON list
+                    const savedData = JSON.parse(userSavedRanking.ranking_data);
+                    
+                    // 4. To be extremely safe, we should merge in any NEW players that might have been 
+                    // added to the database since they last saved (e.g. late free agent signings).
+                    const savedPlayerIds = new Set(savedData.map(item => item.id));
+                    const newPlayers = players
+                        .filter(p => !savedPlayerIds.has(p.id))
+                        .map(p => ({ ...p, type: 'player' }));
+
+                    // Append any brand new players to the very bottom of their saved list!
+                    setRankedPlayers([...savedData, ...newPlayers]);
+                    return; // Exit early, we loaded their saved state!
+                } catch (e) {
+                    console.error("Failed to parse user's saved ranking data.", e);
+                }
+            }
+        }
+
+        // 5. If no saved state exists, fallback to the default reset state
         const formattedPlayers = players.map(p => ({ ...p, type: 'player' }));
         const stopTier = { type: 'stop-tier', id: 'stop-tier', name: 'Stop my rankings here', details: 'Drag players above this line to rank them.' };
         setRankedPlayers([stopTier, ...formattedPlayers]);
     } else {
         setRankedPlayers([]);
     }
-  }, [players]);
+  }, [players, rankings, session]);
+
+  // Allows the user to wipe out their saved state and start over if they want
+  const handleResetToDefault = () => {
+      if (confirm("Are you sure you want to reset your rankings to the default order? This will wipe your current progress.")) {
+          const formattedPlayers = players.map(p => ({ ...p, type: 'player' }));
+          const stopTier = { type: 'stop-tier', id: 'stop-tier', name: 'Stop my rankings here', details: 'Drag players above this line to rank them.' };
+          setRankedPlayers([stopTier, ...formattedPlayers]);
+      }
+  };
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
@@ -141,7 +179,18 @@ const UserRanking = () => {
       ) : itemsToRender.length > 0 ? (
           <div className="bg-[#111] rounded-3xl p-4 md:p-6 border border-gray-800 shadow-2xl">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 pb-4 border-b border-gray-800 gap-4">
-               <h2 className="text-lg font-black text-white uppercase tracking-wider">Your {currentPosition} Order</h2>
+               <div className="flex items-center gap-4">
+                   <h2 className="text-lg font-black text-white uppercase tracking-wider">Your {currentPosition} Order</h2>
+                   
+                   {/* Provide a handy reset button just in case their saved rankings are completely messed up */}
+                   <button 
+                       onClick={handleResetToDefault}
+                       className="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 hover:text-red-400 uppercase tracking-widest transition-colors"
+                   >
+                       <RotateCcw size={12} /> Reset to Default
+                   </button>
+               </div>
+               
                <button onClick={handleSubmit} disabled={isSubmitting} className="px-5 py-2 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-bold uppercase tracking-widest rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:-translate-y-0.5 transition-all text-[10px]">
                    {isSubmitting ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
                    {isSubmitting ? 'Saving...' : 'Save Rankings'}
