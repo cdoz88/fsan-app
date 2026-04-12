@@ -71,10 +71,21 @@ export const PlayerProvider = ({ children }) => {
         itemStats[key] = { ...player, type: 'player', positionSum: 0, rankSum: 0, minRank: Infinity, maxRank: -Infinity, timesRanked: 0 };
     });
 
+    let validRankingsCount = 0;
+
     allRankings.forEach(ranking => {
         try {
             const rankingData = JSON.parse(ranking.ranking_data);
             if (!Array.isArray(rankingData)) return;
+
+            // CHECK FOR DRAFT/WITHDRAWN STATUS
+            // If the user saved this for later or withdrew it, we do NOT calculate it in the consensus!
+            const metaTag = rankingData.find(item => item.type === 'meta');
+            if (metaTag && (metaTag.status === 'draft' || metaTag.status === 'withdrawn')) {
+                return; 
+            }
+
+            validRankingsCount++;
 
             const stopTierIndex = rankingData.findIndex(item => item.id === 'stop-tier');
             const rankedSlice = stopTierIndex === -1 ? rankingData : rankingData.slice(0, stopTierIndex);
@@ -117,7 +128,7 @@ export const PlayerProvider = ({ children }) => {
 
     const consensusItems = Object.values(itemStats)
         .filter(item => item.type === 'player' && item.timesRanked > 0)
-        .map(item => ({ ...item, averageScore: item.rankSum / totalRankers, averageRank: item.rankSum / totalRankers, rankCount: item.timesRanked }))
+        .map(item => ({ ...item, averageScore: item.rankSum / validRankingsCount, averageRank: item.rankSum / validRankingsCount, rankCount: item.timesRanked }))
         .sort((a, b) => a.averageRank - b.averageRank);
 
     setConsensusRanking(consensusItems);
@@ -137,7 +148,6 @@ export const PlayerProvider = ({ children }) => {
       formData.append('ranking_data', JSON.stringify(rankedItemsData));
       formData.append('user_id', session.user.id);
 
-      // Route the request through our Next.js API proxy to avoid CORS
       const proxyUrl = `/api/rankings`;
 
       const response = await fetch(proxyUrl, { 
