@@ -55,7 +55,7 @@ const SortableItem = ({ item }) => {
 
 const UserRanking = () => {
   const { data: session } = useSession();
-  const { players, rankings, loading, currentPosition, setCurrentPosition, submitRanking } = usePlayer();
+  const { players, rankings, loading, currentPosition, setCurrentPosition, currentWeek, submitRanking } = usePlayer();
   const [rankedPlayers, setRankedPlayers] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
@@ -153,7 +153,7 @@ const UserRanking = () => {
                <Link href="/football/rankings" className="text-gray-500 hover:text-white transition-colors p-1.5 bg-[#111] hover:bg-[#1a1a1a] rounded-lg border border-gray-800 flex items-center justify-center">
                    <ArrowLeft size={16} />
                </Link>
-               <h1 className="text-3xl font-black italic text-white uppercase tracking-tighter drop-shadow-md">Submit Rankings</h1>
+               <h1 className="text-3xl font-black italic text-white uppercase tracking-tighter drop-shadow-md">Submit {currentWeek} Rankings</h1>
            </div>
            <p className="text-sm text-gray-400">Drag and drop players above the stop line to set your official ranks for <span className="text-red-500 font-bold">{currentPosition}</span>.</p>
         </div>
