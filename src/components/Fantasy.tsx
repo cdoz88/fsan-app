@@ -58,6 +58,10 @@ export const Fantasy = () => {
 
   const handleYahooSync = async () => {
     try {
+      // PREPARE THE UI: Show the loading state so the user knows something is happening when they return
+      setIsFetchingYahoo(true);
+      setSelectedPlatform('YahooSelect');
+
       const response = await fetch('/api/yahoo/auth/url');
       if (!response.ok) {
         throw new Error('Failed to get auth URL');
@@ -72,9 +76,13 @@ export const Fantasy = () => {
 
       if (!authWindow) {
         alert('Please allow popups for this site to connect your account.');
+        setIsFetchingYahoo(false);
+        setSelectedPlatform(null);
       }
     } catch (error) {
       console.error('OAuth error:', error);
+      setIsFetchingYahoo(false);
+      setSelectedPlatform(null);
     }
   };
 
@@ -97,14 +105,13 @@ export const Fantasy = () => {
           setYahooLeagues([]);
         }
       } else {
-        // If Yahoo returns a 404/400 because the user has never played NFL fantasy, catch it safely
         setYahooLeagues([]);
       }
     } catch (error) {
       console.error('Failed to fetch Yahoo leagues:', error);
       setYahooLeagues([]);
     } finally {
-      // Guarantee the modal opens so the user can access the Disconnect button
+      // KEEP MODAL OPEN SO THEY CAN DISCONNECT OR SEE THE ERROR
       setSelectedPlatform('YahooSelect');
       setIsFetchingYahoo(false);
     }
@@ -236,6 +243,7 @@ export const Fantasy = () => {
             </button>
             <button onClick={handleYahooSync} disabled={isFetchingYahoo} className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity disabled:opacity-50">
               <div className="w-16 h-16 rounded-2xl overflow-hidden bg-[#121212] relative flex items-center justify-center">
+                {/* Visual feedback if they double click before modal opens */}
                 {isFetchingYahoo ? <RefreshCw className="animate-spin text-white" size={24} /> : <img src={PLATFORM_ICONS['Yahoo']} alt="Yahoo" className="w-full h-full object-cover" />}
               </div>
               <span className="text-sm font-medium">{isFetchingYahoo ? 'Syncing...' : 'Yahoo'}</span>
@@ -268,7 +276,15 @@ export const Fantasy = () => {
       {selectedPlatform && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-[#2A2A2A] rounded-2xl p-6 w-full max-w-sm border border-gray-800 text-center">
-            {selectedPlatform === 'Sleeper' ? (
+            
+            {/* Show a massive loading state if Yahoo is actively fetching so the user is forced to wait */}
+            {selectedPlatform === 'YahooSelect' && isFetchingYahoo ? (
+                <div className="flex flex-col items-center justify-center py-10">
+                   <RefreshCw className="animate-spin text-gray-400 mb-4" size={40} />
+                   <h2 className="text-lg font-bold text-white mb-2">Connecting to Yahoo...</h2>
+                   <p className="text-xs text-gray-500">Searching your account for active NFL leagues.</p>
+                </div>
+            ) : selectedPlatform === 'Sleeper' ? (
               <>
                 <h2 className="text-xl font-semibold mb-2">Enter your username to sync your Sleeper account.</h2>
                 <p className="text-gray-400 text-sm mb-6">You can always unsync your leagues at any time, which will safely dissociate your username from the app.</p>
