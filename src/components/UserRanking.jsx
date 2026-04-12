@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Save, Loader2, AlertCircle, MinusCircle, ArrowLeft, RotateCcw } from 'lucide-react';
+import { GripVertical, Save, Loader2, AlertCircle, MinusCircle, ArrowLeft, RotateCcw, Upload } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
 // Custom modifier to restrict drag to vertical axis without needing the extra npm package!
@@ -70,7 +70,6 @@ const UserRanking = () => {
         // 1. Check if the user is logged in
         if (session?.user?.id && rankings && rankings.length > 0) {
             // 2. Check if this specific user has a saved ranking in the current database pull
-            // FIX: Use String() to ensure type mismatch doesn't cause find to return undefined!
             const userSavedRanking = rankings.find(r => String(r.user_id) === String(session.user.id));
             
             if (userSavedRanking) {
@@ -110,6 +109,64 @@ const UserRanking = () => {
           const stopTier = { type: 'stop-tier', id: 'stop-tier', name: 'Stop my rankings here', details: 'Drag players above this line to rank them.' };
           setRankedPlayers([stopTier, ...formattedPlayers]);
       }
+  };
+
+  // CSV UPLOAD HANDLER
+  const handleCsvUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const text = e.target.result;
+        const lines = text.split(/\r\n|\n/);
+        const playerNamesFromCSV = [];
+
+        // Scan every cell for potential player names
+        lines.forEach(line => {
+            line.split(',').forEach(cell => {
+                const cleanCell = cell.replace(/"/g, '').trim();
+                // Basic validation: must be at least 3 chars and not purely a number
+                if (cleanCell.length > 2 && isNaN(cleanCell)) {
+                    playerNamesFromCSV.push(cleanCell);
+                }
+            });
+        });
+
+        // Use the master player list as the source of truth
+        const allAvailablePlayers = players.map(p => ({ ...p, type: 'player' }));
+        const sortedPlayers = [];
+        const foundPlayerIds = new Set();
+
+        // Create the sorted list based on CSV order
+        playerNamesFromCSV.forEach(name => {
+            const foundIndex = allAvailablePlayers.findIndex(p => p.name.toLowerCase() === name.toLowerCase() && !foundPlayerIds.has(String(p.id)));
+            if (foundIndex !== -1) {
+                const [foundPlayer] = allAvailablePlayers.splice(foundIndex, 1);
+                sortedPlayers.push(foundPlayer);
+                foundPlayerIds.add(String(foundPlayer.id));
+            }
+        });
+        
+        // Whatever is left in allAvailablePlayers is unsorted
+        const unsortedPlayers = allAvailablePlayers; 
+
+        // Rebuild the non-player items correctly
+        const stopTier = { type: 'stop-tier', id: 'stop-tier', name: 'Stop my rankings here', details: 'Drag players above this line to rank them.' };
+        
+        // Final assembly
+        setRankedPlayers([
+            ...sortedPlayers,
+            stopTier,
+            ...unsortedPlayers
+        ]);
+
+        setMessage({ type: 'success', text: `✅ Successfully imported and sorted ${sortedPlayers.length} players from CSV!` });
+        setTimeout(() => setMessage(null), 5000);
+    };
+
+    reader.readAsText(file);
+    event.target.value = ''; // Reset input so the same file can be selected again if needed
   };
 
   const handleDragEnd = (event) => {
@@ -183,7 +240,6 @@ const UserRanking = () => {
                <div className="flex items-center gap-4">
                    <h2 className="text-lg font-black text-white uppercase tracking-wider">Your {currentPosition} Order</h2>
                    
-                   {/* Provide a handy reset button just in case their saved rankings are completely messed up */}
                    <button 
                        onClick={handleResetToDefault}
                        className="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 hover:text-red-400 uppercase tracking-widest transition-colors"
@@ -192,10 +248,19 @@ const UserRanking = () => {
                    </button>
                </div>
                
-               <button onClick={handleSubmit} disabled={isSubmitting} className="px-5 py-2 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-bold uppercase tracking-widest rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:-translate-y-0.5 transition-all text-[10px]">
-                   {isSubmitting ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
-                   {isSubmitting ? 'Saving...' : 'Save Rankings'}
-               </button>
+               <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                 {/* NEW CSV UPLOAD BUTTON */}
+                 <label className="w-full sm:w-auto px-5 py-2 bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-gray-300 hover:text-white font-bold uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 shadow-lg hover:-translate-y-0.5 transition-all text-[10px] cursor-pointer">
+                     <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" />
+                     <Upload size={14} />
+                     Upload CSV
+                 </label>
+                 
+                 <button onClick={handleSubmit} disabled={isSubmitting} className="w-full sm:w-auto px-5 py-2 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-bold uppercase tracking-widest rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:-translate-y-0.5 transition-all text-[10px]">
+                     {isSubmitting ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
+                     {isSubmitting ? 'Saving...' : 'Save Rankings'}
+                 </button>
+               </div>
             </div>
 
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
