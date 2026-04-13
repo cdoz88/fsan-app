@@ -90,32 +90,35 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
           <div className="space-y-1.5 mt-auto">
             {top3Competitors.map((c: any, i: number) => {
               
-              // FIX: Sweep through all possible arrays to extract the data regardless of how ESPN nested it!
-              const getStat = (name: string) => {
-                 const statsArr = c.statistics || c.stats || c.athlete?.statistics || c.athlete?.stats || c.linescores || [];
-                 const stat = statsArr.find((s: any) => s.name?.toLowerCase() === name.toLowerCase() || s.abbreviation?.toLowerCase() === name.toLowerCase() || s.label?.toLowerCase() === name.toLowerCase());
-                 return stat?.displayValue ?? stat?.value;
-              };
-              
-              let carNum = c.athlete?.jersey || c.car || getStat('car') || getStat('carNumber') || '';
-              if (carNum === '-') carNum = '';
-              const displayCar = carNum ? `#${carNum}` : '';
-              
               let rightSide = '-';
+              
               if (game.league === 'NASCAR') {
-                 const pts = getStat('points') || getStat('championshipPts') || c.score || c.points;
-                 const laps = getStat('laps') || getStat('lapsCompleted');
-                 if (isPre) {
-                     rightSide = displayCar || '-';
-                 } else if (isLive) {
-                     rightSide = laps ? `L: ${laps}` : 'Running';
+                 // Scan for the most relevant stat to show on the mini-card (Time, Points, or Status)
+                 const arr = c.statistics || c.stats || c.athlete?.statistics || c.athlete?.stats || [];
+                 const primaryStat = arr.find((s: any) => s.name?.toLowerCase().includes('time') || s.name?.toLowerCase().includes('point'));
+                 
+                 if (primaryStat) {
+                     rightSide = primaryStat.displayValue ?? primaryStat.value ?? '-';
                  } else {
-                     rightSide = pts ? `${pts} pts` : (c.reason?.displayValue || 'Finished');
+                     // Look for primitive properties directly on the object
+                     const possibleKeys = ['time', 'timeBehind', 'points', 'score', 'laps'];
+                     const foundKey = possibleKeys.find(k => c[k] !== undefined || c.athlete?.[k] !== undefined);
+                     if (foundKey) {
+                         rightSide = String(c[foundKey] ?? c.athlete?.[foundKey]);
+                     } else {
+                         rightSide = c.status?.displayValue || c.reason?.displayValue || (c.order === 1 ? 'Winner' : 'Finished');
+                     }
                  }
               } else {
                  const pointsStat = c.statistics?.find((s: any) => s.name === 'points');
                  rightSide = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';
               }
+
+              // Attempt to extract the Car Number
+              const carKeys = ['car', 'carNumber', 'jersey'];
+              const foundCarKey = carKeys.find(k => c[k] !== undefined || c.athlete?.[k] !== undefined);
+              const carNum = foundCarKey ? String(c[foundCarKey] ?? c.athlete?.[foundKey]) : '';
+              const displayCar = carNum ? `#${carNum}` : '';
 
               return (
                 <div key={i} className="flex justify-between text-sm items-center">
@@ -124,7 +127,7 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
                      <span className="text-gray-200 font-bold truncate">{c.athlete?.shortName || c.athlete?.displayName || c.team?.displayName}</span>
                      {game.league === 'NASCAR' && displayCar && <span className="text-[10px] text-gray-500 font-mono ml-1">{displayCar}</span>}
                   </div>
-                  <span className="font-bold text-white bg-[#1f2937] px-1.5 py-0.5 text-xs rounded whitespace-nowrap">{rightSide}</span>
+                  <span className="font-bold text-white bg-[#1f2937] px-1.5 py-0.5 text-xs rounded whitespace-nowrap uppercase">{rightSide}</span>
                 </div>
               );
             })}
