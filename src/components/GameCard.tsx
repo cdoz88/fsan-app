@@ -107,11 +107,13 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
               let rightSide = '-';
               if (['NASCAR', 'F1'].includes(game.league)) {
                  const pts = getDynamicStat(['point', 'pts', 'score']);
+                 const time = getDynamicStat(['tot', 'time']);
                  const laps = getDynamicStat(['lap']);
+                 const fallbackStatus = c.status?.displayValue || c.reason?.displayValue || c.status?.type?.detail || (c.order === 1 ? 'Winner' : 'Finished');
                  
                  if (isPre) rightSide = displayCar || '-';
                  else if (isLive) rightSide = laps ? `L: ${laps}` : 'Running';
-                 else rightSide = pts ? `${pts} pts` : (c.score ? `${c.score} pts` : (c.reason?.displayValue || c.status?.displayValue || c.status?.type?.detail || 'Finished'));
+                 else rightSide = pts ? `${pts} pts` : (c.score ? `${c.score} pts` : (time ? time : fallbackStatus));
               } else {
                  const pointsStat = c.statistics?.find((s: any) => s.name === 'points');
                  rightSide = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';
@@ -124,7 +126,7 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
                      <span className="text-gray-200 font-bold truncate">{c.athlete?.shortName || c.athlete?.displayName || c.team?.displayName}</span>
                      {['NASCAR', 'F1'].includes(game.league) && displayCar && <span className="text-[10px] text-gray-500 font-mono ml-1">{displayCar}</span>}
                   </div>
-                  <span className="font-bold text-white bg-[#1f2937] px-1.5 py-0.5 text-xs rounded whitespace-nowrap">{rightSide}</span>
+                  <span className="font-bold text-white bg-[#1f2937] px-1.5 py-0.5 text-xs rounded whitespace-nowrap uppercase">{rightSide}</span>
                 </div>
               );
             })}

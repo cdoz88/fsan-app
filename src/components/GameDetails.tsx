@@ -128,12 +128,17 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                 });
             });
             
-            // Failsafe fallback: Ensures points and status always render even if ESPN drops the statistics arrays
+            // Failsafe if absolutely nothing was found
             if (racingCols.length === 0) {
                 racingCols.push({ label: 'POINTS', getVal: (c: any) => c.score ?? c.points ?? '-' });
-                racingCols.push({ label: 'TIME / STATUS', getVal: (c: any) => c.status?.displayValue ?? c.reason?.displayValue ?? (c.order === 1 ? 'WINNER' : 'FINISHED') });
             }
         }
+        
+        // FIX: ALWAYS explicitly attach the primary TIME / STATUS column to the very end!
+        racingCols.push({ 
+            label: 'TIME / STATUS', 
+            getVal: (c: any) => c.status?.displayValue ?? c.reason?.displayValue ?? (c.order === 1 ? 'WINNER' : 'FINISHED') 
+        });
     }
 
     return (
@@ -179,7 +184,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                 {isRacing ? (
                    <>
                      {racingCols.map((col, idx) => (
-                        <th key={idx} className="px-4 py-3.5 border-l border-gray-800 text-right">
+                        <th key={idx} className={`px-4 py-3.5 border-l border-gray-800 ${col.label.includes('STATUS') ? 'text-right' : 'text-center'}`}>
                            {col.label}
                         </th>
                      ))}
@@ -209,7 +214,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                          <td className="px-4 py-3 font-bold text-white group-hover:text-blue-400 transition-colors flex items-center gap-2">{flagImg}{name}</td>
                          
                          {racingCols.map((col, idx) => (
-                            <td key={idx} className="px-4 py-3 border-l border-gray-800/50 text-right text-gray-300 font-bold uppercase">
+                            <td key={idx} className={`px-4 py-3 border-l border-gray-800/50 uppercase ${col.label.includes('STATUS') ? 'text-right text-gray-400 font-bold' : 'text-center text-gray-300 font-medium'}`}>
                                {col.getVal(c)}
                             </td>
                          ))}
