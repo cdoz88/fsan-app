@@ -37,56 +37,66 @@ export async function fetchScoreboard(leagueId: string, date: string): Promise<G
   const response = await fetch(url);
   const data = await response.json();
 
-  return (data.events || []).map((event: any) => {
-    const competition = event.competitions?.[0];
-    if (!competition) return null;
+  return (data.events || []).flatMap((event: any) => {
     
-    // Handle Golf and Racing differently as they don't have away/home teams
+    // FIX: Use flatMap to generate a unique GameCard for every single session of a racing weekend!
     if (['PGA', 'NASCAR', 'F1'].includes(leagueId)) {
-      const competitors = competition.competitors || [];
-      const sortedCompetitors = competitors
-        .sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
+      return (event.competitions || []).map((competition: any) => {
+        const competitors = competition.competitors || [];
+        const sortedCompetitors = competitors.sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
         
-      return {
-        // FIX: Create a composite ID so the app treats each specific day/session individually
-        id: `${event.id}_${competition.id}`,
-        league: leagueId,
-        name: event.name,
-        shortName: event.shortName,
-        date: event.date,
-        status: {
-          state: competition.status.type.state,
-          detail: competition.status.type.detail,
-          clock: competition.status.clock,
-          period: competition.status.period,
-        },
-        golfCompetitors: sortedCompetitors, 
-        awayTeam: {
-          id: `${leagueId.toLowerCase()}-dummy-1`,
-          name: leagueId,
-          abbreviation: leagueId.substring(0, 3),
-          displayName: leagueId,
-          logo: '',
-        },
-        homeTeam: {
-          id: `${leagueId.toLowerCase()}-dummy-2`,
-          name: leagueId,
-          abbreviation: leagueId.substring(0, 3),
-          displayName: leagueId,
-          logo: '',
-        },
-        lastPlay: competition.situation?.lastPlay?.text,
-        odds: competition.odds || [],
-        broadcasts: competition.broadcasts || competition.geoBroadcasts || [],
-      };
+        // Dynamically label the card so you know exactly which session you are clicking on
+        let sessionName = event.shortName;
+        if (competition.type?.text) {
+            sessionName = `${event.shortName} - ${competition.type.text}`;
+        } else if (competition.type?.abbreviation) {
+            sessionName = `${event.shortName} (${competition.type.abbreviation})`;
+        }
+          
+        return {
+          id: `${event.id}_${competition.id}`,
+          league: leagueId,
+          name: event.name,
+          shortName: sessionName,
+          date: competition.date || event.date,
+          status: {
+            state: competition.status?.type?.state || 'post',
+            detail: competition.status?.type?.detail || 'Final',
+            clock: competition.status?.clock,
+            period: competition.status?.period,
+          },
+          golfCompetitors: sortedCompetitors, 
+          awayTeam: {
+            id: `${leagueId.toLowerCase()}-dummy-1`,
+            name: leagueId,
+            abbreviation: leagueId.substring(0, 3),
+            displayName: leagueId,
+            logo: '',
+          },
+          homeTeam: {
+            id: `${leagueId.toLowerCase()}-dummy-2`,
+            name: leagueId,
+            abbreviation: leagueId.substring(0, 3),
+            displayName: leagueId,
+            logo: '',
+          },
+          lastPlay: competition.situation?.lastPlay?.text,
+          odds: competition.odds || [],
+          broadcasts: competition.broadcasts || competition.geoBroadcasts || [],
+        };
+      });
     }
     
+    // --- Standard Team Sports Logic ---
+    const competition = event.competitions?.[0];
+    if (!competition) return [];
+
     const away = competition.competitors?.find((c: any) => c.homeAway === 'away');
     const home = competition.competitors?.find((c: any) => c.homeAway === 'home');
 
-    if (!away || !home) return null;
+    if (!away || !home) return [];
 
-    return {
+    return [{
       id: event.id,
       league: leagueId,
       name: event.name,
@@ -119,18 +129,17 @@ export async function fetchScoreboard(leagueId: string, date: string): Promise<G
       lastPlay: competition.situation?.lastPlay?.text,
       odds: competition.odds || [],
       broadcasts: competition.broadcasts || competition.geoBroadcasts || [],
-    };
-  }).filter((g): g is Game => g !== null);
+    }];
+  });
 }
 
 export async function fetchGameSummary(leagueId: string, gameId: string, date?: string) {
   const league = LEAGUES.find(l => l.id === leagueId);
   if (!league) return null;
 
-  // Split the composite ID back into the Event ID and the Session ID
+  // Safely split out the Event ID and the Session ID we injected above
   const [baseEventId, compId] = gameId.split('_');
 
-  // FORCE scoreboard fallback for field-based sports (PGA, NASCAR, F1) to securely pull the leaderboard
   if (['PGA', 'NASCAR', 'F1'].includes(leagueId)) {
     let fallbackUrl = `${API_BASE}${league.endpoint}`;
     if (date) {
@@ -144,7 +153,7 @@ export async function fetchGameSummary(leagueId: string, gameId: string, date?: 
       const event = data.events?.find((e: any) => e.id === baseEventId);
       
       if (event) {
-        // Pinpoint the EXACT session the user clicked on based on the composite ID
+        // Securely target ONLY the exact session the user clicked on
         const comp = compId ? event.competitions?.find((c: any) => c.id === compId) : event.competitions?.[0];
         const activeComp = comp || event.competitions?.[0];
 
