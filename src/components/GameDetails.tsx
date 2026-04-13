@@ -59,154 +59,72 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
     );
   }
 
-  if (!summary) {
-    if (['PGA', 'NASCAR'].includes(leagueId) && fallbackGame && fallbackGame.golfCompetitors) {
-      // Use fallback game data to render the leaderboard
-      const eventName = fallbackGame.name || fallbackGame.shortName || 'Event Details';
-      const statusDetail = fallbackGame.status?.detail || 'Status Unavailable';
-      const eventDate = fallbackGame.date ? new Date(fallbackGame.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
-      const sortedCompetitors = fallbackGame.golfCompetitors;
-
-      return (
-        <div className="max-w-5xl mx-auto pb-16 sm:pb-24">
-          <div className="sticky top-0 z-20 bg-[#121212] pt-6 pb-2">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={onBack}
-                  className="p-2 bg-gray-800/50 hover:bg-gray-700 rounded-full transition-colors"
-                >
-                  <ChevronLeft size={20} />
-                </button>
-                <button 
-                  onClick={() => queryClient.invalidateQueries({ queryKey: ['gameSummary', leagueId, gameId] })}
-                  className="p-2 bg-gray-800/50 hover:bg-gray-700 rounded-full transition-colors"
-                >
-                  <RefreshCw size={20} className={cn("transition-transform", isFetching && "animate-spin")} />
-                </button>
-              </div>
-            </div>
-            <div className="my-3 text-center">
-              <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">{eventName}</h2>
-              <div className="flex items-center justify-center gap-2">
-                <p className="text-xs font-bold text-gray-300 uppercase tracking-wider">{statusDetail}</p>
-                {eventDate && (
-                  <>
-                    <span className="text-gray-600">•</span>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{eventDate}</p>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto rounded-lg border border-gray-700 shadow-xl mt-4">
-            <table className="w-full text-sm text-left whitespace-nowrap">
-              <thead className="text-xs text-gray-400 uppercase bg-[#222] border-b border-gray-800 font-black tracking-widest">
-                <tr>
-                  <th className="px-4 py-3.5 text-center w-16">Pos</th>
-                  <th className="px-4 py-3.5">{leagueId === 'NASCAR' ? 'Driver' : 'Athlete'}</th>
-                  {leagueId === 'NASCAR' && (
-                     <>
-                       <th className="px-4 py-3.5 text-center border-l border-gray-800">Car</th>
-                       <th className="px-4 py-3.5 text-center border-l border-gray-800">Laps</th>
-                       <th className="px-4 py-3.5 text-center border-l border-gray-800 hidden sm:table-cell">Led</th>
-                       <th className="px-4 py-3.5 border-l border-gray-800 hidden md:table-cell">Status</th>
-                     </>
-                  )}
-                  <th className="px-4 py-3.5 text-right border-l border-gray-800">{leagueId === 'NASCAR' ? 'Points' : 'Score'}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800/50 bg-[#1a1a1a]">
-                {sortedCompetitors.length === 0 ? (
-                  <tr>
-                    <td colSpan={leagueId === 'NASCAR' ? 7 : 3} className="p-8 text-center text-gray-500 font-bold uppercase tracking-widest">Leaderboard data not available.</td>
-                  </tr>
-                ) : (
-                  sortedCompetitors.slice(0, 40).map((c: any, index: number) => {
-                    const rank = c.order || (index + 1);
-                    const name = c.athlete?.displayName || c.team?.displayName || 'Unknown';
-                    const flagImg = c.athlete?.flag?.href ? (
-                      <img src={c.athlete.flag.href} className="w-4 h-3 inline-block mr-2 rounded-sm shadow-sm" alt="flag" />
-                    ) : null;
-                    
-                    if (leagueId === 'NASCAR') {
-                       
-                       // FIX: Aggressively search through all array structures to find the hidden stats
-                       const getStat = (nameOrLabel: string) => {
-                          const statsArray = c.statistics || c.stats || c.athlete?.statistics || c.athlete?.stats || c.linescores || [];
-                          const nameLower = nameOrLabel.toLowerCase();
-                          const stat = statsArray.find((s: any) => 
-                             s.name?.toLowerCase() === nameLower || 
-                             s.label?.toLowerCase() === nameLower || 
-                             s.abbreviation?.toLowerCase() === nameLower
-                          );
-                          return stat ? (stat.displayValue ?? stat.value ?? '-') : '-';
-                       };
-                       
-                       let carNum = c.athlete?.jersey || c.car || '-';
-                       if (carNum === '-') {
-                           const statCar = getStat('car') !== '-' ? getStat('car') : getStat('carNumber');
-                           if (statCar !== '-') carNum = statCar;
-                       }
-                       
-                       const laps = getStat('laps') !== '-' ? getStat('laps') : getStat('lapsCompleted');
-                       const lapsLed = getStat('lapsLed') !== '-' ? getStat('lapsLed') : getStat('led');
-                       let points = getStat('points') !== '-' ? getStat('points') : getStat('championshipPts');
-                       if (points === '-') points = c.score ?? c.points ?? '-';
-                       
-                       const statusText = c.reason?.displayValue || c.status?.displayValue || c.status?.type?.detail || (rank === 1 ? 'Winner' : 'Finished');
-                       
-                       return (
-                         <tr key={index} className="hover:bg-[#252525] transition-colors group">
-                           <td className="px-4 py-3 font-black text-gray-300 w-16 text-center">{rank}</td>
-                           <td className="px-4 py-3 font-bold text-white group-hover:text-blue-400 transition-colors flex items-center gap-2">{flagImg}{name}</td>
-                           <td className="px-4 py-3 text-center border-l border-gray-800/50 text-gray-400 font-mono text-xs">{carNum}</td>
-                           <td className="px-4 py-3 text-center border-l border-gray-800/50 text-gray-300 font-medium">{laps}</td>
-                           <td className="px-4 py-3 text-center border-l border-gray-800/50 text-gray-400 hidden sm:table-cell">{lapsLed}</td>
-                           <td className="px-4 py-3 border-l border-gray-800/50 text-gray-500 text-xs uppercase hidden md:table-cell tracking-widest">{statusText}</td>
-                           <td className="px-4 py-3 font-black text-right border-l border-gray-800/50 text-white">{points}</td>
-                         </tr>
-                       );
-                    }
-
-                    // Default Golf Render
-                    const pointsStat = c.statistics?.find((s: any) => s.name === 'points');
-                    const score = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';
-                    
-                    return (
-                      <tr key={index} className="hover:bg-[#252525] transition-colors group">
-                        <td className="px-4 py-3 font-black text-gray-300 w-16 text-center">{rank}</td>
-                        <td className="px-4 py-3 font-bold text-white group-hover:text-blue-400 transition-colors">{flagImg}{name}</td>
-                        <td className="px-4 py-3 font-black text-right border-l border-gray-800/50 text-white">{score}</td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <p className="text-gray-400 font-bold uppercase tracking-widest">Game Data Unavailable</p>
-        <button onClick={onBack} className="text-gray-300 font-bold">Go Back</button>
-      </div>
-    );
-  }
-
-  const header = summary.header;
-  const competition = header?.competitions?.[0];
+  // --- LEADERBOARD LOGIC (PGA & NASCAR) ---
+  const header = summary?.header || fallbackGame;
+  const competition = header?.competitions?.[0] || fallbackGame;
   
-  if (['PGA', 'NASCAR'].includes(leagueId)) {
+  if (['PGA', 'NASCAR'].includes(leagueId) && (competition?.competitors || fallbackGame?.golfCompetitors)) {
     const eventName = header?.name || header?.shortName || 'Event Details';
-    const statusDetail = competition?.status?.type?.detail || 'Status Unavailable';
-    const competitors = competition?.competitors || [];
+    const statusDetail = competition?.status?.type?.detail || fallbackGame?.status?.detail || 'Status Unavailable';
+    const competitors = competition?.competitors || fallbackGame?.golfCompetitors || [];
     const sortedCompetitors = [...competitors].sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
     const eventDate = header?.date ? new Date(header.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+
+    const isRacing = leagueId === 'NASCAR';
+    
+    // NEW FIX: Dynamic Column Extraction
+    // Automatically parse the array and build columns based on whatever labels the ESPN API returns for this specific race.
+    let racingCols: any[] = [];
+    if (isRacing && sortedCompetitors.length > 0) {
+        const topComp = sortedCompetitors.find((c: any) => c.statistics?.length > 0) || sortedCompetitors[0] || {};
+        
+        // 1. Always inject the Car Number explicitly at the beginning
+        racingCols.push({
+            label: 'CAR',
+            getVal: (c: any) => c.athlete?.jersey || c.car || c.carNumber || '-'
+        });
+
+        // 2. Map through whatever structured stats ESPN provides
+        if (topComp.statistics && topComp.statistics.length > 0) {
+            racingCols.push(...topComp.statistics.map((s: any) => ({
+                label: s.abbreviation || s.label || s.name || 'STAT',
+                getVal: (c: any) => {
+                    const stat = c.statistics?.find((x: any) => x.name === s.name);
+                    return stat ? (stat.displayValue ?? stat.value ?? '-') : '-';
+                }
+            })));
+        } 
+        else if (topComp.stats && topComp.stats.length > 0) {
+            racingCols.push(...topComp.stats.map((s: any) => ({
+                label: s.abbreviation || s.label || s.name || 'STAT',
+                getVal: (c: any) => {
+                    const stat = c.stats?.find((x: any) => x.name === s.name);
+                    return stat ? (stat.displayValue ?? stat.value ?? '-') : '-';
+                }
+            })));
+        }
+        // 3. Ultra-Aggressive Fallback: If ESPN didn't provide a stats array, rip the raw properties right off the object
+        else {
+            const skipKeys = ['id', 'uid', 'order', 'type', 'homeAway', 'winner', 'href', 'athlete', 'status', 'linescores', 'records', 'car', 'carNumber'];
+            const primitiveKeys = Object.keys(topComp).filter(k => 
+                !skipKeys.includes(k) && (typeof topComp[k] === 'string' || typeof topComp[k] === 'number') && topComp[k] !== ''
+            );
+            
+            if (primitiveKeys.length > 0) {
+                racingCols.push(...primitiveKeys.map(k => ({
+                    label: k.toUpperCase(),
+                    getVal: (c: any) => c[k] ?? '-'
+                })));
+            } else if (topComp.linescores && topComp.linescores.length > 0) {
+                racingCols.push(...topComp.linescores.map((ls: any, idx: number) => ({
+                    label: `STAGE ${idx + 1}`,
+                    getVal: (c: any) => c.linescores?.[idx]?.displayValue ?? c.linescores?.[idx]?.value ?? '-'
+                })));
+            } else {
+                racingCols.push({ label: 'SCORE', getVal: (c: any) => c.score ?? '-' });
+            }
+        }
+    }
 
     return (
       <div className="max-w-5xl mx-auto pb-16 sm:pb-24">
@@ -246,22 +164,26 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
             <thead className="text-xs text-gray-400 uppercase bg-[#222] border-b border-gray-800 font-black tracking-widest">
               <tr>
                 <th className="px-4 py-3.5 text-center w-16">Pos</th>
-                <th className="px-4 py-3.5">{leagueId === 'NASCAR' ? 'Driver' : 'Athlete'}</th>
-                {leagueId === 'NASCAR' && (
+                <th className="px-4 py-3.5">{isRacing ? 'Driver' : 'Athlete'}</th>
+                
+                {isRacing ? (
                    <>
-                     <th className="px-4 py-3.5 text-center border-l border-gray-800">Car</th>
-                     <th className="px-4 py-3.5 text-center border-l border-gray-800">Laps</th>
-                     <th className="px-4 py-3.5 text-center border-l border-gray-800 hidden sm:table-cell">Led</th>
-                     <th className="px-4 py-3.5 border-l border-gray-800 hidden md:table-cell">Status</th>
+                     {racingCols.map((col, idx) => (
+                        <th key={idx} className={`px-4 py-3.5 border-l border-gray-800 ${col.label === 'CAR' ? 'text-center' : 'text-right'}`}>
+                           {col.label}
+                        </th>
+                     ))}
+                     <th className="px-4 py-3.5 border-l border-gray-800 text-right">Status</th>
                    </>
+                ) : (
+                   <th className="px-4 py-3.5 text-right border-l border-gray-800">Score</th>
                 )}
-                <th className="px-4 py-3.5 text-right border-l border-gray-800">{leagueId === 'NASCAR' ? 'Points' : 'Score'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800/50 bg-[#1a1a1a]">
               {sortedCompetitors.length === 0 ? (
                 <tr>
-                  <td colSpan={leagueId === 'NASCAR' ? 7 : 3} className="p-8 text-center text-gray-500 font-bold uppercase tracking-widest">Leaderboard data not available.</td>
+                  <td colSpan={isRacing ? racingCols.length + 3 : 3} className="p-8 text-center text-gray-500 font-bold uppercase tracking-widest">Leaderboard data not available.</td>
                 </tr>
               ) : (
                 sortedCompetitors.slice(0, 40).map((c: any, index: number) => {
@@ -271,42 +193,21 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                     <img src={c.athlete.flag.href} className="w-4 h-3 inline-block mr-2 rounded-sm shadow-sm" alt="flag" />
                   ) : null;
                   
-                  if (leagueId === 'NASCAR') {
-
-                     // FIX: Aggressively search through all array structures to find the hidden stats
-                     const getStat = (nameOrLabel: string) => {
-                        const statsArray = c.statistics || c.stats || c.athlete?.statistics || c.athlete?.stats || c.linescores || [];
-                        const nameLower = nameOrLabel.toLowerCase();
-                        const stat = statsArray.find((s: any) => 
-                           s.name?.toLowerCase() === nameLower || 
-                           s.label?.toLowerCase() === nameLower || 
-                           s.abbreviation?.toLowerCase() === nameLower
-                        );
-                        return stat ? (stat.displayValue ?? stat.value ?? '-') : '-';
-                     };
-                     
-                     let carNum = c.athlete?.jersey || c.car || '-';
-                     if (carNum === '-') {
-                         const statCar = getStat('car') !== '-' ? getStat('car') : getStat('carNumber');
-                         if (statCar !== '-') carNum = statCar;
-                     }
-                     
-                     const laps = getStat('laps') !== '-' ? getStat('laps') : getStat('lapsCompleted');
-                     const lapsLed = getStat('lapsLed') !== '-' ? getStat('lapsLed') : getStat('led');
-                     let points = getStat('points') !== '-' ? getStat('points') : getStat('championshipPts');
-                     if (points === '-') points = c.score ?? c.points ?? '-';
-                     
+                  if (isRacing) {
                      const statusText = c.reason?.displayValue || c.status?.displayValue || c.status?.type?.detail || (rank === 1 ? 'Winner' : 'Finished');
                      
                      return (
                        <tr key={index} className="hover:bg-[#252525] transition-colors group">
                          <td className="px-4 py-3 font-black text-gray-300 w-16 text-center">{rank}</td>
                          <td className="px-4 py-3 font-bold text-white group-hover:text-blue-400 transition-colors flex items-center gap-2">{flagImg}{name}</td>
-                         <td className="px-4 py-3 text-center border-l border-gray-800/50 text-gray-400 font-mono text-xs">{carNum}</td>
-                         <td className="px-4 py-3 text-center border-l border-gray-800/50 text-gray-300 font-medium">{laps}</td>
-                         <td className="px-4 py-3 text-center border-l border-gray-800/50 text-gray-400 hidden sm:table-cell">{lapsLed}</td>
-                         <td className="px-4 py-3 border-l border-gray-800/50 text-gray-500 text-xs uppercase hidden md:table-cell tracking-widest">{statusText}</td>
-                         <td className="px-4 py-3 font-black text-right border-l border-gray-800/50 text-white">{points}</td>
+                         
+                         {racingCols.map((col, idx) => (
+                            <td key={idx} className={`px-4 py-3 border-l border-gray-800/50 ${col.label === 'CAR' ? 'text-center text-gray-400 font-mono text-xs' : 'text-right text-gray-300 font-bold'}`}>
+                               {col.getVal(c)}
+                            </td>
+                         ))}
+
+                         <td className="px-4 py-3 border-l border-gray-800/50 text-gray-500 text-xs uppercase text-right tracking-widest">{statusText}</td>
                        </tr>
                      );
                   }
@@ -331,12 +232,15 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
     );
   }
 
-  if (!competition) return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-      <p className="text-gray-400 font-bold uppercase tracking-widest">Game Data Unavailable</p>
-      <button onClick={onBack} className="text-gray-300 font-bold">Go Back</button>
-    </div>
-  );
+  // --- STANDARD MATCHUP LOGIC ---
+  if (!summary || !competition) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <p className="text-gray-400 font-bold uppercase tracking-widest">Game Data Unavailable</p>
+        <button onClick={onBack} className="text-gray-300 font-bold">Go Back</button>
+      </div>
+    );
+  }
 
   const away = competition?.competitors?.find((c: any) => c.homeAway === 'away');
   const home = competition?.competitors?.find((c: any) => c.homeAway === 'home');
@@ -356,7 +260,6 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
     return getTeamLogo(playTeam);
   };
   
-  // Handle odds as an array
   let oddsList: any[] = [];
   if (summary.pickcenter && summary.pickcenter.length > 0) {
     oddsList = summary.pickcenter;
@@ -370,7 +273,6 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
   const broadcasts = competition.broadcasts || summary.broadcasts || competition.geoBroadcasts || summary.geoBroadcasts || fallbackGame?.broadcasts || [];
   const lastPlayText = summary.drives?.current?.plays?.slice(-1)[0]?.text || summary.plays?.slice(-1)[0]?.text || '';
 
-  // Determine valid sport slugs for Internal Linking
   const sportSlug = leagueId === 'NFL' ? 'football' : leagueId === 'NBA' ? 'basketball' : leagueId === 'MLB' ? 'baseball' : null;
 
   const renderTeamLogoWithLink = (teamData: any) => {
@@ -385,13 +287,11 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
     );
 
     if (sportSlug && teamData.team) {
-      // Build the full team name from available ESPN data properties
       const fullName = teamData.team.displayName || 
                        [teamData.team.location, teamData.team.name].filter(Boolean).join(' ') || 
                        teamData.team.abbreviation || '';
       
       if (fullName) {
-        // Slugify the full name (e.g. "Boston Celtics" -> "boston-celtics")
         const fullSlug = fullName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
         return (
           <Link href={`/${sportSlug}/teams/${fullSlug}`}>
@@ -403,7 +303,6 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
     return imgEl;
   };
 
-  // Helper to render player names with SEO links for NFL, NBA, MLB
   const isLinkableLeague = ['NFL', 'NBA', 'MLB'].includes(leagueId);
 
   const renderPlayerName = (athleteData: any) => {
