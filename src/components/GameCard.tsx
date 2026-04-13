@@ -37,7 +37,6 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
   const isLive = game.status.state === 'in';
   const isPost = game.status.state === 'post';
 
-  // Helper to stack and format the live status strings
   const formatLiveStatus = (detail: string) => {
     if (!detail) return null;
     
@@ -71,8 +70,8 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
     return <span className="block text-center leading-none">{detail.replace(/Quarter/gi, 'QTR').replace(/Inning/gi, 'INN')}</span>;
   };
 
-  // Render leaderboard card for both PGA and NASCAR
-  if (['PGA', 'NASCAR'].includes(game.league) && game.golfCompetitors) {
+  // Render leaderboard card for Golf and Racing (NASCAR/F1)
+  if (['PGA', 'NASCAR', 'F1'].includes(game.league) && game.golfCompetitors) {
     const eventName = game.shortName || game.name || 'Event';
     const top3Competitors = game.golfCompetitors.slice(0, 3);
     
@@ -90,44 +89,42 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
           <div className="space-y-1.5 mt-auto">
             {top3Competitors.map((c: any, i: number) => {
               
-              let rightSide = '-';
-              
-              if (game.league === 'NASCAR') {
-                 // Scan for the most relevant stat to show on the mini-card (Time, Points, or Status)
+              const getDynamicStat = (keywords: string[]) => {
                  const arr = c.statistics || c.stats || c.athlete?.statistics || c.athlete?.stats || [];
-                 const primaryStat = arr.find((s: any) => s.name?.toLowerCase().includes('time') || s.name?.toLowerCase().includes('point'));
+                 const stat = arr.find((s: any) => keywords.some(k => (s.name||'').toLowerCase().includes(k) || (s.label||'').toLowerCase().includes(k) || (s.abbreviation||'').toLowerCase().includes(k)));
+                 if (stat) return stat.displayValue ?? stat.value;
                  
-                 if (primaryStat) {
-                     rightSide = primaryStat.displayValue ?? primaryStat.value ?? '-';
-                 } else {
-                     // Look for primitive properties directly on the object
-                     const possibleKeys = ['time', 'timeBehind', 'points', 'score', 'laps'];
-                     const foundKey = possibleKeys.find(k => c[k] !== undefined || c.athlete?.[k] !== undefined);
-                     if (foundKey) {
-                         rightSide = String(c[foundKey] ?? c.athlete?.[foundKey]);
-                     } else {
-                         rightSide = c.status?.displayValue || c.reason?.displayValue || (c.order === 1 ? 'Winner' : 'Finished');
-                     }
-                 }
+                 const key = Object.keys(c).find(k => keywords.some(kw => k.toLowerCase().includes(kw)));
+                 if (key) return c[key];
+                 
+                 return null;
+              };
+              
+              let carNum = c.athlete?.jersey || c.car || getDynamicStat(['car']);
+              if (carNum === '-') carNum = '';
+              const displayCar = carNum ? `#${carNum}` : '';
+              
+              let rightSide = '-';
+              if (['NASCAR', 'F1'].includes(game.league)) {
+                 const pts = getDynamicStat(['point', 'pts', 'score']);
+                 const laps = getDynamicStat(['lap']);
+                 
+                 if (isPre) rightSide = displayCar || '-';
+                 else if (isLive) rightSide = laps ? `L: ${laps}` : 'Running';
+                 else rightSide = pts ? `${pts} pts` : (c.reason?.displayValue || c.status?.displayValue || c.status?.type?.detail || 'Finished');
               } else {
                  const pointsStat = c.statistics?.find((s: any) => s.name === 'points');
                  rightSide = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';
               }
-
-              // Attempt to extract the Car Number
-              const carKeys = ['car', 'carNumber', 'jersey'];
-              const foundCarKey = carKeys.find(k => c[k] !== undefined || c.athlete?.[k] !== undefined);
-              const carNum = foundCarKey ? String(c[foundCarKey] ?? c.athlete?.[foundKey]) : '';
-              const displayCar = carNum ? `#${carNum}` : '';
 
               return (
                 <div key={i} className="flex justify-between text-sm items-center">
                   <div className="flex items-center gap-1.5 truncate pr-2">
                      <span className="text-gray-500 font-bold text-xs w-4">{c.order || i+1}.</span>
                      <span className="text-gray-200 font-bold truncate">{c.athlete?.shortName || c.athlete?.displayName || c.team?.displayName}</span>
-                     {game.league === 'NASCAR' && displayCar && <span className="text-[10px] text-gray-500 font-mono ml-1">{displayCar}</span>}
+                     {['NASCAR', 'F1'].includes(game.league) && displayCar && <span className="text-[10px] text-gray-500 font-mono ml-1">{displayCar}</span>}
                   </div>
-                  <span className="font-bold text-white bg-[#1f2937] px-1.5 py-0.5 text-xs rounded whitespace-nowrap uppercase">{rightSide}</span>
+                  <span className="font-bold text-white bg-[#1f2937] px-1.5 py-0.5 text-xs rounded whitespace-nowrap">{rightSide}</span>
                 </div>
               );
             })}

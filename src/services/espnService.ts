@@ -16,6 +16,7 @@ export const LEAGUES: League[] = [
   { id: 'NHL', name: 'NHL', sport: 'hockey', endpoint: 'hockey/nhl/scoreboard' },
   { id: 'PGA', name: 'PGA', sport: 'golf', endpoint: 'golf/pga/scoreboard' },
   { id: 'NASCAR', name: 'NASCAR', sport: 'racing', endpoint: 'racing/nascar-premier/scoreboard' },
+  { id: 'F1', name: 'F1', sport: 'racing', endpoint: 'racing/f1/scoreboard' },
   { id: 'EPL', name: 'EPL', sport: 'soccer', endpoint: 'soccer/eng.1/scoreboard' },
   { id: 'MLS', name: 'MLS', sport: 'soccer', endpoint: 'soccer/usa.1/scoreboard' },
   { id: 'UCL', name: 'UCL', sport: 'soccer', endpoint: 'soccer/uefa.champions/scoreboard' },
@@ -40,8 +41,8 @@ export async function fetchScoreboard(leagueId: string, date: string): Promise<G
     const competition = event.competitions?.[0];
     if (!competition) return null;
     
-    // Handle Golf (PGA) and Racing (NASCAR) differently as they don't have away/home teams
-    if (leagueId === 'PGA' || leagueId === 'NASCAR') {
+    // Handle Golf and Racing differently as they don't have away/home teams
+    if (['PGA', 'NASCAR', 'F1'].includes(leagueId)) {
       const competitors = competition.competitors || [];
       const sortedCompetitors = competitors
         .sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
@@ -130,9 +131,7 @@ export async function fetchGameSummary(leagueId: string, gameId: string, date?: 
   const response = await fetch(url);
   
   if (!response.ok) {
-    // For PGA and NASCAR, the summary endpoint might not exist or return 404.
-    // We can fallback to the scoreboard endpoint to get the leaderboard data for this specific event.
-    if (leagueId === 'PGA' || leagueId === 'NASCAR') {
+    if (['PGA', 'NASCAR', 'F1'].includes(leagueId)) {
       let fallbackUrl = `${API_BASE}${league.endpoint}`;
       if (date) {
         // Format date to YYYYMMDD

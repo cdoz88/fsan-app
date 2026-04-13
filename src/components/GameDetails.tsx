@@ -58,25 +58,22 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
     );
   }
 
-  // --- LEADERBOARD LOGIC (PGA & NASCAR) ---
   const header = summary?.header || fallbackGame;
   const competition = header?.competitions?.[0] || fallbackGame;
   
-  if (['PGA', 'NASCAR'].includes(leagueId) && (competition?.competitors || fallbackGame?.golfCompetitors)) {
+  // Handle Leaderboard formats (PGA, NASCAR, F1)
+  if (['PGA', 'NASCAR', 'F1'].includes(leagueId) && (competition?.competitors || fallbackGame?.golfCompetitors)) {
     const eventName = header?.name || header?.shortName || 'Event Details';
     const statusDetail = competition?.status?.type?.detail || fallbackGame?.status?.detail || 'Status Unavailable';
     const competitors = competition?.competitors || fallbackGame?.golfCompetitors || [];
     const sortedCompetitors = [...competitors].sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
     const eventDate = header?.date ? new Date(header.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
 
-    const isRacing = leagueId === 'NASCAR';
+    const isRacing = ['NASCAR', 'F1'].includes(leagueId);
     
-    // NEW FIX: Dynamic Column Extraction Engine
-    // Actively sweeps through the entire API payload to find any hidden arrays or loose statistical variables and generates perfectly matching columns!
     let racingCols: any[] = [];
     if (isRacing && sortedCompetitors.length > 0) {
         
-        // 1. Scan EVERY competitor for ANY available statistics arrays
         let foundStats = new Map<string, string>(); 
         
         sortedCompetitors.forEach((c: any) => {
@@ -87,7 +84,6 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
         });
 
         if (foundStats.size > 0) {
-            // We found statistics! Create a column for each unique stat.
             foundStats.forEach((label, name) => {
                 racingCols.push({
                     label: label.toUpperCase(),
@@ -99,7 +95,6 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                 });
             });
         } else {
-            // 2. ULTRA-AGGRESSIVE FALLBACK: Extract all primitive keys directly from the objects
             const skipKeys = ['id', 'uid', 'order', 'type', 'homeAway', 'winner', 'href', 'athlete', 'status', 'linescores', 'records', 'displayName', 'shortName', 'fullName', 'firstName', 'lastName', 'displayValue', 'active', 'color', 'alternateColor', 'links', 'flag', 'headshot', 'logo'];
             
             const allFoundKeys = new Set<string>();
@@ -133,7 +128,6 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                 });
             });
             
-            // If we STILL found nothing, just inject a standard "TIME / STATUS" column
             if (racingCols.length === 0) {
                 racingCols.push({ label: 'TIME / STATUS', getVal: (c: any) => c.status?.displayValue ?? c.reason?.displayValue ?? (c.order === 1 ? 'WINNER' : 'FINISHED') });
             }
@@ -221,7 +215,6 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                      );
                   }
 
-                  // Default Golf Render
                   const pointsStat = c.statistics?.find((s: any) => s.name === 'points');
                   const score = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';
                   
