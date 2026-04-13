@@ -111,7 +111,7 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
                  
                  if (isPre) rightSide = displayCar || '-';
                  else if (isLive) rightSide = laps ? `L: ${laps}` : 'Running';
-                 else rightSide = pts ? `${pts} pts` : (c.reason?.displayValue || c.status?.displayValue || c.status?.type?.detail || 'Finished');
+                 else rightSide = pts ? `${pts} pts` : (c.score ? `${c.score} pts` : (c.reason?.displayValue || c.status?.displayValue || c.status?.type?.detail || 'Finished'));
               } else {
                  const pointsStat = c.statistics?.find((s: any) => s.name === 'points');
                  rightSide = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';

@@ -142,7 +142,32 @@ export async function fetchGameSummary(leagueId: string, gameId: string, date?: 
       if (fallbackResponse.ok) {
         const data = await fallbackResponse.json();
         const event = data.events?.find((e: any) => e.id === gameId);
+        
         if (event) {
+          // --- F1 CORE STATS INJECTION ---
+          // ESPN hides F1 stats. This rapidly fetches the detailed analytics for all 20 drivers concurrently!
+          if (leagueId === 'F1') {
+             const comp = event.competitions?.[0];
+             if (comp && comp.competitors) {
+                const statPromises = comp.competitors.map(async (c: any) => {
+                    try {
+                        const statRes = await fetch(`https://sports.core.api.espn.com/v2/sports/racing/leagues/f1/events/${gameId}/competitions/${comp.id}/competitors/${c.id}/statistics`);
+                        if (statRes.ok) {
+                            const statData = await statRes.json();
+                            // Standardize the injection point so the dynamic parser finds it instantly
+                            c.statistics = statData.splits?.categories?.[0]?.stats || statData.stats || [];
+                        }
+                    } catch(e) {
+                        console.error(`Failed to fetch deep stats for driver ${c.id}`);
+                    }
+                    return c;
+                });
+                
+                const detailedCompetitors = await Promise.all(statPromises);
+                event.competitions[0].competitors = detailedCompetitors;
+             }
+          }
+          
           return { header: event }; 
         }
       }

@@ -128,7 +128,9 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                 });
             });
             
+            // Failsafe fallback: Ensures points and status always render even if ESPN drops the statistics arrays
             if (racingCols.length === 0) {
+                racingCols.push({ label: 'POINTS', getVal: (c: any) => c.score ?? c.points ?? '-' });
                 racingCols.push({ label: 'TIME / STATUS', getVal: (c: any) => c.status?.displayValue ?? c.reason?.displayValue ?? (c.order === 1 ? 'WINNER' : 'FINISHED') });
             }
         }
