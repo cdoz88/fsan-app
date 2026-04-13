@@ -48,7 +48,8 @@ export async function fetchScoreboard(leagueId: string, date: string): Promise<G
         .sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
         
       return {
-        id: event.id,
+        // FIX: Create a composite ID so the app treats each specific day/session individually
+        id: `${event.id}_${competition.id}`,
         league: leagueId,
         name: event.name,
         shortName: event.shortName,
@@ -126,52 +127,58 @@ export async function fetchGameSummary(leagueId: string, gameId: string, date?: 
   const league = LEAGUES.find(l => l.id === leagueId);
   if (!league) return null;
 
+  // Split the composite ID back into the Event ID and the Session ID
+  const [baseEventId, compId] = gameId.split('_');
+
+  // FORCE scoreboard fallback for field-based sports (PGA, NASCAR, F1) to securely pull the leaderboard
+  if (['PGA', 'NASCAR', 'F1'].includes(leagueId)) {
+    let fallbackUrl = `${API_BASE}${league.endpoint}`;
+    if (date) {
+      // Format date to YYYYMMDD
+      const formattedDate = new Date(date).toISOString().split('T')[0].replace(/-/g, '');
+      fallbackUrl += `?dates=${formattedDate}`;
+    }
+    const fallbackResponse = await fetch(fallbackUrl);
+    if (fallbackResponse.ok) {
+      const data = await fallbackResponse.json();
+      const event = data.events?.find((e: any) => e.id === baseEventId);
+      
+      if (event) {
+        // Pinpoint the EXACT session the user clicked on based on the composite ID
+        const comp = compId ? event.competitions?.find((c: any) => c.id === compId) : event.competitions?.[0];
+        const activeComp = comp || event.competitions?.[0];
+
+        // --- F1 CORE STATS INJECTION ---
+        if (leagueId === 'F1' && activeComp && activeComp.competitors) {
+            const statPromises = activeComp.competitors.map(async (c: any) => {
+                try {
+                    const statRes = await fetch(`https://sports.core.api.espn.com/v2/sports/racing/leagues/f1/events/${baseEventId}/competitions/${activeComp.id}/competitors/${c.id}/statistics`);
+                    if (statRes.ok) {
+                        const statData = await statRes.json();
+                        c.statistics = statData.splits?.categories?.[0]?.stats || statData.stats || [];
+                    }
+                } catch(e) {
+                    console.error(`Failed to fetch deep stats for driver ${c.id}`);
+                }
+                return c;
+            });
+            
+            const detailedCompetitors = await Promise.all(statPromises);
+            activeComp.competitors = detailedCompetitors;
+        }
+        
+        event.competitions = [activeComp];
+        return { header: event }; 
+      }
+    }
+    throw new Error(`Failed to fetch racing summary.`);
+  }
+
   const leaguePath = league.endpoint.replace('/scoreboard', '');
-  const url = `${API_BASE}${leaguePath}/summary?event=${gameId}`;
+  const url = `${API_BASE}${leaguePath}/summary?event=${baseEventId}`;
   const response = await fetch(url);
   
   if (!response.ok) {
-    if (['PGA', 'NASCAR', 'F1'].includes(leagueId)) {
-      let fallbackUrl = `${API_BASE}${league.endpoint}`;
-      if (date) {
-        // Format date to YYYYMMDD
-        const formattedDate = new Date(date).toISOString().split('T')[0].replace(/-/g, '');
-        fallbackUrl += `?dates=${formattedDate}`;
-      }
-      const fallbackResponse = await fetch(fallbackUrl);
-      if (fallbackResponse.ok) {
-        const data = await fallbackResponse.json();
-        const event = data.events?.find((e: any) => e.id === gameId);
-        
-        if (event) {
-          // --- F1 CORE STATS INJECTION ---
-          // ESPN hides F1 stats. This rapidly fetches the detailed analytics for all 20 drivers concurrently!
-          if (leagueId === 'F1') {
-             const comp = event.competitions?.[0];
-             if (comp && comp.competitors) {
-                const statPromises = comp.competitors.map(async (c: any) => {
-                    try {
-                        const statRes = await fetch(`https://sports.core.api.espn.com/v2/sports/racing/leagues/f1/events/${gameId}/competitions/${comp.id}/competitors/${c.id}/statistics`);
-                        if (statRes.ok) {
-                            const statData = await statRes.json();
-                            // Standardize the injection point so the dynamic parser finds it instantly
-                            c.statistics = statData.splits?.categories?.[0]?.stats || statData.stats || [];
-                        }
-                    } catch(e) {
-                        console.error(`Failed to fetch deep stats for driver ${c.id}`);
-                    }
-                    return c;
-                });
-                
-                const detailedCompetitors = await Promise.all(statPromises);
-                event.competitions[0].competitors = detailedCompetitors;
-             }
-          }
-          
-          return { header: event }; 
-        }
-      }
-    }
     throw new Error(`Failed to fetch game summary: ${response.statusText}`);
   }
   
