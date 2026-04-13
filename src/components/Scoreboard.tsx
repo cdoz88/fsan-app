@@ -42,6 +42,30 @@ export const Scoreboard = ({
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
 
+  // 1. Read the URL query parameters on initial load
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const sportParam = params.get('sport');
+      const leagueParam = params.get('league');
+
+      if (leagueParam && leagueParam !== 'ALL') {
+        const upperLeague = leagueParam.toUpperCase();
+        setSelectedLeague(upperLeague);
+        
+        // Smart Detection: Auto-set the sport if they only passed the league (e.g. ?league=NBA)
+        const foundLeague = LEAGUES.find(l => l.id === upperLeague);
+        if (foundLeague) {
+          setSelectedSport(foundLeague.sport.toUpperCase());
+        }
+      } else if (sportParam) {
+        setSelectedSport(sportParam.toUpperCase());
+        if (leagueParam === 'ALL') setSelectedLeague('ALL');
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
@@ -57,9 +81,29 @@ export const Scoreboard = ({
     return LEAGUES.filter(l => l.sport.toUpperCase() === selectedSport);
   }, [selectedSport]);
 
+  // 2. Update the URL dynamically when the user changes the Sport dropdown
   const handleSportChange = (value: string) => {
     setSelectedSport(value);
     setSelectedLeague('ALL');
+    
+    if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.set('sport', value);
+        url.searchParams.set('league', 'ALL');
+        window.history.replaceState({}, '', url.toString());
+    }
+  };
+
+  // 3. Update the URL dynamically when the user changes the League dropdown
+  const handleLeagueChange = (value: string) => {
+    setSelectedLeague(value);
+    
+    if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.set('league', value);
+        url.searchParams.set('sport', selectedSport);
+        window.history.replaceState({}, '', url.toString());
+    }
   };
 
   const { data: games, isLoading } = useQuery({
@@ -86,7 +130,6 @@ export const Scoreboard = ({
     if (!games) return {};
     const groups: Record<string, Game[]> = {};
     
-    // Step 1: Group games into their respective leagues
     games.forEach(game => {
       if (!groups[game.league]) {
         groups[game.league] = [];
@@ -94,8 +137,6 @@ export const Scoreboard = ({
       groups[game.league].push(game);
     });
 
-    // Step 2: Sort the games inside each league bucket!
-    // Live ('in') goes first, Upcoming ('pre') goes second, Final ('post') goes to the bottom.
     const stateRank: Record<string, number> = { 'in': 1, 'pre': 2, 'post': 3 };
     
     Object.keys(groups).forEach(league => {
@@ -112,7 +153,6 @@ export const Scoreboard = ({
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
-        {/* League and Sport Filters */}
         <div className="flex items-center gap-2 w-full sm:w-auto z-30">
           <div className="relative w-full sm:w-48">
             <Dropdown
@@ -129,13 +169,12 @@ export const Scoreboard = ({
                 { value: 'ALL', label: 'ALL' },
                 ...availableLeagues.map(l => ({ value: l.id, label: l.name }))
               ]}
-              onChange={setSelectedLeague}
+              onChange={handleLeagueChange}
               disabled={selectedSport === 'ALL SPORTS'}
             />
           </div>
         </div>
 
-        {/* Date Picker */}
         <div className="relative flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end z-50" ref={calendarRef}>
           <button
             onClick={() => setDate(subDays(date, 1))}
