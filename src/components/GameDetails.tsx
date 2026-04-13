@@ -61,15 +61,24 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
   const header = summary?.header || fallbackGame;
   const competition = header?.competitions?.[0] || fallbackGame;
   
-  // Handle Leaderboard formats (PGA, NASCAR, F1)
   if (['PGA', 'NASCAR', 'F1'].includes(leagueId) && (competition?.competitors || fallbackGame?.golfCompetitors)) {
-    const eventName = header?.name || header?.shortName || 'Event Details';
+    const isRacing = ['NASCAR', 'F1'].includes(leagueId);
+
+    // FIX: Make sure the Header dynamically updates to the correct Session Name (e.g. "Practice 1")
+    let eventName = header?.shortName || header?.name || 'Event Details';
+    if (isRacing && competition?.type?.text) {
+        eventName = `${header?.shortName || header?.name} - ${competition.type.text}`;
+    } else if (isRacing && competition?.type?.abbreviation) {
+        eventName = `${header?.shortName || header?.name} (${competition.type.abbreviation})`;
+    }
+
     const statusDetail = competition?.status?.type?.detail || fallbackGame?.status?.detail || 'Status Unavailable';
     const competitors = competition?.competitors || fallbackGame?.golfCompetitors || [];
     const sortedCompetitors = [...competitors].sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
-    const eventDate = header?.date ? new Date(header.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
-
-    const isRacing = ['NASCAR', 'F1'].includes(leagueId);
+    
+    // FIX: Pinpoint the exact date of the session instead of the overall start of the weekend
+    const sessionDateStr = competition?.date || header?.date;
+    const eventDate = sessionDateStr ? new Date(sessionDateStr).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
     
     let racingCols: any[] = [];
     if (isRacing && sortedCompetitors.length > 0) {
@@ -128,13 +137,11 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                 });
             });
             
-            // Failsafe if absolutely nothing was found
             if (racingCols.length === 0) {
                 racingCols.push({ label: 'POINTS', getVal: (c: any) => c.score ?? c.points ?? '-' });
             }
         }
         
-        // FIX: ALWAYS explicitly attach the primary TIME / STATUS column to the very end!
         racingCols.push({ 
             label: 'TIME / STATUS', 
             getVal: (c: any) => c.status?.displayValue ?? c.reason?.displayValue ?? (c.order === 1 ? 'WINNER' : 'FINISHED') 

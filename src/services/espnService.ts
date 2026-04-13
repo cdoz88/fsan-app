@@ -33,24 +33,40 @@ export async function fetchScoreboard(leagueId: string, date: string): Promise<G
   const league = LEAGUES.find(l => l.id === leagueId);
   if (!league) return [];
 
-  const url = `${API_BASE}${league.endpoint}?dates=${date.replace(/-/g, '')}`;
+  const targetDateStr = date.replace(/-/g, '');
+  const url = `${API_BASE}${league.endpoint}?dates=${targetDateStr}`;
   const response = await fetch(url);
   const data = await response.json();
 
   return (data.events || []).flatMap((event: any) => {
     
-    // FIX: Use flatMap to generate a unique GameCard for every single session of a racing weekend!
+    // Handle Golf and Racing differently
     if (['PGA', 'NASCAR', 'F1'].includes(leagueId)) {
-      return (event.competitions || []).map((competition: any) => {
+      
+      const isRacing = ['NASCAR', 'F1'].includes(leagueId);
+      
+      // FIX: Strictly filter Racing sessions so FP1 only shows on Thursday, Race only shows on Sunday, etc.
+      // We skip filtering PGA so the 4-day tournament card remains visible all weekend.
+      const filteredComps = (event.competitions || []).filter((comp: any) => {
+          if (!isRacing || !comp.date) return true;
+          
+          const compDate = new Date(comp.date);
+          const yyyy = compDate.getFullYear();
+          const mm = String(compDate.getMonth() + 1).padStart(2, '0');
+          const dd = String(compDate.getDate()).padStart(2, '0');
+          
+          return `${yyyy}${mm}${dd}` === targetDateStr;
+      });
+
+      return filteredComps.map((competition: any) => {
         const competitors = competition.competitors || [];
         const sortedCompetitors = competitors.sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
         
-        // Dynamically label the card so you know exactly which session you are clicking on
-        let sessionName = event.shortName;
+        let sessionName = event.shortName || event.name;
         if (competition.type?.text) {
-            sessionName = `${event.shortName} - ${competition.type.text}`;
+            sessionName = `${event.shortName || event.name} - ${competition.type.text}`;
         } else if (competition.type?.abbreviation) {
-            sessionName = `${event.shortName} (${competition.type.abbreviation})`;
+            sessionName = `${event.shortName || event.name} (${competition.type.abbreviation})`;
         }
           
         return {
@@ -137,13 +153,11 @@ export async function fetchGameSummary(leagueId: string, gameId: string, date?: 
   const league = LEAGUES.find(l => l.id === leagueId);
   if (!league) return null;
 
-  // Safely split out the Event ID and the Session ID we injected above
   const [baseEventId, compId] = gameId.split('_');
 
   if (['PGA', 'NASCAR', 'F1'].includes(leagueId)) {
     let fallbackUrl = `${API_BASE}${league.endpoint}`;
     if (date) {
-      // Format date to YYYYMMDD
       const formattedDate = new Date(date).toISOString().split('T')[0].replace(/-/g, '');
       fallbackUrl += `?dates=${formattedDate}`;
     }
@@ -153,11 +167,9 @@ export async function fetchGameSummary(leagueId: string, gameId: string, date?: 
       const event = data.events?.find((e: any) => e.id === baseEventId);
       
       if (event) {
-        // Securely target ONLY the exact session the user clicked on
         const comp = compId ? event.competitions?.find((c: any) => c.id === compId) : event.competitions?.[0];
         const activeComp = comp || event.competitions?.[0];
 
-        // --- F1 CORE STATS INJECTION ---
         if (leagueId === 'F1' && activeComp && activeComp.competitors) {
             const statPromises = activeComp.competitors.map(async (c: any) => {
                 try {
