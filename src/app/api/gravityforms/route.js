@@ -1,22 +1,5 @@
 import { NextResponse } from 'next/server';
 
-// Helper function to safely encode the API keys for Basic Auth
-const getAuthHeaders = () => {
-  const consumerKey = process.env.GF_CONSUMER_KEY;
-  const consumerSecret = process.env.GF_CONSUMER_SECRET;
-  
-  if (!consumerKey || !consumerSecret) {
-      console.warn("Gravity Forms API Keys are missing from environment variables.");
-      return {};
-  }
-  
-  const token = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
-  return {
-    'Authorization': `Basic ${token}`,
-    'Content-Type': 'application/json'
-  };
-};
-
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const formId = searchParams.get('formId');
@@ -25,14 +8,27 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Form ID is required' }, { status: 400 });
   }
 
+  const consumerKey = process.env.GF_CONSUMER_KEY;
+  const consumerSecret = process.env.GF_CONSUMER_SECRET;
+
+  if (!consumerKey || !consumerSecret) {
+      console.warn("Gravity Forms API Keys are missing from environment variables.");
+      return NextResponse.json({ error: 'Missing API Keys' }, { status: 500 });
+  }
+
   try {
-    const res = await fetch(`https://admin.fsan.com/wp-json/gf/v2/forms/${formId}`, {
+    // FIX: Pass keys as query parameters to bypass WordPress Core's Application Passwords interceptor
+    const res = await fetch(`https://admin.fsan.com/wp-json/gf/v2/forms/${formId}?consumer_key=${consumerKey}&consumer_secret=${consumerSecret}`, {
       method: 'GET',
-      headers: getAuthHeaders(),
+      headers: { 'Content-Type': 'application/json' },
       next: { revalidate: 60 } // Cache the form structure for 60 seconds
     });
 
-    if (!res.ok) throw new Error('Failed to fetch form from WordPress');
+    if (!res.ok) {
+       const errText = await res.text();
+       console.error("GF GET Error:", errText);
+       throw new Error('Failed to fetch form from WordPress');
+    }
     
     const data = await res.json();
     return NextResponse.json(data);
@@ -51,9 +47,17 @@ export async function POST(request) {
       return NextResponse.json({ is_valid: false, message: 'Form ID is required' }, { status: 400 });
     }
 
-    const res = await fetch(`https://admin.fsan.com/wp-json/gf/v2/forms/${formId}/submissions`, {
+    const consumerKey = process.env.GF_CONSUMER_KEY;
+    const consumerSecret = process.env.GF_CONSUMER_SECRET;
+
+    if (!consumerKey || !consumerSecret) {
+        return NextResponse.json({ is_valid: false, message: 'Missing API Keys' }, { status: 500 });
+    }
+
+    // FIX: Pass keys as query parameters to bypass WordPress Core's Application Passwords interceptor
+    const res = await fetch(`https://admin.fsan.com/wp-json/gf/v2/forms/${formId}/submissions?consumer_key=${consumerKey}&consumer_secret=${consumerSecret}`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
     });
 
