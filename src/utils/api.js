@@ -31,6 +31,43 @@ export async function getMenuBySlug(slug) {
   }
 }
 
+export async function fetchGraphQL(query, variables = {}) {
+  const WP_GRAPHQL_URL = 'https://admin.fsan.com/graphql';
+
+  try {
+    const res = await fetch(WP_GRAPHQL_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query,
+        variables,
+      }),
+      next: { revalidate: 60 }, 
+    });
+
+    const json = await res.json();
+    if (json.errors) {
+      console.error('GraphQL Errors:', json.errors);
+      throw new Error('Failed to fetch GraphQL API');
+    }
+
+    return json.data;
+  } catch (error) {
+    console.error('GraphQL Fetch Error:', error);
+    return null;
+  }
+}
+
+export const generatePlayerSlug = (name) => {
+  return name.toLowerCase()
+             .replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '') // Strips out suffixes
+             .replace(/['.]/g, '')                      // Strips out apostrophes and periods
+             .replace(/[^a-z0-9]+/g, '-')               // Replaces spaces/specials with dashes
+             .replace(/(^-|-$)/g, '');                  // Trims any trailing dashes
+};
+
 export async function fetchPosts(activeSport = 'All', postType = 'all', page = 1) {
   const POSTS_PER_PAGE = 17; // Increased from 15 to 17 to fill the bottom row!
   
