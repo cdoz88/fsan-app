@@ -14,16 +14,34 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); // 'success' or 'error'
 
+  // FIX: Create a local state to hold the live form data
+  const [liveForm, setLiveForm] = useState(gfForm);
+
+  // FIX: Failsafe - If the server passed a null form (e.g. from a stale Vercel build cache), fetch it instantly on the client!
   useEffect(() => {
-      if (session?.user?.email && gfForm?.fields) {
-          const emailField = gfForm.fields.find(f => f.type === 'email');
+     if (!liveForm || !liveForm.fields) {
+         fetch('/api/gravityforms?formId=18')
+             .then(res => res.json())
+             .then(data => {
+                 if (data && data.fields) {
+                     setLiveForm(data);
+                 }
+             })
+             .catch(err => console.error("Client-side GF sync failed:", err));
+     }
+  }, [liveForm]);
+
+  useEffect(() => {
+      // Use liveForm instead of gfForm
+      if (session?.user?.email && liveForm?.fields) {
+          const emailField = liveForm.fields.find(f => f.type === 'email');
           if (emailField) {
               setFormData(prev => ({ ...prev, [`input_${emailField.id}`]: session.user.email }));
           }
       } else if (session?.user?.email) {
           setFormData(prev => ({ ...prev, ['input_1']: session.user.email }));
       }
-  }, [session, gfForm]);
+  }, [session, liveForm]);
 
   const handleInputChange = (fieldId, value) => {
       setFormData(prev => ({ ...prev, [`input_${fieldId}`]: value }));
@@ -63,7 +81,8 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
   };
 
   const renderForm = () => {
-      const hasFields = gfForm && gfForm.fields && gfForm.fields.length > 0;
+      // Use liveForm instead of gfForm
+      const hasFields = liveForm && liveForm.fields && liveForm.fields.length > 0;
       
       if (!hasFields) {
           return (
@@ -97,14 +116,14 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
       return (
           <form onSubmit={handleSubmit} className={`w-full flex flex-col gap-4 ${!isAuthed ? 'opacity-30 pointer-events-none blur-[2px] transition-all duration-300' : ''}`}>
               <div className="flex flex-col gap-4 sm:flex-row">
-                  {gfForm.fields.filter(f => f.type === 'email' || f.type === 'text').map(field => (
+                  {liveForm.fields.filter(f => f.type === 'email' || f.type === 'text').map(field => (
                       <div key={field.id} className="flex flex-col flex-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{field.label}</label>
                           <input type={field.type} required={field.isRequired} onChange={(e) => handleInputChange(field.id, e.target.value)} value={formData[`input_${field.id}`] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder={`Enter ${field.label}`} />
                       </div>
                   ))}
               </div>
-              {gfForm.fields.filter(f => f.type === 'select').map(field => (
+              {liveForm.fields.filter(f => f.type === 'select').map(field => (
                   <div key={field.id} className="flex flex-col">
                       <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{field.label}</label>
                       <select required={field.isRequired} onChange={(e) => handleInputChange(field.id, e.target.value)} value={formData[`input_${field.id}`] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors appearance-none text-sm shadow-inner cursor-pointer">
@@ -212,7 +231,6 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
                   {steps.map((step, idx) => (
                     <div key={idx} className={`${step.colSpan} ${step.isForm ? 'border-red-900/30 shadow-[0_0_20px_rgba(220,38,38,0.05)]' : 'border-gray-800'} bg-[#1a1a1a] rounded-3xl border p-8 flex flex-col items-start relative overflow-hidden group transition-colors shadow-lg`}>
                       
-                      {/* FIX 1: Removed conditional styling so the number always shows exactly like the others */}
                       <div className="absolute -right-4 -top-4 text-[120px] font-black text-[#222] z-0 select-none group-hover:text-[#2a2a2a] transition-colors leading-none pointer-events-none">
                         {idx + 1}
                       </div>
@@ -285,7 +303,6 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
                     Step 6: The Playoff Challenge
                   </h2>
                   
-                  {/* FIX 2: Updated the text to precisely match your request */}
                   <p className="text-gray-300 text-base md:text-lg leading-relaxed">
                     All regular-season winners will face off in an ultimate showdown. The winner of The Playoff Challenge will take home a <strong>championship ring or belt</strong>, proving them as the undisputed tournament champ!
                   </p>
