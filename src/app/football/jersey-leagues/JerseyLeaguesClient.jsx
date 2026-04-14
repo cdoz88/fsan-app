@@ -14,14 +14,16 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); // 'success' or 'error'
 
-  // FIX: Create a local state to hold the live form data
   const [liveForm, setLiveForm] = useState(gfForm);
 
-  // FIX: Failsafe - If the server passed a null form (e.g. from a stale Vercel build cache), fetch it instantly on the client!
+  // Failsafe - If the server passed a null form, attempt to fetch it on the client
   useEffect(() => {
      if (!liveForm || !liveForm.fields) {
          fetch('/api/gravityforms?formId=18')
-             .then(res => res.json())
+             .then(res => {
+                 if (res.ok) return res.json();
+                 throw new Error('Sync endpoint failed');
+             })
              .then(data => {
                  if (data && data.fields) {
                      setLiveForm(data);
@@ -32,19 +34,19 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
   }, [liveForm]);
 
   useEffect(() => {
-      // Use liveForm instead of gfForm
       if (session?.user?.email && liveForm?.fields) {
           const emailField = liveForm.fields.find(f => f.type === 'email');
           if (emailField) {
-              setFormData(prev => ({ ...prev, [`input_${emailField.id}`]: session.user.email }));
+              setFormData(prev => ({ ...prev, [emailField.id]: session.user.email }));
           }
       } else if (session?.user?.email) {
-          setFormData(prev => ({ ...prev, ['input_1']: session.user.email }));
+          setFormData(prev => ({ ...prev, ['1']: session.user.email }));
       }
   }, [session, liveForm]);
 
   const handleInputChange = (fieldId, value) => {
-      setFormData(prev => ({ ...prev, [`input_${fieldId}`]: value }));
+      // FIX: Store exactly as the numeric field ID required by Gravity Forms
+      setFormData(prev => ({ ...prev, [fieldId]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -81,7 +83,6 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
   };
 
   const renderForm = () => {
-      // Use liveForm instead of gfForm
       const hasFields = liveForm && liveForm.fields && liveForm.fields.length > 0;
       
       if (!hasFields) {
@@ -90,16 +91,16 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
                   <div className="flex flex-col gap-4 sm:flex-row">
                       <div className="flex flex-col flex-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
-                          <input type="email" required onChange={(e) => handleInputChange('1', e.target.value)} value={formData['input_1'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder="Enter your email" />
+                          <input type="email" required onChange={(e) => handleInputChange('1', e.target.value)} value={formData['1'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder="Enter your email" />
                       </div>
                       <div className="flex flex-col flex-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Sleeper Username</label>
-                          <input type="text" required onChange={(e) => handleInputChange('4', e.target.value)} value={formData['input_4'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder="Your Sleeper ID" />
+                          <input type="text" required onChange={(e) => handleInputChange('4', e.target.value)} value={formData['4'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder="Your Sleeper ID" />
                       </div>
                   </div>
                   <div className="flex flex-col">
                       <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Select League</label>
-                      <select required onChange={(e) => handleInputChange('5', e.target.value)} value={formData['input_5'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors appearance-none text-sm cursor-pointer shadow-inner">
+                      <select required onChange={(e) => handleInputChange('5', e.target.value)} value={formData['5'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors appearance-none text-sm cursor-pointer shadow-inner">
                           <option value="">(Waiting for Gravity Forms Sync...)</option>
                           <option value="Tyreek Hill League">Tyreek Hill League</option>
                           <option value="James Cook League">James Cook League</option>
@@ -119,14 +120,14 @@ export default function JerseyLeaguesClient({ proToolsMenu, connectMenu, gfForm 
                   {liveForm.fields.filter(f => f.type === 'email' || f.type === 'text').map(field => (
                       <div key={field.id} className="flex flex-col flex-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{field.label}</label>
-                          <input type={field.type} required={field.isRequired} onChange={(e) => handleInputChange(field.id, e.target.value)} value={formData[`input_${field.id}`] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder={`Enter ${field.label}`} />
+                          <input type={field.type} required={field.isRequired} onChange={(e) => handleInputChange(field.id, e.target.value)} value={formData[field.id] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder={`Enter ${field.label}`} />
                       </div>
                   ))}
               </div>
               {liveForm.fields.filter(f => f.type === 'select').map(field => (
                   <div key={field.id} className="flex flex-col">
                       <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{field.label}</label>
-                      <select required={field.isRequired} onChange={(e) => handleInputChange(field.id, e.target.value)} value={formData[`input_${field.id}`] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors appearance-none text-sm shadow-inner cursor-pointer">
+                      <select required={field.isRequired} onChange={(e) => handleInputChange(field.id, e.target.value)} value={formData[field.id] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors appearance-none text-sm shadow-inner cursor-pointer">
                           <option value="">Select your preferred league...</option>
                           {field.choices.map((c, i) => (
                               <option key={i} value={c.value}>{c.text}</option>
