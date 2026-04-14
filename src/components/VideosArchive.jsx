@@ -6,7 +6,6 @@ import { themes } from '../utils/theme';
 
 const hideScrollbar = "scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
 
-// SEO Helper: Generates the true path for Googlebot
 const getItemUrl = (item) => {
   const itemView = item.type === 'article' ? 'articles' : item.type === 'podcast' ? 'podcasts' : 'videos';
   const sportPrefix = (!item.sport || item.sport === 'All') ? '' : `/${item.sport.toLowerCase()}`;
@@ -28,7 +27,6 @@ const PostMeta = ({ item, activeSport }) => {
   );
 };
 
-// THE TRUE UNIVERSAL AD COMPONENT
 const DynamicAd = ({ ad, variant = "inline" }) => {
   if (!ad) return null;
 
@@ -192,7 +190,6 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Fetch Global Ads from WP
   useEffect(() => {
     const fetchAds = async () => {
       const query = `
@@ -238,13 +235,21 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
     return true; 
   });
 
-  // Categorize by Placement
   const headerAds = pageAds.filter(ad => ad.placements?.includes('header'));
   const inlineAds = pageAds.filter(ad => ad.placements?.includes('inline'));
 
   // DATA FILTERING
-  const standardVideos = videos.filter(v => v.type === 'video');
+  let standardVideos = videos.filter(v => v.type === 'video');
   const shorts = videos.filter(v => v.type === 'short');
+
+  // FIX: Truncate the standard videos so that the final grid ALWAYS contains a multiple of 3.
+  // This physically guarantees we never have a standalone video at the bottom!
+  if (standardVideos.length > 14) {
+      const remainder = (standardVideos.length - 14) % 3;
+      if (remainder !== 0) {
+          standardVideos = standardVideos.slice(0, standardVideos.length - remainder);
+      }
+  }
 
   // GRID MAPPING
   const heroVideo = standardVideos.length > 0 ? standardVideos[0] : null;
