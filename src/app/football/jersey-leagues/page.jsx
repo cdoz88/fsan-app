@@ -23,13 +23,11 @@ export default async function JerseyLeaguesPage() {
     const consumerSecret = process.env.GF_CONSUMER_SECRET;
     
     if (consumerKey && consumerSecret) {
-        // Create the Basic Auth token
-        const token = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
         
-        const gfRes = await fetch('https://admin.fsan.com/wp-json/gf/v2/forms/18', { 
+        // FIX: Bypass the WordPress Application Passwords interceptor by passing the keys directly in the URL
+        const gfRes = await fetch(`https://admin.fsan.com/wp-json/gf/v2/forms/18?consumer_key=${consumerKey}&consumer_secret=${consumerSecret}`, { 
             next: { revalidate: 60 },
             headers: { 
-                'Authorization': `Basic ${token}`,
                 'Content-Type': 'application/json' 
             }
         });
@@ -37,7 +35,8 @@ export default async function JerseyLeaguesPage() {
         if (gfRes.ok) {
             gfForm = await gfRes.json();
         } else {
-            console.error("GF Fetch failed with status:", gfRes.status);
+            const errText = await gfRes.text();
+            console.error("GF Fetch failed with status:", gfRes.status, errText);
         }
     } else {
         console.warn("Missing Gravity Forms environment variables in Vercel.");
