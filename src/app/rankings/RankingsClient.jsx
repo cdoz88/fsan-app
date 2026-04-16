@@ -21,21 +21,21 @@ export default function RankingsClient() {
       name: 'Basketball',
       href: '/basketball/coming-soon',
       icon: <BasketballIcon />,
-      colorClass: 'text-blue-500',
-      bgClass: 'bg-blue-500/10',
-      borderClass: 'border-blue-500/30',
-      hoverClass: 'hover:border-blue-500/50 hover:bg-blue-500/20',
-      fillOverride: '[&>svg]:!fill-blue-500'
-    },
-    {
-      name: 'Baseball',
-      href: '/baseball/coming-soon',
-      icon: <BaseballIcon />,
       colorClass: 'text-orange-500',
       bgClass: 'bg-orange-500/10',
       borderClass: 'border-orange-500/30',
       hoverClass: 'hover:border-orange-500/50 hover:bg-orange-500/20',
       fillOverride: '[&>svg]:!fill-orange-500'
+    },
+    {
+      name: 'Baseball',
+      href: '/baseball/coming-soon',
+      icon: <BaseballIcon />,
+      colorClass: 'text-blue-500',
+      bgClass: 'bg-blue-500/10',
+      borderClass: 'border-blue-500/30',
+      hoverClass: 'hover:border-blue-500/50 hover:bg-blue-500/20',
+      fillOverride: '[&>svg]:!fill-blue-500'
     }
   ];
 
