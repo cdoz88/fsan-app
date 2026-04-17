@@ -4,12 +4,11 @@ import Link from 'next/link';
 import Header from '../../../components/Header'; 
 import Sidebar from '../../../components/Sidebar'; 
 import ContentModal from '../../../components/ContentModal'; 
-import { PlayCircle, FileText, Video, User, Activity, LayoutGrid, Zap, Play, ChevronLeft, ChevronRight, ArrowRight, Headphones } from 'lucide-react';
+import { PlayCircle, FileText, Video, User, LayoutGrid, Zap, Play, ChevronLeft, ChevronRight, ArrowRight, Headphones } from 'lucide-react';
 import { themes } from '../../../utils/theme';
 
 export default function PlayerClient({ playerName, rawSlug, espnData, content, proToolsMenu, connectMenu, playerSport = 'All' }) {
   const [selectedItem, setSelectedItem] = useState(null);
-  const [activeTab, setActiveTab] = useState('Content');
   
   // Refs for carousel scrolling
   const articlesRef = useRef(null);
@@ -67,7 +66,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   const renderContentGrid = () => {
     if (content.length === 0) {
       return (
-        <div className="py-20 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-2xl">
+        <div className="py-20 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-2xl w-full">
           No recent coverage found.
         </div>
       );
@@ -177,7 +176,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     };
 
     return (
-      <div className="flex flex-col gap-10">
+      <div className="flex flex-col gap-10 w-full">
         <svg style={{ width: 0, height: 0, position: 'absolute' }} aria-hidden="true" focusable="false">
           <defs>
             <linearGradient id="grey-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop stopColor="#d1d5db" offset="0%" /><stop stopColor="#6b7280" offset="100%" /></linearGradient>
@@ -285,6 +284,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       }
       return tables;
     };
+
     const allTables = findStatTables(espnData);
     const uniqueTables = [];
     const seen = new Set();
@@ -295,12 +295,14 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
         uniqueTables.push(t);
       }
     });
-    if (uniqueTables.length === 0) return <div className="py-16 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-2xl bg-[#111]">Detailed statistics are currently unavailable.</div>;
+
+    // If no stats are available, return nothing instead of a blank box
+    if (uniqueTables.length === 0) return null;
 
     return (
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-8 w-full">
         {uniqueTables.map((table, idx) => (
-          <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
+          <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg w-full">
             <div className="bg-[#222] px-6 py-4 border-b border-gray-800"><h3 className="font-black text-white text-lg tracking-wide uppercase">{table.title}</h3></div>
             <div className="overflow-x-auto">
               {table.type === 'table' ? (
@@ -336,11 +338,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       </div>
     );
   };
-
-  const tabs = [
-    { id: 'Content', icon: <LayoutGrid size={16} /> },
-    { id: 'Statistics', icon: <Activity size={16} /> }
-  ];
 
   return (
     <>
@@ -417,22 +414,9 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
               </div>
             </div>
 
-            <div className="max-w-7xl mx-auto mb-8 border-b border-gray-800 flex justify-between items-end">
-              <div className="flex overflow-x-auto scrollbar-hide gap-2 sm:gap-6">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 pb-4 px-2 whitespace-nowrap transition-all duration-200 border-b-2 font-bold text-sm uppercase tracking-wider
-                      ${activeTab === tab.id ? 'border-white text-white' : 'border-transparent text-gray-500 hover:text-gray-300 hover:border-gray-600'}`}
-                  >
-                    {tab.icon} {tab.id}
-                  </button>
-                ))}
-              </div>
-
+            <div className="max-w-7xl mx-auto mb-8 pb-4 border-b border-gray-800 flex items-center justify-start">
               {/* SEO DIRECTORY BREADCRUMB */}
-              <div className="hidden md:flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-500 pb-4">
+              <div className="hidden md:flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
                 <Link href={`/${playerSport.toLowerCase()}`} className="hover:text-white transition-colors">{playerSport}</Link>
                 <span>/</span>
                 <Link href={`/${playerSport.toLowerCase()}/teams`} className="hover:text-white transition-colors">Teams</Link>
@@ -443,14 +427,13 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                     <span>/</span>
                   </>
                 )}
-                {/* ALSO USE OFFICIAL NAME IN THE BREADCRUMBS */}
                 <span className="text-gray-400 whitespace-nowrap">{espnData?.fullName || espnData?.displayName || playerName}</span>
               </div>
             </div>
 
-            <div className="max-w-7xl mx-auto pb-12">
-              {activeTab === 'Content' && renderContentGrid()}
-              {activeTab === 'Statistics' && renderStatistics()}
+            <div className="max-w-7xl mx-auto pb-12 flex flex-col gap-12 w-full">
+              {renderStatistics()}
+              {renderContentGrid()}
             </div>
           </main>
         </div>
