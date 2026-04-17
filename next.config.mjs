@@ -2,6 +2,12 @@
 const nextConfig = {
   async redirects() {
     return [
+      // NEW: Redirects the old login URL directly to the new WordPress Admin URL
+      {
+        source: '/login',
+        destination: 'https://admin.fsan.com/login',
+        permanent: true,
+      },
       {
         source: '/:sport(football|basketball|baseball|all)',
         destination: '/:sport/home',
