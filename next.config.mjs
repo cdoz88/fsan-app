@@ -1,8 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // FIX: Bypass Vercel's strict image optimization limits and whitelist your external image sources!
+  images: {
+    unoptimized: true,
+    remotePatterns: [
+      { protocol: 'https', hostname: 'admin.fsan.com' },
+      { protocol: 'https', hostname: 'a.espncdn.com' },
+      { protocol: 'https', hostname: 's.yimg.com' },
+      { protocol: 'https', hostname: 'placehold.co' }
+    ],
+  },
   async redirects() {
     return [
-      // NEW: Redirects the old login URL directly to the new WordPress Admin URL
       {
         source: '/login',
         destination: 'https://admin.fsan.com/login',
