@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // FIX: Bypass Vercel's strict image optimization limits and whitelist your external image sources!
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -21,6 +20,13 @@ const nextConfig = {
         source: '/:sport(football|basketball|baseball|all)',
         destination: '/:sport/home',
         permanent: false,
+      },
+      // NEW: Catch-all redirect for your old WordPress article URLs!
+      // The Regex safely ignores your actual app pages and static files to prevent breaking the site.
+      {
+        source: '/:slug((?!api|football|basketball|baseball|all|subscribe|scores|reset-password|player|admin|account|rankings|login)[a-zA-Z0-9-]+)',
+        destination: '/football/articles/:slug',
+        permanent: true,
       }
     ];
   },
