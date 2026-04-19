@@ -11,7 +11,14 @@ const decodeWP = (text) => {
 };
 
 export const formatPost = (post) => {
-  const slugs = post.category_slugs || []; 
+  // FIX: Safely enforce that slugs is ALWAYS an array to prevent the .join() crash
+  let slugs = [];
+  if (Array.isArray(post.category_slugs)) {
+      slugs = post.category_slugs;
+  } else if (typeof post.category_slugs === 'string') {
+      slugs = [post.category_slugs];
+  }
+  
   const slugString = slugs.join(' ').toLowerCase();
   const titleString = (post.title?.rendered || '').toLowerCase();
   
@@ -115,7 +122,6 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
 
     if (targetType === 'all') {
       const endpoints = [
-        // Increased from 15 to 17 here for the home page feeds
         `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=17&page=${currentPage}&sport=${activeSport}&type=articles`,
         `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=17&page=${currentPage}&sport=${activeSport}&type=videos`,
         `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=17&page=${currentPage}&sport=${activeSport}&type=podcasts`,
@@ -139,7 +145,6 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
       rawPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
     } else {
-      // FIX: Increased from 24 to 36 here to ensure we pull enough standard videos on the Archive pages!
       const res = await fetch(`https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=36&page=${currentPage}&sport=${activeSport}&type=${targetType}`, fetchOptions);
       if (!res.ok) throw new Error("API failed");
       totalPages = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);

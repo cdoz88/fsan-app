@@ -21,10 +21,9 @@ const nextConfig = {
         destination: '/:sport/home',
         permanent: false,
       },
-      // NEW: Catch-all redirect for your old WordPress article URLs!
-      // The Regex safely ignores your actual app pages and static files to prevent breaking the site.
+      // FIX: Added 'home' to the protected list so it stops redirecting the homepage!
       {
-        source: '/:slug((?!api|football|basketball|baseball|all|subscribe|scores|reset-password|player|admin|account|rankings|login)[a-zA-Z0-9-]+)',
+        source: '/:slug((?!api|football|basketball|baseball|all|subscribe|scores|reset-password|player|admin|account|rankings|login|home)[a-zA-Z0-9-]+)',
         destination: '/football/articles/:slug',
         permanent: true,
       }
