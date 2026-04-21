@@ -21,9 +21,9 @@ const nextConfig = {
         destination: '/:sport/home',
         permanent: false,
       },
-      // FIX: Added 'home' to the protected list so it stops redirecting the homepage!
+      // FIX: Added articles, videos, podcasts, search, and teams to the protected list!
       {
-        source: '/:slug((?!api|football|basketball|baseball|all|subscribe|scores|reset-password|player|admin|account|rankings|login|home)[a-zA-Z0-9-]+)',
+        source: '/:slug((?!api|football|basketball|baseball|all|subscribe|scores|reset-password|player|admin|account|rankings|login|home|articles|videos|podcasts|search|teams)[a-zA-Z0-9-]+)',
         destination: '/football/articles/:slug',
         permanent: true,
       }
