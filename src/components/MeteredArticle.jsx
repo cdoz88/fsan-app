@@ -11,12 +11,6 @@ export default function MeteredArticle({ articleId, isUserLoggedIn, openAuth, ch
   useEffect(() => {
     setIsClient(true);
     
-    // If they are logged in, bypass everything
-    if (isUserLoggedIn) {
-      setIsExpanded(true);
-      return;
-    }
-
     // 1. Fetch tracking data from local storage
     const storedData = localStorage.getItem('fsan_metered_wall');
     const now = new Date().getTime();
@@ -34,15 +28,18 @@ export default function MeteredArticle({ articleId, isUserLoggedIn, openAuth, ch
       localStorage.setItem('fsan_metered_wall', JSON.stringify(tracker));
     }
 
-    // 3. Evaluate their status
-    const remaining = Math.max(0, 2 - tracker.reads);
-    setReadsRemaining(remaining);
-
-    // If they already unlocked THIS specific article, let them keep reading it
+    // 3. If they already unlocked THIS specific article, let them keep reading it on refresh
     if (tracker.unlockedArticles.includes(articleId)) {
       setIsExpanded(true);
-    } else if (remaining === 0) {
-      setHasHitLimit(true);
+    } 
+    
+    // 4. Only calculate strict limits if the user is NOT logged in
+    if (!isUserLoggedIn) {
+      const remaining = Math.max(0, 2 - tracker.reads);
+      setReadsRemaining(remaining);
+      if (remaining === 0 && !tracker.unlockedArticles.includes(articleId)) {
+        setHasHitLimit(true);
+      }
     }
 
   }, [articleId, isUserLoggedIn]);
@@ -51,17 +48,19 @@ export default function MeteredArticle({ articleId, isUserLoggedIn, openAuth, ch
     const storedData = localStorage.getItem('fsan_metered_wall');
     let tracker = storedData ? JSON.parse(storedData) : { reads: 0, resetTime: new Date().getTime() + (7 * 24 * 60 * 60 * 1000), unlockedArticles: [] };
 
-    // Deduct a read and save the article ID so they aren't charged twice if they refresh
-    tracker.reads += 1;
+    // Only deduct a read from their quota if they are a guest
+    if (!isUserLoggedIn) {
+      tracker.reads += 1;
+      setReadsRemaining(Math.max(0, 2 - tracker.reads));
+    }
+    
+    // Always save that they clicked this specific article so it stays open on refresh
     tracker.unlockedArticles.push(articleId);
     localStorage.setItem('fsan_metered_wall', JSON.stringify(tracker));
 
-    setReadsRemaining(Math.max(0, 2 - tracker.reads));
     setIsExpanded(true);
 
-    // --- QUALITY VIEW TRACKING PING ---
-    // This silently pings your WordPress backend to log a "Quality View" 
-    // Replace the URL with the actual REST API endpoint your Writer's Hub uses!
+    // --- QUALITY VIEW TRACKING PING (Now fires for ALL users!) ---
     try {
       fetch('https://admin.fsan.com/wp-json/fsan/v1/quality-view', {
         method: 'POST',
@@ -81,9 +80,7 @@ export default function MeteredArticle({ articleId, isUserLoggedIn, openAuth, ch
   return (
     <div className="relative w-full flex-1 flex flex-col mt-4">
       
-      {/* FIX: Changed max-h-[500px] to max-h-[800px] to show double the content! */}
       <div className={`relative transition-all duration-700 overflow-hidden ${isExpanded ? 'max-h-none' : 'max-h-[800px]'}`}>
-        {/* We render your beautifully formatted WordPress HTML inside here */}
         {children}
         
         {/* CSS Fade Out Gradient */}
@@ -92,7 +89,7 @@ export default function MeteredArticle({ articleId, isUserLoggedIn, openAuth, ch
         )}
       </div>
 
-      {/* METERED PAYWALL UI */}
+      {/* METERED PAYWALL UI (Shown to everyone until clicked) */}
       {!isExpanded && !hasHitLimit && (
         <div className="relative z-20 -mt-8 flex flex-col items-center justify-center p-6 bg-[#1a1a1a] border border-gray-800 rounded-2xl shadow-2xl max-w-2xl mx-auto w-full text-center">
           
@@ -104,19 +101,28 @@ export default function MeteredArticle({ articleId, isUserLoggedIn, openAuth, ch
             </button>
           </div>
           
-          <div className="flex items-center gap-2 text-sm text-gray-400 font-bold mb-2">
-            <Unlock size={16} className="text-green-500" />
-            <span>You have {readsRemaining} free {readsRemaining === 1 ? 'article' : 'articles'} remaining this week.</span>
-          </div>
-          
-          <p className="text-xs text-gray-500 font-bold">
-            Want to read without limits? <button onClick={() => openAuth('subscribe')} className="text-red-500 hover:text-red-400 underline transition-colors uppercase tracking-widest ml-1">Create a free account</button>
-          </p>
+          {/* Show sales pitch to guests, show a thank you to logged-in users */}
+          {!isUserLoggedIn ? (
+            <>
+              <div className="flex items-center gap-2 text-sm text-gray-400 font-bold mb-2">
+                <Unlock size={16} className="text-green-500" />
+                <span>You have {readsRemaining} free {readsRemaining === 1 ? 'article' : 'articles'} remaining this week.</span>
+              </div>
+              <p className="text-xs text-gray-500 font-bold">
+                Want to read without limits? <button onClick={() => openAuth('subscribe')} className="text-red-500 hover:text-red-400 underline transition-colors uppercase tracking-widest ml-1">Create a free account</button>
+              </p>
+            </>
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-gray-400 font-bold">
+              <Unlock size={16} className="text-[#1b75bb]" />
+              <span>Thank you for being a registered member!</span>
+            </div>
+          )}
         </div>
       )}
 
-      {/* HARD PAYWALL UI (0 Reads Remaining) */}
-      {!isExpanded && hasHitLimit && (
+      {/* HARD PAYWALL UI (0 Reads Remaining - Only guests will ever see this) */}
+      {!isExpanded && hasHitLimit && !isUserLoggedIn && (
         <div className="relative z-20 -mt-10 flex flex-col items-center justify-center p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] max-w-2xl mx-auto w-full shadow-2xl">
           <div className="bg-[#1a1a1a] p-8 rounded-[22px] text-center w-full h-full flex flex-col items-center justify-center">
             <div className="w-16 h-16 bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mb-4 border border-red-500/30">
