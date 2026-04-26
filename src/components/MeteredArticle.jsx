@@ -58,6 +58,21 @@ export default function MeteredArticle({ articleId, isUserLoggedIn, openAuth, ch
 
     setReadsRemaining(Math.max(0, 2 - tracker.reads));
     setIsExpanded(true);
+
+    // --- QUALITY VIEW TRACKING PING ---
+    // This silently pings your WordPress backend to log a "Quality View" 
+    // Replace the URL with the actual REST API endpoint your Writer's Hub uses!
+    try {
+      fetch('https://admin.fsan.com/wp-json/fsan/v1/quality-view', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ article_id: articleId }),
+      });
+    } catch (error) {
+      console.warn("Failed to log quality view tracking");
+    }
   };
 
   // Don't render the wall until the client has checked local storage (prevents layout shift)
@@ -66,7 +81,8 @@ export default function MeteredArticle({ articleId, isUserLoggedIn, openAuth, ch
   return (
     <div className="relative w-full flex-1 flex flex-col mt-4">
       
-      <div className={`relative transition-all duration-700 overflow-hidden ${isExpanded ? 'max-h-none' : 'max-h-[500px]'}`}>
+      {/* FIX: Changed max-h-[500px] to max-h-[800px] to show double the content! */}
+      <div className={`relative transition-all duration-700 overflow-hidden ${isExpanded ? 'max-h-none' : 'max-h-[800px]'}`}>
         {/* We render your beautifully formatted WordPress HTML inside here */}
         {children}
         
@@ -80,7 +96,6 @@ export default function MeteredArticle({ articleId, isUserLoggedIn, openAuth, ch
       {!isExpanded && !hasHitLimit && (
         <div className="relative z-20 -mt-8 flex flex-col items-center justify-center p-6 bg-[#1a1a1a] border border-gray-800 rounded-2xl shadow-2xl max-w-2xl mx-auto w-full text-center">
           
-          {/* UPDATED BUTTON WITH BRANDED GRADIENT BORDER */}
           <div className="p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] mb-4 w-full sm:w-auto hover:scale-[1.02] transition-transform shadow-lg cursor-pointer" onClick={handleReadMore}>
             <button 
               className="w-full px-8 py-4 bg-[#111] hover:bg-black text-white font-black uppercase tracking-widest rounded-[10px] flex items-center justify-center gap-2 transition-colors"
