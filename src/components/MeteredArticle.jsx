@@ -79,12 +79,15 @@ export default function MeteredArticle({ articleId, isUserLoggedIn, openAuth, ch
       {/* METERED PAYWALL UI */}
       {!isExpanded && !hasHitLimit && (
         <div className="relative z-20 -mt-8 flex flex-col items-center justify-center p-6 bg-[#1a1a1a] border border-gray-800 rounded-2xl shadow-2xl max-w-2xl mx-auto w-full text-center">
-          <button 
-            onClick={handleReadMore}
-            className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 mb-4"
-          >
-            Read Full Article <ChevronDown size={18} />
-          </button>
+          
+          {/* UPDATED BUTTON WITH BRANDED GRADIENT BORDER */}
+          <div className="p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] mb-4 w-full sm:w-auto hover:scale-[1.02] transition-transform shadow-lg cursor-pointer" onClick={handleReadMore}>
+            <button 
+              className="w-full px-8 py-4 bg-[#111] hover:bg-black text-white font-black uppercase tracking-widest rounded-[10px] flex items-center justify-center gap-2 transition-colors"
+            >
+              Continue Reading <ChevronDown size={18} />
+            </button>
+          </div>
           
           <div className="flex items-center gap-2 text-sm text-gray-400 font-bold mb-2">
             <Unlock size={16} className="text-green-500" />
