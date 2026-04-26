@@ -1,13 +1,12 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { Lock, Unlock, ChevronDown } from 'lucide-react';
 
-export default function MeteredArticle({ content, articleId, isUserLoggedIn }) {
+export default function MeteredArticle({ articleId, isUserLoggedIn, openAuth, children }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [readsRemaining, setReadsRemaining] = useState(2);
   const [hasHitLimit, setHasHitLimit] = useState(false);
-  const [isClient, setIsClient] = useState(false); // Prevents Next.js hydration mismatch
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -62,29 +61,24 @@ export default function MeteredArticle({ content, articleId, isUserLoggedIn }) {
   };
 
   // Don't render the wall until the client has checked local storage (prevents layout shift)
-  if (!isClient) return <div className="animate-pulse h-96 bg-gray-900 rounded-xl mt-8"></div>;
+  if (!isClient) return <div className="animate-pulse h-96 bg-gray-900 rounded-xl mt-8 w-full"></div>;
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full flex-1 flex flex-col mt-4">
       
-      {/* ARTICLE CONTENT */}
-      <div 
-        className={`relative transition-all duration-700 overflow-hidden ${isExpanded ? 'max-h-none' : 'max-h-[400px]'}`}
-      >
-        <div 
-          className="article-body text-gray-300 leading-relaxed space-y-6"
-          dangerouslySetInnerHTML={{ __html: content }} 
-        />
+      <div className={`relative transition-all duration-700 overflow-hidden ${isExpanded ? 'max-h-none' : 'max-h-[500px]'}`}>
+        {/* We render your beautifully formatted WordPress HTML inside here */}
+        {children}
         
         {/* CSS Fade Out Gradient */}
         {!isExpanded && (
-          <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-[#121212] via-[#121212]/80 to-transparent z-10 pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-[#121212] via-[#121212]/90 to-transparent z-10 pointer-events-none"></div>
         )}
       </div>
 
       {/* METERED PAYWALL UI */}
       {!isExpanded && !hasHitLimit && (
-        <div className="relative z-20 -mt-16 flex flex-col items-center justify-center p-6 bg-[#1a1a1a] border border-gray-800 rounded-2xl shadow-2xl max-w-2xl mx-auto text-center">
+        <div className="relative z-20 -mt-8 flex flex-col items-center justify-center p-6 bg-[#1a1a1a] border border-gray-800 rounded-2xl shadow-2xl max-w-2xl mx-auto w-full text-center">
           <button 
             onClick={handleReadMore}
             className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 mb-4"
@@ -97,30 +91,32 @@ export default function MeteredArticle({ content, articleId, isUserLoggedIn }) {
             <span>You have {readsRemaining} free {readsRemaining === 1 ? 'article' : 'articles'} remaining this week.</span>
           </div>
           
-          <p className="text-xs text-gray-500">
-            Want to read without limits? <Link href="/login" className="text-red-500 hover:text-red-400 underline transition-colors">Create a free account</Link> to unlock all standard articles.
+          <p className="text-xs text-gray-500 font-bold">
+            Want to read without limits? <button onClick={() => openAuth('subscribe')} className="text-red-500 hover:text-red-400 underline transition-colors uppercase tracking-widest ml-1">Create a free account</button>
           </p>
         </div>
       )}
 
       {/* HARD PAYWALL UI (0 Reads Remaining) */}
       {!isExpanded && hasHitLimit && (
-        <div className="relative z-20 -mt-16 flex flex-col items-center justify-center p-8 bg-gradient-to-b from-[#1a1a1a] to-[#111] border border-red-900/50 rounded-2xl shadow-2xl max-w-2xl mx-auto text-center">
-          <div className="w-16 h-16 bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mb-4 border border-red-500/30">
-            <Lock size={28} />
-          </div>
-          <h3 className="text-2xl font-black text-white uppercase tracking-wide mb-2">Weekly Limit Reached</h3>
-          <p className="text-gray-400 text-sm mb-8 max-w-md">
-            You've read your 2 free articles for the week! Create a free account today to instantly unlock unlimited access to all of our standard content.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-            <Link href="/login" className="px-8 py-3.5 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg text-sm">
-              Create Free Account
-            </Link>
-            <Link href="/login" className="px-8 py-3.5 bg-[#111] border border-gray-700 hover:bg-gray-800 text-white font-bold uppercase tracking-widest rounded-xl transition-all shadow-inner text-sm">
-              Log In
-            </Link>
+        <div className="relative z-20 -mt-10 flex flex-col items-center justify-center p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] max-w-2xl mx-auto w-full shadow-2xl">
+          <div className="bg-[#1a1a1a] p-8 rounded-[22px] text-center w-full h-full flex flex-col items-center justify-center">
+            <div className="w-16 h-16 bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mb-4 border border-red-500/30">
+              <Lock size={28} />
+            </div>
+            <h3 className="text-2xl font-black text-white uppercase tracking-wide mb-2">Weekly Limit Reached</h3>
+            <p className="text-gray-400 text-sm mb-8 max-w-md">
+              You've read your 2 free articles for the week! Create a free account today to instantly unlock unlimited access to all of our standard content.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 w-full justify-center mb-4">
+              <button onClick={() => openAuth('subscribe')} className="px-8 py-3.5 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg text-sm flex-1">
+                Create Free Account
+              </button>
+              <button onClick={() => openAuth('login')} className="px-8 py-3.5 bg-[#111] border border-gray-700 hover:bg-gray-800 text-white font-bold uppercase tracking-widest rounded-xl transition-all shadow-inner text-sm flex-1">
+                Log In
+              </button>
+            </div>
           </div>
         </div>
       )}

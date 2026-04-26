@@ -5,6 +5,7 @@ import { Facebook, XIcon, Reddit } from './Icons.jsx';
 import { themes } from '../utils/theme.js';
 import { useSession } from 'next-auth/react';
 import AuthModal from './AuthModal';
+import MeteredArticle from './MeteredArticle';
 
 const ShareButtons = ({ handleShare, handleCopy, copied, btnSize = "w-8 h-8", iconSize = 14 }) => (
   <div className="flex gap-2">
@@ -101,7 +102,6 @@ const ArticleContent = React.memo(function ArticleContent({ content, sportThemeH
           const playerName = link.textContent.trim();
           if (!playerName) return;
 
-          // NEW: Removes suffixes, apostrophes, and periods before replacing spaces
           const slug = playerName.toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
           
           if (!seenPlayers.has(slug)) {
@@ -435,8 +435,6 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
     );
   }
 
-  const showGating = !isAuthed && authStatus === 'unauthenticated';
-
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="w-full h-64 md:h-96 bg-gray-800 relative overflow-hidden shrink-0">
@@ -464,37 +462,11 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
         </div>
         
         <div className="relative flex-1" key={`article-auth-${isAuthed}`}>
-          <div className={`${showGating ? 'max-h-[1000px] overflow-hidden' : ''}`}>
-             <ArticleContent content={selectedItem.content} sportThemeHex={themes[selectedItem.sport]?.hex || '#ffffff'} />
-          </div>
-          
-          {showGating && (
-            <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#121212] via-[#121212]/90 to-transparent z-10 pointer-events-none" />
-          )}
+          <MeteredArticle articleId={selectedItem.id} isUserLoggedIn={isAuthed} openAuth={openAuth}>
+            <ArticleContent content={selectedItem.content} sportThemeHex={themes[selectedItem.sport]?.hex || '#ffffff'} />
+          </MeteredArticle>
         </div>
 
-        {showGating && (
-          <div className="mt-2 pb-8 flex flex-col items-center justify-center relative z-20 animate-in fade-in slide-in-from-bottom-8 duration-500">
-            <div className="p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] max-w-md w-full shadow-2xl">
-              <div className="bg-[#1a1a1a] p-8 rounded-[22px] text-center w-full h-full">
-                <div className="w-12 h-12 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Lock size={24} className="text-red-500" />
-                </div>
-                <h3 className="text-2xl font-black text-white uppercase tracking-wider mb-2">Keep Reading</h3>
-                <p className="text-gray-400 text-sm mb-6 leading-relaxed">Create a free account to read the rest of this article and get the advice you need to win your league.</p>
-                <button 
-                  onClick={() => openAuth('subscribe')} 
-                  className="w-full bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all transform hover:scale-[1.02] mb-4 text-sm"
-                >
-                  Create Free Account
-                </button>
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">
-                  Already have an account? <button onClick={() => openAuth('login')} className="text-white hover:text-gray-300 transition-colors ml-1">Log In</button>
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
