@@ -80,7 +80,7 @@ export default function MeteredArticle({ articleId, isUserLoggedIn, openAuth, ch
   return (
     <div className="relative w-full flex-1 flex flex-col mt-4">
       
-      <div className={`relative transition-all duration-700 overflow-hidden ${isExpanded ? 'max-h-none' : 'max-h-[800px]'}`}>
+      <div className={`relative transition-all duration-700 overflow-hidden ${isExpanded ? 'max-h-none' : 'max-h-[1200px]'}`}>
         {children}
         
         {/* CSS Fade Out Gradient */}
