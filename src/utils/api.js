@@ -11,7 +11,6 @@ const decodeWP = (text) => {
 };
 
 export const formatPost = (post) => {
-  // FIX: Safely enforce that slugs is ALWAYS an array to prevent the .join() crash
   let slugs = [];
   if (Array.isArray(post.category_slugs)) {
       slugs = post.category_slugs;
@@ -161,16 +160,23 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
 export async function fetchGraphQL(query, variables = {}) {
   const WP_GRAPHQL_URL = 'https://admin.fsan.com/graphql';
 
+  // FIX: Convert the GraphQL query and variables into URL parameters for a GET request
+  const queryParams = new URLSearchParams({
+    query: query.trim(), // Trim whitespace to keep URLs clean
+  });
+  
+  // Only append variables if they exist and aren't empty
+  if (Object.keys(variables).length > 0) {
+    queryParams.append('variables', JSON.stringify(variables));
+  }
+
   try {
-    const res = await fetch(WP_GRAPHQL_URL, {
-      method: 'POST',
+    // We now send a GET request with the query safely tucked into the URL string
+    const res = await fetch(`${WP_GRAPHQL_URL}?${queryParams.toString()}`, {
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        query,
-        variables,
-      }),
       next: { revalidate: 60 }, 
     });
 
