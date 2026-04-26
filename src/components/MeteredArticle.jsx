@@ -2,11 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, Unlock, ChevronDown } from 'lucide-react';
 
-export default function MeteredArticle({ articleId, isUserLoggedIn, openAuth, children }) {
+export default function MeteredArticle({ articleId, isUserLoggedIn, userTier = 'registered', openAuth, children }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [readsRemaining, setReadsRemaining] = useState(2);
   const [hasHitLimit, setHasHitLimit] = useState(false);
   const [isClient, setIsClient] = useState(false);
+
+  // Format the tier nicely for the UI (e.g., 'pro-plus' becomes 'Pro+')
+  const displayTier = userTier.toLowerCase() === 'pro-plus' ? 'Pro+' : 
+                      userTier.toLowerCase() === 'pro' ? 'Pro' : 
+                      userTier.toLowerCase() === 'free' ? 'Registered' : 
+                      userTier.charAt(0).toUpperCase() + userTier.slice(1);
 
   useEffect(() => {
     setIsClient(true);
@@ -60,7 +66,7 @@ export default function MeteredArticle({ articleId, isUserLoggedIn, openAuth, ch
 
     setIsExpanded(true);
 
-    // --- QUALITY VIEW TRACKING PING (Now fires for ALL users!) ---
+    // --- QUALITY VIEW TRACKING PING ---
     try {
       fetch('https://admin.fsan.com/wp-json/fsan/v1/quality-view', {
         method: 'POST',
@@ -80,6 +86,7 @@ export default function MeteredArticle({ articleId, isUserLoggedIn, openAuth, ch
   return (
     <div className="relative w-full flex-1 flex flex-col mt-4">
       
+      {/* 1200px View Height */}
       <div className={`relative transition-all duration-700 overflow-hidden ${isExpanded ? 'max-h-none' : 'max-h-[1200px]'}`}>
         {children}
         
@@ -114,8 +121,8 @@ export default function MeteredArticle({ articleId, isUserLoggedIn, openAuth, ch
             </>
           ) : (
             <div className="flex items-center gap-2 text-sm text-gray-400 font-bold">
-              <Unlock size={16} className="text-[#1b75bb]" />
-              <span>Thank you for being a registered member!</span>
+              <Unlock size={16} className="text-green-500" />
+              <span>Keep enjoying unlimited articles as a {displayTier} member.</span>
             </div>
           )}
         </div>
