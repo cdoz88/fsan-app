@@ -1,16 +1,61 @@
 import ClientManager from '../../../../components/ClientManager';
-import { fetchPosts, getMenuBySlug } from '../../../../utils/api';
-import { cache } from 'react';
+import { fetchPosts, getMenuBySlug, formatPost } from '../../../../utils/api';
 
-// Highly optimized, memoized function to locate an article, even if it's buried in the archives
-const getPostData = cache(async (sport, view, slug) => {
+// Force Vercel to dynamically process direct links so they never get stuck in a frozen state
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }) {
+  const { sport, view, slug } = await params;
   const targetType = view === 'home' ? 'all' : (view === 'podcasts' ? 'shows' : view);
   
-  const { posts: initialPosts, totalPages } = await fetchPosts(sport, targetType, 1);
+  let { posts: initialPosts } = await fetchPosts(sport, targetType, 1);
   let selectedPost = initialPosts.find(p => p.slug === slug);
 
-  // If the article isn't on Page 1, parallel-search up to 15 pages of archives!
-  // Thanks to WPGraphQL Smart Cache, this fetches instantly without hurting the server.
+  // CACHE-BUSTING FALLBACK: If Vercel's memory is stale, force a fresh database check
+  if (!selectedPost) {
+    try {
+      const res = await fetch(`https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=36&page=1&sport=${sport}&type=${targetType}&bypass=${Date.now()}`, { cache: 'no-store' });
+      const freshRaw = await res.json();
+      const freshPosts = freshRaw.map(formatPost);
+      selectedPost = freshPosts.find(p => p.slug === slug);
+    } catch (e) {}
+  }
+
+  return {
+    title: selectedPost ? `${selectedPost.title} | FSAN` : 'Article Not Found',
+    openGraph: {
+      images: [selectedPost?.imageUrl].filter(Boolean),
+    },
+  };
+}
+
+export default async function SingleContentPage({ params }) {
+  const { sport, view, slug } = await params;
+  const targetType = view === 'home' ? 'all' : (view === 'podcasts' ? 'shows' : view);
+  
+  let { posts: initialPosts, totalPages } = await fetchPosts(sport, targetType, 1);
+  let selectedPost = initialPosts.find(p => p.slug === slug);
+
+  // 1. CACHE-BUSTING FALLBACK
+  // If the article isn't in the cached feed, Vercel's cache is stale. Fetch live data immediately!
+  if (!selectedPost) {
+    try {
+       const res = await fetch(`https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=36&page=1&sport=${sport}&type=${targetType}&bypass=${Date.now()}`, { cache: 'no-store' });
+       if (res.ok) {
+         const freshRaw = await res.json();
+         const freshPosts = freshRaw.map(formatPost);
+         selectedPost = freshPosts.find(p => p.slug === slug);
+         
+         if (selectedPost) {
+            // We found the new article! Replace the stale background feed with the fresh one!
+            initialPosts = freshPosts; 
+         }
+       }
+    } catch(e) {}
+  }
+
+  // 2. PAGINATION ARCHIVE FALLBACK
+  // If it's STILL not found, it must be an older article. Scan the archives!
   if (!selectedPost && totalPages > 1) {
     const pagesToFetch = Array.from({ length: Math.min(totalPages - 1, 15) }, (_, i) => i + 2);
     const results = await Promise.all(pagesToFetch.map(page => fetchPosts(sport, targetType, page)));
@@ -23,34 +68,13 @@ const getPostData = cache(async (sport, view, slug) => {
       }
     }
   }
-  
-  return { initialPosts, totalPages, selectedPost };
-});
 
-export async function generateMetadata({ params }) {
-  const { sport, view, slug } = await params;
-  const { selectedPost } = await getPostData(sport, view, slug);
-  
-  return {
-    title: selectedPost ? `${selectedPost.title} | FSAN` : 'Article Not Found',
-    openGraph: {
-      images: [selectedPost?.imageUrl].filter(Boolean),
-    },
-  };
-}
-
-export default async function SingleContentPage({ params }) {
-  const { sport, view, slug } = await params;
-  
-  const { initialPosts, totalPages, selectedPost } = await getPostData(sport, view, slug);
-
-  // Ensure the found post is injected into the feed so the ClientManager can render it!
+  // Ensure the found post is injected into the feed so the UI can render it
   let finalPosts = [...initialPosts];
   if (selectedPost && !initialPosts.find(p => p.id === selectedPost.id)) {
     finalPosts = [selectedPost, ...initialPosts];
   }
 
-  // FETCH WORDPRESS MENUS DYNAMICALLY BASED ON CURRENT SPORT
   const proToolsMenu = await getMenuBySlug(`pro-tools-${sport.toLowerCase()}`);
   const connectMenu = await getMenuBySlug(`connect-${sport.toLowerCase()}`);
 
