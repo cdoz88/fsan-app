@@ -97,7 +97,11 @@ export default function AdsDashboard() {
     `;
     const adRes = await fetch('https://admin.fsan.com/graphql', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        // FIX: Attached the Admin Auth token so WordPress bypasses the frozen Object Cache!
+        'Authorization': `Bearer ${session?.user?.token}`
+      },
       body: JSON.stringify({ query: adQuery }),
       cache: 'no-store'
     });
@@ -137,7 +141,6 @@ export default function AdsDashboard() {
     e.preventDefault();
     setIsSaving(true);
     
-    // FIX: Reverted all IDs back to String format so WordPress will accept them!
     const query = `
       mutation SaveGlobalAd(
         $id: String, $headline: String, $subtext: String, $buttonText: String, 
@@ -152,7 +155,6 @@ export default function AdsDashboard() {
       }
     `;
 
-    // The __typename cleaner remains to prevent other 400 errors
     const { __typename, ...cleanAdData } = adData;
     if (!cleanAdData.id) {
       delete cleanAdData.id;
@@ -184,7 +186,6 @@ export default function AdsDashboard() {
     if (!confirm("Are you sure you want to permanently delete this ad?")) return;
     setIsDeleting(true);
     
-    // FIX: Reverted $id back to String!
     const query = `mutation DeleteAd($id: String!) { deleteGlobalAd(input: { clientMutationId: "delete_ad", id: $id }) { success } }`;
     try {
       const res = await fetch('https://admin.fsan.com/graphql', {
@@ -220,7 +221,6 @@ export default function AdsDashboard() {
 
     const newIds = newAdsList.map(ad => ad.id);
     
-    // FIX: Reverted $ids back to [String]
     const query = `mutation ReorderAds($ids: [String]) { reorderGlobalAds(input: { clientMutationId: "reorder_ads", ids: $ids }) { success } }`;
     
     try {
@@ -355,7 +355,6 @@ export default function AdsDashboard() {
                            <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Pages: {Array.isArray(ad.pages) ? ad.pages.join(', ') : (ad.pages || 'None')}</span>
                         </div>
                         <div className="flex items-center gap-4">
-                           {/* REORDER ARROWS */}
                            <div className="flex gap-1 bg-gray-900 border border-gray-700 rounded-lg p-1">
                              <button onClick={() => moveAd(index, -1)} disabled={index === 0 || isReordering} className="p-1 text-gray-400 hover:text-white disabled:opacity-30 transition-colors"><ArrowUp size={16} /></button>
                              <button onClick={() => moveAd(index, 1)} disabled={index === adsList.length - 1 || isReordering} className="p-1 text-gray-400 hover:text-white disabled:opacity-30 transition-colors"><ArrowDown size={16} /></button>
