@@ -137,9 +137,10 @@ export default function AdsDashboard() {
     e.preventDefault();
     setIsSaving(true);
     
+    // FIX: Reverted all IDs back to String format so WordPress will accept them!
     const query = `
       mutation SaveGlobalAd(
-        $id: ID, $headline: String, $subtext: String, $buttonText: String, 
+        $id: String, $headline: String, $subtext: String, $buttonText: String, 
         $buttonLink: String, $bgColor: String, $bgColor2: String, $bgGradientType: String,
         $btnColor: String, $btnTextColor: String, $borderColor: String, $pattern: String, $bgImage: String, 
         $fgImage: String, $sport: [String], $pages: [String], $placements: [String], $startDate: String, $endDate: String
@@ -151,6 +152,7 @@ export default function AdsDashboard() {
       }
     `;
 
+    // The __typename cleaner remains to prevent other 400 errors
     const { __typename, ...cleanAdData } = adData;
     if (!cleanAdData.id) {
       delete cleanAdData.id;
@@ -182,7 +184,8 @@ export default function AdsDashboard() {
     if (!confirm("Are you sure you want to permanently delete this ad?")) return;
     setIsDeleting(true);
     
-    const query = `mutation DeleteAd($id: ID!) { deleteGlobalAd(input: { clientMutationId: "delete_ad", id: $id }) { success } }`;
+    // FIX: Reverted $id back to String!
+    const query = `mutation DeleteAd($id: String!) { deleteGlobalAd(input: { clientMutationId: "delete_ad", id: $id }) { success } }`;
     try {
       const res = await fetch('https://admin.fsan.com/graphql', {
         method: 'POST',
@@ -217,7 +220,8 @@ export default function AdsDashboard() {
 
     const newIds = newAdsList.map(ad => ad.id);
     
-    const query = `mutation ReorderAds($ids: [ID]) { reorderGlobalAds(input: { clientMutationId: "reorder_ads", ids: $ids }) { success } }`;
+    // FIX: Reverted $ids back to [String]
+    const query = `mutation ReorderAds($ids: [String]) { reorderGlobalAds(input: { clientMutationId: "reorder_ads", ids: $ids }) { success } }`;
     
     try {
       const res = await fetch('https://admin.fsan.com/graphql', {
@@ -356,7 +360,7 @@ export default function AdsDashboard() {
                              <button onClick={() => moveAd(index, -1)} disabled={index === 0 || isReordering} className="p-1 text-gray-400 hover:text-white disabled:opacity-30 transition-colors"><ArrowUp size={16} /></button>
                              <button onClick={() => moveAd(index, 1)} disabled={index === adsList.length - 1 || isReordering} className="p-1 text-gray-400 hover:text-white disabled:opacity-30 transition-colors"><ArrowDown size={16} /></button>
                            </div>
-                           <div className="w-[1px] h-6 bg-gray-800"></div>
+                           <div className="w-px h-6 bg-gray-800"></div>
                            <button onClick={() => openEditor(ad)} className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"><Edit2 size={16} /></button>
                            <button onClick={() => handleDeleteAd(ad.id)} disabled={isDeleting} className="p-2 bg-red-900/30 hover:bg-red-900/50 text-red-500 rounded-lg transition-colors"><Trash2 size={16} /></button>
                         </div>

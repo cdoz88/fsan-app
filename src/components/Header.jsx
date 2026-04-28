@@ -225,10 +225,13 @@ export default function Header({ activeSport }) {
           ) : session ? (
             <>
               <Link href="/account" className="px-6 text-white hover:text-gray-300 transition-colors flex items-center gap-2 no-underline">
-                {session.user?.image ? (
-                  <img src={session.user.image} alt="Avatar" className="w-6 h-6 rounded-full border border-gray-600" />
+                {/* FIX: Filter out broken Jetpack WP Avatar links and use the clean fallback instead */}
+                {session.user?.image && !session.user.image.includes('wp_user_avatar') ? (
+                  <img src={session.user.image} alt="Avatar" className="w-6 h-6 rounded-full border border-gray-600 object-cover" />
                 ) : (
-                  <User size={16} />
+                  <div className="w-6 h-6 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center shrink-0">
+                    <User size={14} className="text-gray-400" />
+                  </div>
                 )}
                 Hi, {session.user?.name?.split(' ')[0] || 'User'}
               </Link>
@@ -256,7 +259,12 @@ export default function Header({ activeSport }) {
           {session ? (
             <>
               <Link href="/account" className="hover:text-white p-2 transition-colors">
-                {session.user?.image ? <img src={session.user.image} alt="Avatar" className="w-6 h-6 rounded-full border border-gray-600" /> : <User size={22} />}
+                {/* FIX: Filter out broken Jetpack WP Avatar links and use the clean fallback instead */}
+                {session.user?.image && !session.user.image.includes('wp_user_avatar') ? (
+                  <img src={session.user.image} alt="Avatar" className="w-6 h-6 rounded-full border border-gray-600 object-cover" /> 
+                ) : (
+                  <User size={22} />
+                )}
               </Link>
               <button onClick={() => signOut({ callbackUrl: '/home' })} className="hover:text-red-400 p-2 transition-colors"><LogOut size={22} /></button>
             </>
@@ -362,7 +370,6 @@ export default function Header({ activeSport }) {
 
             {/* INLINE SEARCH BAR (Wrapped in Pro+ Gradient Border) */}
             <div className="p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] w-full shadow-[0_0_50px_rgba(0,0,0,0.8)] relative z-20">
-              {/* Removed overflow-hidden so the dropdown menu can escape the container! */}
               <div className="flex items-center bg-[#1e1e1e] rounded-[22px] h-16 md:h-20 w-full">
                 
                 {/* COMPACT SPORT SELECTOR ON LEFT (Icon Only) */}
