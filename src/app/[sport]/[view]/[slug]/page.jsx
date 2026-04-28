@@ -1,15 +1,40 @@
 import ClientManager from '../../../../components/ClientManager';
 import { fetchPosts, getMenuBySlug } from '../../../../utils/api';
+import { cache } from 'react';
+
+// Highly optimized, memoized function to locate an article, even if it's buried in the archives
+const getPostData = cache(async (sport, view, slug) => {
+  const targetType = view === 'home' ? 'all' : (view === 'podcasts' ? 'shows' : view);
+  
+  const { posts: initialPosts, totalPages } = await fetchPosts(sport, targetType, 1);
+  let selectedPost = initialPosts.find(p => p.slug === slug);
+
+  // If the article isn't on Page 1, parallel-search up to 15 pages of archives!
+  // Thanks to WPGraphQL Smart Cache, this fetches instantly without hurting the server.
+  if (!selectedPost && totalPages > 1) {
+    const pagesToFetch = Array.from({ length: Math.min(totalPages - 1, 15) }, (_, i) => i + 2);
+    const results = await Promise.all(pagesToFetch.map(page => fetchPosts(sport, targetType, page)));
+    
+    for (const res of results) {
+      const found = res.posts.find(p => p.slug === slug);
+      if (found) {
+        selectedPost = found;
+        break;
+      }
+    }
+  }
+  
+  return { initialPosts, totalPages, selectedPost };
+});
 
 export async function generateMetadata({ params }) {
   const { sport, view, slug } = await params;
-  const { posts } = await fetchPosts(sport, view === 'home' ? 'all' : view);
-  const post = posts.find(p => p.slug === slug);
+  const { selectedPost } = await getPostData(sport, view, slug);
   
   return {
-    title: post ? `${post.title} | FSAN` : 'Article Not Found',
+    title: selectedPost ? `${selectedPost.title} | FSAN` : 'Article Not Found',
     openGraph: {
-      images: [post?.imageUrl],
+      images: [selectedPost?.imageUrl].filter(Boolean),
     },
   };
 }
@@ -17,9 +42,13 @@ export async function generateMetadata({ params }) {
 export default async function SingleContentPage({ params }) {
   const { sport, view, slug } = await params;
   
-  const targetType = view === 'home' ? 'all' : (view === 'podcasts' ? 'shows' : view);
-  const { posts, totalPages } = await fetchPosts(sport, targetType, 1);
-  const selectedPost = posts.find(p => p.slug === slug);
+  const { initialPosts, totalPages, selectedPost } = await getPostData(sport, view, slug);
+
+  // Ensure the found post is injected into the feed so the ClientManager can render it!
+  let finalPosts = [...initialPosts];
+  if (selectedPost && !initialPosts.find(p => p.id === selectedPost.id)) {
+    finalPosts = [selectedPost, ...initialPosts];
+  }
 
   // FETCH WORDPRESS MENUS DYNAMICALLY BASED ON CURRENT SPORT
   const proToolsMenu = await getMenuBySlug(`pro-tools-${sport.toLowerCase()}`);
@@ -27,7 +56,7 @@ export default async function SingleContentPage({ params }) {
 
   return (
     <ClientManager 
-      initialPosts={posts} 
+      initialPosts={finalPosts} 
       activeSport={sport.charAt(0).toUpperCase() + sport.slice(1)} 
       currentView={view} 
       initialHasMore={1 < totalPages}
