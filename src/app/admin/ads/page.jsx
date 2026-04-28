@@ -37,7 +37,7 @@ const defaultAdState = {
   fgImage: '',
   sport: ['All'],
   pages: ['home', 'articles', 'videos', 'podcasts'],
-  placements: ['inline'], // Added placements array
+  placements: ['inline'],
   startDate: '',
   endDate: ''
 };
@@ -57,7 +57,6 @@ export default function AdsDashboard() {
   const [adData, setAdData] = useState(defaultAdState);
 
   useEffect(() => {
-    // FIX: Updated redirect to clean /home URL
     if (status === 'unauthenticated') router.push('/home');
     if (status === 'authenticated' && session?.user?.token) {
       verifyAdminAndFetchAds();
@@ -138,45 +137,70 @@ export default function AdsDashboard() {
     e.preventDefault();
     setIsSaving(true);
     
+    // FIX: Using ID for the id field to match WPGraphQL
     const query = `
       mutation SaveGlobalAd(
-        $id: String, $headline: String, $subtext: String, $buttonText: String, 
+        $id: ID, $headline: String, $subtext: String, $buttonText: String, 
         $buttonLink: String, $bgColor: String, $bgColor2: String, $bgGradientType: String,
         $btnColor: String, $btnTextColor: String, $borderColor: String, $pattern: String, $bgImage: String, 
         $fgImage: String, $sport: [String], $pages: [String], $placements: [String], $startDate: String, $endDate: String
       ) {
         saveGlobalAd(input: {
+          clientMutationId: "save_ad",
           id: $id, headline: $headline, subtext: $subtext, buttonText: $buttonText, buttonLink: $buttonLink, bgColor: $bgColor, bgColor2: $bgColor2, bgGradientType: $bgGradientType, btnColor: $btnColor, btnTextColor: $btnTextColor, borderColor: $borderColor, pattern: $pattern, bgImage: $bgImage, fgImage: $fgImage, sport: $sport, pages: $pages, placements: $placements, startDate: $startDate, endDate: $endDate
         }) { success }
       }
     `;
 
+    // FIX: Remove __typename to prevent 400 Bad Request error from GraphQL
+    // FIX: Delete empty IDs so WP knows it's a new ad
+    const { __typename, ...cleanAdData } = adData;
+    if (!cleanAdData.id) {
+      delete cleanAdData.id;
+    }
+
     try {
-      await fetch('https://admin.fsan.com/graphql', {
+      const res = await fetch('https://admin.fsan.com/graphql', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.user.token}` },
-        body: JSON.stringify({ query, variables: adData }),
+        body: JSON.stringify({ query, variables: cleanAdData }),
       });
-      await fetchAds();
-      setView('list');
+      const data = await res.json();
+      
+      if (data.errors) {
+        console.error("Save Error:", data.errors);
+        alert(`Error saving ad: ${data.errors[0].message}`);
+      } else {
+        await fetchAds();
+        setView('list');
+      }
     } catch(e) {
-        alert('Network error saving ad.');
+      alert('Network error saving ad.');
     } finally {
-        setIsSaving(false);
+      setIsSaving(false);
     }
   };
 
   const handleDeleteAd = async (id) => {
     if (!confirm("Are you sure you want to permanently delete this ad?")) return;
     setIsDeleting(true);
-    const query = `mutation DeleteAd($id: String!) { deleteGlobalAd(input: { id: $id }) { success } }`;
+    
+    // FIX: Changed $id to ID! and added clientMutationId
+    const query = `mutation DeleteAd($id: ID!) { deleteGlobalAd(input: { clientMutationId: "delete_ad", id: $id }) { success } }`;
     try {
-      await fetch('https://admin.fsan.com/graphql', {
+      const res = await fetch('https://admin.fsan.com/graphql', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.user.token}` },
         body: JSON.stringify({ query, variables: { id } }),
       });
-      await fetchAds();
+      const data = await res.json();
+      
+      if (data.errors) {
+        console.error("Delete Error:", data.errors);
+        alert(`Error deleting ad: ${data.errors[0].message}`);
+      } else {
+        await fetchAds();
+      }
     } catch(e) {
       alert('Error deleting ad.');
     } finally {
@@ -196,14 +220,22 @@ export default function AdsDashboard() {
     setAdsList(newAdsList); 
 
     const newIds = newAdsList.map(ad => ad.id);
-    const query = `mutation ReorderAds($ids: [String]) { reorderGlobalAds(input: { ids: $ids }) { success } }`;
+    
+    // FIX: Changed to [ID] and added clientMutationId
+    const query = `mutation ReorderAds($ids: [ID]) { reorderGlobalAds(input: { clientMutationId: "reorder_ads", ids: $ids }) { success } }`;
     
     try {
-      await fetch('https://admin.fsan.com/graphql', {
+      const res = await fetch('https://admin.fsan.com/graphql', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.user.token}` },
         body: JSON.stringify({ query, variables: { ids: newIds } }),
       });
+      const data = await res.json();
+      if (data.errors) {
+        console.error("Reorder Error:", data.errors);
+        alert(`Error reordering ads: ${data.errors[0].message}`);
+        fetchAds();
+      }
     } catch(e) {
       alert('Error reordering ads.');
       fetchAds(); 
@@ -329,206 +361,4 @@ export default function AdsDashboard() {
                              <button onClick={() => moveAd(index, -1)} disabled={index === 0 || isReordering} className="p-1 text-gray-400 hover:text-white disabled:opacity-30 transition-colors"><ArrowUp size={16} /></button>
                              <button onClick={() => moveAd(index, 1)} disabled={index === adsList.length - 1 || isReordering} className="p-1 text-gray-400 hover:text-white disabled:opacity-30 transition-colors"><ArrowDown size={16} /></button>
                            </div>
-                           <div className="w-px h-6 bg-gray-800"></div>
-                           <button onClick={() => openEditor(ad)} className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"><Edit2 size={16} /></button>
-                           <button onClick={() => handleDeleteAd(ad.id)} disabled={isDeleting} className="p-2 bg-red-900/30 hover:bg-red-900/50 text-red-500 rounded-lg transition-colors"><Trash2 size={16} /></button>
-                        </div>
-                      </div>
-                   </div>
-                 ))
-               )}
-             </div>
-          ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 animate-in slide-in-from-right-8 duration-300">
-              
-              {/* FORM EDITOR */}
-              <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-6 shadow-xl space-y-6">
-                 <div className="flex items-center justify-between border-b border-gray-800 pb-3">
-                   <h3 className="font-bold text-lg flex items-center gap-2"><LayoutTemplate size={20}/> Edit Ad Content</h3>
-                   <button onClick={() => setView('list')} className="text-gray-500 hover:text-white flex items-center gap-1 text-xs uppercase tracking-widest font-bold"><ArrowLeft size={14}/> Back to List</button>
-                 </div>
-                 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   <div>
-                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Headline</label>
-                     <input type="text" name="headline" value={adData.headline} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
-                   </div>
-                   <div>
-                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Subtext</label>
-                     <input type="text" name="subtext" value={adData.subtext} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
-                   </div>
-                   <div>
-                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button Text</label>
-                     <input type="text" name="buttonText" value={adData.buttonText} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
-                   </div>
-                   <div>
-                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button Link URL</label>
-                     <input type="text" name="buttonLink" value={adData.buttonLink} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
-                   </div>
-                 </div>
-
-                 <h3 className="font-bold text-lg border-b border-gray-800 pb-3 pt-4">Design & Media</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <div className="space-y-4">
-                     <div>
-                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Gradient Type</label>
-                       <select name="bgGradientType" value={adData.bgGradientType} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none">
-                         <option value="solid">Solid Color</option>
-                         <option value="linear">Linear Gradient (Left to Right)</option>
-                         <option value="radial">Radial Gradient (Glow)</option>
-                       </select>
-                     </div>
-                     <div className="flex gap-4">
-                       <div className="flex-1">
-                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Color 1</label>
-                         <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
-                           <input type="color" name="bgColor" value={adData.bgColor} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
-                           <input type="text" name="bgColor" value={adData.bgColor} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
-                         </div>
-                       </div>
-                       {adData.bgGradientType !== 'solid' && (
-                         <div className="flex-1">
-                           <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Color 2</label>
-                           <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
-                             <input type="color" name="bgColor2" value={adData.bgColor2} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
-                           <input type="text" name="bgColor2" value={adData.bgColor2} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
-                           </div>
-                         </div>
-                       )}
-                     </div>
-                     <div>
-                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Outer Border Color</label>
-                       <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
-                         <input type="color" name="borderColor" value={adData.borderColor} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
-                         <input type="text" name="borderColor" value={adData.borderColor} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
-                       </div>
-                     </div>
-                   </div>
-
-                   <div className="space-y-4">
-                     <div>
-                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Pattern Overlay</label>
-                       <select name="pattern" value={adData.pattern} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none">
-                         <option value="none">None</option>
-                         <option value="dots">Dots</option>
-                         <option value="lines">Diagonal Lines</option>
-                         <option value="grid">Grid Pattern</option>
-                         <option value="crosshatch">Crosshatch</option>
-                       </select>
-                     </div>
-                     <div className="flex gap-4">
-                       <div className="flex-1">
-                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button BG</label>
-                         <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
-                           <input type="color" name="btnColor" value={adData.btnColor} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
-                           <input type="text" name="btnColor" value={adData.btnColor} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
-                         </div>
-                       </div>
-                       <div className="flex-1">
-                         <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Button Text</label>
-                         <div className="flex items-center gap-2 bg-[#111] border border-gray-700 rounded-lg p-1">
-                           <input type="color" name="btnTextColor" value={adData.btnTextColor} onChange={handleChange} className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0" />
-                           <input type="text" name="btnTextColor" value={adData.btnTextColor} onChange={handleChange} className="w-full bg-transparent text-white text-xs outline-none" />
-                         </div>
-                       </div>
-                     </div>
-                   </div>
-                 </div>
-
-                 <div className="space-y-4 pt-2">
-                   <div>
-                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-2">Background Image URL (Optional) <ImageIcon size={12}/></label>
-                     <input type="text" name="bgImage" value={adData.bgImage} onChange={handleChange} placeholder="Paste WP Media Library URL (https://...)" className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
-                   </div>
-                   <div>
-                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 flex items-center gap-2">Center Foreground / Merch Image URL (Optional) <Shirt size={12}/></label>
-                     <input type="text" name="fgImage" value={adData.fgImage} onChange={handleChange} placeholder="Paste WP Media Library URL (https://...)" className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm focus:border-gray-400 outline-none" />
-                   </div>
-                 </div>
-
-                 <h3 className="font-bold text-lg border-b border-gray-800 pb-3 pt-4">Targeting & Schedule</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <div>
-                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Display Sport</label>
-                     <div className="flex flex-col gap-3 mb-6">
-                       {['All', 'Football', 'Basketball', 'Baseball'].map(s => (
-                         <label key={s} className="flex items-center gap-3 cursor-pointer">
-                           <input 
-                              type="checkbox" 
-                              checked={adData.sport.includes(s)} 
-                              onChange={() => handleSportToggle(s)}
-                              className="w-4 h-4 rounded bg-[#111] border-gray-700 text-red-500 focus:ring-red-500 focus:ring-offset-gray-900"
-                           />
-                           <span className="text-sm font-bold uppercase tracking-widest text-gray-300">{s}</span>
-                         </label>
-                       ))}
-                     </div>
-
-                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Display Pages</label>
-                     <div className="flex flex-col gap-3">
-                       {['home', 'articles', 'videos', 'podcasts'].map(page => (
-                         <label key={page} className="flex items-center gap-3 cursor-pointer">
-                           <input 
-                              type="checkbox" 
-                              checked={adData.pages.includes(page)} 
-                              onChange={() => handlePageToggle(page)}
-                              className="w-4 h-4 rounded bg-[#111] border-gray-700 text-red-500 focus:ring-red-500 focus:ring-offset-gray-900"
-                           />
-                           <span className="text-sm font-bold uppercase tracking-widest text-gray-300">{page}</span>
-                         </label>
-                       ))}
-                     </div>
-                   </div>
-
-                   <div className="flex flex-col gap-4">
-                     <div>
-                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Placements</label>
-                       <div className="flex flex-col gap-3 mb-6">
-                         {['inline', 'header', 'content-popup'].map(p => (
-                           <label key={p} className="flex items-center gap-3 cursor-pointer">
-                             <input 
-                                type="checkbox" 
-                                checked={adData.placements?.includes(p)} 
-                                onChange={() => handlePlacementToggle(p)}
-                                className="w-4 h-4 rounded bg-[#111] border-gray-700 text-red-500 focus:ring-red-500 focus:ring-offset-gray-900"
-                             />
-                             <span className="text-sm font-bold uppercase tracking-widest text-gray-300">
-                               {p === 'content-popup' ? 'Content Popup' : p.charAt(0).toUpperCase() + p.slice(1)}
-                             </span>
-                           </label>
-                         ))}
-                       </div>
-                     </div>
-                     <div>
-                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Start Date</label>
-                       <input type="date" name="startDate" value={adData.startDate} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none" style={{ colorScheme: 'dark' }} />
-                     </div>
-                     <div>
-                       <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">End Date</label>
-                       <input type="date" name="endDate" value={adData.endDate} onChange={handleChange} className="w-full bg-[#111] border border-gray-700 text-white rounded-lg py-2.5 px-4 text-sm outline-none" style={{ colorScheme: 'dark' }} />
-                     </div>
-                   </div>
-                 </div>
-                 
-                 <div className="pt-6 border-t border-gray-800">
-                    <button onClick={handleSaveAd} disabled={isSaving} className="w-full bg-white text-black px-6 py-4 rounded-xl font-black uppercase tracking-widest text-sm flex justify-center items-center gap-2 hover:bg-gray-200 transition-colors shadow-lg">
-                        {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} Save & Deploy Ad
-                    </button>
-                 </div>
-              </div>
-
-              {/* LIVE PREVIEW COLUMN */}
-              <div className="flex flex-col gap-6">
-                <div className="sticky top-24">
-                  <h3 className="font-bold text-sm uppercase tracking-widest text-gray-500 mb-4">Live Preview</h3>
-                  <LivePreviewAd ad={adData} />
-                </div>
-              </div>
-
-            </div>
-          )}
-        </div>
-      </div>
-    </>
-  );
-}
+                           <div className="w-
