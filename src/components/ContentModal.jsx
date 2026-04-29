@@ -18,7 +18,8 @@ const ShareButtons = ({ handleShare, handleCopy, copied, btnSize = "w-8 h-8", ic
   </div>
 );
 
-const DynamicAd = ({ ad }) => {
+// UPDATED: Now uses the responsive DynamicAd matching the rest of the site
+const DynamicAd = ({ ad, variant = "inline" }) => {
   if (!ad) return null;
 
   let patternOverlay = '';
@@ -32,36 +33,76 @@ const DynamicAd = ({ ad }) => {
   else if (ad.bgGradientType === 'linear') bgStyles.backgroundImage = `linear-gradient(to right, ${ad.bgColor}, ${ad.bgColor2 || '#000000'})`;
   else if (ad.bgGradientType === 'radial') bgStyles.backgroundImage = `radial-gradient(ellipse at top, ${ad.bgColor}80, ${ad.bgColor2 || '#111'}, #000000)`;
 
+  const isHeader = variant === 'header';
+  const isSidebar = variant === 'sidebar'; 
+
   const renderButton = (extraClass) => (
-    <div className={`px-3 py-2 sm:px-5 sm:py-2.5 rounded-full sm:rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
-       {ad.buttonText} <ChevronRight size={14} className="hidden sm:block" />
+    <div className={`px-3 py-2 ${isHeader ? '@md:px-4 @md:py-2.5' : '@2xl:px-5 @2xl:py-2.5'} rounded-lg font-black text-[10px] uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 ${isHeader ? '@md:gap-1.5' : '@2xl:gap-2'} shrink-0 whitespace-nowrap ${extraClass}`} style={{ backgroundColor: ad.btnColor, color: ad.btnTextColor || '#ffffff' }}>
+      {ad.buttonText} <ChevronRight size={14} className={isHeader ? 'hidden @sm:block' : 'hidden @md:block'} />
     </div>
   );
 
+  let wrapperClasses = `@container w-full h-full rounded-2xl flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] `;
+  
+  if (isHeader) {
+    wrapperClasses += `p-3 @md:p-4 min-h-[80px] flex-row items-center justify-between gap-3 @2xl:gap-6`;
+  } else if (isSidebar && ad.fgImage) {
+    wrapperClasses += `p-4 @2xl:p-6 min-h-[200px] flex-col items-center justify-center text-center gap-4`;
+  } else {
+    wrapperClasses += `p-4 @2xl:p-6 min-h-[120px] gap-3 @2xl:gap-6 ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col @4xl:flex-row items-center justify-center @4xl:justify-between'}`;
+  }
+
   return (
-    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full rounded-xl p-3 sm:p-4 flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${ad.fgImage ? 'flex-row items-center justify-between' : 'flex-col sm:flex-row items-center justify-center sm:justify-between gap-2 sm:gap-4'}`} style={bgStyles}>
-       {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
+    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={wrapperClasses} style={bgStyles}>
+       {ad.bgImage && <img loading="lazy" src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
        {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
        
-       <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 items-center text-center sm:items-start sm:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
-         <h2 className={`text-base sm:text-xl lg:text-2xl font-black text-white italic tracking-tight mb-0.5 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center sm:origin-left`}>
-           {ad.headline}
-         </h2>
-         <p className="text-gray-300 font-bold text-[9px] sm:text-[10px] uppercase tracking-widest relative z-10 line-clamp-1 mt-0.5">
-           {ad.subtext}
-         </p>
-         {!ad.fgImage && renderButton("mt-2 flex sm:hidden w-max")}
-       </div>
-
-       {ad.fgImage && (
-          <div className="relative z-10 hidden sm:flex justify-center items-center shrink-0 pr-4 sm:flex-1">
-             <img src={ad.fgImage} className="max-h-12 lg:max-h-16 w-auto object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
-          </div>
+       {isHeader ? (
+         <>
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @xs:items-start @xs:text-left ${!ad.fgImage ? 'flex-1' : ''}`}>
+             <h2 className={`text-base @xs:text-lg @md:text-xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-1 leading-tight origin-center @xs:origin-left`}>{ad.headline}</h2>
+             <p className={`text-gray-300 font-bold text-[9px] @md:text-[10px] uppercase tracking-widest relative z-10 line-clamp-1 mt-0.5`}>{ad.subtext}</p>
+             {renderButton("mt-2 flex @sm:hidden w-max")}
+           </div>
+           {ad.fgImage && (
+             <div className="relative z-10 flex justify-center items-center shrink-0 mx-auto px-2">
+               <img loading="lazy" src={ad.fgImage} className="max-h-12 w-auto max-w-[80px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+             </div>
+           )}
+           <div className={`relative z-10 hidden @sm:flex justify-end items-center shrink-0 min-w-0`}>
+             {renderButton("")}
+           </div>
+         </>
+       ) : isSidebar && ad.fgImage ? (
+         <>
+           <div className="relative z-10 flex flex-col justify-center shrink min-w-0 items-center text-center flex-1">
+             <h2 className="text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center">{ad.headline}</h2>
+             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">{ad.subtext}</p>
+           </div>
+           <div className="relative z-10 flex items-center justify-center shrink-0">
+             <img loading="lazy" src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[100px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+           </div>
+           {renderButton("")}
+         </>
+       ) : (
+         <>
+           <div className={`relative z-10 flex flex-col justify-center shrink min-w-0 pr-2 items-center text-center @4xl:items-start @4xl:text-left flex-1`}>
+             <h2 className={`text-lg @md:text-2xl @2xl:text-3xl font-black text-white italic tracking-tight mb-1 relative z-10 group-hover:scale-105 transition-transform line-clamp-2 leading-tight origin-center @4xl:origin-left`}>{ad.headline}</h2>
+             <p className="text-gray-300 font-bold text-[10px] @md:text-xs uppercase tracking-widest relative z-10 line-clamp-2 mt-1">{ad.subtext}</p>
+             {renderButton("mt-4 flex @4xl:hidden w-max")}
+           </div>
+           
+           {ad.fgImage && (
+              <div className="relative z-10 flex justify-end @4xl:justify-center items-center shrink-0 pl-2 @4xl:pl-0 @4xl:flex-1 mx-auto">
+                 <img loading="lazy" src={ad.fgImage} className="max-h-24 @2xl:max-h-32 w-auto max-w-[90px] @2xl:max-w-[160px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-300" alt="" />
+              </div>
+           )}
+           
+           <div className={`relative z-10 hidden @4xl:flex justify-end items-center shrink-0 @5xl:flex-1 min-w-0`}>
+              {renderButton("")}
+           </div>
+         </>
        )}
-
-       <div className={`relative z-10 hidden sm:flex justify-end items-center shrink-0 min-w-0 ${!ad.fgImage && 'sm:flex-1'}`}>
-          {renderButton("")}
-       </div>
     </a>
   );
 };
@@ -435,6 +476,8 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
     );
   }
 
+  const showGating = !isAuthed && authStatus === 'unauthenticated';
+
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="w-full h-64 md:h-96 bg-gray-800 relative overflow-hidden shrink-0">
@@ -462,11 +505,37 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
         </div>
         
         <div className="relative flex-1" key={`article-auth-${isAuthed}`}>
-          <MeteredArticle articleId={selectedItem.id} isUserLoggedIn={isAuthed} openAuth={openAuth}>
-            <ArticleContent content={selectedItem.content} sportThemeHex={themes[selectedItem.sport]?.hex || '#ffffff'} />
-          </MeteredArticle>
+          <div className={`${showGating ? 'max-h-[1000px] overflow-hidden' : ''}`}>
+             <ArticleContent content={selectedItem.content} sportThemeHex={themes[selectedItem.sport]?.hex || '#ffffff'} />
+          </div>
+          
+          {showGating && (
+            <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#121212] via-[#121212]/90 to-transparent z-10 pointer-events-none" />
+          )}
         </div>
 
+        {showGating && (
+          <div className="mt-2 pb-8 flex flex-col items-center justify-center relative z-20 animate-in fade-in slide-in-from-bottom-8 duration-500">
+            <div className="p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] max-w-md w-full shadow-2xl">
+              <div className="bg-[#1a1a1a] p-8 rounded-[22px] text-center w-full h-full">
+                <div className="w-12 h-12 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Lock size={24} className="text-red-500" />
+                </div>
+                <h3 className="text-2xl font-black text-white uppercase tracking-wider mb-2">Keep Reading</h3>
+                <p className="text-gray-400 text-sm mb-6 leading-relaxed">Create a free account to read the rest of this article and get the advice you need to win your league.</p>
+                <button 
+                  onClick={() => openAuth('subscribe')} 
+                  className="w-full bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all transform hover:scale-[1.02] mb-4 text-sm"
+                >
+                  Create Free Account
+                </button>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">
+                  Already have an account? <button onClick={() => openAuth('login')} className="text-white hover:text-gray-300 transition-colors ml-1">Log In</button>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -510,6 +579,7 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
     return () => clearInterval(interval);
   }, [isAuthed, status, videoOverlayActive]);
 
+  // FIX: Updated to use GET requests for ultra-fast WPGraphQL Object Caching!
   useEffect(() => {
     const fetchAds = async () => {
       const query = `
@@ -519,11 +589,12 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
           }
         }
       `;
+      const queryParams = new URLSearchParams({ query: query.trim() });
       try {
-        const res = await fetch('https://admin.fsan.com/graphql', {
-          method: 'POST',
+        const res = await fetch(`https://admin.fsan.com/graphql?${queryParams.toString()}`, {
+          method: 'GET',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query }),
+          cache: 'no-store'
         });
         const json = await res.json();
         if (json?.data?.globalAds) {
@@ -580,7 +651,7 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
         
         {popupAds.length > 0 && (
           <div className="w-full shrink-0 mb-3 sm:mb-4">
-            <DynamicAd ad={popupAds[0]} />
+            <DynamicAd ad={popupAds[0]} variant="header" />
           </div>
         )}
 
