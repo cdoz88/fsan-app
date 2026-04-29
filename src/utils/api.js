@@ -119,13 +119,16 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
     let totalPages = 1;
     const fetchOptions = { next: { revalidate: 60 } }; 
 
+    // CACHE BUSTER: Generates a new timestamp every 5 minutes to permanently prevent stale feeds!
+    const timeBuster = Math.floor(Date.now() / (1000 * 60 * 5));
+
     if (targetType === 'all') {
       const endpoints = [
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=17&page=${currentPage}&sport=${activeSport}&type=articles`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=17&page=${currentPage}&sport=${activeSport}&type=videos`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=17&page=${currentPage}&sport=${activeSport}&type=podcasts`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=17&page=${currentPage}&sport=${activeSport}&type=shorts`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=${currentPage}&sport=${activeSport}&type=shows`
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=17&page=${currentPage}&sport=${activeSport}&type=articles&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=17&page=${currentPage}&sport=${activeSport}&type=videos&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=17&page=${currentPage}&sport=${activeSport}&type=podcasts&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=17&page=${currentPage}&sport=${activeSport}&type=shorts&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=${currentPage}&sport=${activeSport}&type=shows&t=${timeBuster}`
       ];
       
       const responses = await Promise.all(endpoints.map(url => fetch(url, fetchOptions)));
@@ -144,7 +147,7 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
       rawPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
     } else {
-      const res = await fetch(`https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=36&page=${currentPage}&sport=${activeSport}&type=${targetType}`, fetchOptions);
+      const res = await fetch(`https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=36&page=${currentPage}&sport=${activeSport}&type=${targetType}&t=${timeBuster}`, fetchOptions);
       if (!res.ok) throw new Error("API failed");
       totalPages = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);
       rawPosts = await res.json();
@@ -160,18 +163,19 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
 export async function fetchGraphQL(query, variables = {}) {
   const WP_GRAPHQL_URL = 'https://admin.fsan.com/graphql';
 
-  // FIX: Convert the GraphQL query and variables into URL parameters for a GET request
   const queryParams = new URLSearchParams({
-    query: query.trim(), // Trim whitespace to keep URLs clean
+    query: query.trim(), 
   });
   
-  // Only append variables if they exist and aren't empty
   if (Object.keys(variables).length > 0) {
     queryParams.append('variables', JSON.stringify(variables));
   }
 
+  // CACHE BUSTER for GraphQL GET requests (Ensures Menus and dynamic settings never freeze)
+  const timeBuster = Math.floor(Date.now() / (1000 * 60 * 5));
+  queryParams.append('t', timeBuster);
+
   try {
-    // We now send a GET request with the query safely tucked into the URL string
     const res = await fetch(`${WP_GRAPHQL_URL}?${queryParams.toString()}`, {
       method: 'GET',
       headers: {
