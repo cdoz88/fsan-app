@@ -124,10 +124,10 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
 
     if (targetType === 'all') {
       const endpoints = [
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=17&page=${currentPage}&sport=${activeSport}&type=articles&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=17&page=${currentPage}&sport=${activeSport}&type=videos&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=17&page=${currentPage}&sport=${activeSport}&type=podcasts&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=17&page=${currentPage}&sport=${activeSport}&type=shorts&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=${currentPage}&sport=${activeSport}&type=articles&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=40&page=${currentPage}&sport=${activeSport}&type=videos&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=${currentPage}&sport=${activeSport}&type=podcasts&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=${currentPage}&sport=${activeSport}&type=shorts&t=${timeBuster}`,
         `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=${currentPage}&sport=${activeSport}&type=shows&t=${timeBuster}`
       ];
       

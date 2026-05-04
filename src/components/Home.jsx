@@ -295,7 +295,13 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
   const boothPodcasts = allPosts.filter(p => p.type === 'podcast' && !p.isMasterShow && !usedIds.has(p.id)).slice(0, 4);
   boothPodcasts.forEach(p => usedIds.add(p.id));
 
-  const filmRoomVideos = allPosts.filter(p => p.type === 'video' && !usedIds.has(p.id)).slice(0, 6);
+  // FIX: Force film room grid to always round down to a clean multiple of 3 to avoid hanging videos!
+  let filmRoomVideos = allPosts.filter(p => p.type === 'video' && !usedIds.has(p.id));
+  if (filmRoomVideos.length >= 6) {
+      filmRoomVideos = filmRoomVideos.slice(0, 6);
+  } else {
+      filmRoomVideos = filmRoomVideos.slice(0, filmRoomVideos.length - (filmRoomVideos.length % 3));
+  }
   filmRoomVideos.forEach(p => usedIds.add(p.id));
 
   const highlightShorts = allPosts.filter(p => p.type === 'short' && !usedIds.has(p.id)).slice(0, 8);
