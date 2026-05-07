@@ -18,7 +18,6 @@ const ShareButtons = ({ handleShare, handleCopy, copied, btnSize = "w-8 h-8", ic
   </div>
 );
 
-// UPDATED: Now uses the responsive DynamicAd matching the rest of the site
 const DynamicAd = ({ ad, variant = "inline" }) => {
   if (!ad) return null;
 
@@ -466,7 +465,8 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
   </div>
 );
 
-const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isAuthed, authStatus, openAuth }) => {
+// RESTORED: Now successfully wraps your Article Content inside the MeteredArticle logic!
+const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isAuthed, authStatus, openAuth, session }) => {
 
   if (authStatus === 'loading') {
     return (
@@ -476,12 +476,10 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
     );
   }
 
-  const showGating = !isAuthed && authStatus === 'unauthenticated';
-
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="w-full h-64 md:h-96 bg-gray-800 relative overflow-hidden shrink-0">
-        {selectedItem.imageUrl && <img src={selectedItem.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-top opacity-60" />}
+        {selectedItem.imageUrl && <img loading="lazy" src={selectedItem.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-top opacity-60" />}
         <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent"></div>
       </div>
       <div className="p-6 md:p-10 -mt-24 relative z-10 max-w-4xl mx-auto w-full flex-1 flex flex-col">
@@ -495,7 +493,7 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
         <div className="flex items-center gap-4 border-b border-gray-800 pb-6 mb-8 bg-[#121212]/80 p-4 rounded-xl backdrop-blur-sm">
           <div className="w-12 h-12 rounded-full bg-gray-700 border border-gray-600 flex items-center justify-center font-bold text-gray-400 overflow-hidden shrink-0">
             {selectedItem.author?.avatar ? (
-              <img src={selectedItem.author.avatar} alt={selectedItem.author.name} className="w-full h-full object-cover" />
+              <img loading="lazy" src={selectedItem.author.avatar} alt={selectedItem.author.name} className="w-full h-full object-cover" />
             ) : (
               selectedItem.author?.name?.charAt(0) || "F"
             )}
@@ -505,37 +503,16 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
         </div>
         
         <div className="relative flex-1" key={`article-auth-${isAuthed}`}>
-          <div className={`${showGating ? 'max-h-[1000px] overflow-hidden' : ''}`}>
-             <ArticleContent content={selectedItem.content} sportThemeHex={themes[selectedItem.sport]?.hex || '#ffffff'} />
-          </div>
-          
-          {showGating && (
-            <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#121212] via-[#121212]/90 to-transparent z-10 pointer-events-none" />
-          )}
+          <MeteredArticle 
+            articleId={selectedItem.id} 
+            isUserLoggedIn={isAuthed} 
+            userTier={session?.user?.tier || 'registered'}
+            openAuth={openAuth}
+          >
+            <ArticleContent content={selectedItem.content} sportThemeHex={themes[selectedItem.sport]?.hex || '#ffffff'} />
+          </MeteredArticle>
         </div>
 
-        {showGating && (
-          <div className="mt-2 pb-8 flex flex-col items-center justify-center relative z-20 animate-in fade-in slide-in-from-bottom-8 duration-500">
-            <div className="p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] max-w-md w-full shadow-2xl">
-              <div className="bg-[#1a1a1a] p-8 rounded-[22px] text-center w-full h-full">
-                <div className="w-12 h-12 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Lock size={24} className="text-red-500" />
-                </div>
-                <h3 className="text-2xl font-black text-white uppercase tracking-wider mb-2">Keep Reading</h3>
-                <p className="text-gray-400 text-sm mb-6 leading-relaxed">Create a free account to read the rest of this article and get the advice you need to win your league.</p>
-                <button 
-                  onClick={() => openAuth('subscribe')} 
-                  className="w-full bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all transform hover:scale-[1.02] mb-4 text-sm"
-                >
-                  Create Free Account
-                </button>
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">
-                  Already have an account? <button onClick={() => openAuth('login')} className="text-white hover:text-gray-300 transition-colors ml-1">Log In</button>
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -579,7 +556,6 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
     return () => clearInterval(interval);
   }, [isAuthed, status, videoOverlayActive]);
 
-  // FIX: Updated to use GET requests for ultra-fast WPGraphQL Object Caching!
   useEffect(() => {
     const fetchAds = async () => {
       const query = `
@@ -703,6 +679,7 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
                 isAuthed={isAuthed}
                 authStatus={status}
                 openAuth={openAuth}
+                session={session}
               />
             )}
           </div>
