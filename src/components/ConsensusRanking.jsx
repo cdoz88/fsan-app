@@ -114,7 +114,6 @@ const ConsensusRanking = () => {
       }
   }
 
-  // Slicing exactly at 20 so only 20 players render before the fade/box takes over for free users
   const hasAccess = userTier !== 'free' || canRank;
   const visibleData = hasAccess ? displayData : displayData.slice(0, 20);
 
@@ -142,7 +141,6 @@ const ConsensusRanking = () => {
       return null; 
   };
 
-  // Determine the display week based on rankings data
   let weekDisplay = 'Offseason';
   if (rankings && rankings.length > 0 && rankings[0].week) {
      const rawWeek = rankings[0].week;
@@ -172,7 +170,6 @@ const ConsensusRanking = () => {
         
         <div className="relative z-10 w-full flex flex-col md:flex-row items-start md:items-end justify-between h-full px-6 md:px-10 pb-8 gap-4">
           <div>
-            {/* UPDATED: Dynamic Week Header */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-2">
               {weekDisplay} Rankings
             </h1>
@@ -192,7 +189,8 @@ const ConsensusRanking = () => {
       <div className="w-full">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div className="flex flex-wrap gap-2 bg-[#1a1a1a] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
-             {['QB', 'RB', 'WR', 'TE', 'FLEX', 'K', 'DEF'].map(pos => (
+             {/* UPDATED: Removed FLEX, K, and DEF */}
+             {['QB', 'RB', 'WR', 'TE'].map(pos => (
                 <button 
                    key={pos} onClick={() => setCurrentPosition(pos)}
                    className={`px-4 py-1.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${currentPosition === pos ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'text-gray-500 hover:text-white hover:bg-[#252525]'}`}
@@ -339,7 +337,6 @@ const ConsensusRanking = () => {
                             Visitors can only view the top 20 players.
                           </p>
                           
-                          {/* UPDATED: Sleek gray gradient button */}
                           <Link href="/subscribe" className="w-full bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border border-gray-600 text-white font-black uppercase tracking-widest py-3.5 rounded-xl transition-all shadow-lg text-sm flex items-center justify-center gap-2 hover:-translate-y-0.5">
                             Unlock Rankings <ChevronRight size={16} />
                           </Link>

@@ -57,7 +57,6 @@ const UserRanking = () => {
   const [message, setMessage] = useState(null);
   const [isConsensusModalOpen, setIsConsensusModalOpen] = useState(false);
   
-  // Custom Confirmation Modal State
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
 
   const fileInputRef = useRef(null);
@@ -76,7 +75,6 @@ const UserRanking = () => {
                 try {
                     const savedData = JSON.parse(userSavedRanking.ranking_data);
                     
-                    // Filter out the meta tag so it doesn't render as a draggable object!
                     const visibleData = savedData.filter(item => item.type !== 'meta');
                     
                     const savedPlayerIds = new Set(visibleData.map(item => String(item.id)));
@@ -127,12 +125,11 @@ const UserRanking = () => {
                   if (idxA !== -1 && idxB !== -1) return idxA - idxB;
                   if (idxA !== -1) return -1;
                   if (idxB !== -1) return 1;
-                  return 0; // maintain original unsorted order if neither is in consensus
+                  return 0; 
               }).map(p => ({ ...p, type: 'player' }));
 
               const stopTier = { type: 'stop-tier', id: 'stop-tier', name: 'Stop my rankings here', details: 'Drag players above this line to rank them.' };
               
-              // Insert the stop tier right after the players that have a consensus rank!
               const rankedCount = consensusRanking.length;
               const newOrder = [
                   ...sortedPlayers.slice(0, rankedCount),
@@ -210,7 +207,6 @@ const UserRanking = () => {
     setIsSubmitting(status);
     setMessage(null);
     try {
-      // Inject the invisible meta tag directly into the payload array!
       const payload = [{ type: 'meta', status }, ...rankedPlayers];
       
       const res = await submitRanking(payload);
@@ -235,7 +231,6 @@ const UserRanking = () => {
       return { ...item, displayRank, isBelowStopTier };
   });
 
-  // Determine the current submission status of the user
   let currentStatus = 'Not Submitted';
   if (session?.user?.id && rankings && rankings.length > 0) {
       const userSavedRanking = rankings.find(r => String(r.user_id) === String(session.user.id));
@@ -336,7 +331,8 @@ const UserRanking = () => {
             {/* Position and Week Controls */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
                 <div className="flex flex-wrap gap-2 bg-[#111] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-full sm:w-fit mt-2">
-                   {['QB', 'RB', 'WR', 'TE', 'FLEX', 'K', 'DEF'].map(pos => (
+                   {/* UPDATED: Removed FLEX, K, and DEF */}
+                   {['QB', 'RB', 'WR', 'TE'].map(pos => (
                       <button key={pos} onClick={() => setCurrentPosition(pos)} className={`flex-1 sm:flex-none px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${currentPosition === pos ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'text-gray-500 hover:text-white hover:bg-[#1a1a1a]'}`}>
                          {pos}
                       </button>
