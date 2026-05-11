@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -50,6 +51,7 @@ const SortableItem = ({ item }) => {
 };
 
 const UserRanking = () => {
+  const router = useRouter();
   const { data: session } = useSession();
   const { players, rankings, consensusRanking, loading, currentPosition, setCurrentPosition, currentWeek, setCurrentWeek, submitRanking } = usePlayer();
   const [rankedPlayers, setRankedPlayers] = useState([]);
@@ -57,6 +59,10 @@ const UserRanking = () => {
   const [message, setMessage] = useState(null);
   const [isConsensusModalOpen, setIsConsensusModalOpen] = useState(false);
   
+  // Dirty State Tracker
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Custom Confirmation Modal State
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
 
   const fileInputRef = useRef(null);
@@ -67,6 +73,9 @@ const UserRanking = () => {
   );
 
   useEffect(() => {
+    // A fresh data load means no unsaved changes
+    setHasUnsavedChanges(false);
+
     if (players && players.length > 0) {
         if (session?.user?.id && rankings && rankings.length > 0) {
             const userSavedRanking = rankings.find(r => String(r.user_id) === String(session.user.id));
@@ -75,6 +84,7 @@ const UserRanking = () => {
                 try {
                     const savedData = JSON.parse(userSavedRanking.ranking_data);
                     
+                    // Filter out the meta tag so it doesn't render as a draggable object!
                     const visibleData = savedData.filter(item => item.type !== 'meta');
                     
                     const savedPlayerIds = new Set(visibleData.map(item => String(item.id)));
@@ -98,6 +108,60 @@ const UserRanking = () => {
     }
   }, [players, rankings, session]);
 
+  // NAVIGATION & TAB INTERCEPTORS
+  const handlePositionChange = (newPos) => {
+    if (newPos === currentPosition) return;
+    
+    if (hasUnsavedChanges) {
+      setConfirmDialog({
+        isOpen: true,
+        title: "Unsaved Changes",
+        message: `You have unsaved changes in your ${currentPosition} rankings. If you switch positions now, your changes will be lost. Do you still want to switch?`,
+        onConfirm: () => {
+          setHasUnsavedChanges(false);
+          setCurrentPosition(newPos);
+          setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null });
+        }
+      });
+    } else {
+      setCurrentPosition(newPos);
+    }
+  };
+
+  const handleWeekChange = (newWeek) => {
+    if (newWeek === currentWeek) return;
+    
+    if (hasUnsavedChanges) {
+      setConfirmDialog({
+        isOpen: true,
+        title: "Unsaved Changes",
+        message: `You have unsaved changes in your ${currentPosition} rankings. If you switch weeks now, your changes will be lost. Do you still want to switch?`,
+        onConfirm: () => {
+          setHasUnsavedChanges(false);
+          setCurrentWeek(newWeek);
+          setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null });
+        }
+      });
+    } else {
+      setCurrentWeek(newWeek);
+    }
+  };
+
+  const handleBackNavigation = (e) => {
+    if (hasUnsavedChanges) {
+      e.preventDefault();
+      setConfirmDialog({
+        isOpen: true,
+        title: "Unsaved Changes",
+        message: `You have unsaved changes in your ${currentPosition} rankings. Are you sure you want to leave without saving?`,
+        onConfirm: () => {
+          setHasUnsavedChanges(false);
+          router.push('/football/rankings');
+        }
+      });
+    }
+  };
+
   const handleResetToDefault = () => {
       setConfirmDialog({
           isOpen: true,
@@ -107,6 +171,7 @@ const UserRanking = () => {
               const formattedPlayers = players.map(p => ({ ...p, type: 'player' }));
               const stopTier = { type: 'stop-tier', id: 'stop-tier', name: 'Stop my rankings here', details: 'Drag players above this line to rank them.' };
               setRankedPlayers([stopTier, ...formattedPlayers]);
+              setHasUnsavedChanges(true); // Dirty state triggered
               setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null });
           }
       });
@@ -138,6 +203,7 @@ const UserRanking = () => {
               ];
 
               setRankedPlayers(newOrder);
+              setHasUnsavedChanges(true); // Dirty state triggered
               setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null });
           }
       });
@@ -183,6 +249,7 @@ const UserRanking = () => {
             ...allAvailablePlayers
         ]);
 
+        setHasUnsavedChanges(true); // Dirty state triggered
         setMessage({ type: 'success', text: `Successfully imported and sorted ${sortedPlayers.length} players from CSV!` });
         setTimeout(() => setMessage(null), 5000);
     };
@@ -194,6 +261,7 @@ const UserRanking = () => {
   const handleDragEnd = (event) => {
     const { active, over } = event;
     if (active && over && active.id !== over.id) {
+      setHasUnsavedChanges(true); // Dirty state triggered
       setRankedPlayers((items) => {
         const oldIndex = items.findIndex(item => item.id === active.id);
         const newIndex = items.findIndex(item => item.id === over.id);
@@ -216,6 +284,7 @@ const UserRanking = () => {
           if (status === 'draft') successText = 'Rankings saved for later (Not Public).';
           if (status === 'withdrawn') successText = 'Rankings successfully withdrawn from consensus.';
           setMessage({ type: 'success', text: successText }); 
+          setHasUnsavedChanges(false); // Clear the dirty state!
       } 
       else { setMessage({ type: 'error', text: res.message }); }
     } catch (error) { setMessage({ type: 'error', text: 'Critical submission error.' }); } 
@@ -251,7 +320,11 @@ const UserRanking = () => {
         
         {/* SIDEBAR NAVIGATION */}
         <div className="w-full lg:w-64 shrink-0 flex flex-col gap-3">
-            <Link href="/football/rankings" className="flex items-center gap-2 text-gray-500 hover:text-white font-bold uppercase tracking-widest text-xs mb-4 transition-colors">
+            <Link 
+              href="/football/rankings" 
+              onClick={handleBackNavigation}
+              className="flex items-center gap-2 text-gray-500 hover:text-white font-bold uppercase tracking-widest text-xs mb-4 transition-colors"
+            >
                 <ArrowLeft size={16} /> Back to Consensus
             </Link>
 
@@ -263,7 +336,7 @@ const UserRanking = () => {
                 className="flex items-center gap-3 px-5 py-4 rounded-xl font-bold uppercase tracking-widest text-xs transition-all bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 {isSubmitting === 'published' ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                {isSubmitting === 'published' ? 'Saving...' : 'Submit Rankings'}
+                {isSubmitting === 'published' ? 'Saving...' : `Submit ${currentPosition} Rankings`}
             </button>
 
             <button 
@@ -331,9 +404,12 @@ const UserRanking = () => {
             {/* Position and Week Controls */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
                 <div className="flex flex-wrap gap-2 bg-[#111] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-full sm:w-fit mt-2">
-                   {/* UPDATED: Removed FLEX, K, and DEF */}
                    {['QB', 'RB', 'WR', 'TE'].map(pos => (
-                      <button key={pos} onClick={() => setCurrentPosition(pos)} className={`flex-1 sm:flex-none px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${currentPosition === pos ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'text-gray-500 hover:text-white hover:bg-[#1a1a1a]'}`}>
+                      <button 
+                        key={pos} 
+                        onClick={() => handlePositionChange(pos)} 
+                        className={`flex-1 sm:flex-none px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${currentPosition === pos ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'text-gray-500 hover:text-white hover:bg-[#1a1a1a]'}`}
+                      >
                          {pos}
                       </button>
                    ))}
@@ -343,7 +419,7 @@ const UserRanking = () => {
                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-3 shrink-0">Week:</span>
                    <select 
                       value={currentWeek} 
-                      onChange={(e) => setCurrentWeek(e.target.value)}
+                      onChange={(e) => handleWeekChange(e.target.value)}
                       className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none focus:border-red-500 font-bold cursor-pointer text-xs tracking-wider w-full sm:w-auto outline-none"
                    >
                       <option value="Offseason">Offseason</option>
@@ -372,7 +448,10 @@ const UserRanking = () => {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-red-900/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
 
                 <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-800 relative z-10">
-                   <h2 className="text-lg font-black text-white uppercase tracking-wider">Your {currentPosition} Order</h2>
+                   <h2 className="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
+                     Your {currentPosition} Order
+                     {hasUnsavedChanges && <span className="text-xs text-yellow-500 italic ml-2 lowercase tracking-normal font-normal">*unsaved changes*</span>}
+                   </h2>
                    <span className={`text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full border ${currentStatus === 'Submitted' ? 'bg-green-900/20 text-green-400 border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.1)]' : 'bg-gray-900 text-gray-500 border-gray-700'}`}>
                        {currentStatus}
                    </span>
