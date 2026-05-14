@@ -153,11 +153,12 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
     return FileText; 
   };
 
+  // UPDATED: Brand new FSANHQ and standardized URLs for all networks!
   const socialLinksData = {
-    All: { facebook: 'https://www.facebook.com/fantasyfootballadvicenetwork', x: 'https://x.com/fsadvicenet', youtube: 'https://www.youtube.com/@FFAdviceNet', tiktok: 'https://www.tiktok.com/@fsadvicenetwork', linkedin: 'https://www.linkedin.com/company/fantasy-sports-advice', sellout: 'https://www.selloutcrowds.com/crowd/fsan', instagram: null },
-    Football: { facebook: 'https://www.facebook.com/fantasyfootballadvicenetwork', x: 'https://x.com/FFAdviceNet', youtube: 'https://www.youtube.com/@FFAdviceNet', instagram: 'https://www.instagram.com/ffadvicenet/', sellout: '#', tiktok: null, linkedin: null },
-    Basketball: { facebook: null, x: 'https://x.com/FBBAdviceNet', youtube: 'https://www.youtube.com/@FBBAdviceNet', instagram: 'https://www.instagram.com/fbkadvicenet/', sellout: 'https://www.selloutcrowds.com/crowd/fbban', tiktok: null, linkedin: null },
-    Baseball: { facebook: null, x: 'https://x.com/FBAdviceNet', youtube: 'https://www.youtube.com/@FBAdviceNet', instagram: 'https://www.instagram.com/fbadvicenet/', sellout: 'https://www.selloutcrowds.com/crowd/fban', tiktok: null, linkedin: null },
+    All: { facebook: 'https://www.facebook.com/FSANHQ', x: 'https://x.com/FSANHQ', youtube: 'https://www.youtube.com/@FSANHQ', tiktok: 'https://www.tiktok.com/@fsanhq', linkedin: 'https://www.linkedin.com/company/fantasy-sports-advice', sellout: 'https://www.selloutcrowds.com/crowd/fsan', instagram: 'https://www.instagram.com/fsanhq' },
+    Football: { facebook: 'https://www.facebook.com/FSANHQ', x: 'https://x.com/FSANHQ', youtube: 'https://www.youtube.com/@FSANfootball', instagram: 'https://www.instagram.com/fsanhq', sellout: 'https://www.selloutcrowds.com/crowd/ffan', tiktok: 'https://www.tiktok.com/@fsanhq', linkedin: null },
+    Basketball: { facebook: 'https://www.facebook.com/FSANHQ', x: 'https://x.com/FSANHQ', youtube: 'https://www.youtube.com/@FSANbasketball', instagram: 'https://www.instagram.com/fsanhq', sellout: 'https://www.selloutcrowds.com/crowd/fbban', tiktok: 'https://www.tiktok.com/@fsanhq', linkedin: null },
+    Baseball: { facebook: 'https://www.facebook.com/FSANHQ', x: 'https://x.com/FSANHQ', youtube: 'https://www.youtube.com/@FSANbaseball', instagram: 'https://www.instagram.com/fsanhq', sellout: 'https://www.selloutcrowds.com/crowd/fban', tiktok: 'https://www.tiktok.com/@fsanhq', linkedin: null },
   };
   const currentLinks = socialLinksData[activeSport] || socialLinksData.All;
 
@@ -374,9 +375,7 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
             </div>
           )}
 
-          {/* FOOTER / SOCIALS 
-              NEW FIX: mt-auto pushes the footer to the absolute bottom of the flex container!
-          */}
+          {/* FOOTER / SOCIALS */}
           <div className="flex flex-col items-center justify-center gap-1.5 [@media(min-height:750px)]:gap-2 [@media(min-height:900px)]:gap-3 mt-auto mb-2 [@media(min-height:750px)]:mb-4 pt-2 [@media(min-height:750px)]:pt-4 shrink-0">
              <div className="flex flex-wrap items-center justify-center gap-4 px-2">
                 {currentLinks.sellout && <SocialIcon id="sellout" href={currentLinks.sellout} IconComponent={SelloutCrowds} />}
