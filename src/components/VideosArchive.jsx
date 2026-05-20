@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Loader2, ChevronRight, ChevronUp, PlayCircle, ChevronLeft, Zap, Play } from 'lucide-react';
 import { themes } from '../utils/theme';
+import { fetchPosts } from '../utils/api';
 
 const hideScrollbar = "scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
 
@@ -182,6 +183,13 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
   const theme = themes[activeSport] || themes.All;
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [globalAds, setGlobalAds] = useState([]);
+  
+  // Custom State for the dedicated Shorts loading
+  const [loadedShorts, setLoadedShorts] = useState([]);
+  const [shortsPage, setShortsPage] = useState(1);
+  const [isLoadingShorts, setIsLoadingShorts] = useState(false);
+  const [hasMoreShorts, setHasMoreShorts] = useState(true);
+
   const shortsRef = useRef(null);
 
   useEffect(() => {
@@ -240,10 +248,14 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
 
   // DATA FILTERING
   let standardVideos = videos.filter(v => v.type === 'video');
-  const shorts = videos.filter(v => v.type === 'short');
+  const baseShorts = videos.filter(v => v.type === 'short');
+  
+  // Combine initial shorts with any newly loaded shorts, ensuring no duplicates!
+  const allShortsMap = new Map();
+  [...baseShorts, ...loadedShorts].forEach(s => allShortsMap.set(s.id, s));
+  const finalShorts = Array.from(allShortsMap.values());
 
   // FIX: Truncate the standard videos so that the final grid ALWAYS contains a multiple of 3.
-  // This physically guarantees we never have a standalone video at the bottom!
   if (standardVideos.length > 14) {
       const remainder = (standardVideos.length - 14) % 3;
       if (remainder !== 0) {
@@ -260,6 +272,26 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
 
   const scrollShorts = (direction) => {
     if (shortsRef.current) shortsRef.current.scrollBy({ left: direction === 'left' ? -350 : 350, behavior: 'smooth' });
+  };
+
+  const loadMoreShorts = async () => {
+    if (isLoadingShorts) return;
+    setIsLoadingShorts(true);
+    try {
+      // Talk directly to the shorts endpoint to grab a pure batch of shorts
+      const { posts, totalPages } = await fetchPosts(activeSport, 'shorts', shortsPage);
+      
+      const existingIds = new Set([...baseShorts, ...loadedShorts].map(s => s.id));
+      const newShorts = posts.filter(p => !existingIds.has(p.id));
+
+      setLoadedShorts(prev => [...prev, ...newShorts]);
+      setShortsPage(prev => prev + 1);
+      setHasMoreShorts(shortsPage < totalPages);
+    } catch(e) {
+      console.error(e);
+    } finally {
+      setIsLoadingShorts(false);
+    }
   };
 
   return (
@@ -281,7 +313,7 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
         )}
       </div>
 
-      {standardVideos.length === 0 && shorts.length === 0 ? (
+      {standardVideos.length === 0 && finalShorts.length === 0 ? (
         <div className="py-12 text-center text-gray-500 font-bold uppercase tracking-widest">No content found.</div>
       ) : (
         <div className="flex flex-col gap-8">
@@ -290,14 +322,12 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
               <div className="xl:col-span-8 flex flex-col gap-6">
                 
-                {/* FORCE aspect-video, prevent flex stretching on the video */}
                 {heroVideo && (
                     <div className="w-full shrink-0 flex flex-col">
                         <WideVideoCard item={heroVideo} setSelectedItem={setSelectedItem} activeSport={activeSport} />
                     </div>
                 )}
                 
-                {/* DYNAMIC INLINE AD SLOT 1 - Takes flex-1 to fill remaining vertical gap! */}
                 {inlineAds.length > 0 && (
                   <div className="w-full flex-1 flex flex-col min-h-[120px]">
                     <DynamicAd ad={inlineAds[0]} variant="inline" />
@@ -324,7 +354,6 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
                 {gridVideos.map(v => <GridVideoCard key={v.id} item={v} setSelectedItem={setSelectedItem} activeSport={activeSport} />)}
               </div>
               <div className="xl:col-span-1 flex flex-col gap-6">
-                 {/* DYNAMIC INLINE AD SLOTS 2 & 3 - Set to sidebar variant */}
                  {inlineAds.length > 1 && (
                    <div className="flex-1 w-full min-h-[200px]">
                      <DynamicAd ad={inlineAds[1]} variant="sidebar" />
@@ -340,7 +369,7 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
           )}
 
           {/* SECTION 4: SHORTS CAROUSEL */}
-          {shorts.length > 0 && (
+          {finalShorts.length > 0 && (
             <section className="relative py-8 border-y border-gray-800/50 my-4">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold flex items-center gap-2 text-white"><Zap className="text-yellow-500" /> The Highlight Reel</h3>
@@ -350,12 +379,29 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
                 </div>
               </div>
               <div ref={shortsRef} className={`flex gap-4 md:gap-6 overflow-x-auto pb-4 snap-x ${hideScrollbar}`}>
-                {/* FIX: Removed the slice limit so you can endlessly scroll all available shorts! */}
-                {shorts.map(short => (
+                {finalShorts.map(short => (
                   <div key={short.id} className="relative w-36 md:w-44 flex-shrink-0 snap-start">
                     <ShortCard item={short} setSelectedItem={setSelectedItem} activeSport={activeSport} />
                   </div>
                 ))}
+                
+                {/* DEDICATED SHORTS LOAD MORE BUTTON */}
+                {hasMoreShorts && (
+                  <div className="relative w-36 md:w-44 flex-shrink-0 snap-start aspect-[9/16] rounded-2xl overflow-hidden bg-[#111] border border-gray-700 hover:border-gray-500 transition-colors flex flex-col items-center justify-center group text-gray-400 hover:text-white">
+                    <button onClick={loadMoreShorts} disabled={isLoadingShorts} className="w-full h-full flex flex-col items-center justify-center outline-none">
+                      {isLoadingShorts ? (
+                        <Loader2 size={32} className="animate-spin mb-3 text-gray-500" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                          <ChevronRight size={24} />
+                        </div>
+                      )}
+                      <span className="font-black uppercase tracking-widest text-sm text-center">
+                        {isLoadingShorts ? 'Loading...' : <>Load<br/>More</>}
+                      </span>
+                    </button>
+                  </div>
+                )}
               </div>
             </section>
           )}
