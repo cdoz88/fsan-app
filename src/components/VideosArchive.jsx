@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Loader2, ChevronRight, ChevronUp, PlayCircle, ChevronLeft, ArrowRight, Zap, Play } from 'lucide-react';
+import { Loader2, ChevronRight, ChevronUp, PlayCircle, ChevronLeft, Zap, Play } from 'lucide-react';
 import { themes } from '../utils/theme';
 
 const hideScrollbar = "scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
@@ -350,15 +350,12 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
                 </div>
               </div>
               <div ref={shortsRef} className={`flex gap-4 md:gap-6 overflow-x-auto pb-4 snap-x ${hideScrollbar}`}>
-                {shorts.slice(0, 10).map(short => (
+                {/* FIX: Removed the slice limit so you can endlessly scroll all available shorts! */}
+                {shorts.map(short => (
                   <div key={short.id} className="relative w-36 md:w-44 flex-shrink-0 snap-start">
                     <ShortCard item={short} setSelectedItem={setSelectedItem} activeSport={activeSport} />
                   </div>
                 ))}
-                <Link href={`${activeSport === 'All' ? '' : `/${activeSport.toLowerCase()}`}/videos`} className="relative w-36 md:w-44 flex-shrink-0 snap-start aspect-[9/16] rounded-2xl overflow-hidden bg-[#111] border border-gray-800 hover:border-gray-500 transition-colors flex flex-col items-center justify-center group shadow-lg text-gray-400 hover:text-white no-underline block">
-                  <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"><ArrowRight size={24} /></div>
-                  <span className="font-black uppercase tracking-widest text-sm text-center">See All<br/>Shorts</span>
-                </Link>
               </div>
             </section>
           )}
