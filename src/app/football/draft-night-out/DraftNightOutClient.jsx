@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
-import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
+import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Utensils, MessageSquare, Users, Trophy, Heart, Shield, Sparkles } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm, formId }) {
@@ -147,6 +147,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
         <div className="flex-1 w-full min-w-0 pt-6">
           <main className="w-full animate-in fade-in duration-500">
             
+            {/* HERO BANNER */}
             <div className="relative w-full h-[260px] md:h-[300px] flex items-end overflow-hidden rounded-2xl mb-12 shadow-2xl bg-gray-900">
               <div 
                 className="absolute inset-0 opacity-80 z-0" 
@@ -170,106 +171,188 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
 
             <div className="max-w-5xl mx-auto">
               
-              <div className="bg-[#111] rounded-3xl border border-gray-800 p-8 md:p-10 mb-12 shadow-2xl relative overflow-hidden">
+              {/* EVENT DETAILS SECTION */}
+              <div className="bg-[#111] rounded-3xl border border-gray-800 p-8 md:p-10 mb-16 shadow-2xl relative overflow-hidden">
                  <div className="absolute top-0 right-0 w-64 h-64 bg-red-900/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-                 <p className="text-gray-300 text-lg md:text-xl leading-relaxed relative z-10">
-                   <strong>Draft Night Out</strong> is officially expanding! Whether you want to throw back beers with fantasy analysts at the Expo, or dominate your draft board from the comfort of your own couch, there's a league for you. Choose how you want to play below!
+                 
+                 <h2 className="text-2xl md:text-3xl font-black italic text-white uppercase tracking-tighter mb-4 relative z-10">
+                   What is Draft Night Out?
+                 </h2>
+                 <p className="text-gray-300 text-base leading-relaxed relative z-10 mb-8">
+                   Get away for the day to one of the best and biggest fantasy football hangs of the year! Compete in a live draft party to kick off a new season-long league. Vibes will be high with music, raffles, and giveaways. It'll be a packed house full of fantasy football analysts and enthusiasts. Come chill, network, link up with online friends, and make some new ones!
                  </p>
+                 
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
+                    <div className="bg-[#1a1a1a] p-6 rounded-2xl border border-gray-800 flex flex-col items-center text-center shadow-lg hover:border-gray-600 transition-colors">
+                        <Calendar className="text-red-500 mb-3" size={28} />
+                        <h4 className="font-black text-white uppercase tracking-wider mb-1 text-sm">When</h4>
+                        <p className="text-xs text-gray-400 leading-snug">July 25, 2026<br/>12:00 p.m. – 4:00 p.m. ET</p>
+                    </div>
+                    <div className="bg-[#1a1a1a] p-6 rounded-2xl border border-gray-800 flex flex-col items-center text-center shadow-lg hover:border-gray-600 transition-colors">
+                        <MapPin className="text-red-500 mb-3" size={28} />
+                        <h4 className="font-black text-white uppercase tracking-wider mb-1 text-sm">Where</h4>
+                        <p className="text-xs text-gray-400 leading-snug">Jerzee's Sports Grille<br/>Canton, Ohio</p>
+                    </div>
+                    <div className="bg-[#1a1a1a] p-6 rounded-2xl border border-gray-800 flex flex-col items-center text-center shadow-lg hover:border-gray-600 transition-colors">
+                        <Utensils className="text-red-500 mb-3" size={28} />
+                        <h4 className="font-black text-white uppercase tracking-wider mb-1 text-sm">Food & Drink</h4>
+                        <p className="text-xs text-gray-400 leading-snug">Full menu and full bar available for purchase.</p>
+                    </div>
+                    <div className="bg-[#1a1a1a] p-6 rounded-2xl border border-gray-800 flex flex-col items-center text-center shadow-lg hover:border-gray-600 transition-colors">
+                        <MessageSquare className="text-red-500 mb-3" size={28} />
+                        <h4 className="font-black text-white uppercase tracking-wider mb-1 text-sm">Community</h4>
+                        <p className="text-xs text-gray-400 leading-snug">Chat with commissioners & leaguemates via Discord.</p>
+                    </div>
+                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
-                
-                {/* OPTION 1: IN-PERSON */}
-                <div className="bg-[#1a1a1a] rounded-3xl border border-gray-800 p-8 flex flex-col relative overflow-hidden group shadow-lg">
-                  <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
-                    <Ticket size={120} />
-                  </div>
-                  
-                  <div className="relative z-10 flex items-center gap-4 w-full mb-6">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-600 to-red-900 flex items-center justify-center shrink-0 shadow-lg">
-                      <Ticket className="text-white" size={32} />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-black text-white uppercase tracking-wide leading-tight italic">Draft Live in Canton</h3>
-                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">At the Fantasy Football Expo</p>
-                    </div>
-                  </div>
-                  
-                  <div className="relative z-10 space-y-4 mb-8 flex-1">
-                    <div className="flex items-start gap-3">
-                      <Calendar className="text-red-500 shrink-0 mt-0.5" size={18} />
-                      <p className="text-sm text-gray-300"><strong>July 25, 2026</strong> <br/>12:00 p.m. – 4:00 p.m. ET</p>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <MapPin className="text-red-500 shrink-0 mt-0.5" size={18} />
-                      <p className="text-sm text-gray-300"><strong>Jerzee's Sports Grille</strong> <br/>5260 Dressler Rd. NW, Canton, OH</p>
-                    </div>
-                    <p className="text-sm text-gray-400 leading-relaxed mt-4 pt-4 border-t border-gray-800">
-                      Get away for the day to one of the best & biggest fantasy football hangs of the year! Vibes will be high with food & drink available for purchase, music, raffles & giveaways. It'll be a packed house full of fantasy football analysts and enthusiasts. 
-                    </p>
-                  </div>
-                  
-                  <a href="https://in-betweenmedia.com/product/draft-night-out-2026-tickets/" target="_blank" rel="noopener noreferrer" className="relative z-10 w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest text-xs py-4 rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.2)] transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2 text-center">
-                    Get Tickets for Canton <ExternalLink size={16} />
-                  </a>
-                  <p className="text-center text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-4 relative z-10">
-                    *Tickets sold separately via In-Between Media
-                  </p>
+              {/* FORMATS SECTION */}
+              <div className="mb-16">
+                <div className="flex items-center gap-6 mb-8">
+                   <h2 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">League Formats</h2>
+                   <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
                 </div>
 
-                {/* OPTION 2: ONLINE */}
-                <div className="bg-[#1a1a1a] rounded-3xl border border-gray-800 p-8 flex flex-col relative overflow-hidden group shadow-lg">
-                  <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
-                    <MonitorSmartphone size={120} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  
+                  <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
+                    <Users className="text-red-500 mb-4" size={28} />
+                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Traditional Redraft</h4>
+                    <p className="text-sm text-gray-400 leading-relaxed">The classic format you know and love. Standard roster requirements and scoring to kick off your season-long leagues right.</p>
                   </div>
                   
-                  <div className="relative z-10 flex items-center gap-4 w-full mb-6">
-                    <div className="w-16 h-16 rounded-2xl bg-[#111] border border-gray-700 flex items-center justify-center shrink-0 shadow-inner">
-                      <MonitorSmartphone className="text-red-500" size={32} />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-black text-white uppercase tracking-wide leading-tight italic">Draft Online</h3>
-                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">From the comfort of home</p>
-                    </div>
+                  <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
+                    <Sparkles className="text-red-500 mb-4" size={28} />
+                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Superflex Redraft</h4>
+                    <p className="text-sm text-gray-400 leading-relaxed">Change the value of the quarterback position with the option of adding another QB to your starting lineup! The new standard for many managers.</p>
                   </div>
                   
-                  <div className="relative z-10 mb-6 flex-1">
-                    <p className="text-sm text-gray-400 leading-relaxed">
-                      Can't make it to Ohio? No problem! Join an online division and draft remotely against other members of the FSAN community. Select your preferred format below to submit your entry request.
-                    </p>
+                  <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
+                    <Trophy className="text-red-500 mb-4" size={28} />
+                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Best Ball</h4>
+                    <p className="text-sm text-gray-400 leading-relaxed">Pick your players and work the waivers, but don't stress about setting a weekly lineup. Your highest scorers automatically start!</p>
                   </div>
                   
-                  <div className="relative z-10 w-full bg-[#111] border border-gray-800 rounded-2xl p-6">
-                       {!isAuthed && (
-                           <div className="absolute inset-0 z-20 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center rounded-2xl border border-gray-800">
-                               <Lock size={24} className="text-red-500 mb-2 drop-shadow-md" />
-                               <h4 className="text-sm font-black text-white uppercase tracking-wider mb-1">Pro+ Required</h4>
-                               <p className="text-[10px] text-gray-400 mb-4 max-w-[200px] leading-relaxed">Sign up to unlock the online tournament registration.</p>
-                               <Link href="/subscribe" className="bg-gradient-to-r from-red-600 to-red-800 text-white text-[10px] font-black uppercase tracking-widest px-6 py-2.5 rounded-lg shadow-lg hover:-translate-y-0.5 transition-all">
-                                   Get Pro+
-                               </Link>
-                           </div>
-                       )}
+                  <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
+                    <Calendar className="text-red-500 mb-4" size={28} />
+                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Dynasty (Superflex)</h4>
+                    <p className="text-sm text-gray-400 leading-relaxed">For those where fantasy is a year-round affair. We offer both Startup drafts and Rookie-only drafts for returning attendees.</p>
+                  </div>
+                  
+                  <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
+                    <Shield className="text-red-500 mb-4" size={28} />
+                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">IDP Redraft</h4>
+                    <p className="text-sm text-gray-400 leading-relaxed">Test your luck incorporating the other side of the ball! Run in partnership with IDP+, this league brings defensive players into the mix.</p>
+                  </div>
+                  
+                  <div className="bg-[#111] p-6 rounded-3xl border border-red-900/30 shadow-[0_0_20px_rgba(220,38,38,0.05)] flex flex-col hover:-translate-y-1 transition-transform">
+                    <Heart className="text-red-500 mb-4" size={28} />
+                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Charity League</h4>
+                    <p className="text-sm text-gray-400 leading-relaxed">Industry veterans Jason Watson and George Reed host select leagues where 100% of all league donations go directly to Toys for Tots!</p>
+                  </div>
 
-                       {submitStatus === 'success' ? (
-                           <div className="bg-green-900/20 border border-green-500/30 rounded-xl p-6 flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-300">
-                               <CheckCircle2 size={40} className="text-green-500 mb-3 drop-shadow-md" />
-                               <h4 className="text-lg font-black text-white uppercase tracking-wider mb-2">Entry Received!</h4>
-                               <p className="text-xs text-green-400 font-medium">Keep an eye on your inbox. We'll send your invite link shortly.</p>
-                           </div>
-                       ) : (
-                           <>
-                               {submitStatus === 'error' && (
-                                   <div className="mb-4 bg-red-900/20 border border-red-500/30 rounded-xl p-3 flex items-center gap-3 text-red-400 text-[10px] font-bold uppercase tracking-wider">
-                                       <AlertCircle size={16} className="shrink-0" /> Error submitting entry. Please try again.
-                                   </div>
-                               )}
-                               {renderForm()}
-                           </>
-                       )}
-                  </div>
+                </div>
+              </div>
+
+              {/* REGISTRATION CARDS */}
+              <div className="mb-16">
+                <div className="flex items-center gap-6 mb-8">
+                   <h2 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">Choose Your Path</h2>
+                   <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
                 </div>
 
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  
+                  {/* OPTION 1: IN-PERSON */}
+                  <div className="bg-[#1a1a1a] rounded-3xl border border-gray-800 p-8 flex flex-col relative overflow-hidden group shadow-lg">
+                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
+                      <Ticket size={120} />
+                    </div>
+                    
+                    <div className="relative z-10 flex items-center gap-4 w-full mb-6">
+                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-600 to-red-900 flex items-center justify-center shrink-0 shadow-lg">
+                        <Ticket className="text-white" size={32} />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-black text-white uppercase tracking-wide leading-tight italic">Draft Live in Canton</h3>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">At the Fantasy Football Expo</p>
+                      </div>
+                    </div>
+                    
+                    <div className="relative z-10 mb-8 flex-1 flex flex-col justify-between">
+                      <p className="text-sm text-gray-300 leading-relaxed mb-6">
+                        Secure your spot to draft in person at Jerzee's Sports Grille. Choose your specific division (named after NFL legends like Larry Fitzgerald, Curtis Martin, etc.) right when you buy your ticket!
+                      </p>
+                      <div className="bg-red-900/10 border border-red-900/30 rounded-xl p-4 mt-auto">
+                         <h5 className="text-xs font-black text-red-500 uppercase tracking-widest mb-1">Event Note</h5>
+                         <p className="text-xs text-gray-400 leading-relaxed">
+                           This is a private event. Everyone in attendance, drafting or not, must have a ticket. If you don't want to draft, "Just To Hang" cover-only tickets are available!
+                         </p>
+                      </div>
+                    </div>
+                    
+                    <a href="https://in-betweenmedia.com/product/draft-night-out-2026-tickets/" target="_blank" rel="noopener noreferrer" className="relative z-10 w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest text-xs py-4 rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.2)] transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2 text-center">
+                      Get Tickets for Canton <ExternalLink size={16} />
+                    </a>
+                    <p className="text-center text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-4 relative z-10">
+                      *Tickets sold securely via In-Between Media
+                    </p>
+                  </div>
+
+                  {/* OPTION 2: ONLINE */}
+                  <div className="bg-[#1a1a1a] rounded-3xl border border-gray-800 p-8 flex flex-col relative overflow-hidden group shadow-lg">
+                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
+                      <MonitorSmartphone size={120} />
+                    </div>
+                    
+                    <div className="relative z-10 flex items-center gap-4 w-full mb-6">
+                      <div className="w-16 h-16 rounded-2xl bg-[#111] border border-gray-700 flex items-center justify-center shrink-0 shadow-inner">
+                        <MonitorSmartphone className="text-red-500" size={32} />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-black text-white uppercase tracking-wide leading-tight italic">Draft Online</h3>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">From the comfort of home</p>
+                      </div>
+                    </div>
+                    
+                    <div className="relative z-10 mb-6 flex-1">
+                      <p className="text-sm text-gray-400 leading-relaxed">
+                        Can't make it to Ohio? No problem! Join an online division and draft remotely against other members of the FSAN community. Select your preferred format below to submit your entry request.
+                      </p>
+                    </div>
+                    
+                    <div className="relative z-10 w-full bg-[#111] border border-gray-800 rounded-2xl p-6">
+                         {!isAuthed && (
+                             <div className="absolute inset-0 z-20 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center rounded-2xl border border-gray-800">
+                                 <Lock size={24} className="text-red-500 mb-2 drop-shadow-md" />
+                                 <h4 className="text-sm font-black text-white uppercase tracking-wider mb-1">Pro+ Required</h4>
+                                 <p className="text-[10px] text-gray-400 mb-4 max-w-[200px] leading-relaxed">Sign up to unlock the online tournament registration.</p>
+                                 <Link href="/subscribe" className="bg-gradient-to-r from-red-600 to-red-800 text-white text-[10px] font-black uppercase tracking-widest px-6 py-2.5 rounded-lg shadow-lg hover:-translate-y-0.5 transition-all">
+                                     Get Pro+
+                                 </Link>
+                             </div>
+                         )}
+
+                         {submitStatus === 'success' ? (
+                             <div className="bg-green-900/20 border border-green-500/30 rounded-xl p-6 flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-300">
+                                 <CheckCircle2 size={40} className="text-green-500 mb-3 drop-shadow-md" />
+                                 <h4 className="text-lg font-black text-white uppercase tracking-wider mb-2">Entry Received!</h4>
+                                 <p className="text-xs text-green-400 font-medium">Keep an eye on your inbox. We'll send your invite link shortly.</p>
+                             </div>
+                         ) : (
+                             <>
+                                 {submitStatus === 'error' && (
+                                     <div className="mb-4 bg-red-900/20 border border-red-500/30 rounded-xl p-3 flex items-center gap-3 text-red-400 text-[10px] font-bold uppercase tracking-wider">
+                                         <AlertCircle size={16} className="shrink-0" /> Error submitting entry. Please try again.
+                                     </div>
+                                 )}
+                                 {renderForm()}
+                             </>
+                         )}
+                    </div>
+                  </div>
+
+                </div>
               </div>
 
             </div>
