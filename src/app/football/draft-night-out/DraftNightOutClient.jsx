@@ -34,7 +34,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
 
   useEffect(() => {
       if (session?.user?.email && liveForm?.fields) {
-          const emailField = liveForm.fields.find(f => f.type === 'email');
+          const emailField = liveForm.fields.find(f => f.type === 'email' || f.label.toLowerCase().includes('email'));
           if (emailField) {
               setFormData(prev => ({ ...prev, [emailField.id]: session.user.email }));
           }
@@ -86,7 +86,8 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
               <form onSubmit={handleSubmit} className={`w-full flex flex-col gap-4 ${!isAuthed ? 'opacity-30 pointer-events-none blur-[2px]' : ''}`}>
                   <div className="flex flex-col gap-4">
                       <div className="flex flex-col flex-1">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Email Address</label>
+                          {/* UPDATED: "Your Email" */}
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Your Email</label>
                           <input type="email" required onChange={(e) => handleInputChange('1', e.target.value)} value={formData['1'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder="Enter your email" />
                       </div>
                       <div className="flex flex-col flex-1">
@@ -113,12 +114,18 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
       return (
           <form onSubmit={handleSubmit} className={`w-full flex flex-col gap-4 ${!isAuthed ? 'opacity-30 pointer-events-none blur-[2px] transition-all duration-300' : ''}`}>
               <div className="flex flex-col gap-4">
-                  {liveForm.fields.filter(f => f.type === 'email' || f.type === 'text').map(field => (
-                      <div key={field.id} className="flex flex-col flex-1">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{field.label}</label>
-                          <input type={field.type} required={field.isRequired} onChange={(e) => handleInputChange(field.id, e.target.value)} value={formData[field.id] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder={`Enter ${field.label}`} />
-                      </div>
-                  ))}
+                  {liveForm.fields.filter(f => f.type === 'email' || f.type === 'text').map(field => {
+                      // UPDATED: Forces the email field to display "Your Email" regardless of Gravity Forms label
+                      const isEmail = field.type === 'email' || field.label.toLowerCase().includes('email');
+                      const displayLabel = isEmail ? 'Your Email' : field.label;
+
+                      return (
+                          <div key={field.id} className="flex flex-col flex-1">
+                              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{displayLabel}</label>
+                              <input type={field.type} required={field.isRequired} onChange={(e) => handleInputChange(field.id, e.target.value)} value={formData[field.id] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder={`Enter ${displayLabel.toLowerCase()}`} />
+                          </div>
+                      );
+                  })}
               </div>
               {liveForm.fields.filter(f => f.type === 'select').map(field => (
                   <div key={field.id} className="flex flex-col">
@@ -206,55 +213,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                  </div>
               </div>
 
-              {/* FORMATS SECTION */}
-              <div className="mb-16">
-                <div className="flex items-center gap-6 mb-8">
-                   <h2 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">League Formats</h2>
-                   <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  
-                  <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
-                    <Users className="text-red-500 mb-4" size={28} />
-                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Traditional Redraft</h4>
-                    <p className="text-sm text-gray-400 leading-relaxed">The classic format you know and love. Standard roster requirements and scoring to kick off your season-long leagues right.</p>
-                  </div>
-                  
-                  <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
-                    <Sparkles className="text-red-500 mb-4" size={28} />
-                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Superflex Redraft</h4>
-                    <p className="text-sm text-gray-400 leading-relaxed">Change the value of the quarterback position with the option of adding another QB to your starting lineup! The new standard for many managers.</p>
-                  </div>
-                  
-                  <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
-                    <Trophy className="text-red-500 mb-4" size={28} />
-                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Best Ball</h4>
-                    <p className="text-sm text-gray-400 leading-relaxed">Pick your players and work the waivers, but don't stress about setting a weekly lineup. Your highest scorers automatically start!</p>
-                  </div>
-                  
-                  <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
-                    <Calendar className="text-red-500 mb-4" size={28} />
-                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Dynasty (Superflex)</h4>
-                    <p className="text-sm text-gray-400 leading-relaxed">For those where fantasy is a year-round affair. We offer both Startup drafts and Rookie-only drafts for returning attendees.</p>
-                  </div>
-                  
-                  <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
-                    <Shield className="text-red-500 mb-4" size={28} />
-                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">IDP Redraft</h4>
-                    <p className="text-sm text-gray-400 leading-relaxed">Test your luck incorporating the other side of the ball! Run in partnership with IDP+, this league brings defensive players into the mix.</p>
-                  </div>
-                  
-                  <div className="bg-[#111] p-6 rounded-3xl border border-red-900/30 shadow-[0_0_20px_rgba(220,38,38,0.05)] flex flex-col hover:-translate-y-1 transition-transform">
-                    <Heart className="text-red-500 mb-4" size={28} />
-                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Charity League</h4>
-                    <p className="text-sm text-gray-400 leading-relaxed">Industry veterans Jason Watson and George Reed host select leagues where 100% of all league donations go directly to Toys for Tots!</p>
-                  </div>
-
-                </div>
-              </div>
-
-              {/* REGISTRATION CARDS */}
+              {/* REGISTRATION CARDS - MOVED ABOVE FORMATS */}
               <div className="mb-16">
                 <div className="flex items-center gap-6 mb-8">
                    <h2 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">Choose Your Path</h2>
@@ -322,8 +281,10 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                     </div>
                     
                     <div className="relative z-10 w-full bg-[#111] border border-gray-800 rounded-2xl p-6">
+                         
+                         {/* IDENTICAL PRO+ LOCK USED IN JERSEY LEAGUES */}
                          {!isAuthed && (
-                             <div className="absolute inset-0 z-20 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center rounded-2xl border border-gray-800">
+                             <div className="absolute inset-0 z-20 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center rounded-2xl border border-red-900/30">
                                  <Lock size={24} className="text-red-500 mb-2 drop-shadow-md" />
                                  <h4 className="text-sm font-black text-white uppercase tracking-wider mb-1">Pro+ Required</h4>
                                  <p className="text-[10px] text-gray-400 mb-4 max-w-[200px] leading-relaxed">Sign up to unlock the online tournament registration.</p>
@@ -350,6 +311,54 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                              </>
                          )}
                     </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* FORMATS SECTION - MOVED BELOW REGISTRATION */}
+              <div className="mb-16">
+                <div className="flex items-center gap-6 mb-8">
+                   <h2 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">League Formats</h2>
+                   <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  
+                  <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
+                    <Users className="text-red-500 mb-4" size={28} />
+                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Traditional Redraft</h4>
+                    <p className="text-sm text-gray-400 leading-relaxed">The classic format you know and love. Standard roster requirements and scoring to kick off your season-long leagues right.</p>
+                  </div>
+                  
+                  <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
+                    <Sparkles className="text-red-500 mb-4" size={28} />
+                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Superflex Redraft</h4>
+                    <p className="text-sm text-gray-400 leading-relaxed">Change the value of the quarterback position with the option of adding another QB to your starting lineup! The new standard for many managers.</p>
+                  </div>
+                  
+                  <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
+                    <Trophy className="text-red-500 mb-4" size={28} />
+                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Best Ball</h4>
+                    <p className="text-sm text-gray-400 leading-relaxed">Pick your players and work the waivers, but don't stress about setting a weekly lineup. Your highest scorers automatically start!</p>
+                  </div>
+                  
+                  <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
+                    <Calendar className="text-red-500 mb-4" size={28} />
+                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Dynasty (Superflex)</h4>
+                    <p className="text-sm text-gray-400 leading-relaxed">For those where fantasy is a year-round affair. We offer both Startup drafts and Rookie-only drafts for returning attendees.</p>
+                  </div>
+                  
+                  <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
+                    <Shield className="text-red-500 mb-4" size={28} />
+                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">IDP Redraft</h4>
+                    <p className="text-sm text-gray-400 leading-relaxed">Test your luck incorporating the other side of the ball! Run in partnership with IDP+, this league brings defensive players into the mix.</p>
+                  </div>
+                  
+                  <div className="bg-[#111] p-6 rounded-3xl border border-red-900/30 shadow-[0_0_20px_rgba(220,38,38,0.05)] flex flex-col hover:-translate-y-1 transition-transform">
+                    <Heart className="text-red-500 mb-4" size={28} />
+                    <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Charity League</h4>
+                    <p className="text-sm text-gray-400 leading-relaxed">Industry veterans Jason Watson and George Reed host select leagues where 100% of all league donations go directly to Toys for Tots!</p>
                   </div>
 
                 </div>
