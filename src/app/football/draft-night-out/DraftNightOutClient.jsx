@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
-import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Utensils, MessageSquare, Users, Trophy, Heart, Shield, Sparkles } from 'lucide-react';
+import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Utensils, MessageSquare, Users, Trophy, Heart, Shield, Sparkles, Medal, Gift } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm, formId }) {
@@ -86,7 +86,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
               <form onSubmit={handleSubmit} className={`w-full flex flex-col gap-4 ${!isAuthed ? 'opacity-30 pointer-events-none blur-[2px]' : ''}`}>
                   <div className="flex flex-col gap-4">
                       <div className="flex flex-col flex-1">
-                          {/* UPDATED: "Your Email" */}
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Your Email</label>
                           <input type="email" required onChange={(e) => handleInputChange('1', e.target.value)} value={formData['1'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder="Enter your email" />
                       </div>
@@ -115,7 +114,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
           <form onSubmit={handleSubmit} className={`w-full flex flex-col gap-4 ${!isAuthed ? 'opacity-30 pointer-events-none blur-[2px] transition-all duration-300' : ''}`}>
               <div className="flex flex-col gap-4">
                   {liveForm.fields.filter(f => f.type === 'email' || f.type === 'text').map(field => {
-                      // UPDATED: Forces the email field to display "Your Email" regardless of Gravity Forms label
                       const isEmail = field.type === 'email' || field.label.toLowerCase().includes('email');
                       const displayLabel = isEmail ? 'Your Email' : field.label;
 
@@ -213,7 +211,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                  </div>
               </div>
 
-              {/* REGISTRATION CARDS - MOVED ABOVE FORMATS */}
+              {/* REGISTRATION CARDS */}
               <div className="mb-16">
                 <div className="flex items-center gap-6 mb-8">
                    <h2 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">Choose Your Path</h2>
@@ -282,7 +280,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                     
                     <div className="relative z-10 w-full bg-[#111] border border-gray-800 rounded-2xl p-6">
                          
-                         {/* IDENTICAL PRO+ LOCK USED IN JERSEY LEAGUES */}
                          {!isAuthed && (
                              <div className="absolute inset-0 z-20 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center rounded-2xl border border-red-900/30">
                                  <Lock size={24} className="text-red-500 mb-2 drop-shadow-md" />
@@ -316,7 +313,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                 </div>
               </div>
 
-              {/* FORMATS SECTION - MOVED BELOW REGISTRATION */}
+              {/* FORMATS SECTION */}
               <div className="mb-16">
                 <div className="flex items-center gap-6 mb-8">
                    <h2 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">League Formats</h2>
@@ -362,6 +359,60 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                   </div>
 
                 </div>
+              </div>
+
+              {/* PRIZES & PLAYOFF CHALLENGE */}
+              <div className="mb-16">
+                <div className="flex items-center gap-6 mb-8">
+                   <h2 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">What's on the Line?</h2>
+                   <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                   {/* Division Winner */}
+                   <div className="bg-[#111] p-8 rounded-3xl border border-gray-800 flex flex-col items-center text-center shadow-lg hover:-translate-y-1 transition-transform">
+                     <Medal className="text-gray-400 mb-4" size={40} />
+                     <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Division Winner</h4>
+                     <p className="text-sm text-gray-400 leading-relaxed">Championship plaque provided by <strong className="text-white">Dynasty Decks</strong>.</p>
+                   </div>
+
+                   {/* Regular Season Winner */}
+                   <div className="bg-[#111] p-8 rounded-3xl border border-gray-800 flex flex-col items-center text-center shadow-lg hover:-translate-y-1 transition-transform">
+                     <Gift className="text-green-500 mb-4" size={40} />
+                     <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Regular Season Champ</h4>
+                     <p className="text-sm text-gray-400 leading-relaxed">A <strong className="text-green-400">$75 Gift Card</strong> to the official FSAN Shop.</p>
+                   </div>
+
+                   {/* Playoff Challenge Champ */}
+                   <div className="bg-gradient-to-b from-[#1a0f0f] to-[#111] p-8 rounded-3xl border border-red-500/30 flex flex-col items-center text-center shadow-[0_0_30px_rgba(220,38,38,0.15)] hover:-translate-y-1 transition-transform relative overflow-hidden">
+                     <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/10 blur-2xl rounded-full"></div>
+                     <Trophy className="text-yellow-500 mb-4 relative z-10" size={40} />
+                     <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2 relative z-10">Playoff Champion</h4>
+                     <p className="text-sm text-gray-300 leading-relaxed relative z-10">Championship plaque by <strong className="text-white">Dynasty Decks</strong> & Champ Chain by <strong className="text-white">TrophySmack</strong>!</p>
+                   </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-[#1b1010] to-[#111] rounded-3xl border border-red-900/30 p-8 md:p-12 mb-12 shadow-[0_0_40px_rgba(220,38,38,0.1)] relative overflow-hidden flex flex-col md:flex-row items-center gap-8 md:gap-12">
+                  
+                  <div className="absolute -right-4 -top-4 text-[120px] md:text-[180px] font-black text-red-900/10 z-0 select-none transition-colors leading-none pointer-events-none">
+                      🏆
+                  </div>
+
+                  <div className="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-red-600 to-red-900 rounded-full flex items-center justify-center shrink-0 shadow-[0_0_30px_rgba(220,38,38,0.4)] border-4 border-[#111] relative z-10">
+                    <Shield size={48} className="text-white drop-shadow-md" />
+                  </div>
+                  <div className="flex-1 text-center md:text-left relative z-10">
+                    <div className="inline-block px-3 py-1 bg-red-600 text-white font-black text-[10px] uppercase tracking-widest rounded-full mb-3 shadow-md">New in 2026!</div>
+                    <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter mb-4 italic">
+                      The Playoff Challenge
+                    </h2>
+                    
+                    <p className="text-gray-300 text-base md:text-lg leading-relaxed">
+                      We are hosting a massive playoff challenge for the <strong>top 200 teams</strong> from the regular season. Qualify for the playoffs to compete for the ultimate prize package and prove you are the undisputed champion!
+                    </p>
+                  </div>
+                </div>
+
               </div>
 
             </div>
