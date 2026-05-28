@@ -40,11 +40,11 @@ export const themes = {
     hex: '#eab308'
   },
   Golf: {
-    text: 'text-green-500',
-    border: 'border-green-500',
-    bg: 'bg-green-500',
-    hoverBorder: 'hover:border-green-400',
-    hoverText: 'hover:text-green-400',
-    hex: '#22c55e'
+    text: 'text-[#019c9e]',
+    border: 'border-[#019c9e]',
+    bg: 'bg-[#019c9e]',
+    hoverBorder: 'hover:border-[#018082]',
+    hoverText: 'hover:text-[#018082]',
+    hex: '#019c9e'
   }
 };

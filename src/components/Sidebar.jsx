@@ -34,7 +34,7 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
     Basketball: 'bg-gradient-to-r from-[#e85d22] to-[#a33308] hover:from-[#f26d35] hover:to-[#bc4010] border-[#e85d22]',
     Baseball: 'bg-gradient-to-r from-[#1b75bb] to-[#1e3b8a] hover:from-[#2587d0] hover:to-[#2546a1] border-[#1b75bb]',
     Racing: 'bg-gradient-to-r from-[#eab308] to-[#a16207] hover:from-[#facc15] hover:to-[#ca8a04] border-[#eab308]',
-    Golf: 'bg-gradient-to-r from-[#22c55e] to-[#14532d] hover:from-[#4ade80] hover:to-[#166534] border-[#22c55e]',
+    Golf: 'bg-gradient-to-r from-[#019c9e] to-[#015e5f] hover:from-[#01b5b8] hover:to-[#01787a] border-[#019c9e]',
   };
   const currentGradient = sportGradients[activeSport] || sportGradients.All;
 

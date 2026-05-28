@@ -44,8 +44,8 @@ export default function Header({ activeSport }) {
     Football: 'https://admin.fsan.com/wp-content/uploads/2023/11/Horizontal-White-2.webp',
     Basketball: 'https://admin.fsan.com/wp-content/uploads/2023/11/Horizontal-white.webp',
     Baseball: 'https://admin.fsan.com/wp-content/uploads/2023/11/Horizontal-white-1.webp',
-    Racing: 'https://admin.fsan.com/wp-content/uploads/2026/05/FRAN-Logo_Yellow_Horizontal-White.webp',
-    Golf: 'https://admin.fsan.com/wp-content/uploads/2026/05/FGAN-Logo_Horizontal-White.webp',
+    Racing: 'https://admin.fsan.com/wp-content/uploads/2026/05/FRAN.webp',
+    Golf: 'https://admin.fsan.com/wp-content/uploads/2026/05/FGAN.webp',
   };
 
   const currentLogo = logos[activeSport] || logos.All;
@@ -56,7 +56,7 @@ export default function Header({ activeSport }) {
     Basketball: 'bg-gradient-to-b from-[#e85d22] to-[#a33308]',
     Baseball: 'bg-gradient-to-b from-[#1b75bb] to-[#1e3b8a]',
     Racing: 'bg-gradient-to-b from-[#eab308] to-[#a16207]',
-    Golf: 'bg-gradient-to-b from-[#22c55e] to-[#14532d]',
+    Golf: 'bg-gradient-to-b from-[#019c9e] to-[#015e5f]',
   };
   
   const currentGradient = sportGradients[activeSport] || sportGradients.All;
