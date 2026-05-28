@@ -22,7 +22,6 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
   const [isMobileOpen, setIsMobileMenuOpen] = useState(false);
   const [hoveredSocial, setHoveredSocial] = useState(null);
   
-  // Initialize tier as free, but add a loading state so we don't flash the wrong button
   const [userTier, setUserTier] = useState('free');
   const [isTierLoading, setIsTierLoading] = useState(true);
 
@@ -34,6 +33,8 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
     Football: 'bg-gradient-to-r from-[#e42d38] to-[#8a1a20] hover:from-[#f03a45] hover:to-[#a3222a] border-[#e42d38]',
     Basketball: 'bg-gradient-to-r from-[#e85d22] to-[#a33308] hover:from-[#f26d35] hover:to-[#bc4010] border-[#e85d22]',
     Baseball: 'bg-gradient-to-r from-[#1b75bb] to-[#1e3b8a] hover:from-[#2587d0] hover:to-[#2546a1] border-[#1b75bb]',
+    Racing: 'bg-gradient-to-r from-[#eab308] to-[#a16207] hover:from-[#facc15] hover:to-[#ca8a04] border-[#eab308]',
+    Golf: 'bg-gradient-to-r from-[#22c55e] to-[#14532d] hover:from-[#4ade80] hover:to-[#166534] border-[#22c55e]',
   };
   const currentGradient = sportGradients[activeSport] || sportGradients.All;
 
@@ -53,12 +54,9 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
     }
   }, [isMobileOpen]);
 
-  // Fetch the user's role to control the Go Pro button
   useEffect(() => {
-    // If next-auth is still figuring out if the user is logged in, wait.
     if (status === 'loading') return;
 
-    // If we know they aren't logged in, they are free. Stop loading.
     if (status === 'unauthenticated') {
       setUserTier('free');
       setIsTierLoading(false);
@@ -110,7 +108,6 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
           console.error("Failed to fetch user role on sidebar.");
           setUserTier('free');
         } finally {
-          // Whether it succeeds or fails, stop loading so a button can render
           setIsTierLoading(false);
         }
       };
@@ -121,7 +118,6 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
     }
   }, [status, session]);
 
-  // Dynamically adjust vertical padding based on screen height
   const getNavStyle = (viewName) => {
     const isActive = currentView === viewName;
     return isActive
@@ -153,12 +149,13 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
     return FileText; 
   };
 
-  // UPDATED: Brand new FSANHQ and standardized URLs for all networks!
   const socialLinksData = {
     All: { facebook: 'https://www.facebook.com/FSANHQ', x: 'https://x.com/FSANHQ', youtube: 'https://www.youtube.com/@FSANHQ', tiktok: 'https://www.tiktok.com/@fsanhq', linkedin: 'https://www.linkedin.com/company/fantasy-sports-advice', sellout: 'https://www.selloutcrowds.com/crowd/fsan', instagram: 'https://www.instagram.com/fsanhq' },
     Football: { facebook: 'https://www.facebook.com/FSANHQ', x: 'https://x.com/FSANHQ', youtube: 'https://www.youtube.com/@FSANfootball', instagram: 'https://www.instagram.com/fsanhq', sellout: 'https://www.selloutcrowds.com/crowd/ffan', tiktok: 'https://www.tiktok.com/@fsanhq', linkedin: null },
     Basketball: { facebook: 'https://www.facebook.com/FSANHQ', x: 'https://x.com/FSANHQ', youtube: 'https://www.youtube.com/@FSANbasketball', instagram: 'https://www.instagram.com/fsanhq', sellout: 'https://www.selloutcrowds.com/crowd/fbban', tiktok: 'https://www.tiktok.com/@fsanhq', linkedin: null },
     Baseball: { facebook: 'https://www.facebook.com/FSANHQ', x: 'https://x.com/FSANHQ', youtube: 'https://www.youtube.com/@FSANbaseball', instagram: 'https://www.instagram.com/fsanhq', sellout: 'https://www.selloutcrowds.com/crowd/fban', tiktok: 'https://www.tiktok.com/@fsanhq', linkedin: null },
+    Racing: { facebook: 'https://www.facebook.com/FSANHQ', x: 'https://x.com/FSANHQ', youtube: 'https://www.youtube.com/@FSANracing', instagram: 'https://www.instagram.com/fsanhq', sellout: 'https://www.selloutcrowds.com/crowd/fran', tiktok: 'https://www.tiktok.com/@fsanhq', linkedin: null },
+    Golf: { facebook: 'https://www.facebook.com/FSANHQ', x: 'https://x.com/FSANHQ', youtube: 'https://www.youtube.com/@FSANgolf', instagram: 'https://www.instagram.com/fsanhq', sellout: 'https://www.selloutcrowds.com/crowd/fgan', tiktok: 'https://www.tiktok.com/@fsanhq', linkedin: null },
   };
   const currentLinks = socialLinksData[activeSport] || socialLinksData.All;
 
@@ -208,6 +205,24 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
         { name: 'Exclusive Community', icon: SelloutCrowds, href: '#' },
         { name: 'Merch Shop', icon: ShoppingCart, href: 'https://fsan.shop', external: true },
       ]
+    },
+    Racing: {
+      proTools: [
+        { name: 'Driver Rankings', icon: Users, href: '#' },
+      ],
+      connect: [
+        { name: 'Exclusive Community', icon: SelloutCrowds, href: '#' },
+        { name: 'Merch Shop', icon: ShoppingCart, href: 'https://fsan.shop', external: true },
+      ]
+    },
+    Golf: {
+      proTools: [
+        { name: 'Golfer Rankings', icon: Users, href: '#' },
+      ],
+      connect: [
+        { name: 'Exclusive Community', icon: SelloutCrowds, href: '#' },
+        { name: 'Merch Shop', icon: ShoppingCart, href: 'https://fsan.shop', external: true },
+      ]
     }
   };
 
@@ -247,14 +262,8 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
            </button>
         </div>
 
-        {/* NEW FIX: 
-          1) lg:h-[calc(100vh-6rem)] combined with lg:overflow-y-auto enables safe inner scrolling.
-          2) [&::-webkit-scrollbar]:hidden hides the ugly scrollbars when it scrolls.
-          3) dynamic [@media(min-height:*)] gap adjustments
-        */}
         <div className="lg:sticky lg:top-20 flex flex-col gap-2 [@media(min-height:750px)]:gap-3 [@media(min-height:900px)]:gap-4 pb-24 lg:pb-4 lg:h-[calc(100vh-6rem)] lg:overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           
-          {/* BROWSE NETWORK */}
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-2 [@media(min-height:750px)]:p-2.5 [@media(min-height:900px)]:p-3 shadow-xl shrink-0">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-1.5 [@media(min-height:750px)]:mb-2 [@media(min-height:900px)]:mb-3 px-1 italic">Content</h4>
              <div className="flex flex-col gap-1">
@@ -273,7 +282,6 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
              </div>
           </div>
 
-          {/* DYNAMIC PRO TOOLS */}
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-2 [@media(min-height:750px)]:p-2.5 [@media(min-height:900px)]:p-3 shadow-xl shrink-0">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-1.5 [@media(min-height:750px)]:mb-2 [@media(min-height:900px)]:mb-3 px-1 italic">Tools</h4>
              <div className="flex flex-col gap-1">
@@ -308,7 +316,6 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
              </div>
           </div>
           
-          {/* DYNAMIC CONNECT */}
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-2 [@media(min-height:750px)]:p-2.5 [@media(min-height:900px)]:p-3 shadow-xl shrink-0">
              <h4 className="text-gray-500 font-black uppercase tracking-widest text-[9px] mb-1.5 [@media(min-height:750px)]:mb-2 [@media(min-height:900px)]:mb-3 px-1 italic">Connect</h4>
              <div className="flex flex-col gap-1">
@@ -350,7 +357,6 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
              </div>
           </div>
 
-          {/* GO PRO BUTTON */}
           {!isTierLoading && userTier !== 'pro-plus' && (
             <div className="mt-1 [@media(min-height:900px)]:mt-2 mb-2 [@media(min-height:900px)]:mb-4 animate-in fade-in duration-300 shrink-0">
               {activeSport === 'All' ? (
@@ -375,7 +381,6 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
             </div>
           )}
 
-          {/* FOOTER / SOCIALS */}
           <div className="flex flex-col items-center justify-center gap-1.5 [@media(min-height:750px)]:gap-2 [@media(min-height:900px)]:gap-3 mt-auto mb-2 [@media(min-height:750px)]:mb-4 pt-2 [@media(min-height:750px)]:pt-4 shrink-0">
              <div className="flex flex-wrap items-center justify-center gap-4 px-2">
                 {currentLinks.sellout && <SocialIcon id="sellout" href={currentLinks.sellout} IconComponent={SelloutCrowds} />}

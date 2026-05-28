@@ -39,6 +39,12 @@ export const formatPost = (post) => {
   else if (slugString.includes('baseball') || slugString.includes('mlb')) {
       sport = 'Baseball';
   }
+  else if (slugString.includes('racing') || slugString.includes('nascar') || slugString.includes('f1')) {
+      sport = 'Racing';
+  }
+  else if (slugString.includes('golf') || slugString.includes('pga')) {
+      sport = 'Golf';
+  }
 
   let defaultType = post.post_type === 'yt2posts_youtube' ? 'video' : 'article';
   let type = defaultType;
@@ -119,7 +125,7 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
     let totalPages = 1;
     const fetchOptions = { next: { revalidate: 60 } }; 
 
-    // CACHE BUSTER: Generates a new timestamp every 5 minutes to permanently prevent stale feeds!
+    // CACHE BUSTER
     const timeBuster = Math.floor(Date.now() / (1000 * 60 * 5));
 
     if (targetType === 'all') {
@@ -147,7 +153,9 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
       rawPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
     } else {
-      const res = await fetch(`https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=36&page=${currentPage}&sport=${activeSport}&type=${targetType}&t=${timeBuster}`, fetchOptions);
+      const fetchLimit = targetType === 'videos' ? 60 : 36;
+      
+      const res = await fetch(`https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=${fetchLimit}&page=${currentPage}&sport=${activeSport}&type=${targetType}&t=${timeBuster}`, fetchOptions);
       if (!res.ok) throw new Error("API failed");
       totalPages = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);
       rawPosts = await res.json();
@@ -171,7 +179,6 @@ export async function fetchGraphQL(query, variables = {}) {
     queryParams.append('variables', JSON.stringify(variables));
   }
 
-  // CACHE BUSTER for GraphQL GET requests (Ensures Menus and dynamic settings never freeze)
   const timeBuster = Math.floor(Date.now() / (1000 * 60 * 5));
   queryParams.append('t', timeBuster);
 

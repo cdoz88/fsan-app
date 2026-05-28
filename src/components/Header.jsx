@@ -13,6 +13,8 @@ const sportsList = [
   { name: 'Football', icon: 'https://admin.fsan.com/wp-content/uploads/2023/11/FFAN-Icon.webp' },
   { name: 'Basketball', icon: 'https://admin.fsan.com/wp-content/uploads/2023/11/FBBAN-Icon.webp' },
   { name: 'Baseball', icon: 'https://admin.fsan.com/wp-content/uploads/2023/11/FBAN-Icon.webp' },
+  { name: 'Racing', icon: 'https://admin.fsan.com/wp-content/uploads/2026/05/FRAN-Icons_Logo.webp' },
+  { name: 'Golf', icon: 'https://admin.fsan.com/wp-content/uploads/2026/05/FGAN-Icons_Logo.webp' },
 ];
 
 export default function Header({ activeSport }) {
@@ -42,6 +44,8 @@ export default function Header({ activeSport }) {
     Football: 'https://admin.fsan.com/wp-content/uploads/2023/11/Horizontal-White-2.webp',
     Basketball: 'https://admin.fsan.com/wp-content/uploads/2023/11/Horizontal-white.webp',
     Baseball: 'https://admin.fsan.com/wp-content/uploads/2023/11/Horizontal-white-1.webp',
+    Racing: 'https://admin.fsan.com/wp-content/uploads/2026/05/FRAN-Logo_Yellow_Horizontal-White.webp',
+    Golf: 'https://admin.fsan.com/wp-content/uploads/2026/05/FGAN-Logo_Horizontal-White.webp',
   };
 
   const currentLogo = logos[activeSport] || logos.All;
@@ -51,6 +55,8 @@ export default function Header({ activeSport }) {
     Football: 'bg-gradient-to-b from-[#e42d38] to-[#8a1a20]',
     Basketball: 'bg-gradient-to-b from-[#e85d22] to-[#a33308]',
     Baseball: 'bg-gradient-to-b from-[#1b75bb] to-[#1e3b8a]',
+    Racing: 'bg-gradient-to-b from-[#eab308] to-[#a16207]',
+    Golf: 'bg-gradient-to-b from-[#22c55e] to-[#14532d]',
   };
   
   const currentGradient = sportGradients[activeSport] || sportGradients.All;
@@ -225,7 +231,6 @@ export default function Header({ activeSport }) {
           ) : session ? (
             <>
               <Link href="/account" className="px-6 text-white hover:text-gray-300 transition-colors flex items-center gap-2 no-underline">
-                {/* FIX: Filter out broken Jetpack WP Avatar links and use the clean fallback instead */}
                 {session.user?.image && !session.user.image.includes('wp_user_avatar') ? (
                   <img src={session.user.image} alt="Avatar" className="w-6 h-6 rounded-full border border-gray-600 object-cover" />
                 ) : (
@@ -259,7 +264,6 @@ export default function Header({ activeSport }) {
           {session ? (
             <>
               <Link href="/account" className="hover:text-white p-2 transition-colors">
-                {/* FIX: Filter out broken Jetpack WP Avatar links and use the clean fallback instead */}
                 {session.user?.image && !session.user.image.includes('wp_user_avatar') ? (
                   <img src={session.user.image} alt="Avatar" className="w-6 h-6 rounded-full border border-gray-600 object-cover" /> 
                 ) : (
@@ -358,7 +362,6 @@ export default function Header({ activeSport }) {
           
           <div className="w-full max-w-4xl relative flex flex-col">
             
-            {/* CLOSE BUTTON - UPPER RIGHT OF SEARCH BAR */}
             <div className="flex justify-end mb-3 pr-1">
               <button 
                 onClick={() => setIsSearchModalOpen(false)} 
@@ -368,11 +371,9 @@ export default function Header({ activeSport }) {
               </button>
             </div>
 
-            {/* INLINE SEARCH BAR (Wrapped in Pro+ Gradient Border) */}
             <div className="p-[2px] rounded-[24px] bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] w-full shadow-[0_0_50px_rgba(0,0,0,0.8)] relative z-20">
               <div className="flex items-center bg-[#1e1e1e] rounded-[22px] h-16 md:h-20 w-full">
                 
-                {/* COMPACT SPORT SELECTOR ON LEFT (Icon Only) */}
                 <div className="relative h-full flex items-center border-r border-gray-800 bg-[#151515] rounded-l-[22px]">
                   <button 
                     onClick={() => setIsSearchSportDropdownOpen(!isSearchSportDropdownOpen)} 
@@ -419,7 +420,6 @@ export default function Header({ activeSport }) {
                   }}
                 />
                 
-                {/* INLINE SUBMIT BUTTON - Grey Gradient */}
                 <button onClick={handleSearch} className="h-full px-6 md:px-8 bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 text-white transition-all text-xs md:text-sm font-black uppercase tracking-widest border-l border-gray-700 rounded-r-[22px] flex items-center gap-2 shadow-inner group shrink-0">
                   <span className="hidden md:inline">Search</span>
                   <Search size={20} className="md:hidden" />
@@ -427,7 +427,6 @@ export default function Header({ activeSport }) {
               </div>
             </div>
 
-            {/* LIVE TYPEAHEAD SUGGESTIONS */}
             {suggestions.length > 0 && (
               <div className="absolute top-full left-0 w-full mt-3 bg-[#1a1a1a] border border-gray-700 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-10 animate-in fade-in slide-in-from-top-2">
                 <div className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500 border-b border-gray-800/50 bg-[#111]">
