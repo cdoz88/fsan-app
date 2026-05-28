@@ -59,7 +59,6 @@ export const formatPost = (post) => {
   let acastShowId = post.acast_show_id || (showMatch ? showMatch[1] : null);
   let rawAcastId = post.acast_episode_id || (epMatch ? epMatch[1] : null);
   
-  // FIX: Seamlessly maps the exact string provided by the PHP script without mangling it!
   let finalAcastEmbedPath = null;
   if (rawAcastId) {
       let cleanId = rawAcastId.replace('acast:', '').replace(/^https?:\/\//, '').trim();
@@ -129,7 +128,7 @@ export const formatPost = (post) => {
       avatar: authorAvatar
     },
     youtubeId,
-    acastEmbedPath: finalAcastEmbedPath,
+    acastId: finalAcastEmbedPath, // FIX: Corrected variable name from acastEmbedPath to acastId
     acastShowId, 
     spreakerId, 
     spreakerShowId, 
