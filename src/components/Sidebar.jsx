@@ -54,6 +54,7 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
     }
   }, [isMobileOpen]);
 
+  // FIX: Switched from POST to GET
   useEffect(() => {
     if (status === 'loading') return;
 
@@ -76,14 +77,14 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
             }
           }
         `;
+        const queryParams = new URLSearchParams({ query: query.trim() });
         try {
-          const res = await fetch('https://admin.fsan.com/graphql', {
-            method: 'POST',
+          const res = await fetch(`https://admin.fsan.com/graphql?${queryParams.toString()}`, {
+            method: 'GET',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${session.user.token}`,
             },
-            body: JSON.stringify({ query }),
             cache: 'no-store' 
           });
           const json = await res.json();

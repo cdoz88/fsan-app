@@ -122,6 +122,7 @@ export default function Header({ activeSport }) {
     return () => clearTimeout(timer);
   }, [searchQuery, searchSport]);
 
+  // FIX: Switched from POST to GET
   useEffect(() => {
     const fetchMobileMenu = async () => {
       const query = `
@@ -137,11 +138,11 @@ export default function Header({ activeSport }) {
           }
         }
       `;
+      const queryParams = new URLSearchParams({ query: query.trim() });
       try {
-        const res = await fetch('https://admin.fsan.com/graphql', {
-          method: 'POST',
+        const res = await fetch(`https://admin.fsan.com/graphql?${queryParams.toString()}`, {
+          method: 'GET',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query }),
         });
         const json = await res.json();
         if (json?.data?.menu?.menuItems?.nodes) {
