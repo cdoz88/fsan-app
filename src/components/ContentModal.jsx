@@ -438,15 +438,15 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
   );
 };
 
-// FIX: Feeds the perfectly translated URL directly to Acast Embeds
+// FIX: Acast episodes load seamlessly using either the exact string or the $ wildcard!
 const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) => (
   <div className="flex flex-col lg:flex-row h-full min-h-0 overflow-y-auto lg:overflow-hidden">
     <div className="flex-none lg:flex-1 bg-[#0a0a0a] flex flex-col items-center justify-center lg:border-r border-gray-800 p-4 sm:p-6 relative min-h-0">
       <div className="w-full h-[380px] sm:h-[400px] lg:h-full lg:min-h-[400px] bg-[#111] rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800 shrink-0">
         
-        {selectedItem.acastEmbedPath ? (
+        {selectedItem.acastId ? (
           <iframe 
-            src={`https://embed.acast.com/${selectedItem.acastEmbedPath}?theme=podcast&hidePrivacy=true`} 
+            src={`https://embed.acast.com/${selectedItem.acastId}?theme=podcast&hidePrivacy=true`} 
             width="100%" 
             height="100%" 
             frameBorder="0" 
