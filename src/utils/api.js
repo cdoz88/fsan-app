@@ -56,11 +56,11 @@ export const formatPost = (post) => {
   const showMatch = cleanContent.match(/show_id=([0-9]+)/);
   const epMatch = cleanContent.match(/episode_id=([0-9]+)/);
   
-  // Replaced Spreaker logic with Acast logic
   let acastShowId = post.acast_show_id || (showMatch ? showMatch[1] : null);
   let acastId = post.acast_episode_id || (epMatch ? epMatch[1] : null);
 
-  const isMasterCategory = slugs.some(s => ['football-podcast', 'podcast-basketball', 'podcast-baseball'].includes(s));
+  // FIX: Added bulletproof slug arrays that account for both formatting structures!
+  const isMasterCategory = slugs.some(s => ['football-podcast', 'podcast-football', 'basketball-podcast', 'podcast-basketball', 'baseball-podcast', 'podcast-baseball'].includes(s));
   const isEpisodeCategory = slugs.some(s => ['football-pod-episode', 'basketball-pod-episode', 'baseball-pod-episode', 'pod-episode'].includes(s));
   const isMasterShow = !!acastShowId || isMasterCategory;
 
@@ -126,7 +126,6 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
     let totalPages = 1;
     const fetchOptions = { next: { revalidate: 60 } }; 
 
-    // CACHE BUSTER
     const timeBuster = Math.floor(Date.now() / (1000 * 60 * 5));
 
     if (targetType === 'all') {
