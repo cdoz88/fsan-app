@@ -15,7 +15,6 @@ const shieldMaskStyle = {
   maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center'
 };
 
-// SEO Helper: Generates the true path for Googlebot
 const getItemUrl = (item) => {
   const itemView = item.type === 'article' ? 'articles' : item.type === 'podcast' ? 'podcasts' : 'videos';
   const sportPrefix = (!item.sport || item.sport === 'All') ? '' : `/${item.sport.toLowerCase()}`;
@@ -33,7 +32,6 @@ const PostMeta = ({ item, activeSport }) => (
   </div>
 );
 
-// THE TRUE UNIVERSAL AD COMPONENT
 const DynamicAd = ({ ad, variant = "inline" }) => {
   if (!ad) return null;
 
@@ -122,8 +120,6 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   );
 };
 
-// --- CONTENT CARD COMPONENTS ---
-
 const VideoCard = ({ item, isHero, setSelectedItem, activeSport }) => {
   const isVideo = item.type === 'video' || item.type === 'short';
   const cardTheme = themes[item.sport] || themes.All;
@@ -131,21 +127,13 @@ const VideoCard = ({ item, isHero, setSelectedItem, activeSport }) => {
   return (
     <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group relative w-full ${isVideo ? 'aspect-video' : 'h-full min-h-[350px]'} cursor-pointer bg-[#111] border ${cardTheme.border} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${cardTheme.hoverBorder} transition-all flex flex-col relative no-underline block`}>
       {item.imageUrl ? <img loading="lazy" src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
-      
-      {/* If Video: Hide gradient until hover. If Article: Always show gradient so text is readable. */}
       <div className={`absolute inset-0 bg-gradient-to-t ${isVideo ? 'from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100' : 'from-[#050505] via-[#050505]/80 to-transparent opacity-100'} transition-opacity duration-300 z-10`}></div>
-      
-      {/* Only show Play Button if it's a video */}
       {isVideo && (
         <PlayCircle size={isHero ? 64 : 48} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-lg" />
       )}
-      
-      {/* Content Block */}
       <div className={`absolute bottom-0 left-0 right-0 p-4 lg:p-6 z-20 flex flex-col justify-end ${isVideo ? 'opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0' : 'opacity-100 translate-y-0'} transition-all duration-300`}>
         <PostMeta item={item} activeSport={activeSport} />
         <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'} text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-3 drop-shadow-md mb-2`} dangerouslySetInnerHTML={{ __html: item.title }} />
-        
-        {/* ALWAYS show excerpt if it's an article AND it's the Hero slot */}
         {!isVideo && isHero && item.excerpt && (
           <div className="text-sm text-gray-300 line-clamp-2 max-w-3xl drop-shadow-md mt-1" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
         )}
@@ -203,13 +191,12 @@ const PressBoxCard = ({ item, setSelectedItem, activeSport }) => (
 
 const BoothCard = ({ item, setSelectedItem, activeSport, masterPodcasts }) => {
   const itemTheme = themes[item.sport] || themes.All;
-  const [fetchedImage, setFetchedImage] = useState(null);
   let displayImage = item.imageUrl;
   
   if (!displayImage && masterPodcasts) {
      const genericSlugs = ['all', 'football', 'basketball', 'baseball', 'podcast', 'podcasts', 'pod-episode', 'football-pod-episode', 'basketball-pod-episode', 'baseball-pod-episode', 'football-podcast', 'podcast-basketball', 'podcast-baseball', 'uncategorized'];
      const parentShow = masterPodcasts.find(m => {
-        if (m.spreakerShowId && item.spreakerShowId && m.spreakerShowId === item.spreakerShowId) return true;
+        if (m.acastShowId && item.acastShowId && m.acastShowId === item.acastShowId) return true;
         if (m.category_slugs && item.category_slugs) {
            const mSpecific = m.category_slugs.filter(s => !genericSlugs.includes(s.toLowerCase()));
            return mSpecific.some(slug => item.category_slugs.includes(slug));
@@ -219,15 +206,7 @@ const BoothCard = ({ item, setSelectedItem, activeSport, masterPodcasts }) => {
      if (parentShow?.imageUrl) displayImage = parentShow.imageUrl;
   }
 
-  useEffect(() => {
-    if (!displayImage && item.spreakerId) {
-      fetch(`https://api.spreaker.com/v2/episodes/${item.spreakerId}`).then(res => res.json()).then(data => {
-          if (data?.response?.episode?.image_original_url) setFetchedImage(data.response.episode.image_original_url);
-      }).catch(e => console.error(e));
-    }
-  }, [displayImage, item.spreakerId]);
-
-  const finalImage = displayImage || fetchedImage;
+  const finalImage = displayImage;
 
   return (
     <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`flex items-stretch bg-[#1e1e1e] border ${itemTheme.border} border-opacity-40 rounded-2xl overflow-hidden ${itemTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[100px] no-underline block`}>
@@ -295,7 +274,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
   const boothPodcasts = allPosts.filter(p => p.type === 'podcast' && !p.isMasterShow && !usedIds.has(p.id)).slice(0, 4);
   boothPodcasts.forEach(p => usedIds.add(p.id));
 
-  // FIX: Force film room grid to always round down to a clean multiple of 3 to avoid hanging videos!
   let filmRoomVideos = allPosts.filter(p => p.type === 'video' && !usedIds.has(p.id));
   if (filmRoomVideos.length >= 6) {
       filmRoomVideos = filmRoomVideos.slice(0, 6);
@@ -364,8 +342,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
     if (lineupRef.current) lineupRef.current.scrollBy({ left: direction === 'left' ? -350 : 350, behavior: 'smooth' });
   };
 
-  // --- FINAL RENDER ---
-
   return (
     <div className={`flex flex-col w-full pt-6 pb-16 animate-in fade-in duration-300 ${isLoading ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
       
@@ -411,14 +387,12 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
         <section className="flex flex-col gap-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
             <div className="lg:col-span-2 flex flex-col gap-6">
-              {/* HERO FEATURE: Allows Article to grow using flex-1 while keeping ad tight! */}
               {mainFeature && (
                 <div className="w-full flex-1 flex flex-col min-h-0">
                   <VideoCard item={mainFeature} isHero={true} setSelectedItem={setSelectedItem} activeSport={activeSport} />
                 </div>
               )}
               
-              {/* Ad Slot 1 - Moved INSIDE the left column to dynamically balance vertical gaps! Shrink-0 keeps it from stretching! */}
               {inlineAds[0] && (
                 <div className="w-full shrink-0 flex flex-col">
                   <DynamicAd ad={inlineAds[0]} variant="inline" />
@@ -466,7 +440,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
                     <div className="flex flex-col gap-4">
                       {boothPodcasts.map(pod => <BoothCard key={pod.id} item={pod} setSelectedItem={setSelectedItem} activeSport={activeSport} masterPodcasts={masterPodcasts} />)}
                     </div>
-                    {/* Ad Slots 2 & 3 */}
                     {inlineAds[1] && <div className="flex-1 min-h-[120px]"><DynamicAd ad={inlineAds[1]} variant="inline" /></div>}
                     {inlineAds[2] && <div className="flex-1 min-h-[120px]"><DynamicAd ad={inlineAds[2]} variant="inline" /></div>}
                   </div>
@@ -486,7 +459,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filmRoomVideos.map(video => <VideoCard key={video.id} item={video} isHero={false} setSelectedItem={setSelectedItem} activeSport={activeSport} />)}
             </div>
-            {/* Ad Slot 4 */}
             {inlineAds[3] && <div className="w-full"><DynamicAd ad={inlineAds[3]} variant="inline" /></div>}
           </section>
         )}

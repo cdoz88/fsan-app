@@ -56,18 +56,19 @@ export const formatPost = (post) => {
   const showMatch = cleanContent.match(/show_id=([0-9]+)/);
   const epMatch = cleanContent.match(/episode_id=([0-9]+)/);
   
-  let spreakerShowId = post.spreaker_show_id || (showMatch ? showMatch[1] : null);
-  let spreakerId = post.spreaker_episode_id || (epMatch ? epMatch[1] : null);
+  // Replaced Spreaker logic with Acast logic
+  let acastShowId = post.acast_show_id || (showMatch ? showMatch[1] : null);
+  let acastId = post.acast_episode_id || (epMatch ? epMatch[1] : null);
 
   const isMasterCategory = slugs.some(s => ['football-podcast', 'podcast-basketball', 'podcast-baseball'].includes(s));
   const isEpisodeCategory = slugs.some(s => ['football-pod-episode', 'basketball-pod-episode', 'baseball-pod-episode', 'pod-episode'].includes(s));
-  const isMasterShow = !!spreakerShowId || isMasterCategory;
+  const isMasterShow = !!acastShowId || isMasterCategory;
 
-  if (spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('spreaker')) {
+  if (acastId || acastShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('acast')) {
      type = 'podcast';
   }
 
-  const stripTags = (html) => html.replace(/\[\/?vc_[^\]]+\]/gi, '').replace(/\[spreaker[^\]]*\]/gi, '').trim();
+  const stripTags = (html) => html.replace(/\[\/?vc_[^\]]+\]/gi, '').replace(/\[acast[^\]]*\]/gi, '').trim();
   cleanContent = stripTags(cleanContent);
   excerpt = stripTags(excerpt);
 
@@ -113,8 +114,8 @@ export const formatPost = (post) => {
       avatar: authorAvatar
     },
     youtubeId,
-    spreakerId,
-    spreakerShowId, 
+    acastId,
+    acastShowId, 
     link: post.link
   };
 };
