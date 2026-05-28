@@ -59,7 +59,10 @@ export const formatPost = (post) => {
   let acastShowId = post.acast_show_id || (showMatch ? showMatch[1] : null);
   let rawAcastId = post.acast_episode_id || (epMatch ? epMatch[1] : null);
   
+  // FIX: Properly separate the raw ID and the formatted embed path
   let finalAcastEmbedPath = null;
+  let acastId = rawAcastId;
+  
   if (rawAcastId) {
       let cleanId = rawAcastId.replace('acast:', '').replace(/^https?:\/\//, '').trim();
       
@@ -78,7 +81,7 @@ export const formatPost = (post) => {
   
   const isMasterShow = (!finalAcastEmbedPath && !spreakerId && (!!acastShowId || !!spreakerShowId)) || isMasterCategory;
 
-  if (finalAcastEmbedPath || acastShowId || spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('acast')) {
+  if (finalAcastEmbedPath || acastId || acastShowId || spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('acast')) {
      type = 'podcast';
   }
 
@@ -128,7 +131,8 @@ export const formatPost = (post) => {
       avatar: authorAvatar
     },
     youtubeId,
-    acastId: finalAcastEmbedPath, // FIX: Corrected variable name from acastEmbedPath to acastId
+    acastId, // Pass the raw ID 
+    acastEmbedPath: finalAcastEmbedPath, // Pass the formatted path
     acastShowId, 
     spreakerId, 
     spreakerShowId, 
