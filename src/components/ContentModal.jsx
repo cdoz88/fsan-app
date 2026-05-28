@@ -445,7 +445,7 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
         
         {selectedItem.acastId ? (
           <iframe 
-            src={`https://embed.acast.com/${encodeURIComponent(selectedItem.acastId)}?theme=podcast&hidePrivacy=true`} 
+            src={`https://embed.acast.com/${selectedItem.acastShowId ? selectedItem.acastShowId + '/' : ''}${selectedItem.acastId}?theme=podcast&hidePrivacy=true`} 
             width="100%" 
             height="100%" 
             frameBorder="0" 
