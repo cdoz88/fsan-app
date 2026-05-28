@@ -21,7 +21,7 @@ export default function SubscribeClient() {
   const [perks, setPerks] = useState({
     free: ["Ad Free Experience", "Unmetered Access to Articles"],
     pro: ["Save 33%", "Everything in FREE", "Access to our general Sellout Crowds community", "10% off all orders from fsan.shop"],
-    proPlus: ["Save 38%", "Everything in PRO", "Access to our Pro+ group on Sellout Crowds", "Entry into Jersey League", "Free Rookie Guide", "Free shipping on all orders from fsan.shop"]
+    proPlus: ["Save 38%", "Everything in PRO", "Access to our Pro+ group on Sellout Crowds", "Entry into Draft Night Out", "Free Rookie Guide", "Free shipping on all orders from fsan.shop"]
   });
 
   useEffect(() => {
