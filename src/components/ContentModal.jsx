@@ -444,7 +444,7 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
       <div className="w-full h-[380px] sm:h-[400px] lg:h-full lg:min-h-[400px] bg-[#111] rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800 shrink-0">
         {selectedItem.acastId ? (
           <iframe 
-            src={`https://embed.acast.com/${selectedItem.acastShowId ? selectedItem.acastShowId + '/' : ''}${selectedItem.acastId}`} 
+            src={`https://embed.acast.com/${selectedItem.acastShowId ? selectedItem.acastShowId + '/' : ''}${selectedItem.acastId}?theme=podcast&hidePrivacy=true`} 
             width="100%" 
             height="100%" 
             frameBorder="0" 
@@ -453,8 +453,7 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
           ></iframe>
         ) : selectedItem.acastShowId ? (
           <iframe 
-            // FIX: Added ?feed=true to trigger the playlist view for Master Shows!
-            src={`https://embed.acast.com/${selectedItem.acastShowId}?feed=true`} 
+            src={`https://embed.acast.com/${selectedItem.acastShowId}?feed=true&theme=podcast&playlistType=full&hidePrivacy=true`} 
             width="100%" 
             height="100%" 
             frameBorder="0" 
