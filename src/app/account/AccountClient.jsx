@@ -125,14 +125,16 @@ export default function AccountClient() {
       }
     `;
 
+    // FIX: Replaced POST with GET to safely bypass Wordfence/Cloudflare WAF!
+    const queryParams = new URLSearchParams({ query: query.trim() });
+    
     try {
-      const res = await fetch('https://admin.fsan.com/graphql', {
-        method: 'POST',
+      const res = await fetch(`https://admin.fsan.com/graphql?${queryParams.toString()}`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.user.token}`,
         },
-        body: JSON.stringify({ query }),
         cache: 'no-store' 
       });
 
@@ -204,11 +206,14 @@ export default function AccountClient() {
         }
       }
     `;
+
+    // FIX: Replaced POST with GET to safely bypass Wordfence/Cloudflare WAF!
+    const queryParams = new URLSearchParams({ query: query.trim() });
+
     try {
-      const res = await fetch('https://admin.fsan.com/graphql', {
-        method: 'POST',
+      const res = await fetch(`https://admin.fsan.com/graphql?${queryParams.toString()}`, {
+        method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query }),
         cache: 'no-store'
       });
       const json = await res.json();
@@ -515,7 +520,7 @@ export default function AccountClient() {
                       type="button"
                       onClick={handleDeleteAccount}
                       disabled={isDeleting}
-                      className="flex-1 sm:flex-none px-6 py-2.5 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 border border-red-500 text-white text-xs font-bold uppercase tracking-widest rounded-lg transition-colors flex items-center justify-center gap-2"
+                      className="flex-1 sm:flex-none px-6 py-2.5 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 border border-red-50 text-white text-xs font-bold uppercase tracking-widest rounded-lg transition-colors flex items-center justify-center gap-2"
                     >
                       {isDeleting ? <Loader2 size={14} className="animate-spin" /> : 'Yes, Delete Everything'}
                     </button>
