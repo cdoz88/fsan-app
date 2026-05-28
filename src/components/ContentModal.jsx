@@ -438,6 +438,7 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
   );
 };
 
+// FIX: Formats the Acast episode URL seamlessly with Show ID and Episode Slug
 const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) => (
   <div className="flex flex-col lg:flex-row h-full min-h-0 overflow-y-auto lg:overflow-hidden">
     <div className="flex-none lg:flex-1 bg-[#0a0a0a] flex flex-col items-center justify-center lg:border-r border-gray-800 p-4 sm:p-6 relative min-h-0">
@@ -445,7 +446,7 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
         
         {selectedItem.acastId ? (
           <iframe 
-            src={`https://embed.acast.com/${selectedItem.acastShowId ? selectedItem.acastShowId + '/' : ''}${selectedItem.acastId}?theme=podcast&hidePrivacy=true`} 
+            src={`https://embed.acast.com/${selectedItem.acastShowId ? selectedItem.acastShowId + '/' : ''}${encodeURIComponent(selectedItem.acastId)}?theme=podcast&hidePrivacy=true`} 
             width="100%" 
             height="100%" 
             frameBorder="0" 
@@ -589,6 +590,7 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
     return () => clearInterval(interval);
   }, [isAuthed, status, videoOverlayActive]);
 
+  // FIX: Reverted to POST to prevent Firewall/WAF query string rejections
   useEffect(() => {
     const fetchAds = async () => {
       const query = `
@@ -598,11 +600,11 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
           }
         }
       `;
-      const queryParams = new URLSearchParams({ query: query.trim() });
       try {
-        const res = await fetch(`https://admin.fsan.com/graphql?${queryParams.toString()}`, {
-          method: 'GET',
+        const res = await fetch(`https://admin.fsan.com/graphql`, {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query }),
           cache: 'no-store'
         });
         const json = await res.json();

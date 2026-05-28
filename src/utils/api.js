@@ -58,9 +58,16 @@ export const formatPost = (post) => {
   
   let acastShowId = post.acast_show_id || (showMatch ? showMatch[1] : null);
   
-  // FIX: Strip 'acast:' prefix from the episode ID if it exists!
+  // FIX: Chops the Acast RSS URL in half to extract ONLY the episode slug
   let rawAcastId = post.acast_episode_id || (epMatch ? epMatch[1] : null);
-  let acastId = rawAcastId ? rawAcastId.replace('acast:', '') : null;
+  let acastId = rawAcastId;
+  if (acastId) {
+      acastId = acastId.replace('acast:', '');
+      if (acastId.includes('/')) {
+          const parts = acastId.split('/').filter(Boolean);
+          acastId = parts[parts.length - 1]; // Grabs the final slug
+      }
+  }
   
   let spreakerShowId = post.spreaker_show_id || null;
   let spreakerId = post.spreaker_episode_id || null;
