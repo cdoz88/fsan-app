@@ -57,15 +57,34 @@ export const formatPost = (post) => {
   const epMatch = cleanContent.match(/episode_id=([0-9]+)/);
   
   let acastShowId = post.acast_show_id || (showMatch ? showMatch[1] : null);
-  
-  // FIX: Chops the Acast RSS URL in half to extract ONLY the episode slug
   let rawAcastId = post.acast_episode_id || (epMatch ? epMatch[1] : null);
-  let acastId = rawAcastId;
-  if (acastId) {
-      acastId = acastId.replace('acast:', '');
-      if (acastId.includes('/')) {
-          const parts = acastId.split('/').filter(Boolean);
-          acastId = parts[parts.length - 1]; // Grabs the final slug
+  
+  // FIX: Universal translator for Acast Episode IDs to fix broken iframe URLs
+  let finalAcastEmbedPath = null;
+  if (rawAcastId) {
+      let cleanId = rawAcastId.replace('acast:', '');
+      
+      if (cleanId.includes('shows.acast.com') && cleanId.includes('/episodes/')) {
+          const parts = cleanId.split('/').filter(Boolean);
+          const epIndex = parts.indexOf('episodes');
+          if (epIndex !== -1 && parts.length > epIndex + 1) {
+              finalAcastEmbedPath = `${parts[epIndex - 1]}/${parts[epIndex + 1]}`;
+          }
+      } else if (cleanId.includes('play.acast.com/s/')) {
+          const parts = cleanId.split('/').filter(Boolean);
+          const sIndex = parts.indexOf('s');
+          if (sIndex !== -1 && parts.length > sIndex + 2) {
+              finalAcastEmbedPath = `${parts[sIndex + 1]}/${parts[sIndex + 2]}`;
+          }
+      } else if (cleanId.includes('/')) {
+          const parts = cleanId.split('/').filter(Boolean);
+          finalAcastEmbedPath = `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
+      } else {
+          if (acastShowId) {
+              finalAcastEmbedPath = `${acastShowId}/${cleanId}`;
+          } else {
+              finalAcastEmbedPath = `$/${cleanId}`;
+          }
       }
   }
   
@@ -75,9 +94,9 @@ export const formatPost = (post) => {
   const isMasterCategory = slugs.some(s => ['football-podcast', 'podcast-football', 'basketball-podcast', 'podcast-basketball', 'baseball-podcast', 'podcast-baseball'].includes(s));
   const isEpisodeCategory = slugs.some(s => ['football-pod-episode', 'basketball-pod-episode', 'baseball-pod-episode', 'pod-episode'].includes(s));
   
-  const isMasterShow = (!acastId && !spreakerId && (!!acastShowId || !!spreakerShowId)) || isMasterCategory;
+  const isMasterShow = (!finalAcastEmbedPath && !spreakerId && (!!acastShowId || !!spreakerShowId)) || isMasterCategory;
 
-  if (acastId || acastShowId || spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('acast')) {
+  if (finalAcastEmbedPath || acastShowId || spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('acast')) {
      type = 'podcast';
   }
 
@@ -127,7 +146,7 @@ export const formatPost = (post) => {
       avatar: authorAvatar
     },
     youtubeId,
-    acastId,
+    acastEmbedPath: finalAcastEmbedPath,
     acastShowId, 
     spreakerId, 
     spreakerShowId, 
