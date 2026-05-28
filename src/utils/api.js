@@ -59,23 +59,20 @@ export const formatPost = (post) => {
   let acastShowId = post.acast_show_id || (showMatch ? showMatch[1] : null);
   let rawAcastId = post.acast_episode_id || (epMatch ? epMatch[1] : null);
   
-  // FIX: Universal Translator for Acast IDs
-  // This will cleanly extract the Show ID and Episode Slug regardless of how Acast formatted it in the RSS feed.
+  // FIX: Force the Acast $ wildcard for raw IDs to bypass their strict Show Slug requirements!
   let finalAcastEmbedPath = null;
   if (rawAcastId) {
       let cleanId = rawAcastId.replace('acast:', '').replace(/^https?:\/\//, '').trim();
       
       if (!cleanId.includes('/')) {
-          if (acastShowId) {
-              finalAcastEmbedPath = `${acastShowId}/${cleanId}`;
-          } else {
-              finalAcastEmbedPath = cleanId;
-          }
+          // Send the wildcard! Acast will figure out the show context on its own.
+          finalAcastEmbedPath = `$/${cleanId}`;
       } else {
+          // If it's a full URL, safely extract the text show slug and the episode slug
           const parts = cleanId.split('/').filter(Boolean);
           const epSlug = parts[parts.length - 1]; 
           
-          let showSlug = acastShowId; 
+          let showSlug = null; 
           
           const epIndex = parts.indexOf('episodes');
           if (epIndex > 0) {
@@ -90,7 +87,7 @@ export const formatPost = (post) => {
           if (showSlug) {
               finalAcastEmbedPath = `${showSlug}/${epSlug}`;
           } else {
-              finalAcastEmbedPath = epSlug;
+              finalAcastEmbedPath = `$/${epSlug}`;
           }
       }
   }
