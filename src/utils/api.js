@@ -59,31 +59,22 @@ export const formatPost = (post) => {
   let acastShowId = post.acast_show_id || (showMatch ? showMatch[1] : null);
   let rawAcastId = post.acast_episode_id || (epMatch ? epMatch[1] : null);
   
-  // FIX: Universal translator for Acast Episode IDs to fix broken iframe URLs
+  // FIX: Perfectly routes the Acast ID avoiding old Spreaker URL fallbacks
   let finalAcastEmbedPath = null;
   if (rawAcastId) {
       let cleanId = rawAcastId.replace('acast:', '');
       
-      if (cleanId.includes('shows.acast.com') && cleanId.includes('/episodes/')) {
-          const parts = cleanId.split('/').filter(Boolean);
-          const epIndex = parts.indexOf('episodes');
-          if (epIndex !== -1 && parts.length > epIndex + 1) {
-              finalAcastEmbedPath = `${parts[epIndex - 1]}/${parts[epIndex + 1]}`;
-          }
-      } else if (cleanId.includes('play.acast.com/s/')) {
-          const parts = cleanId.split('/').filter(Boolean);
-          const sIndex = parts.indexOf('s');
-          if (sIndex !== -1 && parts.length > sIndex + 2) {
-              finalAcastEmbedPath = `${parts[sIndex + 1]}/${parts[sIndex + 2]}`;
-          }
-      } else if (cleanId.includes('/')) {
-          const parts = cleanId.split('/').filter(Boolean);
-          finalAcastEmbedPath = `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
-      } else {
+      if (!cleanId.includes('/')) {
           if (acastShowId) {
               finalAcastEmbedPath = `${acastShowId}/${cleanId}`;
           } else {
               finalAcastEmbedPath = `$/${cleanId}`;
+          }
+      } else if (cleanId.includes('shows.acast.com') && cleanId.includes('/episodes/')) {
+          const parts = cleanId.split('/').filter(Boolean);
+          const epIndex = parts.indexOf('episodes');
+          if (epIndex !== -1 && parts.length > epIndex + 1) {
+              finalAcastEmbedPath = `${parts[epIndex - 1]}/${parts[epIndex + 1]}`;
           }
       }
   }
