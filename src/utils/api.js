@@ -58,13 +58,17 @@ export const formatPost = (post) => {
   
   let acastShowId = post.acast_show_id || (showMatch ? showMatch[1] : null);
   let acastId = post.acast_episode_id || (epMatch ? epMatch[1] : null);
+  
+  let spreakerShowId = post.spreaker_show_id || null;
+  let spreakerId = post.spreaker_episode_id || null;
 
-  // FIX: Added bulletproof slug arrays that account for both formatting structures!
   const isMasterCategory = slugs.some(s => ['football-podcast', 'podcast-football', 'basketball-podcast', 'podcast-basketball', 'baseball-podcast', 'podcast-baseball'].includes(s));
   const isEpisodeCategory = slugs.some(s => ['football-pod-episode', 'basketball-pod-episode', 'baseball-pod-episode', 'pod-episode'].includes(s));
-  const isMasterShow = !!acastShowId || isMasterCategory;
+  
+  // FIX: Added logic so episodes carrying an Acast Show ID are no longer accidentally flagged as a Master Show!
+  const isMasterShow = (!acastId && !spreakerId && (!!acastShowId || !!spreakerShowId)) || isMasterCategory;
 
-  if (acastId || acastShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('acast')) {
+  if (acastId || acastShowId || spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('acast')) {
      type = 'podcast';
   }
 
@@ -116,6 +120,8 @@ export const formatPost = (post) => {
     youtubeId,
     acastId,
     acastShowId, 
+    spreakerId, 
+    spreakerShowId, 
     link: post.link
   };
 };
