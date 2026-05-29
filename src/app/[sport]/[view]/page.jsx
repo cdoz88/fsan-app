@@ -12,12 +12,10 @@ export async function generateMetadata({ params }) {
     if (view === 'videos') return { title: 'Videos | FSAN' };
     if (view === 'podcasts') return { title: 'Podcasts | FSAN' };
     
-    // Fallback for any other custom views
     const viewName = view.charAt(0).toUpperCase() + view.slice(1);
     return { title: `${viewName} | FSAN` };
   }
 
-  // Fallback for specific sports (e.g., Football | FSAN)
   return {
     title: `${activeSport} | FSAN`,
   };
@@ -56,6 +54,7 @@ export default async function DynamicPage({ params, searchParams }) {
                if (activeSport === 'Football') targetSportCode = 's:20~';
                else if (activeSport === 'Basketball') targetSportCode = 's:40~';
                else if (activeSport === 'Baseball') targetSportCode = 's:1~';
+               else if (activeSport === 'Golf') targetSportCode = 's:300~';
 
                let athleteResult = null;
                if (targetSportCode) {
@@ -67,7 +66,6 @@ export default async function DynamicPage({ params, searchParams }) {
                }
 
                if (athleteResult) {
-                  // Clean up suffixes, periods, and apostrophes to generate the exact matching URL
                   playerRedirectSlug = q.trim().toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
                }
             }
@@ -250,7 +248,6 @@ export default async function DynamicPage({ params, searchParams }) {
      posts.sort((a,b) => b.rawDate - a.rawDate);
 
   } else {
-     // FIX: Changed 'shows' to 'podcasts' so the server passes episodes down to the ClientManager on initial load!
      const targetType = view === 'home' ? 'all' : (view === 'podcasts' ? 'podcasts' : view);
      const data = await fetchPosts(activeSport, targetType, 1);
      posts = data.posts;

@@ -296,7 +296,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       }
     });
 
-    // If no stats are available, return nothing instead of a blank box
     if (uniqueTables.length === 0) return null;
 
     return (
@@ -386,7 +385,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
 
                 <div className="flex flex-col gap-1 md:gap-2 w-full z-20 justify-end md:h-full pb-4 md:px-0">
                   <div className="flex items-baseline gap-3 md:gap-4 flex-wrap">
-                    {/* ALWAYS DISPLAY ESPN'S OFFICIAL NAME IF AVAILABLE */}
                     <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white">
                        {espnData?.fullName || espnData?.displayName || playerName}
                     </h1>
@@ -398,7 +396,12 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                     <div className="flex flex-col gap-3 mt-1 md:mt-3">
                       <div className="flex items-center gap-3">
                         {teamLogo && <img src={teamLogo} alt={espnData.team?.displayName} className="h-6 md:h-8 w-auto object-contain drop-shadow-lg" />}
-                        <span className="font-bold text-white/90 text-sm md:text-lg">{espnData.team?.displayName || 'Free Agent'}</span>
+                        
+                        {/* FIX: If there is no team but they are a golfer, it displays PGA Tour instead of Free Agent */}
+                        <span className="font-bold text-white/90 text-sm md:text-lg">
+                          {espnData.team?.displayName ? espnData.team.displayName : (playerSport === 'Golf' ? 'PGA Tour' : 'Free Agent')}
+                        </span>
+                        
                         {espnData.displayExperience && (<span className="bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10 font-bold text-[10px] sm:text-xs text-white">Year {espnData.displayExperience}</span>)}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 md:gap-x-6 gap-y-2 text-[11px] md:text-sm mt-1">
@@ -415,7 +418,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
             </div>
 
             <div className="max-w-7xl mx-auto mb-8 pb-4 border-b border-gray-800 flex items-center justify-start">
-              {/* SEO DIRECTORY BREADCRUMB */}
               <div className="hidden md:flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
                 <Link href={`/${playerSport.toLowerCase()}`} className="hover:text-white transition-colors">{playerSport}</Link>
                 <span>/</span>

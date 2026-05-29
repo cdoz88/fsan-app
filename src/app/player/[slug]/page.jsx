@@ -17,8 +17,7 @@ async function getESPNPlayerData(lossyName, rawSlug) {
     
     let athleteResult = allContents.find(c => c.uid && c.uid.includes('~a:'));
 
-    // FALLBACK: If ESPN search fails (common for names with apostrophes/initials like D'Andre),
-    // we search just by the Last Name and match against the clean URL slug!
+    // FALLBACK: If ESPN search fails, match against the clean URL slug
     if (!athleteResult && lossyName.includes(' ')) {
       const parts = lossyName.split(' ');
       const lastName = parts[parts.length - 1];
@@ -32,7 +31,6 @@ async function getESPNPlayerData(lossyName, rawSlug) {
         const fallbackAthletes = fallbackContents.filter(c => c.uid && c.uid.includes('~a:'));
         
         athleteResult = fallbackAthletes.find(a => {
-          // Generate a clean slug from the ESPN result to see if it matches our page URL
           const cleanSlug = a.displayName.toLowerCase().replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
           return cleanSlug === rawSlug;
         });
@@ -56,7 +54,7 @@ async function getESPNPlayerData(lossyName, rawSlug) {
 
     let sportString = '';
     let leagueString = '';
-    let sportName = 'All'; // Dynamically capturing the Sport Name for the UI
+    let sportName = 'All';
 
     if (sportCode === '20') {
       sportString = 'football';
@@ -70,8 +68,21 @@ async function getESPNPlayerData(lossyName, rawSlug) {
       sportString = 'baseball';
       sportName = 'Baseball';
       leagueString = leagueCode === '10' ? 'mlb' : 'college-baseball';
+    } else if (sportCode === '300' || sportCode === '70' || (athleteResult.url && athleteResult.url.includes('golf'))) {
+      // NEW GOLF INTEGRATION
+      sportString = 'golf';
+      sportName = 'Golf';
+      leagueString = leagueCode === '284' ? 'lpga' : 'pga'; 
     } else {
-      return null;
+      // Universal Future-Proof Fallback for any other sports ESPN adds
+      const urlParts = athleteResult.url ? athleteResult.url.split('espn.com/')[1]?.split('/') : [];
+      if (urlParts && urlParts.length > 1) {
+         sportString = urlParts[0];
+         sportName = sportString.charAt(0).toUpperCase() + sportString.slice(1);
+         leagueString = urlParts[1];
+      } else {
+         return null;
+      }
     }
 
     const [playerRes, overviewRes, statsRes] = await Promise.all([
@@ -100,9 +111,6 @@ async function getESPNPlayerData(lossyName, rawSlug) {
 }
 
 async function getPlayerContent(searchName, sportName) {
-  // Use a soft search phrase. If searchName has apostrophe or period, exact search might fail in WP,
-  // but GraphQL search is pretty robust. 
-  // Let's search with the exact name, and if WP doesn't find it, that's okay, we do our feed search below which is super robust now.
   const exactMatchQuery = `\\"${searchName}\\"`;
   
   const sportSlug = sportName && sportName !== 'All' ? sportName.toLowerCase() : '';
@@ -171,7 +179,6 @@ async function getPlayerContent(searchName, sportName) {
     if (p1.ok) allPods = allPods.concat(await p1.json());
     if (p2.ok) allPods = allPods.concat(await p2.json());
 
-    // ROBUST SEARCH: Strip periods and apostrophes from both the query and the content!
     const searchNameClean = searchName.toLowerCase().replace(/['.]/g, '');
     
     videos = allVids.filter(v => {
@@ -201,6 +208,7 @@ async function getPlayerContent(searchName, sportName) {
     if (cats.includes('football')) sport = 'Football';
     if (cats.includes('basketball')) sport = 'Basketball';
     if (cats.includes('baseball')) sport = 'Baseball';
+    if (cats.includes('golf') || cats.includes('pga')) sport = 'Golf';
 
     const d = new Date(post.date);
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -241,6 +249,7 @@ async function getPlayerContent(searchName, sportName) {
     if (cats.includes('football') || cats.includes('nfl')) sport = 'Football';
     if (cats.includes('basketball') || cats.includes('nba')) sport = 'Basketball';
     if (cats.includes('baseball') || cats.includes('mlb')) sport = 'Baseball';
+    if (cats.includes('golf') || cats.includes('pga')) sport = 'Golf';
 
     let type = 'video';
     if (cats.includes('shorts') || cats.includes('short') || cats.includes('football-shorts')) {
@@ -290,6 +299,7 @@ async function getPlayerContent(searchName, sportName) {
     if (cats.includes('football') || cats.includes('nfl')) sport = 'Football';
     if (cats.includes('basketball') || cats.includes('nba')) sport = 'Basketball';
     if (cats.includes('baseball') || cats.includes('mlb')) sport = 'Baseball';
+    if (cats.includes('golf') || cats.includes('pga')) sport = 'Golf'; 
 
     const d = new Date(item.date);
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
