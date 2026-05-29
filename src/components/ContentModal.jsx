@@ -438,8 +438,6 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
   );
 };
 
-// FIX: Acast episodes load seamlessly using either the exact string or the $ wildcard!
-// PLUS: Added the explicitly declared isMasterShow property to ensure we only load full feeds when asked.
 const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) => (
   <div className="flex flex-col lg:flex-row h-full min-h-0 overflow-y-auto lg:overflow-hidden">
     <div className="flex-none lg:flex-1 bg-[#0a0a0a] flex flex-col items-center justify-center lg:border-r border-gray-800 p-4 sm:p-6 relative min-h-0">
@@ -463,18 +461,18 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
             allow="autoplay; picture-in-picture" 
             style={{ display: 'block', width: '100%', height: '100%' }}
           ></iframe>
-        ) : selectedItem.spreakerShowId ? (
+        ) : selectedItem.spreakerId ? (
           <iframe 
-            src={`https://widget.spreaker.com/player?show_id=${selectedItem.spreakerShowId}&theme=dark&playlist=show&playlist-continuous=true&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-download=true`} 
+            src={`https://widget.spreaker.com/player?episode_id=${selectedItem.spreakerId}&theme=dark&playlist=false&playlist-continuous=false&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-download=true`} 
             width="100%" 
             height="100%" 
             frameBorder="0" 
             allow="autoplay; picture-in-picture" 
             style={{ display: 'block', width: '100%', height: '100%' }}
           ></iframe>
-        ) : selectedItem.spreakerId ? (
+        ) : selectedItem.isMasterShow && selectedItem.spreakerShowId ? (
           <iframe 
-            src={`https://widget.spreaker.com/player?episode_id=${selectedItem.spreakerId}&theme=dark&playlist=false&playlist-continuous=false&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-download=true`} 
+            src={`https://widget.spreaker.com/player?show_id=${selectedItem.spreakerShowId}&theme=dark&playlist=show&playlist-continuous=true&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-download=true`} 
             width="100%" 
             height="100%" 
             frameBorder="0" 

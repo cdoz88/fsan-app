@@ -59,26 +59,47 @@ export const formatPost = (post) => {
   let acastShowId = post.acast_show_id || (showMatch ? showMatch[1] : null);
   let rawAcastId = post.acast_episode_id || (epMatch ? epMatch[1] : null);
   
-  // THE FIX: Simple, strict formatting. Glues the exact BSON Show ID to the exact Episode Slug.
+  let spreakerShowId = post.spreaker_show_id || null;
+  let spreakerId = post.spreaker_episode_id || null;
+
+  // ====================================================================
+  // OPTION 2: THE BULLETPROOF SPREAKER FALLBACK LOGIC
+  // ====================================================================
+  
+  // 1. If Acast scraped an old Spreaker GUID, extract the Spreaker ID to use the legacy player
+  if (rawAcastId && rawAcastId.includes('spreaker.com')) {
+      const parts = rawAcastId.split('/');
+      spreakerId = parts[parts.length - 1];
+  }
+
+  // 2. If we have a Spreaker ID (natively or extracted), force Spreaker to handle it
+  if (spreakerId) {
+      rawAcastId = null; 
+  }
+
+  // 3. Process native Acast BSON IDs for future episodes (like Operation Domination)
   let finalAcastId = null;
   if (rawAcastId) {
       let cleanId = rawAcastId.replace('acast:', '').replace(/^https?:\/\//, '').trim();
-      
       let episodePart = cleanId;
+      
       if (cleanId.includes('/')) {
           const parts = cleanId.split('/').filter(Boolean);
           episodePart = parts[parts.length - 1]; 
       }
       
-      if (acastShowId) {
-          finalAcastId = `${acastShowId}/${episodePart}`;
-      } else {
-          finalAcastId = episodePart;
+      // Safety Check: Acast's iframe STRICTLY requires a 24-character BSON ID. 
+      // Text slugs will cause the player to spin endlessly. This protects the player.
+      const isBson = /^[a-f0-9]{24}$/i.test(episodePart);
+      
+      if (isBson) {
+          if (acastShowId) {
+              finalAcastId = `${acastShowId}/${episodePart}`;
+          } else {
+              finalAcastId = episodePart;
+          }
       }
   }
-  
-  let spreakerShowId = post.spreaker_show_id || null;
-  let spreakerId = post.spreaker_episode_id || null;
 
   const isMasterCategory = slugs.some(s => ['football-podcast', 'podcast-football', 'basketball-podcast', 'podcast-basketball', 'baseball-podcast', 'podcast-baseball'].includes(s));
   const isEpisodeCategory = slugs.some(s => ['football-pod-episode', 'basketball-pod-episode', 'baseball-pod-episode', 'pod-episode'].includes(s));
