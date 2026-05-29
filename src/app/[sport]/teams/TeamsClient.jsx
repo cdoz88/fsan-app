@@ -5,12 +5,50 @@ import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import { Search, Users } from 'lucide-react';
 
+// Hardcoded directory of top PGA Tour Golfers so they appear exactly like the team grid!
+const topGolfers = [
+  { id: 'g1', name: 'Scottie Scheffler', abbreviation: 'SS', slug: 'scottie-scheffler', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/46046.png&w=350&h=254' },
+  { id: 'g2', name: 'Rory McIlroy', abbreviation: 'RM', slug: 'rory-mcilroy', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/3470.png&w=350&h=254' },
+  { id: 'g3', name: 'Xander Schauffele', abbreviation: 'XS', slug: 'xander-schauffele', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/10140.png&w=350&h=254' },
+  { id: 'g4', name: 'Jon Rahm', abbreviation: 'JR', slug: 'jon-rahm', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/9780.png&w=350&h=254' },
+  { id: 'g5', name: 'Wyndham Clark', abbreviation: 'WC', slug: 'wyndham-clark', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/11099.png&w=350&h=254' },
+  { id: 'g6', name: 'Viktor Hovland', abbreviation: 'VH', slug: 'viktor-hovland', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/43501.png&w=350&h=254' },
+  { id: 'g7', name: 'Collin Morikawa', abbreviation: 'CM', slug: 'collin-morikawa', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/43588.png&w=350&h=254' },
+  { id: 'g8', name: 'Patrick Cantlay', abbreviation: 'PC', slug: 'patrick-cantlay', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/6007.png&w=350&h=254' },
+  { id: 'g9', name: 'Max Homa', abbreviation: 'MH', slug: 'max-homa', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/8973.png&w=350&h=254' },
+  { id: 'g10', name: 'Bryson DeChambeau', abbreviation: 'BD', slug: 'bryson-dechambeau', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/10046.png&w=350&h=254' },
+  { id: 'g11', name: 'Ludvig Åberg', abbreviation: 'LA', slug: 'ludvig-aberg', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/46889.png&w=350&h=254' },
+  { id: 'g12', name: 'Tommy Fleetwood', abbreviation: 'TF', slug: 'tommy-fleetwood', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/5539.png&w=350&h=254' },
+  { id: 'g13', name: 'Matt Fitzpatrick', abbreviation: 'MF', slug: 'matt-fitzpatrick', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/9037.png&w=350&h=254' },
+  { id: 'g14', name: 'Sahith Theegala', abbreviation: 'ST', slug: 'sahith-theegala', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/45525.png&w=350&h=254' },
+  { id: 'g15', name: 'Hideki Matsuyama', abbreviation: 'HM', slug: 'hideki-matsuyama', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/5860.png&w=350&h=254' },
+  { id: 'g16', name: 'Keegan Bradley', abbreviation: 'KB', slug: 'keegan-bradley', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/4808.png&w=350&h=254' },
+  { id: 'g17', name: 'Jordan Spieth', abbreviation: 'JS', slug: 'jordan-spieth', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/5467.png&w=350&h=254' },
+  { id: 'g18', name: 'Brooks Koepka', abbreviation: 'BK', slug: 'brooks-koepka', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/6798.png&w=350&h=254' },
+  { id: 'g19', name: 'Justin Thomas', abbreviation: 'JT', slug: 'justin-thomas', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/4848.png&w=350&h=254' },
+  { id: 'g20', name: 'Cameron Smith', abbreviation: 'CS', slug: 'cameron-smith', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/5800.png&w=350&h=254' },
+  { id: 'g21', name: 'Tony Finau', abbreviation: 'TF', slug: 'tony-finau', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/2230.png&w=350&h=254' },
+  { id: 'g22', name: 'Sam Burns', abbreviation: 'SB', slug: 'sam-burns', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/9938.png&w=350&h=254' },
+  { id: 'g23', name: 'Rickie Fowler', abbreviation: 'RF', slug: 'rickie-fowler', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/3702.png&w=350&h=254' },
+  { id: 'g24', name: 'Jason Day', abbreviation: 'JD', slug: 'jason-day', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/1680.png&w=350&h=254' },
+  { id: 'g25', name: 'Dustin Johnson', abbreviation: 'DJ', slug: 'dustin-johnson', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/3448.png&w=350&h=254' },
+  { id: 'g26', name: 'Tiger Woods', abbreviation: 'TW', slug: 'tiger-woods', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/462.png&w=350&h=254' },
+  { id: 'g27', name: 'Shane Lowry', abbreviation: 'SL', slug: 'shane-lowry', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/4587.png&w=350&h=254' },
+  { id: 'g28', name: 'Brian Harman', abbreviation: 'BH', slug: 'brian-harman', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/1222.png&w=350&h=254' },
+  { id: 'g29', name: 'Tyrrell Hatton', abbreviation: 'TH', slug: 'tyrrell-hatton', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/5553.png&w=350&h=254' },
+  { id: 'g30', name: 'Will Zalatoris', abbreviation: 'WZ', slug: 'will-zalatoris', color: '019c9e', logo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/golf/players/full/10485.png&w=350&h=254' }
+];
+
 export default function TeamsClient({ activeSport, teams, proToolsMenu, connectMenu }) {
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Logic to determine if we are rendering Golfers or standard Teams
+  const isGolf = activeSport === 'Golf';
+  const displayData = isGolf ? topGolfers : teams;
 
-  const filteredTeams = teams.filter(team => 
-    team.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    team.abbreviation.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredData = displayData.filter(item => 
+    item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (item.abbreviation && item.abbreviation.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const bgImages = {
@@ -109,10 +147,10 @@ export default function TeamsClient({ activeSport, teams, proToolsMenu, connectM
                     <div className="flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">
                       <Link href={`/${activeSport.toLowerCase()}/home`} className="hover:text-white transition-colors">{activeSport}</Link>
                       <span>/</span>
-                      <span className="text-gray-200">Teams</span>
+                      <span className="text-gray-200">{isGolf ? 'Golfers' : 'Teams'}</span>
                     </div>
                     <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase">
-                      {activeSport} Teams
+                      {isGolf ? 'PGA Tour Golfers' : `${activeSport} Teams`}
                     </h1>
                   </div>
                 </div>
@@ -122,13 +160,13 @@ export default function TeamsClient({ activeSport, teams, proToolsMenu, connectM
                   {/* SEARCH/FILTER BAR */}
                   <div className="flex justify-between items-center mb-8 border-b border-gray-800 pb-6">
                     <p className="text-gray-400 font-bold text-sm uppercase tracking-widest hidden md:block">
-                      Select a franchise to view active rosters and depth charts
+                      {isGolf ? "Select a golfer to view their profile, stats, and coverage" : "Select a franchise to view active rosters and depth charts"}
                     </p>
                     <div className="relative w-full md:w-72">
                       <Search size={18} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" />
                       <input 
                         type="text" 
-                        placeholder="Find a team..." 
+                        placeholder={isGolf ? "Find a golfer..." : "Find a team..."} 
                         className="w-full bg-[#1a1a1a] border border-gray-700 focus:border-gray-500 rounded-xl py-3 pl-11 pr-4 text-white text-sm outline-none transition-colors shadow-inner"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -136,47 +174,48 @@ export default function TeamsClient({ activeSport, teams, proToolsMenu, connectM
                     </div>
                   </div>
 
-                  {/* TEAM GRID */}
-                  {filteredTeams.length === 0 ? (
+                  {/* DIRECTORY GRID */}
+                  {filteredData.length === 0 ? (
                     <div className="py-20 text-center text-gray-500 font-bold uppercase tracking-widest border border-dashed border-gray-800 rounded-2xl">
-                      No teams found matching "{searchQuery}"
+                      {isGolf ? `No golfers found matching "${searchQuery}"` : `No teams found matching "${searchQuery}"`}
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-                      {filteredTeams.map(team => (
+                      {filteredData.map(item => (
                         <Link 
-                          key={team.id} 
-                          href={`/${team.sport.toLowerCase()}/teams/${team.slug}`}
+                          key={item.id} 
+                          // Reroute Golfers directly to the player profile page, otherwise route to the Team Roster page
+                          href={isGolf ? `/player/${item.slug}` : `/${item.sport.toLowerCase()}/teams/${item.slug}`}
                           className="group flex flex-col items-center bg-[#1a1a1a] border border-gray-800 hover:border-gray-600 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-2xl relative overflow-hidden no-underline"
                         >
-                          {/* Subtle Team Color Glow */}
+                          {/* Subtle Glow */}
                           <div 
                             className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none"
-                            style={{ background: `radial-gradient(circle at center, #${team.color} 0%, transparent 70%)` }}
+                            style={{ background: `radial-gradient(circle at center, #${item.color} 0%, transparent 70%)` }}
                           />
                           
-                          <div className="w-16 h-16 md:w-20 md:h-20 mb-4 relative z-10 flex items-center justify-center">
-                            {team.logo ? (
+                          <div className={`w-16 h-16 md:w-20 md:h-20 mb-4 relative z-10 flex items-center justify-center ${isGolf ? 'bg-gray-800 rounded-full overflow-hidden border border-gray-700' : ''}`}>
+                            {item.logo ? (
                               <img 
-                                src={team.logo} 
-                                alt={team.name} 
-                                className="w-full h-full object-contain drop-shadow-xl group-hover:scale-110 transition-transform duration-300"
+                                src={item.logo} 
+                                alt={item.name} 
+                                className={`w-full h-full drop-shadow-xl group-hover:scale-110 transition-transform duration-300 ${isGolf ? 'object-cover object-top translate-y-2 scale-[1.3]' : 'object-contain'}`}
                               />
                             ) : (
                               <div className="w-full h-full bg-gray-800 rounded-full flex items-center justify-center text-white font-black text-xl">
-                                {team.abbreviation}
+                                {item.abbreviation}
                               </div>
                             )}
                           </div>
                           
                           <h3 className="font-black text-white text-center text-[11px] md:text-xs tracking-wider uppercase leading-tight relative z-10 group-hover:text-gray-200 transition-colors">
-                            {team.name}
+                            {item.name}
                           </h3>
                           
-                          {/* Bottom Team Color Bar */}
+                          {/* Bottom Color Bar */}
                           <div 
                             className="absolute bottom-0 left-0 w-full h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"
-                            style={{ backgroundColor: `#${team.color}` }}
+                            style={{ backgroundColor: `#${item.color}` }}
                           />
                         </Link>
                       ))}
