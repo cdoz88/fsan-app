@@ -40,11 +40,9 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     return () => window.removeEventListener('popstate', handlePopState);
   }, [selectedItem]);
 
-  // FIX: Added PGA Tour Default Colors since golfers don't have "Team Colors"
   const primaryColor = espnData?.team?.color ? `#${espnData.team.color}` : (playerSport === 'Golf' ? '#019c9e' : '#374151');
   const secondaryColor = espnData?.team?.alternateColor ? `#${espnData.team.alternateColor}` : (playerSport === 'Golf' ? '#015e5f' : '#1f2937');
   
-  // FIX: ESPN's API often drops the explicit headshot field for Golfers, so we dynamically rebuild the CDN link using their ID!
   let headshot = espnData?.headshot?.href || null;
   if (!headshot && espnData?.id) {
      const sportCodeMap = { 'Football': 'nfl', 'Basketball': 'nba', 'Baseball': 'mlb', 'Golf': 'golf' };
@@ -270,19 +268,19 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     const findStatTables = (obj, tables = [], currentTitle = "Career Stats") => {
       if (!obj || typeof obj !== 'object') return tables;
       
-      // Standard Table Format (Used in NFL/NBA)
       if (Array.isArray(obj.labels) && Array.isArray(obj.stats)) {
         tables.push({ title: obj.text || obj.name || currentTitle, type: 'table', labels: obj.labels, stats: obj.stats });
         return tables;
       }
       
-      // FIX: Aggressive List Format Catcher (Perfect for Golf/PGA stats like "World Ranking", "FedEx Cup Points")
-      if (Array.isArray(obj) && obj.length > 0 && (obj[0].displayValue !== undefined || obj[0].value !== undefined || obj[0].stat !== undefined)) {
+      // FIX: Hyper-aggressive null checks to prevent the Next.js Server Crash if ESPN returns empty lists
+      if (Array.isArray(obj) && obj.length > 0 && obj[0] && typeof obj[0] === 'object' && (obj[0].displayValue !== undefined || obj[0].value !== undefined || obj[0].stat !== undefined)) {
         const cleanStats = obj.map(s => {
+            if (!s || typeof s !== 'object') return null; // Failsafe for nulls inside the array
             const name = s.displayName || s.label || s.name || s.stat?.displayName || s.stat?.name;
             const val = s.displayValue || s.value || s.stat?.displayValue || s.stat?.value;
             return { name, displayValue: val };
-        }).filter(s => s.name && s.displayValue !== undefined);
+        }).filter(s => s && s.name && s.displayValue !== undefined);
         
         if (cleanStats.length > 0) {
             tables.push({ title: currentTitle, type: 'list', stats: cleanStats });
@@ -290,9 +288,8 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
         return tables;
       }
       
-      // Recursively dig through nested objects
       if (Array.isArray(obj)) {
-        obj.forEach(child => findStatTables(child, tables, child.displayName || child.name || currentTitle));
+        obj.forEach(child => findStatTables(child, tables, child?.displayName || child?.name || currentTitle));
       } else {
         for (const key in obj) {
           if (key === 'athlete' || key === 'team') continue; 
@@ -319,7 +316,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       }
     });
 
-    // If no stats are available, return nothing instead of a blank box
     if (uniqueTables.length === 0) return null;
 
     return (

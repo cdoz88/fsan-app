@@ -83,9 +83,9 @@ async function getESPNPlayerData(lossyName, rawSlug) {
       }
     }
 
-    // FIX: Instead of letting ESPN crash the server with a 404, we gently catch it and move forward
+    // FIX: Using site.api.espn.com to avoid 403 Forbidden blockers from ESPN's web API!
     const [playerRes, overviewRes, statsRes] = await Promise.all([
-      fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } }),
+      fetch(`https://site.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } }),
       fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/overview`, { next: { revalidate: 3600 } }),
       fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/statistics`, { next: { revalidate: 3600 } })
     ]);
@@ -96,8 +96,6 @@ async function getESPNPlayerData(lossyName, rawSlug) {
     
     const baseAthlete = playerData?.athlete || overviewData?.athlete || null;
 
-    // CRASH-PROOF FALLBACK: If ESPN completely refuses the golfer profile API, we forcefully pass the ID through anyway!
-    // This allows the Client UI to manually build the headshot URL and render the overview stats.
     if (!baseAthlete) {
         return {
             id: playerId,
