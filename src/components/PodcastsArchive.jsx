@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Headphones, ChevronRight } from 'lucide-react';
+import { Headphones, ChevronRight, PlayCircle, Loader2 } from 'lucide-react';
 import { themes } from '../utils/theme';
 
 // SEO Helper: Generates the true path for Googlebot
@@ -101,9 +101,54 @@ const LineupCard = ({ item, setSelectedItem }) => (
   </Link>
 );
 
+// NEW: EpisodeCard component for rendering individual episodes in a list format
+const EpisodeCard = ({ item, setSelectedItem, activeSport, masterPodcasts }) => {
+  const itemTheme = themes[item.sport] || themes.All;
+  let displayImage = item.imageUrl;
+  
+  // Inherit the Master Show's artwork if the episode lacks its own image
+  if (!displayImage && masterPodcasts) {
+     const genericSlugs = ['all', 'football', 'basketball', 'baseball', 'podcast', 'podcasts', 'pod-episode', 'football-pod-episode', 'basketball-pod-episode', 'baseball-pod-episode', 'football-podcast', 'podcast-basketball', 'podcast-baseball', 'uncategorized'];
+     const parentShow = masterPodcasts.find(m => {
+        if (m.acastShowId && item.acastShowId && m.acastShowId === item.acastShowId) return true;
+        if (m.spreakerShowId && item.spreakerShowId && m.spreakerShowId === item.spreakerShowId) return true;
+        if (m.category_slugs && item.category_slugs) {
+           const mSpecific = m.category_slugs.filter(s => !genericSlugs.includes(s.toLowerCase()));
+           return mSpecific.some(slug => item.category_slugs.includes(slug));
+        }
+        return false;
+     });
+     if (parentShow?.imageUrl) displayImage = parentShow.imageUrl;
+  }
+
+  const finalImage = displayImage;
+
+  return (
+    <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`flex items-stretch bg-[#1e1e1e] border ${itemTheme.border} border-opacity-40 rounded-2xl overflow-hidden ${itemTheme.hoverBorder} hover:-translate-y-0.5 transition-all cursor-pointer group shadow-lg min-h-[100px] no-underline block`}>
+      <div className="w-24 sm:w-32 shrink-0 relative bg-gray-900 flex items-center justify-center overflow-hidden border-r border-gray-800/50">
+        {finalImage ? <img loading="lazy" src={finalImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" /> : <div className="absolute inset-0 bg-gray-800" />}
+        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
+        <PlayCircle size={36} className="text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-10 drop-shadow-md" />
+      </div>
+      <div className="flex-1 p-4 md:p-5 flex flex-col justify-center overflow-hidden">
+        <div className="flex items-center gap-2 mb-1.5 md:mb-2">
+           {activeSport === 'All' && <span className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${itemTheme.bg}`}></span>}
+           <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-gray-500">{item.date}</span>
+        </div>
+        <h4 className={`font-bold text-sm md:text-base leading-snug mb-2 md:mb-3 text-gray-200 group-hover:${itemTheme.text} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: item.title }} />
+        <div className="flex items-center gap-[3px] mt-auto h-4 opacity-70 group-hover:opacity-100 transition-opacity">
+          {[4, 8, 12, 8, 16, 10, 14, 6, 10, 12, 8, 6, 14, 8, 4, 8, 12, 10, 16, 12, 8, 14, 10, 6, 12, 8, 16, 10, 6, 4].map((h, i) => (
+            <div key={i} className={`w-[2px] sm:w-[3px] shrink-0 rounded-full bg-gray-600 group-hover:${itemTheme.bg} transition-colors`} style={{ height: `${h}px` }} />
+          ))}
+        </div>
+      </div>
+    </Link>
+  );
+};
+
 // --- MAIN COMPONENT ---
 
-export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem }) {
+export default function PodcastsArchive({ podcasts, episodes = [], activeSport, setSelectedItem, loadMorePosts, isLoadingMore, hasMore }) {
   const theme = themes[activeSport] || themes.All;
   const [globalAds, setGlobalAds] = useState([]);
 
@@ -178,8 +223,38 @@ export default function PodcastsArchive({ podcasts, activeSport, setSelectedItem
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* PODCAST GRID */}
-        <div className="lg:col-span-9 grid grid-cols-2 md:grid-cols-3 gap-6">
-          {podcasts.map(pod => <LineupCard key={pod.id} item={pod} setSelectedItem={setSelectedItem} />)}
+        <div className="lg:col-span-9">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            {podcasts.map(pod => <LineupCard key={pod.id} item={pod} setSelectedItem={setSelectedItem} />)}
+          </div>
+          
+          {/* RECENT EPISODES SECTION */}
+          {episodes.length > 0 && (
+            <div className="mt-12 w-full">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="h-px bg-gray-800 flex-1"></div>
+                <h2 className="text-xl md:text-2xl font-black uppercase tracking-wide text-white italic">Recent Episodes</h2>
+                <div className="h-px bg-gray-800 flex-1"></div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                {episodes.map(episode => (
+                  <EpisodeCard key={episode.id} item={episode} setSelectedItem={setSelectedItem} activeSport={activeSport} masterPodcasts={podcasts} />
+                ))}
+              </div>
+              
+              {hasMore && (
+                <div className="mt-10 flex justify-center">
+                  <button 
+                    onClick={loadMorePosts}
+                    disabled={isLoadingMore}
+                    className="px-8 py-3 bg-[#111] hover:bg-gray-800 border border-gray-700 text-white text-sm font-black uppercase tracking-widest rounded-xl transition-all shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:transform-none flex items-center gap-2"
+                  >
+                    {isLoadingMore ? <><Loader2 size={16} className="animate-spin" /> Loading...</> : 'Load More Episodes'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* AD SIDEBAR COLUMN */}

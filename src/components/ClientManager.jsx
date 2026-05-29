@@ -57,7 +57,8 @@ export default function ClientManager({ initialPosts, activeSport, currentView, 
       setIsLoadingMore(true);
       const nextPage = currentPage + 1;
       try {
-        const targetType = currentView === 'home' ? 'all' : (currentView === 'podcasts' ? 'shows' : currentView);
+        // FIX: Ensure we fetch 'podcasts' (which includes episodes) instead of just 'shows'
+        const targetType = currentView === 'home' ? 'all' : (currentView === 'podcasts' ? 'podcasts' : currentView);
         const { posts, totalPages } = await fetchPosts(activeSport, targetType, nextPage);
         
         setWpPosts(prev => {
@@ -101,7 +102,15 @@ export default function ClientManager({ initialPosts, activeSport, currentView, 
             <ArticlesArchive articles={articlePosts} activeSport={activeSport} setSelectedItem={handleSelectItem} loadMorePosts={loadMorePosts} isLoadingMore={isLoadingMore} />
           )}
           {currentView === 'podcasts' && (
-            <PodcastsArchive podcasts={masterPodcasts} activeSport={activeSport} setSelectedItem={handleSelectItem} />
+            <PodcastsArchive 
+              podcasts={masterPodcasts} 
+              episodes={wpPosts.filter(p => p.type === 'podcast' && !p.isMasterShow)}
+              activeSport={activeSport} 
+              setSelectedItem={handleSelectItem} 
+              loadMorePosts={loadMorePosts}
+              isLoadingMore={isLoadingMore}
+              hasMore={hasMore}
+            />
           )}
           {currentView === 'search' && (
             <SearchResults results={wpPosts} activeSport={activeSport} setSelectedItem={handleSelectItem} searchQuery={searchQuery} />
