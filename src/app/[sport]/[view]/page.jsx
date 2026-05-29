@@ -250,7 +250,8 @@ export default async function DynamicPage({ params, searchParams }) {
      posts.sort((a,b) => b.rawDate - a.rawDate);
 
   } else {
-     const targetType = view === 'home' ? 'all' : (view === 'podcasts' ? 'shows' : view);
+     // FIX: Changed 'shows' to 'podcasts' so the server passes episodes down to the ClientManager on initial load!
+     const targetType = view === 'home' ? 'all' : (view === 'podcasts' ? 'podcasts' : view);
      const data = await fetchPosts(activeSport, targetType, 1);
      posts = data.posts;
      totalPages = data.totalPages;
