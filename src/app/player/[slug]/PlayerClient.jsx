@@ -40,12 +40,20 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     return () => window.removeEventListener('popstate', handlePopState);
   }, [selectedItem]);
 
-  const primaryColor = espnData?.team?.color ? `#${espnData.team.color}` : '#374151';
-  const secondaryColor = espnData?.team?.alternateColor ? `#${espnData.team.alternateColor}` : '#1f2937';
-  const headshot = espnData?.headshot?.href || null;
+  // FIX: Added PGA Tour Default Colors since golfers don't have "Team Colors"
+  const primaryColor = espnData?.team?.color ? `#${espnData.team.color}` : (playerSport === 'Golf' ? '#019c9e' : '#374151');
+  const secondaryColor = espnData?.team?.alternateColor ? `#${espnData.team.alternateColor}` : (playerSport === 'Golf' ? '#015e5f' : '#1f2937');
+  
+  // FIX: ESPN's API often drops the explicit headshot field for Golfers, so we dynamically rebuild the CDN link using their ID!
+  let headshot = espnData?.headshot?.href || null;
+  if (!headshot && espnData?.id) {
+     const sportCodeMap = { 'Football': 'nfl', 'Basketball': 'nba', 'Baseball': 'mlb', 'Golf': 'golf' };
+     const sCode = sportCodeMap[playerSport] || 'nfl';
+     headshot = `https://a.espncdn.com/combiner/i?img=/i/headshots/${sCode}/players/full/${espnData.id}.png&w=350&h=254`;
+  }
+
   const teamLogo = espnData?.team?.logos?.[0]?.href || null;
   
-  // Create a clean slug for the team if they are on one!
   const teamSlug = espnData?.team?.displayName ? espnData.team.displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : null;
 
   const dob = espnData?.dateOfBirth ? new Date(espnData.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
@@ -77,7 +85,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     const shorts = content.filter(item => item.type === 'short');
     const podcasts = content.filter(item => item.type === 'podcast');
 
-    // Standard Article Card
     const renderArticleCard = (item) => {
       const itemUrl = `/${item.sport.toLowerCase()}/${item.type}s/${item.slug}`;
       return (
@@ -99,7 +106,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       );
     };
 
-    // Cinematic 16:9 Video Card
     const renderVideoCard = (item) => {
       const cardTheme = themes[item.sport] || themes.All;
       const itemUrl = `/${item.sport.toLowerCase()}/${item.type}s/${item.slug}`;
@@ -123,7 +129,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       );
     };
 
-    // Short Card
     const renderShortCard = (item) => {
       const itemUrl = `/${item.sport.toLowerCase()}/${item.type}s/${item.slug}`;
       return (
@@ -144,7 +149,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       );
     };
 
-    // Podcast Booth Card
     const renderPodcastCard = (item) => {
       const itemTheme = themes[item.sport] || themes.All;
       const itemUrl = `/${item.sport.toLowerCase()}/${item.type}s/${item.slug}`;
@@ -265,20 +269,39 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   const renderStatistics = () => {
     const findStatTables = (obj, tables = [], currentTitle = "Career Stats") => {
       if (!obj || typeof obj !== 'object') return tables;
+      
+      // Standard Table Format (Used in NFL/NBA)
       if (Array.isArray(obj.labels) && Array.isArray(obj.stats)) {
         tables.push({ title: obj.text || obj.name || currentTitle, type: 'table', labels: obj.labels, stats: obj.stats });
         return tables;
       }
-      if (Array.isArray(obj) && obj.length > 0 && obj[0].displayValue !== undefined) {
-        tables.push({ title: currentTitle, type: 'list', stats: obj });
+      
+      // FIX: Aggressive List Format Catcher (Perfect for Golf/PGA stats like "World Ranking", "FedEx Cup Points")
+      if (Array.isArray(obj) && obj.length > 0 && (obj[0].displayValue !== undefined || obj[0].value !== undefined || obj[0].stat !== undefined)) {
+        const cleanStats = obj.map(s => {
+            const name = s.displayName || s.label || s.name || s.stat?.displayName || s.stat?.name;
+            const val = s.displayValue || s.value || s.stat?.displayValue || s.stat?.value;
+            return { name, displayValue: val };
+        }).filter(s => s.name && s.displayValue !== undefined);
+        
+        if (cleanStats.length > 0) {
+            tables.push({ title: currentTitle, type: 'list', stats: cleanStats });
+        }
         return tables;
       }
+      
+      // Recursively dig through nested objects
       if (Array.isArray(obj)) {
         obj.forEach(child => findStatTables(child, tables, child.displayName || child.name || currentTitle));
       } else {
         for (const key in obj) {
           if (key === 'athlete' || key === 'team') continue; 
-          const nextTitle = obj[key]?.displayName || obj[key]?.name || obj.displayName || obj.name || currentTitle;
+          
+          let nextTitle = currentTitle;
+          if (obj[key] && typeof obj[key] === 'object') {
+              nextTitle = obj[key].displayName || obj[key].name || obj[key].text || nextTitle;
+          }
+          
           findStatTables(obj[key], tables, nextTitle);
         }
       }
@@ -296,6 +319,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       }
     });
 
+    // If no stats are available, return nothing instead of a blank box
     if (uniqueTables.length === 0) return null;
 
     return (
@@ -325,8 +349,8 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
                   {table.stats.map((stat, statIdx) => (
                     <div key={statIdx} className="flex flex-col">
-                      <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{stat.displayName || stat.label || stat.name}</span>
-                      <span className="text-lg font-semibold text-white">{stat.displayValue || stat.value || '-'}</span>
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{stat.name}</span>
+                      <span className="text-lg font-semibold text-white">{stat.displayValue}</span>
                     </div>
                   ))}
                 </div>
@@ -396,12 +420,9 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                     <div className="flex flex-col gap-3 mt-1 md:mt-3">
                       <div className="flex items-center gap-3">
                         {teamLogo && <img src={teamLogo} alt={espnData.team?.displayName} className="h-6 md:h-8 w-auto object-contain drop-shadow-lg" />}
-                        
-                        {/* FIX: If there is no team but they are a golfer, it displays PGA Tour instead of Free Agent */}
                         <span className="font-bold text-white/90 text-sm md:text-lg">
                           {espnData.team?.displayName ? espnData.team.displayName : (playerSport === 'Golf' ? 'PGA Tour' : 'Free Agent')}
                         </span>
-                        
                         {espnData.displayExperience && (<span className="bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10 font-bold text-[10px] sm:text-xs text-white">Year {espnData.displayExperience}</span>)}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 md:gap-x-6 gap-y-2 text-[11px] md:text-sm mt-1">
