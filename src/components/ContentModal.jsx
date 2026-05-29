@@ -445,16 +445,7 @@ const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) =
     <div className="flex-none lg:flex-1 bg-[#0a0a0a] flex flex-col items-center justify-center lg:border-r border-gray-800 p-4 sm:p-6 relative min-h-0">
       <div className="w-full h-[380px] sm:h-[400px] lg:h-full lg:min-h-[400px] bg-[#111] rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800 shrink-0">
         
-        {selectedItem.acastEmbedPath ? (
-          <iframe 
-            src={`https://embed.acast.com/${selectedItem.acastEmbedPath}?theme=podcast&hidePrivacy=true`} 
-            width="100%" 
-            height="100%" 
-            frameBorder="0" 
-            allow="autoplay; picture-in-picture" 
-            style={{ display: 'block', width: '100%', height: '100%' }}
-          ></iframe>
-        ) : selectedItem.acastId ? (
+        {selectedItem.acastId ? (
           <iframe 
             src={`https://embed.acast.com/${selectedItem.acastId}?theme=podcast&hidePrivacy=true`} 
             width="100%" 

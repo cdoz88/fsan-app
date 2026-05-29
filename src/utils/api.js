@@ -59,17 +59,21 @@ export const formatPost = (post) => {
   let acastShowId = post.acast_show_id || (showMatch ? showMatch[1] : null);
   let rawAcastId = post.acast_episode_id || (epMatch ? epMatch[1] : null);
   
-  // FIX: Properly separate the raw ID and the formatted embed path
-  let finalAcastEmbedPath = null;
-  let acastId = rawAcastId;
-  
+  // THE FIX: Simple, strict formatting. Glues the exact BSON Show ID to the exact Episode Slug.
+  let finalAcastId = null;
   if (rawAcastId) {
       let cleanId = rawAcastId.replace('acast:', '').replace(/^https?:\/\//, '').trim();
       
+      let episodePart = cleanId;
       if (cleanId.includes('/')) {
-          finalAcastEmbedPath = cleanId; // Perfect show-slug/episode-slug
+          const parts = cleanId.split('/').filter(Boolean);
+          episodePart = parts[parts.length - 1]; 
+      }
+      
+      if (acastShowId) {
+          finalAcastId = `${acastShowId}/${episodePart}`;
       } else {
-          finalAcastEmbedPath = `$/${cleanId}`; // Raw BSON ID using wildcard
+          finalAcastId = episodePart;
       }
   }
   
@@ -79,9 +83,9 @@ export const formatPost = (post) => {
   const isMasterCategory = slugs.some(s => ['football-podcast', 'podcast-football', 'basketball-podcast', 'podcast-basketball', 'baseball-podcast', 'podcast-baseball'].includes(s));
   const isEpisodeCategory = slugs.some(s => ['football-pod-episode', 'basketball-pod-episode', 'baseball-pod-episode', 'pod-episode'].includes(s));
   
-  const isMasterShow = (!finalAcastEmbedPath && !spreakerId && (!!acastShowId || !!spreakerShowId)) || isMasterCategory;
+  const isMasterShow = (!finalAcastId && !spreakerId && (!!acastShowId || !!spreakerShowId)) || isMasterCategory;
 
-  if (finalAcastEmbedPath || acastId || acastShowId || spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('acast')) {
+  if (finalAcastId || acastShowId || spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('acast')) {
      type = 'podcast';
   }
 
@@ -131,8 +135,7 @@ export const formatPost = (post) => {
       avatar: authorAvatar
     },
     youtubeId,
-    acastId, // Pass the raw ID 
-    acastEmbedPath: finalAcastEmbedPath, // Pass the formatted path
+    acastId: finalAcastId,
     acastShowId, 
     spreakerId, 
     spreakerShowId, 
