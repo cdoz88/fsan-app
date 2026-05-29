@@ -17,7 +17,8 @@ export default function TeamsClient({ activeSport, teams, proToolsMenu, connectM
     All: 'https://admin.fsan.com/wp-content/uploads/2023/11/FSAN-Icon.webp',
     Football: 'https://admin.fsan.com/wp-content/uploads/2026/04/NFL-Logo.webp',
     Basketball: 'https://admin.fsan.com/wp-content/uploads/2026/04/nba-logo.webp',
-    Baseball: 'https://admin.fsan.com/wp-content/uploads/2026/04/Major_League_Baseball_logo.webp'
+    Baseball: 'https://admin.fsan.com/wp-content/uploads/2026/04/Major_League_Baseball_logo.webp',
+    Golf: 'https://admin.fsan.com/wp-content/uploads/2026/05/PGA_Tour_logo.webp'
   };
 
   const sportColors = {
@@ -25,6 +26,7 @@ export default function TeamsClient({ activeSport, teams, proToolsMenu, connectM
     Football: { primary: '#e42d38', secondary: '#8a1a20' },
     Basketball: { primary: '#e85d22', secondary: '#a33308' },
     Baseball: { primary: '#1b75bb', secondary: '#1e3b8a' },
+    Golf: { primary: '#019c9e', secondary: '#015e5f' },
   };
 
   const bgImage = bgImages[activeSport] || bgImages.All;
@@ -34,7 +36,8 @@ export default function TeamsClient({ activeSport, teams, proToolsMenu, connectM
   const leagueCards = [
     { id: 'nfl', name: 'NFL Rosters', sport: 'football', logo: 'https://admin.fsan.com/wp-content/uploads/2026/04/NFL-Logo.webp', gradient: 'from-red-600 to-red-900', shadow: 'hover:shadow-[0_0_40px_rgba(228,45,56,0.3)]' },
     { id: 'nba', name: 'NBA Rosters', sport: 'basketball', logo: 'https://admin.fsan.com/wp-content/uploads/2026/04/NBA-Logo.webp', gradient: 'from-orange-500 to-orange-800', shadow: 'hover:shadow-[0_0_40px_rgba(232,93,34,0.3)]' },
-    { id: 'mlb', name: 'MLB Rosters', sport: 'baseball', logo: 'https://admin.fsan.com/wp-content/uploads/2026/04/Major_League_Baseball_logo.webp', gradient: 'from-blue-600 to-blue-900', shadow: 'hover:shadow-[0_0_40px_rgba(27,117,187,0.3)]' }
+    { id: 'mlb', name: 'MLB Rosters', sport: 'baseball', logo: 'https://admin.fsan.com/wp-content/uploads/2026/04/Major_League_Baseball_logo.webp', gradient: 'from-blue-600 to-blue-900', shadow: 'hover:shadow-[0_0_40px_rgba(27,117,187,0.3)]' },
+    { id: 'pga', name: 'PGA Tour Golfers', sport: 'golf', logo: 'https://admin.fsan.com/wp-content/uploads/2026/05/PGA_Tour_logo.webp', gradient: 'from-teal-500 to-teal-800', shadow: 'hover:shadow-[0_0_40px_rgba(1,156,158,0.3)]' }
   ];
 
   return (
@@ -61,7 +64,7 @@ export default function TeamsClient({ activeSport, teams, proToolsMenu, connectM
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
                   {leagueCards.map((league) => (
                     <Link
                       key={league.id}
@@ -70,7 +73,7 @@ export default function TeamsClient({ activeSport, teams, proToolsMenu, connectM
                     >
                       <div className={`absolute inset-0 bg-gradient-to-b ${league.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
                       
-                      <div className="w-32 h-32 sm:w-40 sm:h-40 mb-6 relative z-10 flex items-center justify-center">
+                      <div className="w-32 h-32 sm:w-32 sm:h-32 mb-6 relative z-10 flex items-center justify-center">
                         <img 
                           src={league.logo} 
                           alt={league.name} 
@@ -78,7 +81,7 @@ export default function TeamsClient({ activeSport, teams, proToolsMenu, connectM
                         />
                       </div>
                       
-                      <h2 className="text-xl font-black text-white uppercase tracking-wider relative z-10 group-hover:text-gray-200 transition-colors text-center w-full">
+                      <h2 className="text-lg font-black text-white uppercase tracking-wider relative z-10 group-hover:text-gray-200 transition-colors text-center w-full">
                         {league.name}
                       </h2>
                       <div className="h-1 w-12 bg-gray-700 mt-4 rounded-full group-hover:w-24 transition-all duration-500 relative z-10" />
