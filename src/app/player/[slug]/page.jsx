@@ -1,6 +1,6 @@
-import React from 'react';
-import { getMenuBySlug } from '../../../utils/api'; 
-import PlayerClient from './PlayerClient';
+import ClientManager from '../../../components/ClientManager';
+import { fetchPosts, getMenuBySlug } from '../../../utils/api';
+import { redirect } from 'next/navigation';
 
 // --- DATA FETCHING ---
 
@@ -17,7 +17,7 @@ async function getESPNPlayerData(lossyName, rawSlug) {
     
     let athleteResult = allContents.find(c => c.uid && c.uid.includes('~a:'));
 
-    // FALLBACK: If ESPN search fails, match against the clean URL slug
+    // FALLBACK: If ESPN search fails, we search just by the Last Name and match against the clean URL slug
     if (!athleteResult && lossyName.includes(' ')) {
       const parts = lossyName.split(' ');
       const lastName = parts[parts.length - 1];
@@ -69,12 +69,10 @@ async function getESPNPlayerData(lossyName, rawSlug) {
       sportName = 'Baseball';
       leagueString = leagueCode === '10' ? 'mlb' : 'college-baseball';
     } else if (sportCode === '300' || sportCode === '70' || (athleteResult.url && athleteResult.url.includes('golf'))) {
-      // NEW GOLF INTEGRATION
       sportString = 'golf';
       sportName = 'Golf';
       leagueString = leagueCode === '284' ? 'lpga' : 'pga'; 
     } else {
-      // Universal Future-Proof Fallback for any other sports ESPN adds
       const urlParts = athleteResult.url ? athleteResult.url.split('espn.com/')[1]?.split('/') : [];
       if (urlParts && urlParts.length > 1) {
          sportString = urlParts[0];
@@ -85,20 +83,33 @@ async function getESPNPlayerData(lossyName, rawSlug) {
       }
     }
 
+    // FIX: Instead of letting ESPN crash the server with a 404, we gently catch it and move forward
     const [playerRes, overviewRes, statsRes] = await Promise.all([
-      fetch(`https://site.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } }),
+      fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } }),
       fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/overview`, { next: { revalidate: 3600 } }),
       fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/statistics`, { next: { revalidate: 3600 } })
     ]);
     
-    if (!playerRes.ok) throw new Error('Detail fetch failed');
-    
-    const playerData = await playerRes.json();
+    const playerData = playerRes.ok ? await playerRes.json() : null;
     const overviewData = overviewRes.ok ? await overviewRes.json() : null;
     const statsData = statsRes.ok ? await statsRes.json() : null;
     
+    const baseAthlete = playerData?.athlete || overviewData?.athlete || null;
+
+    // CRASH-PROOF FALLBACK: If ESPN completely refuses the golfer profile API, we forcefully pass the ID through anyway!
+    // This allows the Client UI to manually build the headshot URL and render the overview stats.
+    if (!baseAthlete) {
+        return {
+            id: playerId,
+            fullName: athleteResult.displayName || lossyName,
+            sportName: sportName,
+            overview: overviewData,
+            deepStats: statsData
+        };
+    }
+    
     return {
-      ...playerData.athlete,
+      ...baseAthlete,
       overview: overviewData,
       deepStats: statsData,
       sportName 
