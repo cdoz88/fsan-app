@@ -43,8 +43,8 @@ export const themes = {
     text: 'text-[#019c9e]',
     border: 'border-[#019c9e]',
     bg: 'bg-[#019c9e]',
-    hoverBorder: 'hover:border-[#018082]',
-    hoverText: 'hover:text-[#018082]',
+    hoverBorder: 'hover:border-[#01787a]',
+    hoverText: 'hover:text-[#01787a]',
     hex: '#019c9e'
   }
 };
