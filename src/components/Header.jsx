@@ -209,7 +209,7 @@ export default function Header({ activeSport }) {
                     <Link key={sport.name} href={targetPath} onClick={() => setIsSportDropdownOpen(false)} className={`w-full flex items-center gap-4 px-4 py-3 text-left transition-colors no-underline ${activeSport === sport.name ? 'bg-[#252525] text-white shadow-inner' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
                       <img src={sport.icon} alt={sport.name} className="w-6 h-6 object-contain" />
                       <span className="font-bold text-sm uppercase tracking-wider">{sport.name}</span>
-                      {activeSport === sport.name && <span className={`ml-auto w-2 h-2 rounded-full ${(themes[sport.name] || themes.All).bg} shadow-[0_0_8px_rgba(255,255,255,0.2)]`}></span>}
+                      {activeSport === sport.name && <span className={`ml-auto w-2 h-2 rounded-full ${themes[sport.name].bg} shadow-[0_0_8px_rgba(255,255,255,0.2)]`}></span>}
                     </Link>
                   );
                 })}
