@@ -4,13 +4,12 @@ import Link from 'next/link';
 import Header from '../../../components/Header'; 
 import Sidebar from '../../../components/Sidebar'; 
 import ContentModal from '../../../components/ContentModal'; 
-import { PlayCircle, FileText, Video, User, LayoutGrid, Zap, Play, ChevronLeft, ChevronRight, ArrowRight, Headphones } from 'lucide-react';
+import { PlayCircle, FileText, Video, User, Zap, Play, ChevronLeft, ChevronRight, Headphones } from 'lucide-react';
 import { themes } from '../../../utils/theme';
 
 export default function PlayerClient({ playerName, rawSlug, espnData, content, proToolsMenu, connectMenu, playerSport = 'All' }) {
   const [selectedItem, setSelectedItem] = useState(null);
   
-  // Refs for carousel scrolling
   const articlesRef = useRef(null);
   const videosRef = useRef(null);
   const shortsRef = useRef(null);
@@ -54,7 +53,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   
   const teamSlug = espnData?.team?.displayName ? espnData.team.displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : null;
 
-  const dob = espnData?.dateOfBirth ? new Date(espnData.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
+  const dob = espnData?.dateOfBirth && !isNaN(new Date(espnData.dateOfBirth)) ? new Date(espnData.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
   let birthplace = '';
   if (espnData?.birthPlace) {
     const { city, state, country } = espnData.birthPlace;
@@ -66,8 +65,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   const scroll = (ref, direction) => {
     if (ref.current) ref.current.scrollBy({ left: direction === 'left' ? -350 : 350, behavior: 'smooth' });
   };
-
-  // --- CONTENT SECTION RENDERERS ---
 
   const renderContentGrid = () => {
     if (content.length === 0) {
@@ -265,7 +262,11 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   };
 
   const renderStatistics = () => {
-    const findStatTables = (obj, tables = [], currentTitle = "Career Stats") => {
+    if (!espnData) return null;
+
+    // CRASH-PROOF FIX: Strict recursion depth limit of 8 prevents ESPN's deeply nested Golf data from triggering a Stack Overflow!
+    const findStatTables = (obj, tables = [], currentTitle = "Career Stats", depth = 0) => {
+      if (depth > 8) return tables; 
       if (!obj || typeof obj !== 'object') return tables;
       
       if (Array.isArray(obj.labels) && Array.isArray(obj.stats)) {
@@ -288,17 +289,18 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       }
       
       if (Array.isArray(obj)) {
-        obj.forEach(child => findStatTables(child, tables, child?.displayName || child?.name || currentTitle));
+        obj.forEach(child => findStatTables(child, tables, child?.displayName || child?.name || currentTitle, depth + 1));
       } else {
         for (const key in obj) {
-          if (key === 'athlete' || key === 'team') continue; 
+          // Skip massive or circular internal ESPN keys that we don't need
+          if (['athlete', 'team', 'links', 'season', 'franchise', 'events', 'notes', 'leaders', 'competitors', 'logos', 'headshot'].includes(key)) continue;
           
           let nextTitle = currentTitle;
           if (obj[key] && typeof obj[key] === 'object') {
               nextTitle = obj[key].displayName || obj[key].name || obj[key].text || nextTitle;
           }
           
-          findStatTables(obj[key], tables, nextTitle);
+          findStatTables(obj[key], tables, nextTitle, depth + 1);
         }
       }
       return tables;
@@ -320,7 +322,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     return (
       <div className="flex flex-col gap-8 w-full">
         {uniqueTables.map((table, idx) => {
-          // Absolute fail-safe to guarantee titles are strings, preventing React crashes
           let safeTitle = table.title;
           if (safeTitle && typeof safeTitle === 'object') safeTitle = JSON.stringify(safeTitle);
 
@@ -345,7 +346,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                       {(Array.isArray(table.stats[0]) ? table.stats : [table.stats]).map((row, rowIdx) => (
                         <tr key={rowIdx} className="hover:bg-[#222] transition-colors">
                           {table.labels.map((_, colIdx) => {
-                             // CRASH-PROOF FIX: Force all data points to become strings before React touches them!
                              let val = row[colIdx];
                              if (val !== null && typeof val === 'object') {
                                  val = val.displayValue ?? val.value ?? val.name ?? JSON.stringify(val);
@@ -359,7 +359,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                 ) : (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
                     {table.stats.map((stat, statIdx) => {
-                      // CRASH-PROOF FIX: Force list data to become strings!
                       let sName = stat.name;
                       if (sName && typeof sName === 'object') sName = JSON.stringify(sName);
                       

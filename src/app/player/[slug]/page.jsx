@@ -4,24 +4,26 @@ import { redirect } from 'next/navigation';
 
 // --- DATA FETCHING ---
 
+const fetchSafe = (url, options) => fetch(url, options).catch(() => ({ ok: false }));
+
 async function getESPNPlayerData(lossyName, rawSlug) {
   try {
-    const searchRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(lossyName)}&limit=10`, { 
+    const searchRes = await fetchSafe(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(lossyName)}&limit=10`, { 
       next: { revalidate: 3600 },
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FSAN/1.0)' }
     });
-    if (!searchRes.ok) throw new Error('Search failed');
+    
+    if (!searchRes.ok) throw new Error('Search API Blocked or Failed');
     const searchData = await searchRes.json();
     
     const allContents = searchData?.results?.flatMap(r => r.contents || []) || [];
-    
     let athleteResult = allContents.find(c => c.uid && c.uid.includes('~a:'));
 
-    // FALLBACK: If ESPN search fails, we search just by the Last Name and match against the clean URL slug
+    // FALLBACK: Match against the clean URL slug
     if (!athleteResult && lossyName.includes(' ')) {
       const parts = lossyName.split(' ');
       const lastName = parts[parts.length - 1];
-      const fallbackRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(lastName)}&limit=30`, {
+      const fallbackRes = await fetchSafe(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(lastName)}&limit=30`, {
         next: { revalidate: 3600 },
         headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FSAN/1.0)' }
       });
@@ -83,11 +85,11 @@ async function getESPNPlayerData(lossyName, rawSlug) {
       }
     }
 
-    // FIX: Using site.api.espn.com to avoid 403 Forbidden blockers from ESPN's web API!
+    // BULLETPROOF FETCH: If ESPN throws a 403 Forbidden, fetchSafe prevents a server crash
     const [playerRes, overviewRes, statsRes] = await Promise.all([
-      fetch(`https://site.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } }),
-      fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/overview`, { next: { revalidate: 3600 } }),
-      fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/statistics`, { next: { revalidate: 3600 } })
+      fetchSafe(`https://site.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } }),
+      fetchSafe(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/overview`, { next: { revalidate: 3600 } }),
+      fetchSafe(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/statistics`, { next: { revalidate: 3600 } })
     ]);
     
     const playerData = playerRes.ok ? await playerRes.json() : null;
@@ -114,7 +116,7 @@ async function getESPNPlayerData(lossyName, rawSlug) {
     };
 
   } catch (error) {
-    console.error("ESPN API Error for", lossyName, ":", error);
+    console.error("ESPN API Parsing Error for", lossyName, ":", error);
     return null;
   }
 }
@@ -156,8 +158,10 @@ async function getPlayerContent(searchName, sportName) {
       body: JSON.stringify({ query: postsQuery }),
       next: { revalidate: 60 }
     });
-    const json = await res.json();
-    posts = json?.data?.posts?.nodes || [];
+    if (res.ok) {
+        const json = await res.json();
+        posts = json?.data?.posts?.nodes || [];
+    }
   } catch (error) {
     console.error("WP GraphQL Error:", error);
   }
@@ -167,17 +171,11 @@ async function getPlayerContent(searchName, sportName) {
   try {
     const sportParam = sportSlug ? `&sport=${sportSlug}` : '';
     
-    const feedUrl1 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=1${sportParam}`;
-    const feedUrl2 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=2${sportParam}`;
-    
-    const podUrl1 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=podcasts&per_page=100&page=1${sportParam}`;
-    const podUrl2 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=podcasts&per_page=100&page=2${sportParam}`;
-
     const [v1, v2, p1, p2] = await Promise.all([
-      fetch(feedUrl1, { next: { revalidate: 60 } }),
-      fetch(feedUrl2, { next: { revalidate: 60 } }),
-      fetch(podUrl1, { next: { revalidate: 60 } }),
-      fetch(podUrl2, { next: { revalidate: 60 } })
+      fetchSafe(`https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=1${sportParam}`, { next: { revalidate: 60 } }),
+      fetchSafe(`https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=2${sportParam}`, { next: { revalidate: 60 } }),
+      fetchSafe(`https://admin.fsan.com/wp-json/fsan/v1/feed?type=podcasts&per_page=100&page=1${sportParam}`, { next: { revalidate: 60 } }),
+      fetchSafe(`https://admin.fsan.com/wp-json/fsan/v1/feed?type=podcasts&per_page=100&page=2${sportParam}`, { next: { revalidate: 60 } })
     ]);
     
     let allVids = [];
@@ -221,7 +219,7 @@ async function getPlayerContent(searchName, sportName) {
 
     const d = new Date(post.date);
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+    const safeDateString = isNaN(d.getTime()) ? '' : `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 
     let contentHtml = post.content || '';
     let youtubeId = null;
@@ -237,7 +235,7 @@ async function getPlayerContent(searchName, sportName) {
       excerpt: stripTags(post.excerpt),
       content: contentHtml,
       date: safeDateString,
-      rawDate: d.getTime(),
+      rawDate: isNaN(d.getTime()) ? 0 : d.getTime(),
       imageUrl: post.featuredImage?.node?.sourceUrl || null,
       author: {
         name: post.author?.node?.name || null,
@@ -267,7 +265,7 @@ async function getPlayerContent(searchName, sportName) {
 
     const d = new Date(item.date);
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+    const safeDateString = isNaN(d.getTime()) ? '' : `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 
     let contentHtml = item.content?.rendered || '';
     let youtubeId = null;
@@ -288,7 +286,7 @@ async function getPlayerContent(searchName, sportName) {
       excerpt: stripTags(item.excerpt?.rendered || ''),
       content: contentHtml,
       date: safeDateString,
-      rawDate: d.getTime(),
+      rawDate: isNaN(d.getTime()) ? 0 : d.getTime(),
       imageUrl: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || null,
       author: {
         name: item._embedded?.author?.[0]?.name || 'FSAN Staff',
@@ -312,7 +310,7 @@ async function getPlayerContent(searchName, sportName) {
 
     const d = new Date(item.date);
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+    const safeDateString = isNaN(d.getTime()) ? '' : `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 
     return {
       id: item.id.toString(),
@@ -320,7 +318,7 @@ async function getPlayerContent(searchName, sportName) {
       excerpt: stripTags(item.excerpt?.rendered || ''),
       content: item.content?.rendered || '',
       date: safeDateString,
-      rawDate: d.getTime(),
+      rawDate: isNaN(d.getTime()) ? 0 : d.getTime(),
       imageUrl: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || null,
       author: {
         name: item._embedded?.author?.[0]?.name || 'FSAN Staff',
