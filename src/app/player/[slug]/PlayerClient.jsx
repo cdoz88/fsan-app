@@ -273,10 +273,9 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
         return tables;
       }
       
-      // FIX: Hyper-aggressive null checks to prevent the Next.js Server Crash if ESPN returns empty lists
       if (Array.isArray(obj) && obj.length > 0 && obj[0] && typeof obj[0] === 'object' && (obj[0].displayValue !== undefined || obj[0].value !== undefined || obj[0].stat !== undefined)) {
         const cleanStats = obj.map(s => {
-            if (!s || typeof s !== 'object') return null; // Failsafe for nulls inside the array
+            if (!s || typeof s !== 'object') return null; 
             const name = s.displayName || s.label || s.name || s.stat?.displayName || s.stat?.name;
             const val = s.displayValue || s.value || s.stat?.displayValue || s.stat?.value;
             return { name, displayValue: val };
@@ -309,7 +308,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     const uniqueTables = [];
     const seen = new Set();
     allTables.forEach(t => {
-      const hash = t.title + JSON.stringify(t.labels || (t.stats && t.stats[0]));
+      const hash = typeof t.title === 'string' ? t.title : JSON.stringify(t.title);
       if (!seen.has(hash)) {
         seen.add(hash);
         uniqueTables.push(t);
@@ -320,40 +319,68 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
 
     return (
       <div className="flex flex-col gap-8 w-full">
-        {uniqueTables.map((table, idx) => (
-          <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg w-full">
-            <div className="bg-[#222] px-6 py-4 border-b border-gray-800"><h3 className="font-black text-white text-lg tracking-wide uppercase">{table.title}</h3></div>
-            <div className="overflow-x-auto">
-              {table.type === 'table' ? (
-                <table className="w-full text-left text-sm whitespace-nowrap">
-                  <thead className="bg-[#151515] text-gray-400 font-bold text-xs uppercase tracking-wider">
-                    <tr>{table.labels.map((label, labelIdx) => (<th key={labelIdx} className="px-6 py-4 border-b border-gray-800">{label}</th>))}</tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-800">
-                    {(Array.isArray(table.stats[0]) ? table.stats : [table.stats]).map((row, rowIdx) => (
-                      <tr key={rowIdx} className="hover:bg-[#222] transition-colors">
-                        {table.labels.map((_, colIdx) => {
-                           let val = row[colIdx];
-                           if (val && typeof val === 'object') val = val.displayValue || val.value;
-                           return <td key={colIdx} className={`px-6 py-4 text-gray-300 ${colIdx === 0 ? 'font-bold text-white' : ''}`}>{val ?? '-'}</td>;
+        {uniqueTables.map((table, idx) => {
+          // Absolute fail-safe to guarantee titles are strings, preventing React crashes
+          let safeTitle = table.title;
+          if (safeTitle && typeof safeTitle === 'object') safeTitle = JSON.stringify(safeTitle);
+
+          return (
+            <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg w-full">
+              <div className="bg-[#222] px-6 py-4 border-b border-gray-800">
+                <h3 className="font-black text-white text-lg tracking-wide uppercase">{String(safeTitle ?? 'Stats')}</h3>
+              </div>
+              <div className="overflow-x-auto">
+                {table.type === 'table' ? (
+                  <table className="w-full text-left text-sm whitespace-nowrap">
+                    <thead className="bg-[#151515] text-gray-400 font-bold text-xs uppercase tracking-wider">
+                      <tr>
+                        {table.labels.map((label, labelIdx) => {
+                          let safeLabel = label;
+                          if (safeLabel && typeof safeLabel === 'object') safeLabel = JSON.stringify(safeLabel);
+                          return <th key={labelIdx} className="px-6 py-4 border-b border-gray-800">{String(safeLabel ?? '')}</th>;
                         })}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
-                  {table.stats.map((stat, statIdx) => (
-                    <div key={statIdx} className="flex flex-col">
-                      <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{stat.name}</span>
-                      <span className="text-lg font-semibold text-white">{stat.displayValue}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    </thead>
+                    <tbody className="divide-y divide-gray-800">
+                      {(Array.isArray(table.stats[0]) ? table.stats : [table.stats]).map((row, rowIdx) => (
+                        <tr key={rowIdx} className="hover:bg-[#222] transition-colors">
+                          {table.labels.map((_, colIdx) => {
+                             // CRASH-PROOF FIX: Force all data points to become strings before React touches them!
+                             let val = row[colIdx];
+                             if (val !== null && typeof val === 'object') {
+                                 val = val.displayValue ?? val.value ?? val.name ?? JSON.stringify(val);
+                             }
+                             return <td key={colIdx} className={`px-6 py-4 text-gray-300 ${colIdx === 0 ? 'font-bold text-white' : ''}`}>{String(val ?? '-')}</td>;
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
+                    {table.stats.map((stat, statIdx) => {
+                      // CRASH-PROOF FIX: Force list data to become strings!
+                      let sName = stat.name;
+                      if (sName && typeof sName === 'object') sName = JSON.stringify(sName);
+                      
+                      let sVal = stat.displayValue;
+                      if (sVal !== null && typeof sVal === 'object') {
+                          sVal = sVal.displayValue ?? sVal.value ?? sVal.name ?? JSON.stringify(sVal);
+                      }
+
+                      return (
+                        <div key={statIdx} className="flex flex-col">
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{String(sName ?? '-')}</span>
+                          <span className="text-lg font-semibold text-white">{String(sVal ?? '-')}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -438,7 +465,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
               <div className="hidden md:flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
                 <Link href={`/${playerSport.toLowerCase()}`} className="hover:text-white transition-colors">{playerSport}</Link>
                 <span>/</span>
-                <Link href={`/${playerSport.toLowerCase()}/teams`} className="hover:text-white transition-colors">Teams</Link>
+                <Link href={`/${playerSport.toLowerCase()}/teams`} className="hover:text-white transition-colors">{playerSport === 'Golf' ? 'Golfers' : 'Teams'}</Link>
                 <span>/</span>
                 {teamSlug && (
                   <>
