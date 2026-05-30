@@ -8,6 +8,7 @@ const fetchSafe = (url, options) => fetch(url, options).catch(() => ({ ok: false
 
 async function getESPNPlayerData(lossyName, rawSlug) {
   try {
+    // 1. Initial Search
     const searchRes = await fetchSafe(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(lossyName)}&limit=10`, { 
       next: { revalidate: 3600 },
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FSAN/1.0)' }
@@ -85,33 +86,36 @@ async function getESPNPlayerData(lossyName, rawSlug) {
       }
     }
 
-    // BULLETPROOF FETCH: If ESPN throws a 403 Forbidden, fetchSafe prevents a server crash
-    const [playerRes, overviewRes, statsRes] = await Promise.all([
-      fetchSafe(`https://site.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } }),
-      fetchSafe(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/overview`, { next: { revalidate: 3600 } }),
-      fetchSafe(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/statistics`, { next: { revalidate: 3600 } })
-    ]);
+    // 2. Fetch ONLY the core player profile. We completely drop the massive 'overview' and 'statistics' payloads that were crashing the server.
+    const playerRes = await fetchSafe(`https://site.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } });
     
     const playerData = playerRes.ok ? await playerRes.json() : null;
-    const overviewData = overviewRes.ok ? await overviewRes.json() : null;
-    const statsData = statsRes.ok ? await statsRes.json() : null;
-    
-    const baseAthlete = playerData?.athlete || overviewData?.athlete || null;
+    const baseAthlete = playerData?.athlete || null;
 
     if (!baseAthlete) {
         return {
             id: playerId,
             fullName: athleteResult.displayName || lossyName,
             sportName: sportName,
-            overview: overviewData,
-            deepStats: statsData
         };
     }
     
+    // CRITICAL FIX: We extract ONLY the exact fields the UI needs. 
+    // Passing the massive raw ESPN object to the client was causing Next.js to crash during serialization.
     return {
-      ...baseAthlete,
-      overview: overviewData,
-      deepStats: statsData,
+      id: baseAthlete.id,
+      fullName: baseAthlete.fullName || baseAthlete.displayName || lossyName,
+      displayName: baseAthlete.displayName || null,
+      position: baseAthlete.position || null,
+      team: baseAthlete.team || null,
+      displayExperience: baseAthlete.displayExperience || null,
+      displayHeight: baseAthlete.displayHeight || null,
+      displayWeight: baseAthlete.displayWeight || null,
+      age: baseAthlete.age || null,
+      dateOfBirth: baseAthlete.dateOfBirth || null,
+      birthPlace: baseAthlete.birthPlace || null,
+      college: baseAthlete.college || null,
+      headshot: baseAthlete.headshot || null,
       sportName 
     };
 

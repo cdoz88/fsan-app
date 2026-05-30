@@ -261,129 +261,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     );
   };
 
-  const renderStatistics = () => {
-    if (!espnData) return null;
-
-    // CRASH-PROOF FIX: Strict recursion depth limit of 8 prevents ESPN's deeply nested Golf data from triggering a Stack Overflow!
-    const findStatTables = (obj, tables = [], currentTitle = "Career Stats", depth = 0) => {
-      if (depth > 8) return tables; 
-      if (!obj || typeof obj !== 'object') return tables;
-      
-      if (Array.isArray(obj.labels) && Array.isArray(obj.stats)) {
-        tables.push({ title: obj.text || obj.name || currentTitle, type: 'table', labels: obj.labels, stats: obj.stats });
-        return tables;
-      }
-      
-      if (Array.isArray(obj) && obj.length > 0 && obj[0] && typeof obj[0] === 'object' && (obj[0].displayValue !== undefined || obj[0].value !== undefined || obj[0].stat !== undefined)) {
-        const cleanStats = obj.map(s => {
-            if (!s || typeof s !== 'object') return null; 
-            const name = s.displayName || s.label || s.name || s.stat?.displayName || s.stat?.name;
-            const val = s.displayValue || s.value || s.stat?.displayValue || s.stat?.value;
-            return { name, displayValue: val };
-        }).filter(s => s && s.name && s.displayValue !== undefined);
-        
-        if (cleanStats.length > 0) {
-            tables.push({ title: currentTitle, type: 'list', stats: cleanStats });
-        }
-        return tables;
-      }
-      
-      if (Array.isArray(obj)) {
-        obj.forEach(child => findStatTables(child, tables, child?.displayName || child?.name || currentTitle, depth + 1));
-      } else {
-        for (const key in obj) {
-          // Skip massive or circular internal ESPN keys that we don't need
-          if (['athlete', 'team', 'links', 'season', 'franchise', 'events', 'notes', 'leaders', 'competitors', 'logos', 'headshot'].includes(key)) continue;
-          
-          let nextTitle = currentTitle;
-          if (obj[key] && typeof obj[key] === 'object') {
-              nextTitle = obj[key].displayName || obj[key].name || obj[key].text || nextTitle;
-          }
-          
-          findStatTables(obj[key], tables, nextTitle, depth + 1);
-        }
-      }
-      return tables;
-    };
-
-    const allTables = findStatTables(espnData);
-    const uniqueTables = [];
-    const seen = new Set();
-    allTables.forEach(t => {
-      const hash = typeof t.title === 'string' ? t.title : JSON.stringify(t.title);
-      if (!seen.has(hash)) {
-        seen.add(hash);
-        uniqueTables.push(t);
-      }
-    });
-
-    if (uniqueTables.length === 0) return null;
-
-    return (
-      <div className="flex flex-col gap-8 w-full">
-        {uniqueTables.map((table, idx) => {
-          let safeTitle = table.title;
-          if (safeTitle && typeof safeTitle === 'object') safeTitle = JSON.stringify(safeTitle);
-
-          return (
-            <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg w-full">
-              <div className="bg-[#222] px-6 py-4 border-b border-gray-800">
-                <h3 className="font-black text-white text-lg tracking-wide uppercase">{String(safeTitle ?? 'Stats')}</h3>
-              </div>
-              <div className="overflow-x-auto">
-                {table.type === 'table' ? (
-                  <table className="w-full text-left text-sm whitespace-nowrap">
-                    <thead className="bg-[#151515] text-gray-400 font-bold text-xs uppercase tracking-wider">
-                      <tr>
-                        {table.labels.map((label, labelIdx) => {
-                          let safeLabel = label;
-                          if (safeLabel && typeof safeLabel === 'object') safeLabel = JSON.stringify(safeLabel);
-                          return <th key={labelIdx} className="px-6 py-4 border-b border-gray-800">{String(safeLabel ?? '')}</th>;
-                        })}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-800">
-                      {(Array.isArray(table.stats[0]) ? table.stats : [table.stats]).map((row, rowIdx) => (
-                        <tr key={rowIdx} className="hover:bg-[#222] transition-colors">
-                          {table.labels.map((_, colIdx) => {
-                             let val = row[colIdx];
-                             if (val !== null && typeof val === 'object') {
-                                 val = val.displayValue ?? val.value ?? val.name ?? JSON.stringify(val);
-                             }
-                             return <td key={colIdx} className={`px-6 py-4 text-gray-300 ${colIdx === 0 ? 'font-bold text-white' : ''}`}>{String(val ?? '-')}</td>;
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
-                    {table.stats.map((stat, statIdx) => {
-                      let sName = stat.name;
-                      if (sName && typeof sName === 'object') sName = JSON.stringify(sName);
-                      
-                      let sVal = stat.displayValue;
-                      if (sVal !== null && typeof sVal === 'object') {
-                          sVal = sVal.displayValue ?? sVal.value ?? sVal.name ?? JSON.stringify(sVal);
-                      }
-
-                      return (
-                        <div key={statIdx} className="flex flex-col">
-                          <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{String(sName ?? '-')}</span>
-                          <span className="text-lg font-semibold text-white">{String(sVal ?? '-')}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
   return (
     <>
       <Header activeSport={playerSport} />
@@ -477,7 +354,6 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
             </div>
 
             <div className="max-w-7xl mx-auto pb-12 flex flex-col gap-12 w-full">
-              {renderStatistics()}
               {renderContentGrid()}
             </div>
           </main>
