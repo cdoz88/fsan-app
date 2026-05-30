@@ -8,19 +8,18 @@ const fetchSafe = (url, options) => fetch(url, options).catch(() => ({ ok: false
 
 async function getESPNPlayerData(lossyName, rawSlug) {
   try {
-    // 1. Initial Search
     const searchRes = await fetchSafe(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(lossyName)}&limit=10`, { 
       next: { revalidate: 3600 },
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FSAN/1.0)' }
     });
-    
-    if (!searchRes.ok) throw new Error('Search API Blocked or Failed');
+    if (!searchRes.ok) throw new Error('Search failed');
     const searchData = await searchRes.json();
     
     const allContents = searchData?.results?.flatMap(r => r.contents || []) || [];
+    
     let athleteResult = allContents.find(c => c.uid && c.uid.includes('~a:'));
 
-    // FALLBACK: Match against the clean URL slug
+    // FALLBACK
     if (!athleteResult && lossyName.includes(' ')) {
       const parts = lossyName.split(' ');
       const lastName = parts[parts.length - 1];
@@ -86,41 +85,45 @@ async function getESPNPlayerData(lossyName, rawSlug) {
       }
     }
 
-    // 2. Fetch ONLY the core player profile. We completely drop the massive 'overview' and 'statistics' payloads that were crashing the server.
-    const playerRes = await fetchSafe(`https://site.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } });
+    // THE FIX: We completely disable fetching stats for Golfers so the massive ESPN JSON never crashes Next.js
+    const shouldFetchStats = sportString !== 'golf';
+
+    const [playerRes, overviewRes, statsRes] = await Promise.all([
+      fetchSafe(`https://site.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } }),
+      fetchSafe(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/overview`, { next: { revalidate: 3600 } }),
+      shouldFetchStats ? fetchSafe(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/statistics`, { next: { revalidate: 3600 } }) : Promise.resolve({ ok: false })
+    ]);
     
     const playerData = playerRes.ok ? await playerRes.json() : null;
-    const baseAthlete = playerData?.athlete || null;
+    const overviewData = overviewRes.ok ? await overviewRes.json() : null;
+    const statsData = statsRes.ok ? await statsRes.json() : null;
+    
+    let athlete = playerData?.athlete || overviewData?.athlete;
 
-    if (!baseAthlete) {
-        return {
+    // Build the basics manually if ESPN's main API refuses to return them
+    if (!athlete) {
+        athlete = {
             id: playerId,
             fullName: athleteResult.displayName || lossyName,
-            sportName: sportName,
+            displayName: athleteResult.displayName || lossyName
         };
     }
+
+    // MANUALLY INJECT THE HEADSHOT 
+    if (!athlete.headshot) {
+        const sCode = sportString === 'golf' ? 'golf' : (sportString === 'football' ? 'nfl' : (sportString === 'basketball' ? 'nba' : 'mlb'));
+        athlete.headshot = { href: `https://a.espncdn.com/combiner/i?img=/i/headshots/${sCode}/players/full/${playerId}.png&w=350&h=254` };
+    }
     
-    // CRITICAL FIX: We extract ONLY the exact fields the UI needs. 
-    // Passing the massive raw ESPN object to the client was causing Next.js to crash during serialization.
     return {
-      id: baseAthlete.id,
-      fullName: baseAthlete.fullName || baseAthlete.displayName || lossyName,
-      displayName: baseAthlete.displayName || null,
-      position: baseAthlete.position || null,
-      team: baseAthlete.team || null,
-      displayExperience: baseAthlete.displayExperience || null,
-      displayHeight: baseAthlete.displayHeight || null,
-      displayWeight: baseAthlete.displayWeight || null,
-      age: baseAthlete.age || null,
-      dateOfBirth: baseAthlete.dateOfBirth || null,
-      birthPlace: baseAthlete.birthPlace || null,
-      college: baseAthlete.college || null,
-      headshot: baseAthlete.headshot || null,
+      ...athlete,
+      overview: overviewData,
+      deepStats: statsData,
       sportName 
     };
 
   } catch (error) {
-    console.error("ESPN API Parsing Error for", lossyName, ":", error);
+    console.error("ESPN API Error for", lossyName, ":", error);
     return null;
   }
 }

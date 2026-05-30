@@ -42,13 +42,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   const primaryColor = espnData?.team?.color ? `#${espnData.team.color}` : (playerSport === 'Golf' ? '#019c9e' : '#374151');
   const secondaryColor = espnData?.team?.alternateColor ? `#${espnData.team.alternateColor}` : (playerSport === 'Golf' ? '#015e5f' : '#1f2937');
   
-  let headshot = espnData?.headshot?.href || null;
-  if (!headshot && espnData?.id) {
-     const sportCodeMap = { 'Football': 'nfl', 'Basketball': 'nba', 'Baseball': 'mlb', 'Golf': 'golf' };
-     const sCode = sportCodeMap[playerSport] || 'nfl';
-     headshot = `https://a.espncdn.com/combiner/i?img=/i/headshots/${sCode}/players/full/${espnData.id}.png&w=350&h=254`;
-  }
-
+  const headshot = espnData?.headshot?.href || null;
   const teamLogo = espnData?.team?.logos?.[0]?.href || null;
   
   const teamSlug = espnData?.team?.displayName ? espnData.team.displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : null;
@@ -261,6 +255,82 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     );
   };
 
+  const renderStatistics = () => {
+    const findStatTables = (obj, tables = [], currentTitle = "Career Stats") => {
+      if (!obj || typeof obj !== 'object') return tables;
+      if (Array.isArray(obj.labels) && Array.isArray(obj.stats)) {
+        tables.push({ title: obj.text || obj.name || currentTitle, type: 'table', labels: obj.labels, stats: obj.stats });
+        return tables;
+      }
+      if (Array.isArray(obj) && obj.length > 0 && obj[0].displayValue !== undefined) {
+        tables.push({ title: currentTitle, type: 'list', stats: obj });
+        return tables;
+      }
+      if (Array.isArray(obj)) {
+        obj.forEach(child => findStatTables(child, tables, child.displayName || child.name || currentTitle));
+      } else {
+        for (const key in obj) {
+          if (key === 'athlete' || key === 'team') continue; 
+          const nextTitle = obj[key]?.displayName || obj[key]?.name || obj.displayName || obj.name || currentTitle;
+          findStatTables(obj[key], tables, nextTitle);
+        }
+      }
+      return tables;
+    };
+
+    const allTables = findStatTables(espnData);
+    const uniqueTables = [];
+    const seen = new Set();
+    allTables.forEach(t => {
+      const hash = t.title + JSON.stringify(t.labels || (t.stats && t.stats[0]));
+      if (!seen.has(hash)) {
+        seen.add(hash);
+        uniqueTables.push(t);
+      }
+    });
+
+    if (uniqueTables.length === 0) return null;
+
+    return (
+      <div className="flex flex-col gap-8 w-full">
+        {uniqueTables.map((table, idx) => (
+          <div key={idx} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg w-full">
+            <div className="bg-[#222] px-6 py-4 border-b border-gray-800"><h3 className="font-black text-white text-lg tracking-wide uppercase">{table.title}</h3></div>
+            <div className="overflow-x-auto">
+              {table.type === 'table' ? (
+                <table className="w-full text-left text-sm whitespace-nowrap">
+                  <thead className="bg-[#151515] text-gray-400 font-bold text-xs uppercase tracking-wider">
+                    <tr>{table.labels.map((label, labelIdx) => (<th key={labelIdx} className="px-6 py-4 border-b border-gray-800">{label}</th>))}</tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800">
+                    {(Array.isArray(table.stats[0]) ? table.stats : [table.stats]).map((row, rowIdx) => (
+                      <tr key={rowIdx} className="hover:bg-[#222] transition-colors">
+                        {table.labels.map((_, colIdx) => {
+                           let val = row[colIdx];
+                           if (val && typeof val === 'object') val = val.displayValue || val.value;
+                           return <td key={colIdx} className={`px-6 py-4 text-gray-300 ${colIdx === 0 ? 'font-bold text-white' : ''}`}>{val ?? '-'}</td>;
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
+                  {table.stats.map((stat, statIdx) => (
+                    <div key={statIdx} className="flex flex-col">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{stat.displayName || stat.label || stat.name}</span>
+                      <span className="text-lg font-semibold text-white">{stat.displayValue || stat.value || '-'}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <>
       <Header activeSport={playerSport} />
@@ -354,6 +424,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
             </div>
 
             <div className="max-w-7xl mx-auto pb-12 flex flex-col gap-12 w-full">
+              {renderStatistics()}
               {renderContentGrid()}
             </div>
           </main>
