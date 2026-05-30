@@ -1,14 +1,12 @@
-import ClientManager from '../../../components/ClientManager';
-import { fetchPosts, getMenuBySlug } from '../../../utils/api';
-import { redirect } from 'next/navigation';
+import React from 'react';
+import { getMenuBySlug } from '../../../utils/api'; 
+import PlayerClient from './PlayerClient';
 
 // --- DATA FETCHING ---
 
-const fetchSafe = (url, options) => fetch(url, options).catch(() => ({ ok: false }));
-
 async function getESPNPlayerData(lossyName, rawSlug) {
   try {
-    const searchRes = await fetchSafe(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(lossyName)}&limit=10`, { 
+    const searchRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(lossyName)}&limit=10`, { 
       next: { revalidate: 3600 },
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FSAN/1.0)' }
     });
@@ -19,11 +17,12 @@ async function getESPNPlayerData(lossyName, rawSlug) {
     
     let athleteResult = allContents.find(c => c.uid && c.uid.includes('~a:'));
 
-    // FALLBACK
+    // FALLBACK: If ESPN search fails (common for names with apostrophes/initials like D'Andre),
+    // we search just by the Last Name and match against the clean URL slug!
     if (!athleteResult && lossyName.includes(' ')) {
       const parts = lossyName.split(' ');
       const lastName = parts[parts.length - 1];
-      const fallbackRes = await fetchSafe(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(lastName)}&limit=30`, {
+      const fallbackRes = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(lastName)}&limit=30`, {
         next: { revalidate: 3600 },
         headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FSAN/1.0)' }
       });
@@ -33,6 +32,7 @@ async function getESPNPlayerData(lossyName, rawSlug) {
         const fallbackAthletes = fallbackContents.filter(c => c.uid && c.uid.includes('~a:'));
         
         athleteResult = fallbackAthletes.find(a => {
+          // Generate a clean slug from the ESPN result to see if it matches our page URL
           const cleanSlug = a.displayName.toLowerCase().replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
           return cleanSlug === rawSlug;
         });
@@ -56,7 +56,7 @@ async function getESPNPlayerData(lossyName, rawSlug) {
 
     let sportString = '';
     let leagueString = '';
-    let sportName = 'All';
+    let sportName = 'All'; // Dynamically capturing the Sport Name for the UI
 
     if (sportCode === '20') {
       sportString = 'football';
@@ -70,53 +70,24 @@ async function getESPNPlayerData(lossyName, rawSlug) {
       sportString = 'baseball';
       sportName = 'Baseball';
       leagueString = leagueCode === '10' ? 'mlb' : 'college-baseball';
-    } else if (sportCode === '300' || sportCode === '70' || (athleteResult.url && athleteResult.url.includes('golf'))) {
-      sportString = 'golf';
-      sportName = 'Golf';
-      leagueString = leagueCode === '284' ? 'lpga' : 'pga'; 
     } else {
-      const urlParts = athleteResult.url ? athleteResult.url.split('espn.com/')[1]?.split('/') : [];
-      if (urlParts && urlParts.length > 1) {
-         sportString = urlParts[0];
-         sportName = sportString.charAt(0).toUpperCase() + sportString.slice(1);
-         leagueString = urlParts[1];
-      } else {
-         return null;
-      }
+      return null;
     }
 
-    // THE FIX: We completely disable fetching stats for Golfers so the massive ESPN JSON never crashes Next.js
-    const shouldFetchStats = sportString !== 'golf';
-
     const [playerRes, overviewRes, statsRes] = await Promise.all([
-      fetchSafe(`https://site.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } }),
-      fetchSafe(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/overview`, { next: { revalidate: 3600 } }),
-      shouldFetchStats ? fetchSafe(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/statistics`, { next: { revalidate: 3600 } }) : Promise.resolve({ ok: false })
+      fetch(`https://site.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}`, { next: { revalidate: 3600 } }),
+      fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/overview`, { next: { revalidate: 3600 } }),
+      fetch(`https://site.web.api.espn.com/apis/common/v3/sports/${sportString}/${leagueString}/athletes/${playerId}/statistics`, { next: { revalidate: 3600 } })
     ]);
     
-    const playerData = playerRes.ok ? await playerRes.json() : null;
+    if (!playerRes.ok) throw new Error('Detail fetch failed');
+    
+    const playerData = await playerRes.json();
     const overviewData = overviewRes.ok ? await overviewRes.json() : null;
     const statsData = statsRes.ok ? await statsRes.json() : null;
     
-    let athlete = playerData?.athlete || overviewData?.athlete;
-
-    // Build the basics manually if ESPN's main API refuses to return them
-    if (!athlete) {
-        athlete = {
-            id: playerId,
-            fullName: athleteResult.displayName || lossyName,
-            displayName: athleteResult.displayName || lossyName
-        };
-    }
-
-    // MANUALLY INJECT THE HEADSHOT 
-    if (!athlete.headshot) {
-        const sCode = sportString === 'golf' ? 'golf' : (sportString === 'football' ? 'nfl' : (sportString === 'basketball' ? 'nba' : 'mlb'));
-        athlete.headshot = { href: `https://a.espncdn.com/combiner/i?img=/i/headshots/${sCode}/players/full/${playerId}.png&w=350&h=254` };
-    }
-    
     return {
-      ...athlete,
+      ...playerData.athlete,
       overview: overviewData,
       deepStats: statsData,
       sportName 
@@ -165,10 +136,8 @@ async function getPlayerContent(searchName, sportName) {
       body: JSON.stringify({ query: postsQuery }),
       next: { revalidate: 60 }
     });
-    if (res.ok) {
-        const json = await res.json();
-        posts = json?.data?.posts?.nodes || [];
-    }
+    const json = await res.json();
+    posts = json?.data?.posts?.nodes || [];
   } catch (error) {
     console.error("WP GraphQL Error:", error);
   }
@@ -178,11 +147,17 @@ async function getPlayerContent(searchName, sportName) {
   try {
     const sportParam = sportSlug ? `&sport=${sportSlug}` : '';
     
+    const feedUrl1 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=1${sportParam}`;
+    const feedUrl2 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=2${sportParam}`;
+    
+    const podUrl1 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=podcasts&per_page=100&page=1${sportParam}`;
+    const podUrl2 = `https://admin.fsan.com/wp-json/fsan/v1/feed?type=podcasts&per_page=100&page=2${sportParam}`;
+
     const [v1, v2, p1, p2] = await Promise.all([
-      fetchSafe(`https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=1${sportParam}`, { next: { revalidate: 60 } }),
-      fetchSafe(`https://admin.fsan.com/wp-json/fsan/v1/feed?type=videos&per_page=100&page=2${sportParam}`, { next: { revalidate: 60 } }),
-      fetchSafe(`https://admin.fsan.com/wp-json/fsan/v1/feed?type=podcasts&per_page=100&page=1${sportParam}`, { next: { revalidate: 60 } }),
-      fetchSafe(`https://admin.fsan.com/wp-json/fsan/v1/feed?type=podcasts&per_page=100&page=2${sportParam}`, { next: { revalidate: 60 } })
+      fetch(feedUrl1, { next: { revalidate: 60 } }),
+      fetch(feedUrl2, { next: { revalidate: 60 } }),
+      fetch(podUrl1, { next: { revalidate: 60 } }),
+      fetch(podUrl2, { next: { revalidate: 60 } })
     ]);
     
     let allVids = [];
@@ -222,11 +197,10 @@ async function getPlayerContent(searchName, sportName) {
     if (cats.includes('football')) sport = 'Football';
     if (cats.includes('basketball')) sport = 'Basketball';
     if (cats.includes('baseball')) sport = 'Baseball';
-    if (cats.includes('golf') || cats.includes('pga')) sport = 'Golf';
 
     const d = new Date(post.date);
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const safeDateString = isNaN(d.getTime()) ? '' : `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+    const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 
     let contentHtml = post.content || '';
     let youtubeId = null;
@@ -242,7 +216,7 @@ async function getPlayerContent(searchName, sportName) {
       excerpt: stripTags(post.excerpt),
       content: contentHtml,
       date: safeDateString,
-      rawDate: isNaN(d.getTime()) ? 0 : d.getTime(),
+      rawDate: d.getTime(),
       imageUrl: post.featuredImage?.node?.sourceUrl || null,
       author: {
         name: post.author?.node?.name || null,
@@ -263,7 +237,6 @@ async function getPlayerContent(searchName, sportName) {
     if (cats.includes('football') || cats.includes('nfl')) sport = 'Football';
     if (cats.includes('basketball') || cats.includes('nba')) sport = 'Basketball';
     if (cats.includes('baseball') || cats.includes('mlb')) sport = 'Baseball';
-    if (cats.includes('golf') || cats.includes('pga')) sport = 'Golf';
 
     let type = 'video';
     if (cats.includes('shorts') || cats.includes('short') || cats.includes('football-shorts')) {
@@ -272,7 +245,7 @@ async function getPlayerContent(searchName, sportName) {
 
     const d = new Date(item.date);
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const safeDateString = isNaN(d.getTime()) ? '' : `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+    const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 
     let contentHtml = item.content?.rendered || '';
     let youtubeId = null;
@@ -293,7 +266,7 @@ async function getPlayerContent(searchName, sportName) {
       excerpt: stripTags(item.excerpt?.rendered || ''),
       content: contentHtml,
       date: safeDateString,
-      rawDate: isNaN(d.getTime()) ? 0 : d.getTime(),
+      rawDate: d.getTime(),
       imageUrl: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || null,
       author: {
         name: item._embedded?.author?.[0]?.name || 'FSAN Staff',
@@ -313,11 +286,10 @@ async function getPlayerContent(searchName, sportName) {
     if (cats.includes('football') || cats.includes('nfl')) sport = 'Football';
     if (cats.includes('basketball') || cats.includes('nba')) sport = 'Basketball';
     if (cats.includes('baseball') || cats.includes('mlb')) sport = 'Baseball';
-    if (cats.includes('golf') || cats.includes('pga')) sport = 'Golf'; 
 
     const d = new Date(item.date);
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const safeDateString = isNaN(d.getTime()) ? '' : `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+    const safeDateString = `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 
     return {
       id: item.id.toString(),
@@ -325,7 +297,7 @@ async function getPlayerContent(searchName, sportName) {
       excerpt: stripTags(item.excerpt?.rendered || ''),
       content: item.content?.rendered || '',
       date: safeDateString,
-      rawDate: isNaN(d.getTime()) ? 0 : d.getTime(),
+      rawDate: d.getTime(),
       imageUrl: item._embedded?.['wp:featuredmedia']?.[0]?.source_url || null,
       author: {
         name: item._embedded?.author?.[0]?.name || 'FSAN Staff',

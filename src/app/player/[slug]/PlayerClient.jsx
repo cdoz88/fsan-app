@@ -4,12 +4,13 @@ import Link from 'next/link';
 import Header from '../../../components/Header'; 
 import Sidebar from '../../../components/Sidebar'; 
 import ContentModal from '../../../components/ContentModal'; 
-import { PlayCircle, FileText, Video, User, Zap, Play, ChevronLeft, ChevronRight, Headphones } from 'lucide-react';
+import { PlayCircle, FileText, Video, User, LayoutGrid, Zap, Play, ChevronLeft, ChevronRight, ArrowRight, Headphones } from 'lucide-react';
 import { themes } from '../../../utils/theme';
 
 export default function PlayerClient({ playerName, rawSlug, espnData, content, proToolsMenu, connectMenu, playerSport = 'All' }) {
   const [selectedItem, setSelectedItem] = useState(null);
   
+  // Refs for carousel scrolling
   const articlesRef = useRef(null);
   const videosRef = useRef(null);
   const shortsRef = useRef(null);
@@ -39,15 +40,15 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     return () => window.removeEventListener('popstate', handlePopState);
   }, [selectedItem]);
 
-  const primaryColor = espnData?.team?.color ? `#${espnData.team.color}` : (playerSport === 'Golf' ? '#019c9e' : '#374151');
-  const secondaryColor = espnData?.team?.alternateColor ? `#${espnData.team.alternateColor}` : (playerSport === 'Golf' ? '#015e5f' : '#1f2937');
-  
+  const primaryColor = espnData?.team?.color ? `#${espnData.team.color}` : '#374151';
+  const secondaryColor = espnData?.team?.alternateColor ? `#${espnData.team.alternateColor}` : '#1f2937';
   const headshot = espnData?.headshot?.href || null;
   const teamLogo = espnData?.team?.logos?.[0]?.href || null;
   
+  // Create a clean slug for the team if they are on one!
   const teamSlug = espnData?.team?.displayName ? espnData.team.displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : null;
 
-  const dob = espnData?.dateOfBirth && !isNaN(new Date(espnData.dateOfBirth)) ? new Date(espnData.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
+  const dob = espnData?.dateOfBirth ? new Date(espnData.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
   let birthplace = '';
   if (espnData?.birthPlace) {
     const { city, state, country } = espnData.birthPlace;
@@ -59,6 +60,8 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
   const scroll = (ref, direction) => {
     if (ref.current) ref.current.scrollBy({ left: direction === 'left' ? -350 : 350, behavior: 'smooth' });
   };
+
+  // --- CONTENT SECTION RENDERERS ---
 
   const renderContentGrid = () => {
     if (content.length === 0) {
@@ -74,6 +77,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
     const shorts = content.filter(item => item.type === 'short');
     const podcasts = content.filter(item => item.type === 'podcast');
 
+    // Standard Article Card
     const renderArticleCard = (item) => {
       const itemUrl = `/${item.sport.toLowerCase()}/${item.type}s/${item.slug}`;
       return (
@@ -95,6 +99,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       );
     };
 
+    // Cinematic 16:9 Video Card
     const renderVideoCard = (item) => {
       const cardTheme = themes[item.sport] || themes.All;
       const itemUrl = `/${item.sport.toLowerCase()}/${item.type}s/${item.slug}`;
@@ -118,6 +123,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       );
     };
 
+    // Short Card
     const renderShortCard = (item) => {
       const itemUrl = `/${item.sport.toLowerCase()}/${item.type}s/${item.slug}`;
       return (
@@ -138,6 +144,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       );
     };
 
+    // Podcast Booth Card
     const renderPodcastCard = (item) => {
       const itemTheme = themes[item.sport] || themes.All;
       const itemUrl = `/${item.sport.toLowerCase()}/${item.type}s/${item.slug}`;
@@ -289,6 +296,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
       }
     });
 
+    // If no stats are available, return nothing instead of a blank box
     if (uniqueTables.length === 0) return null;
 
     return (
@@ -389,9 +397,7 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
                     <div className="flex flex-col gap-3 mt-1 md:mt-3">
                       <div className="flex items-center gap-3">
                         {teamLogo && <img src={teamLogo} alt={espnData.team?.displayName} className="h-6 md:h-8 w-auto object-contain drop-shadow-lg" />}
-                        <span className="font-bold text-white/90 text-sm md:text-lg">
-                          {espnData.team?.displayName ? espnData.team.displayName : (playerSport === 'Golf' ? 'PGA Tour' : 'Free Agent')}
-                        </span>
+                        <span className="font-bold text-white/90 text-sm md:text-lg">{espnData.team?.displayName || 'Free Agent'}</span>
                         {espnData.displayExperience && (<span className="bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10 font-bold text-[10px] sm:text-xs text-white">Year {espnData.displayExperience}</span>)}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 md:gap-x-6 gap-y-2 text-[11px] md:text-sm mt-1">
@@ -408,10 +414,11 @@ export default function PlayerClient({ playerName, rawSlug, espnData, content, p
             </div>
 
             <div className="max-w-7xl mx-auto mb-8 pb-4 border-b border-gray-800 flex items-center justify-start">
+              {/* SEO DIRECTORY BREADCRUMB */}
               <div className="hidden md:flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
                 <Link href={`/${playerSport.toLowerCase()}`} className="hover:text-white transition-colors">{playerSport}</Link>
                 <span>/</span>
-                <Link href={`/${playerSport.toLowerCase()}/teams`} className="hover:text-white transition-colors">{playerSport === 'Golf' ? 'Golfers' : 'Teams'}</Link>
+                <Link href={`/${playerSport.toLowerCase()}/teams`} className="hover:text-white transition-colors">Teams</Link>
                 <span>/</span>
                 {teamSlug && (
                   <>
