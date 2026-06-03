@@ -281,13 +281,15 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                     <div className="relative z-10 w-full bg-[#111] border border-gray-800 rounded-2xl p-6">
                          
                          {!isAuthed && (
-                             <div className="absolute inset-0 z-20 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center rounded-2xl border border-red-900/30">
-                                 <Lock size={24} className="text-red-500 mb-2 drop-shadow-md" />
-                                 <h4 className="text-sm font-black text-white uppercase tracking-wider mb-1">Pro+ Required</h4>
-                                 <p className="text-[10px] text-gray-400 mb-4 max-w-[200px] leading-relaxed">Sign up to unlock the online tournament registration.</p>
-                                 <Link href="/subscribe" className="bg-gradient-to-r from-red-600 to-red-800 text-white text-[10px] font-black uppercase tracking-widest px-6 py-2.5 rounded-lg shadow-lg hover:-translate-y-0.5 transition-all">
-                                     Get Pro+
-                                 </Link>
+                             <div className="absolute inset-0 z-20 p-[3px] rounded-2xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_10px_40px_rgba(195,11,22,0.3)]">
+                                 <div className="bg-[#111]/95 backdrop-blur-xl w-full h-full rounded-[13px] flex flex-col items-center justify-center p-6 text-center">
+                                     <Lock size={40} className="text-red-500 mb-4 drop-shadow-md" />
+                                     <h4 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider mb-2">Pro+ Required</h4>
+                                     <p className="text-sm text-gray-300 mb-6 max-w-[250px] leading-relaxed">Sign up to unlock the online tournament registration.</p>
+                                     <Link href="/subscribe" className="bg-gradient-to-r from-[#e42d38] to-[#8a1a20] hover:from-[#f03a45] hover:to-[#a3222a] text-white text-sm font-black uppercase tracking-widest px-8 py-3.5 rounded-xl shadow-lg hover:-translate-y-0.5 transition-all border border-[#e42d38]/50">
+                                         Upgrade to Pro+
+                                     </Link>
+                                 </div>
                              </div>
                          )}
 
