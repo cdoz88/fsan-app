@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { User, Mail, Lock, Loader2, CreditCard, ShieldCheck, CheckCircle2, FileText, ShoppingCart, Tag, AlertTriangle, ShieldAlert, Book, Download, Shirt, Users, Settings, Gift, LogOut, ChevronRight, Image as ImageIcon, Zap, Star } from 'lucide-react';
+import { User, Mail, Lock, Loader2, CreditCard, ShieldCheck, CheckCircle2, FileText, ShoppingCart, Tag, AlertTriangle, ShieldAlert, Book, Download, Shirt, Users, Settings, Gift, LogOut, ChevronRight, Image as ImageIcon, Zap, Star, Ticket } from 'lucide-react';
 
 // Custom SVG Component for the Premium Community Icon (Supports Color and Monochrome)
 const PremiumCommunityIcon = ({ className = "", size = 24, monochrome = false }) => {
@@ -583,240 +583,214 @@ export default function AccountClient() {
           <div className="space-y-6 animate-in fade-in duration-500 relative z-10">
             <h2 className="text-2xl font-black text-white uppercase tracking-wide mb-6">Your Exclusive Perks</h2>
             
-            {userTier === 'free' ? (
-               <div className="bg-[#1a1a1a] rounded-2xl border border-dashed border-gray-700 p-10 text-center flex flex-col items-center">
-                   <Gift size={48} className="text-gray-600 mb-4" />
-                   <h3 className="text-xl font-black text-white uppercase tracking-wider mb-2">Upgrade to Unlock Perks</h3>
-                   <p className="text-sm text-gray-400 mb-6 max-w-md mx-auto">Pro and Pro+ members get exclusive access to our Football Rookie Draft Guide, Jersey Leagues, and the Sellout Crowds community.</p>
-                   <Link href="/subscribe" className="bg-gradient-to-r from-red-600 to-red-800 text-white font-black uppercase tracking-widest text-xs px-8 py-3 rounded-xl hover:-translate-y-0.5 transition-all shadow-lg">
-                       View Premium Plans
-                   </Link>
-               </div>
-            ) : (
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  
-                  {/* Football Rookie Draft Guide Card - PRO+ ONLY (Red Highlighted) */}
-                  {userTier === 'pro-plus' ? (
-                      <div className="bg-gradient-to-br from-[#301012] to-[#111] border border-red-900/50 rounded-2xl p-6 relative overflow-hidden group hover:border-red-700 transition-all shadow-lg flex flex-col h-full">
-                          <div className="absolute -right-4 -top-4 text-red-500/20 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500"><Book size={120} /></div>
-                          <div className="relative z-10 flex flex-col h-full">
-                              <div className="flex items-center gap-3 mb-4">
-                                <div className="w-12 h-12 bg-red-900/20 text-red-500 border border-red-500/30 rounded-xl flex items-center justify-center shadow-inner shrink-0"><Book size={20} /></div>
-                                <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Football Rookie Draft Guide</h3>
-                              </div>
-                              <p className="text-xs text-gray-300 leading-relaxed mb-6 flex-1 pr-4">Download the official FSAN Rookie Guide to dominate your dynasty rookie drafts with exclusive player grades and tape breakdowns.</p>
-                              
-                              {perksLoading ? (
-                                  <button disabled className="w-full mt-auto bg-[#1a1a1a] border border-gray-700 text-gray-500 font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 shadow-inner transition-colors">
-                                      <Loader2 size={16} className="animate-spin" /> Syncing File...
-                                  </button>
-                              ) : rookieGuideUrl ? (
-                                  <a href={rookieGuideUrl} target="_blank" rel="noopener noreferrer" className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-white font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
-                                      <Download size={14} /> Download PDF
-                                  </a>
-                              ) : (
-                                  <button disabled className="w-full mt-auto bg-[#1a1a1a] border border-gray-700 text-gray-500 font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 shadow-inner transition-colors">
-                                      Not Available
-                                  </button>
-                              )}
-                          </div>
-                      </div>
-                  ) : (
-                      <div className="bg-gradient-to-br from-[#301012] to-[#111] border border-red-900/50 rounded-2xl p-6 relative overflow-hidden flex flex-col h-full">
-                          <div className="absolute -right-4 -top-4 text-red-500/20 z-0 pointer-events-none"><Book size={120} /></div>
-                          <div className="relative z-10 flex flex-col h-full">
-                              <div className="flex items-center gap-3 mb-4">
-                                <div className="w-12 h-12 bg-red-900/20 text-red-500 border border-red-500/30 rounded-xl flex items-center justify-center shadow-inner shrink-0"><Book size={20} /></div>
-                                <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Football Rookie Draft Guide</h3>
-                              </div>
-                              <p className="text-xs text-gray-300 leading-relaxed mb-6 flex-1 pr-4">The ultimate 150-page breakdown of this year's draft class. Exclusive for Pro+ members.</p>
-                              
-                              <button onClick={() => router.push('/subscribe')} className="w-full mt-auto bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 font-bold uppercase tracking-widest py-3 px-6 rounded-xl text-xs relative z-10 shadow-inner transition-colors">Locked: Pro+ Only</button>
-                          </div>
-                      </div>
-                  )}
+            {/* FOMO UPGRADE BOX (Only shows for free users) */}
+            {userTier === 'free' && (
+              <div className="p-[3px] rounded-3xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_10px_40px_rgba(195,11,22,0.15)] mb-10">
+                <div className="bg-[#111] rounded-[21px] p-8 md:p-12 text-center flex flex-col items-center justify-center">
+                  <Lock className="text-red-500 mb-4" size={40} />
+                  <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter mb-2">Upgrade to Unlock Perks</h3>
+                  <p className="text-gray-400 mb-6 font-medium max-w-2xl">Get instant access to the Draft Night Out app, rookie guides, merch discounts, and our exclusive community spaces!</p>
+                  <Link 
+                    href="/subscribe" 
+                    className="px-10 py-4 bg-gradient-to-r from-[#e42d38] to-[#8a1a20] hover:from-[#f03a45] hover:to-[#a3222a] text-white font-black text-lg uppercase tracking-widest rounded-xl transition-transform hover:scale-105 shadow-[0_10px_20px_rgba(228,45,56,0.3)] border border-[#e42d38]/50"
+                  >
+                    Upgrade to Pro+
+                  </Link>
+                </div>
+              </div>
+            )}
 
-                  {/* Merch Shop Discount - PRO */}
-                  {userTier === 'pro' && (
-                   <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl shadow-xl p-6 relative overflow-hidden group transition-all flex flex-col h-full">
-                     <div className="absolute -right-4 -top-4 transition-transform duration-500 pointer-events-none text-gray-700/30 group-hover:scale-110"><ShoppingCart size={120} /></div>
-                     
-                     <div className="relative z-10 flex flex-col h-full">
-                       <div className="flex items-center gap-3 mb-4">
-                          <div className="w-12 h-12 bg-gray-800 text-gray-400 border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0"><ShoppingCart size={20} /></div>
-                          <h3 className="text-lg font-black uppercase tracking-wide leading-tight text-white">Merch Shop Discount</h3>
-                       </div>
-                       <p className="text-xs leading-relaxed mb-6 flex-1 pr-4 text-gray-400">
-                           Get 10% off all apparel in the <a href="https://fsan.shop" target="_blank" rel="noopener noreferrer" className="text-red-500 hover:text-red-400 underline transition-colors">FSAN shop</a>. <Link href="/subscribe" className="text-white hover:text-gray-300 underline font-bold transition-colors">Upgrade to Pro+</Link> to add free shipping.
-                       </p>
-                       
-                       <button 
-                          onClick={() => copyCode(merchCodes.pro)}
-                          disabled={perksLoading}
-                          className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-gray-300 hover:text-white font-mono py-3 px-6 rounded-xl text-lg font-bold tracking-widest relative z-10 shadow-sm transition-colors flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
-                       >
-                         {perksLoading ? (
-                             <span className="flex items-center gap-2 text-sm text-gray-500 font-sans tracking-widest uppercase m-auto">
-                                 <Loader2 size={16} className="animate-spin" /> Syncing...
-                             </span>
-                         ) : (
-                             <>
-                                 {merchCodes.pro} 
-                                 {isCopied ? <CheckCircle2 size={18} className="text-green-500"/> : <Tag size={18} className="text-gray-500"/>}
-                             </>
-                         )}
-                       </button>
-                     </div>
-                   </div>
-                  )}
-
-                  {/* Merch Shop Discount - PRO+ */}
-                  {userTier === 'pro-plus' && (
-                   <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl shadow-xl p-6 relative overflow-hidden group transition-all flex flex-col h-full">
-                     <div className="absolute -right-4 -top-4 transition-transform duration-500 pointer-events-none text-gray-700/30 group-hover:scale-110"><ShoppingCart size={120} /></div>
-                     
-                     <div className="relative z-10 flex flex-col h-full">
-                       <div className="flex items-center gap-3 mb-4">
-                          <div className="w-12 h-12 bg-gray-800 text-gray-400 border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0"><ShoppingCart size={20} /></div>
-                          <h3 className="text-lg font-black uppercase tracking-wide leading-tight text-white">Merch Shop Discount</h3>
-                       </div>
-                       <p className="text-xs leading-relaxed mb-6 flex-1 pr-4 text-gray-400">Get 20% off all apparel and free shipping in the FSAN shop. Exclusive for Pro+ members.</p>
-                       
-                       <button 
-                          onClick={() => copyCode(merchCodes.proPlus)}
-                          disabled={perksLoading}
-                          className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-gray-300 hover:text-white font-mono py-3 px-6 rounded-xl text-lg font-bold tracking-widest relative z-10 shadow-sm transition-colors flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
-                       >
-                         {perksLoading ? (
-                             <span className="flex items-center gap-2 text-sm text-gray-500 font-sans tracking-widest uppercase m-auto">
-                                 <Loader2 size={16} className="animate-spin" /> Syncing...
-                             </span>
-                         ) : (
-                             <>
-                                 {merchCodes.proPlus} 
-                                 {isCopied ? <CheckCircle2 size={18} className="text-green-500"/> : <Tag size={18} className="text-gray-500"/>}
-                             </>
-                         )}
-                       </button>
-                     </div>
-                   </div>
-                  )}
-
-                  {/* Jersey Leagues Card - PRO+ ONLY */}
-                  {userTier === 'pro-plus' ? (
-                      <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-gray-600 transition-all shadow-lg flex flex-col h-full">
-                          <div className="absolute -right-4 -top-4 text-gray-700/30 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500"><Shirt size={120} /></div>
-                          <div className="relative z-10 flex flex-col h-full">
-                              <div className="flex items-center gap-3 mb-4">
-                                <div className="w-12 h-12 bg-gray-800 text-gray-400 border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0"><Shirt size={20} /></div>
-                                <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Jersey Leagues</h3>
-                              </div>
-                              <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">Compete in an exclusive redraft tournament to win an autographed jersey from your favorite NFL player and a championship ring.</p>
-                              
-                              <Link href="/football/jersey-leagues" className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-white font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
-                                  Submit Your Entry <ChevronRight size={14} />
-                               </Link>
-                          </div>
+            {/* PERKS GRID (Visible to everyone, actions conditional) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Football Rookie Draft Guide Card */}
+              <div className="bg-gradient-to-br from-[#301012] to-[#111] border border-red-900/50 rounded-2xl p-6 relative overflow-hidden group hover:border-red-700 transition-all shadow-lg flex flex-col h-full">
+                  <div className="absolute -right-4 -top-4 text-red-500/20 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500"><Book size={120} /></div>
+                  <div className="relative z-10 flex flex-col h-full">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 bg-red-900/20 text-red-500 border border-red-500/30 rounded-xl flex items-center justify-center shadow-inner shrink-0"><Book size={20} /></div>
+                        <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Football Rookie Draft Guide</h3>
                       </div>
-                  ) : (
-                      <div className="bg-gradient-to-br from-[#301012] to-[#111] border border-red-900/50 rounded-2xl p-6 relative overflow-hidden flex flex-col h-full">
-                          <div className="absolute -right-4 -top-4 text-red-500/20 z-0 pointer-events-none"><Shirt size={120} /></div>
-                          <div className="relative z-10 flex flex-col h-full">
-                              <div className="flex items-center gap-3 mb-4">
-                                <div className="w-12 h-12 bg-red-900/20 text-red-500 border border-red-500/30 rounded-xl flex items-center justify-center shadow-inner shrink-0"><Shirt size={20} /></div>
-                                <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Jersey Leagues</h3>
-                              </div>
-                              <p className="text-xs text-gray-300 leading-relaxed mb-6 flex-1 pr-4">Compete in an exclusive redraft tournament to win an autographed jersey from your favorite NFL player and a championship ring. Exclusive for Pro+ members.</p>
-                              
-                              <button onClick={() => router.push('/subscribe')} className="w-full mt-auto bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 font-bold uppercase tracking-widest py-3 px-6 rounded-xl text-xs relative z-10 shadow-inner transition-colors">Locked: Pro+ Only</button>
-                          </div>
-                      </div>
-                  )}
-
-                  {/* Community Card - PRO & PRO+ */}
-                  <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-gray-600 transition-all shadow-lg flex flex-col h-full">
-                      <div className="absolute -right-4 -top-4 text-gray-700/30 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500">
-                          <PremiumCommunityIcon size={120} monochrome={true} />
-                      </div>
+                      <p className="text-xs text-gray-300 leading-relaxed mb-6 flex-1 pr-4">Download the official FSAN Rookie Guide to dominate your dynasty rookie drafts with exclusive player grades and tape breakdowns.</p>
                       
-                      <div className="relative z-10 flex flex-col h-full">
-                          <div className="flex items-center gap-3 mb-4">
-                             <div className="w-12 h-12 bg-gray-800 text-white border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0">
-                                 <PremiumCommunityIcon size={24} monochrome={false} />
-                             </div>
-                             <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Exclusive Community</h3>
-                          </div>
-
-                          {userTier === 'pro-plus' ? (
-                              <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">Get direct access to our analysts and chat with other premium members in our exclusive Sellout Crowds community boards.</p>
+                      {userTier === 'pro-plus' ? (
+                          perksLoading ? (
+                              <button disabled className="w-full mt-auto bg-[#1a1a1a] border border-gray-700 text-gray-500 font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 shadow-inner transition-colors">
+                                  <Loader2 size={16} className="animate-spin" /> Syncing File...
+                              </button>
+                          ) : rookieGuideUrl ? (
+                              <a href={rookieGuideUrl} target="_blank" rel="noopener noreferrer" className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-white font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
+                                  <Download size={14} /> Download PDF
+                              </a>
                           ) : (
-                              <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">
-                                  Get direct access to our analysts and chat with other pro members in our exclusive Sellout Crowds community. <Link href="/subscribe" className="text-white hover:text-gray-300 underline font-bold transition-colors">Upgrade to Pro+</Link> to join our premium Space and get first priority from our experts and exclusive content!
-                              </p>
-                          )}
-                          
+                              <button disabled className="w-full mt-auto bg-[#1a1a1a] border border-gray-700 text-gray-500 font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 shadow-inner transition-colors">
+                                  Not Available
+                              </button>
+                          )
+                      ) : (
+                          <button onClick={() => router.push('/subscribe')} className="w-full mt-auto bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 font-bold uppercase tracking-widest py-3 px-6 rounded-xl text-xs relative z-10 shadow-inner transition-colors flex items-center justify-center gap-2">
+                              <Lock size={14} /> Pro+ Required
+                          </button>
+                      )}
+                  </div>
+              </div>
+
+              {/* Merch Shop Discount Card */}
+              <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl shadow-xl p-6 relative overflow-hidden group transition-all flex flex-col h-full">
+                <div className="absolute -right-4 -top-4 transition-transform duration-500 pointer-events-none text-gray-700/30 group-hover:scale-110"><ShoppingCart size={120} /></div>
+                
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="flex items-center gap-3 mb-4">
+                     <div className="w-12 h-12 bg-gray-800 text-gray-400 border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0"><ShoppingCart size={20} /></div>
+                     <h3 className="text-lg font-black uppercase tracking-wide leading-tight text-white">Merch Shop Discount</h3>
+                  </div>
+                  
+                  {userTier === 'pro-plus' ? (
+                      <p className="text-xs leading-relaxed mb-6 flex-1 pr-4 text-gray-400">Get 20% off all apparel and free shipping in the FSAN shop. Exclusive for Pro+ members.</p>
+                  ) : userTier === 'pro' ? (
+                      <p className="text-xs leading-relaxed mb-6 flex-1 pr-4 text-gray-400">
+                          Get 10% off all apparel in the <a href="https://fsan.shop" target="_blank" rel="noopener noreferrer" className="text-red-500 hover:text-red-400 underline transition-colors">FSAN shop</a>. <Link href="/subscribe" className="text-white hover:text-gray-300 underline font-bold transition-colors">Upgrade to Pro+</Link> to add free shipping.
+                      </p>
+                  ) : (
+                      <p className="text-xs leading-relaxed mb-6 flex-1 pr-4 text-gray-400">Get up to 20% off all apparel and free shipping in the FSAN shop. Exclusive for Pro and Pro+ members.</p>
+                  )}
+                  
+                  {userTier === 'pro-plus' || userTier === 'pro' ? (
+                      <button 
+                         onClick={() => copyCode(userTier === 'pro-plus' ? merchCodes.proPlus : merchCodes.pro)}
+                         disabled={perksLoading}
+                         className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-gray-300 hover:text-white font-mono py-3 px-6 rounded-xl text-lg font-bold tracking-widest relative z-10 shadow-sm transition-colors flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {perksLoading ? (
+                            <span className="flex items-center gap-2 text-sm text-gray-500 font-sans tracking-widest uppercase m-auto">
+                                <Loader2 size={16} className="animate-spin" /> Syncing...
+                            </span>
+                        ) : (
+                            <>
+                                {userTier === 'pro-plus' ? merchCodes.proPlus : merchCodes.pro} 
+                                {isCopied ? <CheckCircle2 size={18} className="text-green-500"/> : <Tag size={18} className="text-gray-500"/>}
+                            </>
+                        )}
+                      </button>
+                  ) : (
+                      <button onClick={() => router.push('/subscribe')} className="w-full mt-auto bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 font-bold uppercase tracking-widest py-3 px-6 rounded-xl text-xs relative z-10 shadow-inner transition-colors flex items-center justify-center gap-2">
+                          <Lock size={14} /> Pro / Pro+ Required
+                      </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Draft Night Out (Replaced Jersey Leagues) */}
+              <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-gray-600 transition-all shadow-lg flex flex-col h-full">
+                  <div className="absolute -right-4 -top-4 text-gray-700/30 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500"><Ticket size={120} /></div>
+                  <div className="relative z-10 flex flex-col h-full">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 bg-gray-800 text-gray-400 border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0"><Ticket size={20} /></div>
+                        <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Draft Night Out</h3>
+                      </div>
+                      <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">Join us live in Canton for the ultimate draft party, or draft remotely from home against other members of the FSAN community.</p>
+                      
+                      {userTier === 'pro-plus' ? (
+                          <Link href="/football/draft-night-out" className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-white font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
+                              Submit Your Entry <ChevronRight size={14} />
+                          </Link>
+                      ) : (
+                          <button onClick={() => router.push('/subscribe')} className="w-full mt-auto bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 font-bold uppercase tracking-widest py-3 px-6 rounded-xl text-xs relative z-10 shadow-inner transition-colors flex items-center justify-center gap-2">
+                              <Lock size={14} /> Pro+ Required
+                          </button>
+                      )}
+                  </div>
+              </div>
+
+              {/* Community Card - PRO & PRO+ */}
+              <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-gray-600 transition-all shadow-lg flex flex-col h-full">
+                  <div className="absolute -right-4 -top-4 text-gray-700/30 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500">
+                      <PremiumCommunityIcon size={120} monochrome={true} />
+                  </div>
+                  
+                  <div className="relative z-10 flex flex-col h-full">
+                      <div className="flex items-center gap-3 mb-4">
+                         <div className="w-12 h-12 bg-gray-800 text-white border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0">
+                             <PremiumCommunityIcon size={24} monochrome={false} />
+                         </div>
+                         <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Exclusive Community</h3>
+                      </div>
+
+                      {userTier === 'pro-plus' ? (
+                          <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">Get direct access to our analysts and chat with other premium members in our exclusive Sellout Crowds community boards.</p>
+                      ) : userTier === 'pro' ? (
+                          <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">
+                              Get direct access to our analysts and chat with other pro members in our exclusive Sellout Crowds community. <Link href="/subscribe" className="text-white hover:text-gray-300 underline font-bold transition-colors">Upgrade to Pro+</Link> to join our premium Space and get first priority from our experts and exclusive content!
+                          </p>
+                      ) : (
+                          <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">Get direct access to our analysts and chat with other premium members in our exclusive Sellout Crowds community boards.</p>
+                      )}
+                      
+                      {userTier === 'pro-plus' || userTier === 'pro' ? (
                           <a href="https://www.selloutcrowds.com/crowd/fsan" target="_blank" rel="noopener noreferrer" className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-white font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
                               Join the Conversation <ChevronRight size={14} />
                           </a>
-                      </div>
+                      ) : (
+                          <button onClick={() => router.push('/subscribe')} className="w-full mt-auto bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 font-bold uppercase tracking-widest py-3 px-6 rounded-xl text-xs relative z-10 shadow-inner transition-colors flex items-center justify-center gap-2">
+                              <Lock size={14} /> Pro / Pro+ Required
+                          </button>
+                      )}
+                  </div>
+              </div>
+              
+              {/* Pro+ Space Access Card */}
+              <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-gray-600 transition-all shadow-lg flex flex-col h-full md:col-span-2">
+                  <div className="absolute -right-4 -top-4 text-gray-700/30 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500">
+                      <PremiumCommunityIcon size={120} monochrome={true} />
                   </div>
                   
-                  {/* Pro+ Space Access Card - PRO & PRO+ */}
-                  {(userTier === 'pro' || userTier === 'pro-plus') && (
-                    <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-gray-600 transition-all shadow-lg flex flex-col h-full">
-                        <div className="absolute -right-4 -top-4 text-gray-700/30 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500">
-                            <PremiumCommunityIcon size={120} monochrome={true} />
-                        </div>
-                        
-                        <div className="relative z-10 flex flex-col h-full">
-                            <div className="flex items-center gap-3 mb-4">
-                               <div className="w-12 h-12 bg-gray-800 text-white border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0">
-                                   <PremiumCommunityIcon size={24} monochrome={false} />
-                               </div>
-                               <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Pro+ Space Access</h3>
-                            </div>
+                  <div className="relative z-10 flex flex-col h-full">
+                      <div className="flex items-center gap-3 mb-4">
+                         <div className="w-12 h-12 bg-gray-800 text-white border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0">
+                             <PremiumCommunityIcon size={24} monochrome={false} />
+                         </div>
+                         <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Pro+ Space Access</h3>
+                      </div>
 
-                            <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">
-                                Jump into our dedicated sport-specific Spaces. Get first priority answers from our experts, exclusive content, and advanced strategy discussions.
-                            </p>
-                            
-                            <div className="flex flex-col gap-2 mt-auto">
-                                {userTier === 'pro-plus' ? (
-                                    <>
-                                        {/* Football */}
-                                        <a href={spaceLinks.football || "#"} target={spaceLinks.football ? "_blank" : "_self"} className={`w-full bg-[#1a1a1a] hover:bg-red-900/20 border border-red-500/50 hover:border-red-500 text-red-500 font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 ${!spaceLinks.football && 'opacity-50 cursor-not-allowed'}`}>
-                                            Football Space <ChevronRight size={14} />
-                                        </a>
-                                        {/* Baseball */}
-                                        <a href={spaceLinks.baseball || "#"} target={spaceLinks.baseball ? "_blank" : "_self"} className={`w-full bg-[#1a1a1a] hover:bg-blue-900/20 border border-blue-500/50 hover:border-blue-500 text-blue-500 font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 ${!spaceLinks.baseball && 'opacity-50 cursor-not-allowed'}`}>
-                                            Baseball Space <ChevronRight size={14} />
-                                        </a>
-                                        {/* Basketball */}
-                                        <a href={spaceLinks.basketball || "#"} target={spaceLinks.basketball ? "_blank" : "_self"} className={`w-full bg-[#1a1a1a] hover:bg-orange-900/20 border border-orange-500/50 hover:border-orange-500 text-orange-500 font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 ${!spaceLinks.basketball && 'opacity-50 cursor-not-allowed'}`}>
-                                            Basketball Space <ChevronRight size={14} />
-                                        </a>
-                                    </>
-                                ) : (
-                                    <>
-                                        {/* Locked Buttons for Pro */}
-                                        <button onClick={() => router.push('/subscribe')} className="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-400 hover:text-white font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-colors shadow-inner flex items-center justify-center gap-2">
-                                            <Lock size={12} /> Football (Pro+ Only)
-                                        </button>
-                                        <button onClick={() => router.push('/subscribe')} className="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-400 hover:text-white font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-colors shadow-inner flex items-center justify-center gap-2">
-                                            <Lock size={12} /> Baseball (Pro+ Only)
-                                        </button>
-                                        <button onClick={() => router.push('/subscribe')} className="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-400 hover:text-white font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-colors shadow-inner flex items-center justify-center gap-2">
-                                            <Lock size={12} /> Basketball (Pro+ Only)
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                  )}
+                      <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4 max-w-3xl">
+                          Jump into our dedicated sport-specific Spaces. Get first priority answers from our experts, exclusive content, and advanced strategy discussions.
+                      </p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-auto">
+                          {userTier === 'pro-plus' ? (
+                              <>
+                                  {/* Football */}
+                                  <a href={spaceLinks.football || "#"} target={spaceLinks.football ? "_blank" : "_self"} className={`w-full bg-[#1a1a1a] hover:bg-red-900/20 border border-red-500/50 hover:border-red-500 text-red-500 font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 ${!spaceLinks.football && 'opacity-50 cursor-not-allowed'}`}>
+                                      Football Space <ChevronRight size={14} />
+                                  </a>
+                                  {/* Baseball */}
+                                  <a href={spaceLinks.baseball || "#"} target={spaceLinks.baseball ? "_blank" : "_self"} className={`w-full bg-[#1a1a1a] hover:bg-blue-900/20 border border-blue-500/50 hover:border-blue-500 text-blue-500 font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 ${!spaceLinks.baseball && 'opacity-50 cursor-not-allowed'}`}>
+                                      Baseball Space <ChevronRight size={14} />
+                                  </a>
+                                  {/* Basketball */}
+                                  <a href={spaceLinks.basketball || "#"} target={spaceLinks.basketball ? "_blank" : "_self"} className={`w-full bg-[#1a1a1a] hover:bg-orange-900/20 border border-orange-500/50 hover:border-orange-500 text-orange-500 font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 ${!spaceLinks.basketball && 'opacity-50 cursor-not-allowed'}`}>
+                                      Basketball Space <ChevronRight size={14} />
+                                  </a>
+                              </>
+                          ) : (
+                              <>
+                                  {/* Locked Buttons for Pro/Free */}
+                                  <button onClick={() => router.push('/subscribe')} className="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-400 hover:text-white font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-colors shadow-inner flex items-center justify-center gap-2">
+                                      <Lock size={12} /> Football (Pro+ Only)
+                                  </button>
+                                  <button onClick={() => router.push('/subscribe')} className="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-400 hover:text-white font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-colors shadow-inner flex items-center justify-center gap-2">
+                                      <Lock size={12} /> Baseball (Pro+ Only)
+                                  </button>
+                                  <button onClick={() => router.push('/subscribe')} className="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-400 hover:text-white font-bold uppercase tracking-widest text-[10px] py-3 rounded-xl transition-colors shadow-inner flex items-center justify-center gap-2">
+                                      <Lock size={12} /> Basketball (Pro+ Only)
+                                  </button>
+                              </>
+                          )}
+                      </div>
+                  </div>
+              </div>
 
-               </div>
-            )}
+           </div>
           </div>
         )}
 
