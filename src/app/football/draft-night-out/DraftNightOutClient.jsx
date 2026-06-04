@@ -276,8 +276,8 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                                   <p className="text-xs text-gray-200">Full menu & bar<br/>available</p>
                                </div>
                                <div className="col-span-2 border-t border-gray-800 pt-3 mt-1">
-                                  <div className="flex items-center gap-2 mb-1"><Ticket size={14} className="text-red-500"/><span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Note</span></div>
-                                  <p className="text-[11px] text-gray-400 leading-snug">Private event. All attendees must have a ticket (Draft or "Just To Hang" covers available).</p>
+                                  <div className="flex items-center gap-2 mb-1"><MapPin size={14} className="text-red-500"/><span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Where</span></div>
+                                  <p className="text-[11px] text-gray-400 leading-snug">Jerzee's Sports Grille, Canton, OH</p>
                                </div>
                             </div>
                             
@@ -291,6 +291,18 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                           {/* Future locations will simply go here as new cards */}
 
                         </div>
+
+                        {/* GLOBAL LIVE EVENT NOTE */}
+                        <div className="mt-8 bg-red-900/10 border border-red-900/30 rounded-xl p-4 flex items-start gap-3">
+                          <Ticket size={20} className="text-red-500 shrink-0 mt-0.5" />
+                          <div>
+                            <h5 className="text-xs font-black text-red-500 uppercase tracking-widest mb-1">Live Event Note</h5>
+                            <p className="text-sm text-gray-400 leading-relaxed">
+                              These are private events. All attendees must have a ticket (Draft or "Just To Hang" covers available).
+                            </p>
+                          </div>
+                        </div>
+
                       </div>
                     )}
 
@@ -356,52 +368,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                         </div>
                       </div>
                     )}
-                  </div>
-
-                  {/* UNIVERSAL FORMATS SECTION */}
-                  <div className="mb-16">
-                    <div className="flex items-center gap-6 mb-8">
-                       <h2 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">League Formats</h2>
-                       <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
-                        <Users className="text-red-500 mb-4" size={28} />
-                        <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Traditional Redraft</h4>
-                        <p className="text-sm text-gray-400 leading-relaxed">The classic format you know and love. Standard roster requirements and scoring to kick off your season-long leagues right.</p>
-                      </div>
-                      
-                      <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
-                        <Sparkles className="text-red-500 mb-4" size={28} />
-                        <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Superflex Redraft</h4>
-                        <p className="text-sm text-gray-400 leading-relaxed">Change the value of the quarterback position with the option of adding another QB to your starting lineup! The new standard for many managers.</p>
-                      </div>
-                      
-                      <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
-                        <Trophy className="text-red-500 mb-4" size={28} />
-                        <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Best Ball</h4>
-                        <p className="text-sm text-gray-400 leading-relaxed">Pick your players and work the waivers, but don't stress about setting a weekly lineup. Your highest scorers automatically start!</p>
-                      </div>
-                      
-                      <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
-                        <Calendar className="text-red-500 mb-4" size={28} />
-                        <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Dynasty (Superflex)</h4>
-                        <p className="text-sm text-gray-400 leading-relaxed">For those where fantasy is a year-round affair. We offer both Startup drafts and Rookie-only drafts for returning attendees.</p>
-                      </div>
-                      
-                      <div className="bg-[#111] p-6 rounded-3xl border border-gray-800 flex flex-col hover:-translate-y-1 transition-transform shadow-lg">
-                        <Shield className="text-red-500 mb-4" size={28} />
-                        <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">IDP Redraft</h4>
-                        <p className="text-sm text-gray-400 leading-relaxed">Test your luck incorporating the other side of the ball! Run in partnership with IDP+, this league brings defensive players into the mix.</p>
-                      </div>
-                      
-                      <div className="bg-[#111] p-6 rounded-3xl border border-red-900/30 shadow-[0_0_20px_rgba(220,38,38,0.05)] flex flex-col hover:-translate-y-1 transition-transform">
-                        <Heart className="text-red-500 mb-4" size={28} />
-                        <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Charity League</h4>
-                        <p className="text-sm text-gray-400 leading-relaxed">Industry veterans Jason Watson and George Reed host select leagues where 100% of all league donations go directly to Toys for Tots!</p>
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}
