@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
-import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Utensils, MessageSquare, Users, Trophy, Heart, Shield, Sparkles, Medal, Gift, ListOrdered, BookOpen } from 'lucide-react';
+import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Utensils, MessageSquare, Users, Trophy, Heart, Shield, Sparkles, Medal, Gift, ListOrdered, BookOpen, Clock } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm, formId, initialLeaderboard }) {
@@ -268,12 +268,12 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                             {/* Location Details Grid */}
                             <div className="bg-[#111] rounded-2xl border border-gray-800 p-4 mb-6 grid grid-cols-2 gap-4 relative z-10">
                                <div>
-                                  <div className="flex items-center gap-2 mb-1"><Calendar size={14} className="text-red-500"/><span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">When</span></div>
-                                  <p className="text-xs text-gray-200">July 25, 2026<br/>12p - 4p ET</p>
+                                  <div className="flex items-center gap-2 mb-1"><Calendar size={14} className="text-red-500"/><span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Date</span></div>
+                                  <p className="text-xs text-gray-200">July 25, 2026</p>
                                </div>
                                <div>
-                                  <div className="flex items-center gap-2 mb-1"><Utensils size={14} className="text-red-500"/><span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Food</span></div>
-                                  <p className="text-xs text-gray-200">Full menu & bar<br/>available</p>
+                                  <div className="flex items-center gap-2 mb-1"><Clock size={14} className="text-red-500"/><span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Time</span></div>
+                                  <p className="text-xs text-gray-200">12p - 4p ET</p>
                                </div>
                                <div className="col-span-2 border-t border-gray-800 pt-3 mt-1">
                                   <div className="flex items-center gap-2 mb-1"><MapPin size={14} className="text-red-500"/><span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Where</span></div>
@@ -298,7 +298,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                           <div>
                             <h5 className="text-xs font-black text-red-500 uppercase tracking-widest mb-1">Live Event Note</h5>
                             <p className="text-sm text-gray-400 leading-relaxed">
-                              These are private events. All attendees must have a ticket (Draft or "Just To Hang" covers available).
+                              These are private events featuring exclusive raffles and giveaways! All attendees must have a ticket (Draft or "Just To Hang" covers available).
                             </p>
                           </div>
                         </div>
