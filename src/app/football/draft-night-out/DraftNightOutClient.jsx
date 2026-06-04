@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
-import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Utensils, MessageSquare, Users, Trophy, Heart, Shield, Sparkles, Medal, Gift, ListOrdered, BookOpen, Clock } from 'lucide-react';
+import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Utensils, MessageSquare, Users, Trophy, Heart, Shield, Sparkles, Medal, Gift, ListOrdered, BookOpen, Clock, Handshake, Mail } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm, formId, initialLeaderboard }) {
@@ -215,6 +215,12 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                  >
                    <BookOpen size={16} /> Rules
                  </button>
+                 <button 
+                    onClick={() => setActiveTab('sponsors')} 
+                    className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'sponsors' ? activeTabStyle : inactiveTabStyle}`}
+                 >
+                   <Handshake size={16} /> Sponsors
+                 </button>
               </div>
 
               {/* LIVE EVENTS TAB */}
@@ -254,11 +260,11 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                           </div>
                           <div>
                             <div className="flex items-center gap-2 mb-1"><Clock size={14} className="text-red-500"/><span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Time</span></div>
-                            <p className="text-xs text-gray-200">12p - 4p ET</p>
+                            <p className="text-xs text-gray-200">12pm - 4pm ET</p>
                           </div>
                           <div className="col-span-2 border-t border-gray-800 pt-3 mt-1">
                             <div className="flex items-center gap-2 mb-1"><MapPin size={14} className="text-red-500"/><span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Where</span></div>
-                            <p className="text-[11px] text-gray-400 leading-snug">Jerzee's Sports Grille, Canton, OH</p>
+                            <p className="text-[11px] text-gray-400 leading-snug">Jerzee's Sports Grille<br/>5260 Dressler Rd NW, Canton, OH 44718</p>
                           </div>
                       </div>
                       
@@ -457,6 +463,31 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
 
                      </div>
                   </section>
+                </div>
+              )}
+
+              {/* SPONSORS TAB */}
+              {activeTab === 'sponsors' && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
+                  <div className="flex items-center gap-6 mb-8">
+                     <h2 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">Partner With Us</h2>
+                     <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
+                  </div>
+
+                  <div className="bg-[#1a1a1a] rounded-3xl border border-gray-800 p-8 md:p-10 shadow-xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-red-900/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+                    
+                    <div className="max-w-3xl relative z-10">
+                      <h3 className="text-2xl font-black text-white uppercase tracking-wide mb-4">Become a Sponsor</h3>
+                      <p className="text-gray-300 leading-relaxed mb-8">
+                        We are always looking to collaborate with brands and individuals who want to make Draft Night Out the ultimate fantasy football experience. Whether you're interested in location hosting, providing prize giveaways, donating raffle items, or exploring other partnership opportunities, we'd love to hear from you!
+                      </p>
+                      
+                      <a href="mailto:info@fsannetwork.com" className="inline-flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest text-xs px-8 py-4 rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.2)] transition-all hover:-translate-y-0.5">
+                        <Mail size={16} /> Contact Us About Sponsorships
+                      </a>
+                    </div>
+                  </div>
                 </div>
               )}
 
