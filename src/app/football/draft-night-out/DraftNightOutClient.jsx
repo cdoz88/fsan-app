@@ -219,7 +219,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                     onClick={() => handleTabClick('online')} 
                     className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'online' ? activeTabStyle : inactiveTabStyle}`}
                  >
-                   <MonitorSmartphone size={16} /> Online Divisions
+                   <MonitorSmartphone size={16} /> Online
                  </button>
                  <button 
                     onClick={() => handleTabClick('leaderboard')} 
@@ -243,7 +243,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                     onClick={() => handleTabClick('sponsors')} 
                     className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'sponsors' ? activeTabStyle : inactiveTabStyle}`}
                  >
-                   <Handshake size={16} /> Sponsors
+                   <Handshake size={16} /> Sponsor
                  </button>
               </div>
 
@@ -325,7 +325,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                   </div>
 
                   {/* ONLINE REGISTRATION CARD */}
-                  <div className="max-w-2xl bg-[#1a1a1a] rounded-3xl border border-gray-800 p-6 md:p-8 flex flex-col relative overflow-hidden shadow-lg">
+                  <div className="max-w-2xl mx-auto bg-[#1a1a1a] rounded-3xl border border-gray-800 p-6 md:p-8 flex flex-col relative overflow-hidden shadow-lg">
                     <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
                       <MonitorSmartphone size={120} />
                     </div>
