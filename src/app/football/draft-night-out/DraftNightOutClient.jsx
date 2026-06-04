@@ -18,10 +18,34 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
   const [liveForm, setLiveForm] = useState(gfForm);
 
   // Tab State & Styling
+  const validTabs = ['live', 'online', 'leaderboard', 'prizes', 'rules', 'sponsors'];
   const [activeTab, setActiveTab] = useState('live'); // Defaulting to live
 
   const activeTabStyle = "bg-gradient-to-r from-red-600 to-red-800 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)] border border-red-500";
   const inactiveTabStyle = "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 border border-transparent";
+
+  // Handle URL Hashes for direct linking
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (validTabs.includes(hash)) {
+        setActiveTab(hash);
+      }
+    };
+
+    // Check hash on initial load
+    handleHashChange();
+
+    // Listen for hash changes if user navigates back/forward
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const handleTabClick = (tabId) => {
+    setActiveTab(tabId);
+    // Update the URL without reloading the page
+    window.history.pushState(null, '', `#${tabId}`);
+  };
 
   useEffect(() => {
      if (!liveForm || !liveForm.fields) {
@@ -186,40 +210,40 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
               {/* TAB SWITCHER */}
               <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 py-2 mb-10 bg-[#151515] p-2 rounded-2xl border border-gray-800/50 w-fit mx-auto shadow-inner animate-in fade-in duration-500 delay-100">
                  <button 
-                    onClick={() => setActiveTab('live')} 
+                    onClick={() => handleTabClick('live')} 
                     className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'live' ? activeTabStyle : inactiveTabStyle}`}
                  >
                    <MapPin size={16} /> Live Events
                  </button>
                  <button 
-                    onClick={() => setActiveTab('online')} 
+                    onClick={() => handleTabClick('online')} 
                     className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'online' ? activeTabStyle : inactiveTabStyle}`}
                  >
-                   <MonitorSmartphone size={16} /> Online
+                   <MonitorSmartphone size={16} /> Online Divisions
                  </button>
                  <button 
-                    onClick={() => setActiveTab('leaderboard')} 
+                    onClick={() => handleTabClick('leaderboard')} 
                     className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'leaderboard' ? activeTabStyle : inactiveTabStyle}`}
                  >
                    <ListOrdered size={16} /> Leaderboard
                  </button>
                  <button 
-                    onClick={() => setActiveTab('prizes')} 
+                    onClick={() => handleTabClick('prizes')} 
                     className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'prizes' ? activeTabStyle : inactiveTabStyle}`}
                  >
                    <Trophy size={16} /> Prizes
                  </button>
                  <button 
-                    onClick={() => setActiveTab('rules')} 
+                    onClick={() => handleTabClick('rules')} 
                     className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'rules' ? activeTabStyle : inactiveTabStyle}`}
                  >
                    <BookOpen size={16} /> Rules
                  </button>
                  <button 
-                    onClick={() => setActiveTab('sponsors')} 
+                    onClick={() => handleTabClick('sponsors')} 
                     className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'sponsors' ? activeTabStyle : inactiveTabStyle}`}
                  >
-                   <Handshake size={16} /> Sponsor
+                   <Handshake size={16} /> Sponsors
                  </button>
               </div>
 
