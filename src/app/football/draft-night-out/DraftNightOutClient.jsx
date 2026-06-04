@@ -175,7 +175,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                   Draft Night Out
                 </h1>
                 <p className="text-gray-300 font-medium md:text-lg leading-relaxed drop-shadow-md max-w-2xl">
-                Join us live in Canton, Ohio for the ultimate draft party at the Fantasy Football Expo, or draft from home in our online divisions!
+                  Secure your seat at one of our live Draft Night Out events, or build your championship roster from home in our exclusive online divisions. Dominate your league to win incredible prizes and compete for the ultimate Playoff Challenge championship!
                 </p>
               </div>
             </div>
