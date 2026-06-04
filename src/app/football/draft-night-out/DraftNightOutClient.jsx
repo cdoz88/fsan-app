@@ -241,7 +241,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                         
                         <div className="relative z-10 mb-8 flex-1 flex flex-col justify-between">
                           <p className="text-sm text-gray-300 leading-relaxed mb-6">
-                            Secure your spot to draft in person at Jerzee's Sports Grille. Choose your specific division (named after NFL legends like Larry Fitzgerald, Curtis Martin, etc.) right when you buy your ticket!
+                            Secure your spot to draft in person. You will be able to select your specific division (named after NFL legends like Larry Fitzgerald, Curtis Martin, etc.) during checkout.
                           </p>
                           <div className="bg-red-900/10 border border-red-900/30 rounded-xl p-4 mt-auto">
                              <h5 className="text-xs font-black text-red-500 uppercase tracking-widest mb-1">Event Note</h5>
