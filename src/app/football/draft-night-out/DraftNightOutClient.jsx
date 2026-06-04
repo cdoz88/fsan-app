@@ -175,7 +175,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                   Draft Night Out
                 </h1>
                 <p className="text-gray-300 font-medium md:text-lg leading-relaxed drop-shadow-md max-w-2xl">
-                  Get away for the day to one of the best and biggest fantasy football hangs of the year! Compete in a live draft party to kick off a new season-long league. Vibes will be high with music, raffles, and giveaways. It'll be a packed house full of fantasy football analysts and enthusiasts. Come chill, network, link up with online friends, and make some new ones!
+                Join us live in Canton, Ohio for the ultimate draft party at the Fantasy Football Expo, or draft from home in our online divisions!
                 </p>
               </div>
             </div>
@@ -323,10 +323,10 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                      <div className="absolute top-0 right-0 w-64 h-64 bg-red-900/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
                      
                      <h2 className="text-2xl md:text-3xl font-black italic text-white uppercase tracking-tighter mb-4 relative z-10">
-                       What is Draft Night Out?
+                       Live Canton Draft Details
                      </h2>
                      <p className="text-gray-300 text-base leading-relaxed relative z-10 mb-8">
-                       Join us live in Canton, Ohio for the ultimate draft party at the Fantasy Football Expo, or draft from home in our online divisions!
+                     Get away for the day to one of the best and biggest fantasy football hangs of the year! Compete in a live draft party to kick off a new season-long league. Vibes will be high with music, raffles, and giveaways. It'll be a packed house full of fantasy football analysts and enthusiasts. Come chill, network, link up with online friends, and make some new ones!
                      </p>
                      
                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
@@ -417,17 +417,17 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                     {/* Division Winner */}
+                     {/* League Winners */}
                      <div className="bg-[#111] p-8 rounded-3xl border border-gray-800 flex flex-col items-center text-center shadow-lg hover:-translate-y-1 transition-transform">
                        <Medal className="text-gray-400 mb-4" size={40} />
-                       <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Division Winner</h4>
+                       <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">League Winners</h4>
                        <p className="text-sm text-gray-400 leading-relaxed">Championship plaque provided by <strong className="text-white">Dynasty Decks</strong>.</p>
                      </div>
 
-                     {/* Regular Season Winner */}
+                     {/* Overall Regular Season Winner */}
                      <div className="bg-[#111] p-8 rounded-3xl border border-gray-800 flex flex-col items-center text-center shadow-lg hover:-translate-y-1 transition-transform">
                        <Gift className="text-green-500 mb-4" size={40} />
-                       <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Regular Season Champ</h4>
+                       <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Overall Regular Season Champ</h4>
                        <p className="text-sm text-gray-400 leading-relaxed">A <strong className="text-green-400">$75 Gift Card</strong> to the official FSAN Shop.</p>
                      </div>
 
@@ -456,7 +456,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                       </h2>
                       
                       <p className="text-gray-300 text-base md:text-lg leading-relaxed">
-                        We are hosting a massive playoff challenge for the <strong>top 200 teams</strong> from the regular season. Qualify for the playoffs to compete for the ultimate prize package and prove you are the undisputed champion!
+                        We are hosting a massive playoff challenge for <strong>all league winners</strong> from the regular season. Qualify for the playoffs to compete for the ultimate prize package and prove you are the undisputed champion!
                       </p>
                     </div>
                   </div>
