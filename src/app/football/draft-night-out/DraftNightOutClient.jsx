@@ -195,7 +195,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                     onClick={() => setActiveTab('online')} 
                     className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'online' ? activeTabStyle : inactiveTabStyle}`}
                  >
-                   <MonitorSmartphone size={16} /> Online Divisions
+                   <MonitorSmartphone size={16} /> Online
                  </button>
                  <button 
                     onClick={() => setActiveTab('leaderboard')} 
@@ -219,7 +219,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                     onClick={() => setActiveTab('sponsors')} 
                     className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'sponsors' ? activeTabStyle : inactiveTabStyle}`}
                  >
-                   <Handshake size={16} /> Sponsors
+                   <Handshake size={16} /> Sponsor
                  </button>
               </div>
 
