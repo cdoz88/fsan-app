@@ -660,52 +660,7 @@ export default function AccountClient() {
                   </div>
               </div>
 
-              {/* Merch Shop Discount Card */}
-              <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl shadow-xl p-6 relative overflow-hidden group transition-all flex flex-col h-full">
-                <div className="absolute -right-4 -top-4 transition-transform duration-500 pointer-events-none text-gray-700/30 group-hover:scale-110"><ShoppingCart size={120} /></div>
-                
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="flex items-center gap-3 mb-4">
-                     <div className="w-12 h-12 bg-gray-800 text-gray-400 border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0"><ShoppingCart size={20} /></div>
-                     <h3 className="text-lg font-black uppercase tracking-wide leading-tight text-white">Merch Shop Discount</h3>
-                  </div>
-                  
-                  {userTier === 'pro-plus' ? (
-                      <p className="text-xs leading-relaxed mb-6 flex-1 pr-4 text-gray-400">Get 20% off all apparel and free shipping in the FSAN shop. Exclusive for Pro+ members.</p>
-                  ) : userTier === 'pro' ? (
-                      <p className="text-xs leading-relaxed mb-6 flex-1 pr-4 text-gray-400">
-                          Get 10% off all apparel in the <a href="https://fsan.shop" target="_blank" rel="noopener noreferrer" className="text-red-500 hover:text-red-400 underline transition-colors">FSAN shop</a>. <Link href="/subscribe" className="text-white hover:text-gray-300 underline font-bold transition-colors">Upgrade to Pro+</Link> to add free shipping.
-                      </p>
-                  ) : (
-                      <p className="text-xs leading-relaxed mb-6 flex-1 pr-4 text-gray-400">Get up to 20% off all apparel and free shipping in the FSAN shop. Exclusive for Pro and Pro+ members.</p>
-                  )}
-                  
-                  {userTier === 'pro-plus' || userTier === 'pro' ? (
-                      <button 
-                         onClick={() => copyCode(userTier === 'pro-plus' ? merchCodes.proPlus : merchCodes.pro)}
-                         disabled={perksLoading}
-                         className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-gray-300 hover:text-white font-mono py-3 px-6 rounded-xl text-lg font-bold tracking-widest relative z-10 shadow-sm transition-colors flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {perksLoading ? (
-                            <span className="flex items-center gap-2 text-sm text-gray-500 font-sans tracking-widest uppercase m-auto">
-                                <Loader2 size={16} className="animate-spin" /> Syncing...
-                            </span>
-                        ) : (
-                            <>
-                                {userTier === 'pro-plus' ? merchCodes.proPlus : merchCodes.pro} 
-                                {isCopied ? <CheckCircle2 size={18} className="text-green-500"/> : <Tag size={18} className="text-gray-500"/>}
-                            </>
-                        )}
-                      </button>
-                  ) : (
-                      <button onClick={() => router.push('/subscribe')} className="w-full mt-auto bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 font-bold uppercase tracking-widest py-3 px-6 rounded-xl text-xs relative z-10 shadow-inner transition-colors flex items-center justify-center gap-2">
-                          <Lock size={14} /> Pro / Pro+ Required
-                      </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Draft Night Out (Replaced Jersey Leagues) */}
+              {/* Draft Night Out */}
               <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-gray-600 transition-all shadow-lg flex flex-col h-full">
                   <div className="absolute -right-4 -top-4 text-gray-700/30 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500"><Ticket size={120} /></div>
                   <div className="relative z-10 flex flex-col h-full">
@@ -813,6 +768,51 @@ export default function AccountClient() {
                           )}
                       </div>
                   </div>
+              </div>
+
+              {/* Merch Shop Discount Card */}
+              <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl shadow-xl p-6 relative overflow-hidden group transition-all flex flex-col h-full">
+                <div className="absolute -right-4 -top-4 transition-transform duration-500 pointer-events-none text-gray-700/30 group-hover:scale-110"><ShoppingCart size={120} /></div>
+                
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="flex items-center gap-3 mb-4">
+                     <div className="w-12 h-12 bg-gray-800 text-gray-400 border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0"><ShoppingCart size={20} /></div>
+                     <h3 className="text-lg font-black uppercase tracking-wide leading-tight text-white">Merch Shop Discount</h3>
+                  </div>
+                  
+                  {userTier === 'pro-plus' ? (
+                      <p className="text-xs leading-relaxed mb-6 flex-1 pr-4 text-gray-400">Get 20% off all apparel and free shipping in the FSAN shop. Exclusive for Pro+ members.</p>
+                  ) : userTier === 'pro' ? (
+                      <p className="text-xs leading-relaxed mb-6 flex-1 pr-4 text-gray-400">
+                          Get 10% off all apparel in the <a href="https://fsan.shop" target="_blank" rel="noopener noreferrer" className="text-red-500 hover:text-red-400 underline transition-colors">FSAN shop</a>. <Link href="/subscribe" className="text-white hover:text-gray-300 underline font-bold transition-colors">Upgrade to Pro+</Link> to add free shipping.
+                      </p>
+                  ) : (
+                      <p className="text-xs leading-relaxed mb-6 flex-1 pr-4 text-gray-400">Get up to 20% off all apparel and free shipping in the FSAN shop. Exclusive for Pro and Pro+ members.</p>
+                  )}
+                  
+                  {userTier === 'pro-plus' || userTier === 'pro' ? (
+                      <button 
+                         onClick={() => copyCode(userTier === 'pro-plus' ? merchCodes.proPlus : merchCodes.pro)}
+                         disabled={perksLoading}
+                         className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-gray-300 hover:text-white font-mono py-3 px-6 rounded-xl text-lg font-bold tracking-widest relative z-10 shadow-sm transition-colors flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {perksLoading ? (
+                            <span className="flex items-center gap-2 text-sm text-gray-500 font-sans tracking-widest uppercase m-auto">
+                                <Loader2 size={16} className="animate-spin" /> Syncing...
+                            </span>
+                        ) : (
+                            <>
+                                {userTier === 'pro-plus' ? merchCodes.proPlus : merchCodes.pro} 
+                                {isCopied ? <CheckCircle2 size={18} className="text-green-500"/> : <Tag size={18} className="text-gray-500"/>}
+                            </>
+                        )}
+                      </button>
+                  ) : (
+                      <button onClick={() => router.push('/subscribe')} className="w-full mt-auto bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 font-bold uppercase tracking-widest py-3 px-6 rounded-xl text-xs relative z-10 shadow-inner transition-colors flex items-center justify-center gap-2">
+                          <Lock size={14} /> Pro / Pro+ Required
+                      </button>
+                  )}
+                </div>
               </div>
 
            </div>
