@@ -14,6 +14,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); 
+  const [errorMessage, setErrorMessage] = useState(''); // Specific error feedback
 
   const [liveForm, setLiveForm] = useState(gfForm);
 
@@ -82,7 +83,39 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
       e.preventDefault();
       setIsSubmitting(true);
       setSubmitStatus(null);
+      setErrorMessage('');
 
+      // 1. Find the field ID corresponding to the Sleeper Username
+      let sleeperFieldId = '4'; // fallback ID for hardcoded form
+      if (liveForm && liveForm.fields) {
+          const sField = liveForm.fields.find(f => f.label.toLowerCase().includes('sleeper'));
+          if (sField) sleeperFieldId = sField.id.toString();
+      }
+
+      const sleeperUsername = formData[sleeperFieldId];
+
+      // 2. Validate Sleeper Username via Sleeper API
+      if (sleeperUsername) {
+          try {
+              const sleeperRes = await fetch(`https://api.sleeper.app/v1/user/${sleeperUsername}`);
+              const sleeperData = await sleeperRes.json();
+              
+              // If user doesn't exist, Sleeper returns null or error
+              if (!sleeperData || !sleeperData.user_id) {
+                  setSubmitStatus('error');
+                  setErrorMessage('Sleeper username not found. Please verify your Sleeper ID.');
+                  setIsSubmitting(false);
+                  return; // Stop form submission
+              }
+          } catch (error) {
+              setSubmitStatus('error');
+              setErrorMessage('Could not verify Sleeper username. Please double check it.');
+              setIsSubmitting(false);
+              return;
+          }
+      }
+
+      // 3. Submit payload to Gravity Forms API
       try {
           const payload = {
              formId: formId,
@@ -99,12 +132,14 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
           
           if (result.is_valid) {
               setSubmitStatus('success');
-              setFormData({});
+              setFormData({}); // Clear form on success
           } else {
               setSubmitStatus('error');
+              setErrorMessage('Error submitting entry. Please ensure all fields are correct.');
           }
       } catch (error) {
           setSubmitStatus('error');
+          setErrorMessage('Network error submitting entry. Please try again.');
       }
       setIsSubmitting(false);
   };
@@ -298,8 +333,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                         </a>
                       </div>
                     </div>
-                    
-                    {/* Future locations will simply go here as new cards */}
 
                   </div>
 
@@ -369,7 +402,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                               <>
                                   {submitStatus === 'error' && (
                                       <div className="mb-4 bg-red-900/20 border border-red-500/30 rounded-xl p-3 flex items-center gap-3 text-red-400 text-[10px] font-bold uppercase tracking-wider">
-                                          <AlertCircle size={16} className="shrink-0" /> Error submitting entry. Please try again.
+                                          <AlertCircle size={16} className="shrink-0" /> {errorMessage || 'Error submitting entry. Please try again.'}
                                       </div>
                                   )}
                                   {renderForm()}
