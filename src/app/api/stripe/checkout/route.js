@@ -27,6 +27,7 @@ export async function POST(req) {
         },
       ],
       mode: 'subscription',
+      allow_promotion_codes: true, // <--- This enables the coupon input box
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/account?checkout=success`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/subscribe?checkout=canceled`,
       customer_email: userEmail,
