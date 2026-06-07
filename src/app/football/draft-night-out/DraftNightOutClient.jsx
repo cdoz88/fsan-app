@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
-import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Utensils, MessageSquare, Users, Trophy, Heart, Shield, Sparkles, Medal, Gift, ListOrdered, BookOpen, Clock, Handshake, Mail, Search } from 'lucide-react';
+import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Utensils, MessageSquare, Users, Trophy, Heart, Shield, Sparkles, Medal, Gift, ListOrdered, BookOpen, Clock, Handshake, Mail, User } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm, formId, initialLeaderboard }) {
@@ -20,17 +20,18 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
   const [sleeperFieldId, setSleeperFieldId] = useState('4'); // Default hardcoded ID
   const [isVerifyingSleeper, setIsVerifyingSleeper] = useState(false);
   const [sleeperVerified, setSleeperVerified] = useState(false);
+  const [sleeperUserData, setSleeperUserData] = useState(null);
 
   const [liveForm, setLiveForm] = useState(gfForm);
 
   // Tab State & Styling
   const validTabs = ['live', 'online', 'leaderboard', 'prizes', 'rules', 'sponsors'];
-  const [activeTab, setActiveTab] = useState('live');
+  const [activeTab, setActiveTab] = useState('live'); // Defaulting to live
 
   const activeTabStyle = "bg-gradient-to-r from-red-600 to-red-800 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)] border border-red-500";
   const inactiveTabStyle = "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 border border-transparent";
 
-  // Handle URL Hashes
+  // Handle URL Hashes for direct linking
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
@@ -38,16 +39,22 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
         setActiveTab(hash);
       }
     };
+
+    // Check hash on initial load
     handleHashChange();
+
+    // Listen for hash changes if user navigates back/forward
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
+    // Update the URL without reloading the page
     window.history.pushState(null, '', `#${tabId}`);
   };
 
+  // Sync Gravity Forms & Identify Sleeper Field
   useEffect(() => {
      if (!liveForm || !liveForm.fields) {
          fetch(`/api/gravityforms?formId=${formId}`)
@@ -58,7 +65,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
              .then(data => {
                  if (data && data.fields) {
                      setLiveForm(data);
-                     // Find the Sleeper field dynamically once synced
                      const sField = data.fields.find(f => f.label.toLowerCase().includes('sleeper'));
                      if (sField) setSleeperFieldId(sField.id.toString());
                  }
@@ -70,6 +76,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
      }
   }, [liveForm, formId]);
 
+  // Pre-fill email from session
   useEffect(() => {
       if (session?.user?.email && liveForm?.fields) {
           const emailField = liveForm.fields.find(f => f.type === 'email' || f.label.toLowerCase().includes('email'));
@@ -83,45 +90,59 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
 
   const handleInputChange = (fieldId, value) => {
       setFormData(prev => ({ ...prev, [fieldId]: value }));
-      // Reset verification if they change their username
       if (fieldId === sleeperFieldId) {
-          setSleeperVerified(false);
           setErrorMessage('');
       }
   };
 
-  const verifySleeperUsername = async () => {
-      const username = formData[sleeperFieldId];
-      if (!username) {
-          setErrorMessage('Please enter a Sleeper username first.');
-          return false;
-      }
+  // Real-time Debounced Sleeper Verification
+  const sleeperUsernameValue = formData[sleeperFieldId];
 
-      setIsVerifyingSleeper(true);
-      setErrorMessage('');
+  useEffect(() => {
+    const username = sleeperUsernameValue;
+    
+    if (!username || username.trim().length === 0) {
+      setSleeperVerified(false);
+      setSleeperUserData(null);
+      setIsVerifyingSleeper(false);
+      return;
+    }
 
+    setIsVerifyingSleeper(true);
+    setSleeperVerified(false);
+    setSleeperUserData(null);
+
+    const timer = setTimeout(async () => {
       try {
-          // Direct API call to Sleeper. If CORS blocks this, you can route it through a Next.js API using your sleeperService.ts
-          const res = await fetch(`https://api.sleeper.app/v1/user/${username}`);
-          const data = await res.json();
+          const res = await fetch(`https://api.sleeper.app/v1/user/${username.trim()}`);
+          if (!res.ok) {
+              setSleeperVerified(false);
+              setIsVerifyingSleeper(false);
+              return;
+          }
+          const text = await res.text();
+          if (!text) {
+              setSleeperVerified(false);
+              setIsVerifyingSleeper(false);
+              return;
+          }
+          const data = JSON.parse(text);
           
           if (data && data.user_id) {
               setSleeperVerified(true);
-              setIsVerifyingSleeper(false);
-              return true;
+              setSleeperUserData(data);
           } else {
               setSleeperVerified(false);
-              setErrorMessage('Sleeper user not found. Check your spelling.');
-              setIsVerifyingSleeper(false);
-              return false;
           }
       } catch (error) {
           setSleeperVerified(false);
-          setErrorMessage('Error connecting to Sleeper. Please try again.');
+      } finally {
           setIsVerifyingSleeper(false);
-          return false;
       }
-  };
+    }, 600); // Wait 600ms after user stops typing to ping the API
+
+    return () => clearTimeout(timer);
+  }, [sleeperUsernameValue]); 
 
   const handleSubmit = async (e) => {
       e.preventDefault();
@@ -131,11 +152,10 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
 
       // Require Sleeper Verification before allowing submission
       if (!sleeperVerified) {
-          const isValid = await verifySleeperUsername();
-          if (!isValid) {
-              setIsSubmitting(false);
-              return; 
-          }
+          setSubmitStatus('error');
+          setErrorMessage('Please enter a valid Sleeper username to continue.');
+          setIsSubmitting(false);
+          return; 
       }
 
       try {
@@ -154,8 +174,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
           
           if (result.is_valid) {
               setSubmitStatus('success');
-              setFormData({});
-              setSleeperVerified(false);
+              setFormData({}); 
           } else {
               setSubmitStatus('error');
               setErrorMessage('Error submitting entry. Please ensure all fields are correct.');
@@ -167,7 +186,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
       setIsSubmitting(false);
   };
 
-  // Helper to render individual inputs (adds the Verify button to the Sleeper field)
   const renderInput = (fieldId, type, placeholder, isRequired) => {
       const isSleeperField = fieldId.toString() === sleeperFieldId;
 
@@ -178,26 +196,35 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                   required={isRequired} 
                   onChange={(e) => handleInputChange(fieldId, e.target.value)} 
                   value={formData[fieldId] || ''} 
-                  className={`w-full bg-[#111] border ${isSleeperField && sleeperVerified ? 'border-green-500' : 'border-gray-700'} rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner ${isSleeperField ? 'pr-24' : ''}`} 
+                  className={`w-full bg-[#111] border ${isSleeperField && sleeperVerified ? 'border-green-500' : 'border-gray-700'} rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner ${isSleeperField ? 'pr-[100px]' : ''}`} 
                   placeholder={placeholder} 
-                  readOnly={isSleeperField && sleeperVerified} // Lock input once verified
               />
               {isSleeperField && (
                   <div className="absolute right-1.5 flex items-center">
-                      {sleeperVerified ? (
-                          <span className="bg-green-900/40 text-green-500 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg flex items-center gap-1 border border-green-900">
-                              <CheckCircle2 size={14} /> Verified
-                          </span>
-                      ) : (
-                          <button 
-                              type="button" 
-                              onClick={verifySleeperUsername}
-                              disabled={isVerifyingSleeper || !formData[fieldId]}
-                              className="bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-300 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors border border-gray-600 flex items-center gap-1"
-                          >
-                              {isVerifyingSleeper ? <Loader2 size={14} className="animate-spin" /> : 'Verify'}
-                          </button>
-                      )}
+                      {isVerifyingSleeper ? (
+                          <div className="px-3 text-gray-500 flex items-center gap-2">
+                             <Loader2 size={14} className="animate-spin" />
+                          </div>
+                      ) : sleeperVerified && sleeperUserData ? (
+                          <div className="flex items-center gap-1.5 bg-green-900/40 text-green-500 text-[10px] font-bold uppercase tracking-wider px-2 py-1.5 rounded-lg border border-green-900 shadow-sm">
+                              {sleeperUserData.avatar ? (
+                                  <img 
+                                      src={`https://sleepercdn.com/avatars/thumbs/${sleeperUserData.avatar}`} 
+                                      alt="Avatar" 
+                                      className="w-4 h-4 rounded-full object-cover bg-black"
+                                  />
+                              ) : (
+                                  <div className="w-4 h-4 rounded-full bg-black flex items-center justify-center">
+                                      <User size={10} className="text-gray-400" />
+                                  </div>
+                              )}
+                              <span>Verified</span>
+                          </div>
+                      ) : formData[fieldId] && formData[fieldId].trim().length > 0 ? (
+                           <div className="px-3 text-red-500/70 text-[10px] font-bold uppercase tracking-wider">
+                              Not Found
+                           </div>
+                      ) : null}
                   </div>
               )}
           </div>
