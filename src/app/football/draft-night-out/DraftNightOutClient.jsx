@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
-import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Utensils, MessageSquare, Users, Trophy, Heart, Shield, Sparkles, Medal, Gift, ListOrdered, BookOpen, Clock, Handshake, Mail } from 'lucide-react';
+import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Utensils, MessageSquare, Users, Trophy, Heart, Shield, Sparkles, Medal, Gift, ListOrdered, BookOpen, Clock, Handshake, Mail, Search } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm, formId, initialLeaderboard }) {
@@ -14,18 +14,23 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null); 
-  const [errorMessage, setErrorMessage] = useState(''); // Specific error feedback
+  const [errorMessage, setErrorMessage] = useState(''); 
+
+  // Sleeper Verification State
+  const [sleeperFieldId, setSleeperFieldId] = useState('4'); // Default hardcoded ID
+  const [isVerifyingSleeper, setIsVerifyingSleeper] = useState(false);
+  const [sleeperVerified, setSleeperVerified] = useState(false);
 
   const [liveForm, setLiveForm] = useState(gfForm);
 
   // Tab State & Styling
   const validTabs = ['live', 'online', 'leaderboard', 'prizes', 'rules', 'sponsors'];
-  const [activeTab, setActiveTab] = useState('live'); // Defaulting to live
+  const [activeTab, setActiveTab] = useState('live');
 
   const activeTabStyle = "bg-gradient-to-r from-red-600 to-red-800 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)] border border-red-500";
   const inactiveTabStyle = "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 border border-transparent";
 
-  // Handle URL Hashes for direct linking
+  // Handle URL Hashes
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
@@ -33,18 +38,13 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
         setActiveTab(hash);
       }
     };
-
-    // Check hash on initial load
     handleHashChange();
-
-    // Listen for hash changes if user navigates back/forward
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
-    // Update the URL without reloading the page
     window.history.pushState(null, '', `#${tabId}`);
   };
 
@@ -58,9 +58,15 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
              .then(data => {
                  if (data && data.fields) {
                      setLiveForm(data);
+                     // Find the Sleeper field dynamically once synced
+                     const sField = data.fields.find(f => f.label.toLowerCase().includes('sleeper'));
+                     if (sField) setSleeperFieldId(sField.id.toString());
                  }
              })
              .catch(err => console.error("Client-side GF sync failed:", err));
+     } else {
+         const sField = liveForm.fields.find(f => f.label.toLowerCase().includes('sleeper'));
+         if (sField) setSleeperFieldId(sField.id.toString());
      }
   }, [liveForm, formId]);
 
@@ -77,6 +83,44 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
 
   const handleInputChange = (fieldId, value) => {
       setFormData(prev => ({ ...prev, [fieldId]: value }));
+      // Reset verification if they change their username
+      if (fieldId === sleeperFieldId) {
+          setSleeperVerified(false);
+          setErrorMessage('');
+      }
+  };
+
+  const verifySleeperUsername = async () => {
+      const username = formData[sleeperFieldId];
+      if (!username) {
+          setErrorMessage('Please enter a Sleeper username first.');
+          return false;
+      }
+
+      setIsVerifyingSleeper(true);
+      setErrorMessage('');
+
+      try {
+          // Direct API call to Sleeper. If CORS blocks this, you can route it through a Next.js API using your sleeperService.ts
+          const res = await fetch(`https://api.sleeper.app/v1/user/${username}`);
+          const data = await res.json();
+          
+          if (data && data.user_id) {
+              setSleeperVerified(true);
+              setIsVerifyingSleeper(false);
+              return true;
+          } else {
+              setSleeperVerified(false);
+              setErrorMessage('Sleeper user not found. Check your spelling.');
+              setIsVerifyingSleeper(false);
+              return false;
+          }
+      } catch (error) {
+          setSleeperVerified(false);
+          setErrorMessage('Error connecting to Sleeper. Please try again.');
+          setIsVerifyingSleeper(false);
+          return false;
+      }
   };
 
   const handleSubmit = async (e) => {
@@ -85,37 +129,15 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
       setSubmitStatus(null);
       setErrorMessage('');
 
-      // 1. Find the field ID corresponding to the Sleeper Username
-      let sleeperFieldId = '4'; // fallback ID for hardcoded form
-      if (liveForm && liveForm.fields) {
-          const sField = liveForm.fields.find(f => f.label.toLowerCase().includes('sleeper'));
-          if (sField) sleeperFieldId = sField.id.toString();
-      }
-
-      const sleeperUsername = formData[sleeperFieldId];
-
-      // 2. Validate Sleeper Username via Sleeper API
-      if (sleeperUsername) {
-          try {
-              const sleeperRes = await fetch(`https://api.sleeper.app/v1/user/${sleeperUsername}`);
-              const sleeperData = await sleeperRes.json();
-              
-              // If user doesn't exist, Sleeper returns null or error
-              if (!sleeperData || !sleeperData.user_id) {
-                  setSubmitStatus('error');
-                  setErrorMessage('Sleeper username not found. Please verify your Sleeper ID.');
-                  setIsSubmitting(false);
-                  return; // Stop form submission
-              }
-          } catch (error) {
-              setSubmitStatus('error');
-              setErrorMessage('Could not verify Sleeper username. Please double check it.');
+      // Require Sleeper Verification before allowing submission
+      if (!sleeperVerified) {
+          const isValid = await verifySleeperUsername();
+          if (!isValid) {
               setIsSubmitting(false);
-              return;
+              return; 
           }
       }
 
-      // 3. Submit payload to Gravity Forms API
       try {
           const payload = {
              formId: formId,
@@ -132,7 +154,8 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
           
           if (result.is_valid) {
               setSubmitStatus('success');
-              setFormData({}); // Clear form on success
+              setFormData({});
+              setSleeperVerified(false);
           } else {
               setSubmitStatus('error');
               setErrorMessage('Error submitting entry. Please ensure all fields are correct.');
@@ -144,6 +167,43 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
       setIsSubmitting(false);
   };
 
+  // Helper to render individual inputs (adds the Verify button to the Sleeper field)
+  const renderInput = (fieldId, type, placeholder, isRequired) => {
+      const isSleeperField = fieldId.toString() === sleeperFieldId;
+
+      return (
+          <div className="relative flex items-center w-full">
+              <input 
+                  type={type} 
+                  required={isRequired} 
+                  onChange={(e) => handleInputChange(fieldId, e.target.value)} 
+                  value={formData[fieldId] || ''} 
+                  className={`w-full bg-[#111] border ${isSleeperField && sleeperVerified ? 'border-green-500' : 'border-gray-700'} rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner ${isSleeperField ? 'pr-24' : ''}`} 
+                  placeholder={placeholder} 
+                  readOnly={isSleeperField && sleeperVerified} // Lock input once verified
+              />
+              {isSleeperField && (
+                  <div className="absolute right-1.5 flex items-center">
+                      {sleeperVerified ? (
+                          <span className="bg-green-900/40 text-green-500 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg flex items-center gap-1 border border-green-900">
+                              <CheckCircle2 size={14} /> Verified
+                          </span>
+                      ) : (
+                          <button 
+                              type="button" 
+                              onClick={verifySleeperUsername}
+                              disabled={isVerifyingSleeper || !formData[fieldId]}
+                              className="bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-300 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors border border-gray-600 flex items-center gap-1"
+                          >
+                              {isVerifyingSleeper ? <Loader2 size={14} className="animate-spin" /> : 'Verify'}
+                          </button>
+                      )}
+                  </div>
+              )}
+          </div>
+      );
+  };
+
   const renderForm = () => {
       const hasFields = liveForm && liveForm.fields && liveForm.fields.length > 0;
       
@@ -153,11 +213,11 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                   <div className="flex flex-col gap-4">
                       <div className="flex flex-col flex-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Your Email</label>
-                          <input type="email" required onChange={(e) => handleInputChange('1', e.target.value)} value={formData['1'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder="Enter your email" />
+                          {renderInput('1', 'email', 'Enter your email', true)}
                       </div>
                       <div className="flex flex-col flex-1">
                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Sleeper Username</label>
-                          <input type="text" required onChange={(e) => handleInputChange('4', e.target.value)} value={formData['4'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder="Your Sleeper ID" />
+                          {renderInput('4', 'text', 'Your Sleeper ID', true)}
                       </div>
                   </div>
                   <div className="flex flex-col">
@@ -169,7 +229,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                           <option value="Online Best Ball">Online Best Ball</option>
                       </select>
                   </div>
-                  <button type="submit" disabled={isSubmitting} className="mt-2 w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest text-xs py-3.5 rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.2)] transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                  <button type="submit" disabled={isSubmitting} className="mt-2 w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest text-xs py-3.5 rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.2)] transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2 disabled:opacity-50">
                       {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : 'Submit Online Entry'}
                   </button>
               </form>
@@ -186,7 +246,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                       return (
                           <div key={field.id} className="flex flex-col flex-1">
                               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{displayLabel}</label>
-                              <input type={field.type} required={field.isRequired} onChange={(e) => handleInputChange(field.id, e.target.value)} value={formData[field.id] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner" placeholder={`Enter ${displayLabel.toLowerCase()}`} />
+                              {renderInput(field.id, field.type, `Enter ${displayLabel.toLowerCase()}`, field.isRequired)}
                           </div>
                       );
                   })}
@@ -202,7 +262,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                       </select>
                   </div>
               ))}
-              <button type="submit" disabled={isSubmitting} className="mt-2 w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest text-xs py-3.5 rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.2)] transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2">
+              <button type="submit" disabled={isSubmitting} className="mt-2 w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest text-xs py-3.5 rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.2)] transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2 disabled:opacity-50">
                   {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : 'Submit Online Entry'}
               </button>
           </form>
@@ -400,9 +460,9 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                               </div>
                           ) : (
                               <>
-                                  {submitStatus === 'error' && (
+                                  {errorMessage && (
                                       <div className="mb-4 bg-red-900/20 border border-red-500/30 rounded-xl p-3 flex items-center gap-3 text-red-400 text-[10px] font-bold uppercase tracking-wider">
-                                          <AlertCircle size={16} className="shrink-0" /> {errorMessage || 'Error submitting entry. Please try again.'}
+                                          <AlertCircle size={16} className="shrink-0" /> {errorMessage}
                                       </div>
                                   )}
                                   {renderForm()}
