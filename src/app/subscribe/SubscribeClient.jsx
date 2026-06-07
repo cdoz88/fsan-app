@@ -133,12 +133,12 @@ export default function SubscribeClient() {
 
     const priceIds = {
       yearly: {
-        pro: 'price_1TH5H5BaSOn1la2fRtfzRPpp',
-        'pro-plus': 'price_1TH5IaBaSOn1la2fS8s0HMPv'
+        pro: 'prod_UerpTefh0nLKFk',
+        'pro-plus': 'prod_Uerp8tUxBYogvY'
       },
       monthly: {
-        pro: 'price_1TH5HsBaSOn1la2fuOcXj2nq',
-        'pro-plus': 'price_1TH5J9BaSOn1la2f861yf4yB'
+        pro: 'prod_UerpypQ0cduYAj',
+        'pro-plus': 'prod_Uerp1QvbHuzeMq'
       }
     };
 
