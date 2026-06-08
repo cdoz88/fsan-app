@@ -7,6 +7,7 @@ import { FootballIcon } from '../../../components/icons';
 export default function RankingsModelClient({ initialRankings, mode, serverError }) {
   const [currentPosition, setCurrentPosition] = useState('All');
   const [showSettings, setShowSettings] = useState(false);
+  const [rankingMode, setRankingMode] = useState('redraft'); // 'redraft' or 'dynasty'
   const isOffseason = mode === 'offseason';
 
   // Scoring Format State Variables
@@ -19,12 +20,46 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
   const primaryColor = '#e42d38';
   const secondaryColor = '#8a1a20';
 
+  // 🧠 Algorithmic Dynasty Age Multiplier
+  const getAgeMultiplier = (position, age) => {
+    if (!age) return 1; // Default if age is missing
+    if (position === 'RB') {
+      if (age <= 23) return 1.45;
+      if (age <= 25) return 1.20;
+      if (age <= 27) return 0.90;
+      if (age <= 29) return 0.50;
+      return 0.20;
+    }
+    if (position === 'WR') {
+      if (age <= 23) return 1.35;
+      if (age <= 26) return 1.15;
+      if (age <= 29) return 0.95;
+      if (age <= 31) return 0.70;
+      return 0.40;
+    }
+    if (position === 'QB') {
+      if (age <= 24) return 1.30;
+      if (age <= 28) return 1.10;
+      if (age <= 32) return 0.95;
+      if (age <= 36) return 0.70;
+      return 0.40;
+    }
+    if (position === 'TE' || position === 'WR/TE') {
+      if (age <= 24) return 1.30;
+      if (age <= 27) return 1.10;
+      if (age <= 30) return 0.90;
+      if (age <= 32) return 0.60;
+      return 0.30;
+    }
+    return 1;
+  };
+
   // ⚡ DYNAMIC RECALCULATION ENGINE
   const processedRankings = useMemo(() => {
-    // 1. Recalculate Fantasy Points based on user settings
     const recalculated = (initialRankings || []).map(player => {
       let pts = 0;
       
+      // Calculate Base Vegas Points
       pts += ((player.pass_yds || 0) / 25);
       pts += ((player.pass_tds || 0) * passTdValue); 
       pts -= ((player.turnovers || 0) * 2);
@@ -36,23 +71,32 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
       // Calculate Receptions using custom PPR value
       let recPoints = ((player.receptions || 0) * pprValue);
       
-      // Add TE Premium Bonus if applicable
+      // Add TE Premium Bonus
       if (player.position === 'TE' || player.position === 'WR/TE') {
         recPoints += ((player.receptions || 0) * tePremium);
       }
-      
       pts += recPoints;
+
+      // Calculate Dynasty Score (Scale 0 - 1000)
+      const ageMult = getAgeMultiplier(player.position, player.age);
+      // We multiply by 2.5 just to scale the raw points up into a clean 0-1000 "Score" format
+      const dynastyScore = Math.round(pts * ageMult * 2.5);
 
       return {
         ...player,
-        projected_points: Number(pts.toFixed(2)) 
+        projected_points: Number(pts.toFixed(1)),
+        dynasty_score: dynastyScore
       };
     });
 
-    // 2. Sort the array by the NEW projected points from highest to lowest
-    recalculated.sort((a, b) => b.projected_points - a.projected_points);
+    // 2. Sort the array based on the selected mode!
+    if (rankingMode === 'dynasty') {
+      recalculated.sort((a, b) => b.dynasty_score - a.dynasty_score);
+    } else {
+      recalculated.sort((a, b) => b.projected_points - a.projected_points);
+    }
 
-    // 3. Assign the new Overall Ranks and Position Ranks based on the new sorted order
+    // 3. Assign the new Overall Ranks and Position Ranks
     const posCounters = {};
     return recalculated.map((player, index) => {
       const pos = player.position || 'UNK';
@@ -66,7 +110,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
         posRank: `${pos}${posCounters[pos]}`
       };
     });
-  }, [initialRankings, pprValue, passTdValue, tePremium]); 
+  }, [initialRankings, pprValue, passTdValue, tePremium, rankingMode]); 
 
   // Filter rankings based on selected position
   const visibleData = processedRankings.filter((player) => {
@@ -104,34 +148,64 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
         <div className="relative z-10 w-full flex flex-col md:flex-row items-start md:items-end justify-between h-full px-6 md:px-10 pb-8 gap-4">
           <div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-2">
-              {isOffseason ? 'Preseason' : 'Weekly'} Rankings
+              {rankingMode === 'dynasty' ? 'Dynasty Values' : (isOffseason ? 'Preseason Rankings' : 'Weekly Rankings')}
             </h1>
             <p className="text-gray-300 font-medium md:text-lg">
-              {isOffseason 
-                ? 'Aggregated projections modeled directly from Vegas season-long player futures.'
-                : 'Projected fantasy points calculated dynamically from live sportsbook player props.'}
+              {rankingMode === 'dynasty'
+                ? 'Proprietary Dynasty Scores calculated via Vegas Projections and Age-Decay algorithms.'
+                : isOffseason 
+                  ? 'Aggregated projections modeled directly from Vegas season-long player futures.'
+                  : 'Projected fantasy points calculated dynamically from live sportsbook player props.'}
             </p>
           </div>
         </div>
       </div>
 
       <div className="w-full">
-        {/* Top Controls Row: Position Filters + Settings Toggle */}
+        {/* Top Controls Row: Mode Toggle, Position Filters + Settings Toggle */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <div className="flex flex-wrap gap-2 bg-[#1a1a1a] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
-             {positions.map(pos => (
-                <button 
-                   key={pos} 
-                   onClick={() => setCurrentPosition(pos)}
-                   className={`px-4 py-1.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${
-                     currentPosition === pos 
-                      ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' 
-                      : 'text-gray-500 hover:text-white hover:bg-[#252525]'
-                   }`}
-                >
-                   {pos}
-                </button>
-             ))}
+          
+          <div className="flex flex-wrap gap-4 items-center">
+            {/* Mode Toggle (Redraft vs Dynasty) */}
+            <div className="flex bg-[#111] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
+              <button 
+                onClick={() => setRankingMode('redraft')}
+                className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${
+                  rankingMode === 'redraft' 
+                  ? 'bg-white text-black shadow-md' 
+                  : 'text-gray-500 hover:text-white hover:bg-[#1a1a1a]'
+                }`}
+              >
+                Redraft
+              </button>
+              <button 
+                onClick={() => setRankingMode('dynasty')}
+                className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all flex items-center gap-2 ${
+                  rankingMode === 'dynasty' 
+                  ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.4)]' 
+                  : 'text-gray-500 hover:text-white hover:bg-[#1a1a1a]'
+                }`}
+              >
+                Dynasty
+              </button>
+            </div>
+
+            {/* Position Filters */}
+            <div className="flex flex-wrap gap-2 bg-[#1a1a1a] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
+               {positions.map(pos => (
+                  <button 
+                     key={pos} 
+                     onClick={() => setCurrentPosition(pos)}
+                     className={`px-4 py-1.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${
+                       currentPosition === pos 
+                        ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' 
+                        : 'text-gray-500 hover:text-white hover:bg-[#252525]'
+                     }`}
+                  >
+                     {pos}
+                  </button>
+               ))}
+            </div>
           </div>
 
           <button 
@@ -156,7 +230,6 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               
-              {/* Receptions Toggle */}
               <div className="flex flex-col gap-3">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Receptions (PPR)</span>
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
@@ -171,7 +244,6 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                 </div>
               </div>
 
-              {/* Pass TD Toggle */}
               <div className="flex flex-col gap-3">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Passing TDs</span>
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
@@ -186,7 +258,6 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                 </div>
               </div>
 
-              {/* TE Premium Toggle */}
               <div className="flex flex-col gap-3">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">TE Premium Bonus</span>
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
@@ -224,9 +295,20 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest w-16 text-center">Ovr</th>
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Pos Rank</th>
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">Player</th>
+                  
+                  {/* Dynamic Column for Dynasty Age */}
+                  {rankingMode === 'dynasty' && (
+                    <th className="px-4 py-3 text-[10px] font-black text-purple-400 uppercase tracking-widest text-center">Age</th>
+                  )}
+
                   {!isOffseason && <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">Game</th>}
                   
-                  <th className="px-4 py-3 text-[10px] font-black text-red-500 uppercase tracking-widest text-center bg-red-900/10 border-x border-gray-800">Proj Pts</th>
+                  {/* Dynamic Column for Score vs Points */}
+                  {rankingMode === 'dynasty' ? (
+                    <th className="px-4 py-3 text-[10px] font-black text-purple-400 uppercase tracking-widest text-center bg-purple-900/10 border-x border-gray-800">Dynasty Score</th>
+                  ) : (
+                    <th className="px-4 py-3 text-[10px] font-black text-red-500 uppercase tracking-widest text-center bg-red-900/10 border-x border-gray-800">Proj Pts</th>
+                  )}
                   
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Pass Yds</th>
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center border-r border-gray-800">Pass TD</th>
@@ -275,13 +357,31 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                          </div>
                       </td>
                       
+                      {/* Show Age if in Dynasty Mode */}
+                      {rankingMode === 'dynasty' && (
+                        <td className="px-4 py-2.5 text-center">
+                          <span className="text-xs font-bold text-gray-300 bg-gray-800 px-2 py-1 rounded">
+                            {player.age || '-'}
+                          </span>
+                        </td>
+                      )}
+
                       {!isOffseason && <td className="px-4 py-2.5 text-xs font-bold text-gray-400 uppercase tracking-wider">{player.game}</td>}
                       
-                      <td className="px-4 py-2.5 text-center bg-red-900/5 border-x border-gray-800/50">
-                         <div className="text-sm font-black text-white">
-                           {player.projected_points.toFixed(1)}
-                         </div>
-                      </td>
+                      {/* Highlighted Value Column */}
+                      {rankingMode === 'dynasty' ? (
+                        <td className="px-4 py-2.5 text-center bg-purple-900/10 border-x border-gray-800/50">
+                           <div className="text-sm font-black text-purple-400">
+                             {player.dynasty_score}
+                           </div>
+                        </td>
+                      ) : (
+                        <td className="px-4 py-2.5 text-center bg-red-900/5 border-x border-gray-800/50">
+                           <div className="text-sm font-black text-white">
+                             {player.projected_points}
+                           </div>
+                        </td>
+                      )}
 
                       <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{player.pass_yds || '-'}</td>
                       <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400 border-r border-gray-800/50">{player.pass_tds || '-'}</td>
@@ -298,7 +398,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="13" className="py-20 text-center">
+                    <td colSpan="14" className="py-20 text-center">
                       <h3 className="text-xl font-black text-white uppercase tracking-wider mb-2">No Data Available</h3>
                       <p className="text-gray-500 font-bold">No {currentPosition} projections exist yet.</p>
                     </td>
@@ -315,7 +415,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
             <p>• Projections are pulled directly from live DraftKings sportsbook player prop Over/Under totals.</p>
             <p>• Player fantasy points are calculated dynamically based on your selected scoring format.</p>
             <p>• Touchdown projections are derived using the true expected value calculated via a Poisson Distribution of the "Anytime TD" betting odds.</p>
-            <p>• During the offseason, these numbers utilize DraftKings season-long player futures.</p>
+            <p>• <strong>Dynasty Scores</strong> evaluate Vegas projected output scaled by a proprietary position-based age decay curve to determine long-term asset value.</p>
           </div>
         </div>
 

@@ -92,7 +92,8 @@ async function fetchLiveVegasData() {
                   name: playerName, game: `${gameOdds.away_team} @ ${gameOdds.home_team}`,
                   pass_yds: 0, pass_tds: 0, ints: 0, fumbles: 0, rush_yds: 0, rush_tds: 0,
                   receptions: 0, rec_yds: 0, rec_tds: 0, anytime_td_odds: 0, position: "FLEX",
-                  team: null // Initialize team for the roster cross-reference
+                  team: null, // Initialize team for the roster cross-reference
+                  age: null   // Initialize age for the Dynasty cross-reference
                 };
               }
 
@@ -111,10 +112,11 @@ async function fetchLiveVegasData() {
         // Process final math for every scraped player
         finalRankings = Object.values(playerStats).map(player => {
           
-          // 🏈 Look up the player in the Master Roster to attach their team abbreviation
+          // 🏈 Look up the player in the Master Roster to attach their team abbreviation AND Age
           const masterPlayer = OFFSEASON_FUTURES_DATABASE.find(p => p.name === player.name);
-          if (masterPlayer && masterPlayer.team) {
-            player.team = masterPlayer.team;
+          if (masterPlayer) {
+            if (masterPlayer.team) player.team = masterPlayer.team;
+            if (masterPlayer.age) player.age = masterPlayer.age; // <--- This ensures Dynasty math works mid-season!
           }
 
           // POISSON DISTRIBUTION EV CALCULATION
