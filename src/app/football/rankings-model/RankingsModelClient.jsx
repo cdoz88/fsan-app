@@ -2,13 +2,19 @@
 
 import React, { useState } from 'react';
 
-export default function RankingsModelClient({ initialRankings, mode }) {
+export default function RankingsModelClient({ initialRankings, mode, serverError }) {
   const [rankings, setRankings] = useState(initialRankings);
   
   const isOffseason = mode === 'offseason';
 
   return (
     <div className="max-w-7xl mx-auto">
+      {serverError && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs font-mono">
+          <strong>Vegas Engine Diagnostics Notice:</strong> {serverError} (Falling back to draft preview mode).
+        </div>
+      )}
+
       <div className="bg-[#1a1a1a] text-white p-6 rounded-t-lg border border-gray-800">
         <h1 className="text-3xl font-bold">
           {isOffseason ? 'Vegas Consensus Draft Rankings' : 'Vegas Implied Weekly Rankings'}
@@ -28,7 +34,6 @@ export default function RankingsModelClient({ initialRankings, mode }) {
                 <th className="p-4 font-semibold">Rank</th>
                 <th className="p-4 font-semibold">Player</th>
                 <th className="p-4 font-semibold">Pos</th>
-                {/* Hide Game column during off-season */}
                 {!isOffseason && <th className="p-4 font-semibold">Game</th>}
                 <th className="p-4 font-extrabold text-green-800 bg-green-100 border-x border-green-200 shadow-sm">Proj Pts</th>
                 

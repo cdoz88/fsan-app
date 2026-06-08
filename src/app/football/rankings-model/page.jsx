@@ -11,18 +11,24 @@ export const metadata = {
 };
 
 async function getVegasData() {
+  // Gracefully fallback to localhost if production URL isn't set yet
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   
   try {
     const res = await fetch(`${baseUrl}/api/odds-engine`, {
-      next: { tags: ['vegas-rankings'] } 
+      next: { tags: ['vegas-rankings'] },
+      cache: 'no-store' // Avoid caching empty responses during debugging
     });
     
-    if (!res.ok) return { rankings: [], mode: 'weekly' };
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`API response was not OK (${res.status}):`, errorText);
+      return { rankings: [], mode: 'offseason', error: `Server error: ${res.status}` };
+    }
     return await res.json();
   } catch (error) {
-    console.error("Error fetching local rankings API:", error);
-    return { rankings: [], mode: 'weekly' };
+    console.error("Internal fetch exception calling /api/odds-engine:", error);
+    return { rankings: [], mode: 'offseason', error: error.message };
   }
 }
 
@@ -30,7 +36,6 @@ export default async function RankingsModelPage() {
   let proToolsMenu = [];
   let connectMenu = [];
 
-  // Fetch the menus so the Sidebar renders correctly
   try {
     if (typeof getMenuBySlug === 'function') {
       proToolsMenu = await getMenuBySlug('pro-tools-football');
@@ -40,8 +45,7 @@ export default async function RankingsModelPage() {
     console.error(e);
   }
 
-  // Fetch from our smart engine
-  const { rankings, mode } = await getVegasData();
+  const { rankings, mode, error } = await getVegasData();
 
   return (
     <>
@@ -51,8 +55,7 @@ export default async function RankingsModelPage() {
         
         <div className="flex-1 w-full min-w-0">
           <PlayerProvider>
-            {/* We now pass the mode to the client so the UI knows how to display itself */}
-            <RankingsModelClient initialRankings={rankings} mode={mode} />
+            <RankingsModelClient initialRankings={rankings} mode={mode} serverError={error} />
           </PlayerProvider>
         </div>
       </div>
