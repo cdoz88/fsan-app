@@ -1,8 +1,20 @@
 {
-    "crons": [
-      {
-        "path": "/api/warmup",
-        "schedule": "0 * * * *"
-      }
-    ]
-  }
+  "crons": [
+    {
+      "path": "/api/warmup",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/odds-engine?cron=true",
+      "schedule": "0 17 * * 4"
+    },
+    {
+      "path": "/api/odds-engine?cron=true",
+      "schedule": "0 23 * * 6"
+    },
+    {
+      "path": "/api/odds-engine?cron=true",
+      "schedule": "0 13 * * 0"
+    }
+  ]
+}
