@@ -148,7 +148,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
       }
     }
 
-    // Axis 2: Actionable Market Recommendations (Tilted by Manager Strategy Strategy)
+    // Axis 2: Actionable Market Recommendations
     if (strategy === 'build') {
       if (age <= 23 && points > 150) {
         marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
@@ -168,7 +168,6 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
         marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
       }
     } else {
-      // Balanced Timeline Logics
       if (age <= 22 && points > 160) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
       else if (age <= 24 && points < 140) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
       else if (age >= 30) marketAction = { text: 'Sell Now', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
@@ -246,7 +245,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
   return (
     <div className="w-full animate-in fade-in duration-500 pb-24 relative">
       
-      {/* ℹ️ Upgraded Explanation Modal */}
+      {/* ℹ️ Valuation Details Modal */}
       {showMarketInfo && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-[#161616] border border-gray-800 w-full max-w-xl rounded-3xl p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
@@ -262,7 +261,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
             </h3>
             
             <div className="space-y-5 text-xs font-medium text-gray-400 leading-relaxed">
-              <p>Our dynasty model indexes **implied market output (Vegas season expectations)** directly across historical **position-specific production age cliffs** using two unique diagnostic columns:</p>
+              <p>Our dynasty model indexes **implied market output (Vegas season expectations)** directly across historical **position-specific production age cliffs** using two unique diagnostic metrics:</p>
               
               <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60">
                 <h4 className="text-[10px] uppercase font-black tracking-widest text-white">Axis 1: Asset Profiling</h4>
@@ -308,11 +307,11 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
         <div className="relative z-10 w-full flex flex-col md:flex-row items-start md:items-end justify-between h-full px-6 md:px-10 pb-8 gap-4">
           <div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-2">
-              {rankingMode === 'dynasty' ? 'Dynasty Models' : (isOffseason ? 'Preseason Rankings' : 'Weekly Rankings')}
+              {rankingMode === 'dynasty' ? 'Dynasty Rankings' : (isOffseason ? 'Preseason Rankings' : 'Weekly Rankings')}
             </h1>
             <p className="text-gray-300 font-medium md:text-lg">
               {rankingMode === 'dynasty'
-                ? 'Vegas projected metrics run through an interactive, strategy-tilted age decay index.'
+                ? 'Projected metrics run through an interactive, strategy-tilted age decay index and ADP consideration.'
                 : isOffseason 
                   ? 'Aggregated projections modeled directly from Vegas season-long player futures.'
                   : 'Projected fantasy points calculated dynamically from live sportsbook player props.'}
@@ -474,23 +473,6 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
         {/* Dark Table Container */}
         <div className="bg-[#111] rounded-3xl shadow-2xl border border-gray-800 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
           
-          <div className="px-6 py-4 border-b border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <h2 className="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
-              {rankingMode === 'dynasty' ? 'Age-Decay Valuation Matrix' : `Vegas Implied ${currentPosition === 'All' ? 'Overall' : currentPosition} Projections`}
-              {rankingMode === 'dynasty' && (
-                <button 
-                  onClick={() => setShowMarketInfo(true)}
-                  className="text-gray-500 hover:text-white transition-colors p-1 rounded-lg bg-[#1a1a1a] border border-gray-800"
-                >
-                  <Info size={14} />
-                </button>
-              )}
-            </h2>
-            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-gray-800">
-              Data Engine: <span className="text-white">DraftKings Sportsbook Inputs</span>
-            </span>
-          </div>
-
           <div className="overflow-x-auto scrollbar-hide">
             <table className="min-w-full text-left whitespace-nowrap">
               <thead className="bg-[#1a1a1a] border-b border-gray-800">
@@ -504,8 +486,28 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                     <>
                       <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center">Age</th>
                       <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center bg-zinc-900/20 border-x border-gray-800">Dynasty Score</th>
-                      <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest">Roster Asset Type</th>
-                      <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest">Market Recommendation</th>
+                      <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest">
+                        <div className="flex items-center gap-1.5">
+                          Roster Asset Type
+                          <button 
+                            onClick={() => setShowMarketInfo(true)}
+                            className="text-gray-500 hover:text-white transition-colors p-0.5 rounded bg-zinc-800/40 border border-zinc-700/50"
+                          >
+                            <Info size={11} />
+                          </button>
+                        </div>
+                      </th>
+                      <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest">
+                        <div className="flex items-center gap-1.5">
+                          Market Recommendation
+                          <button 
+                            onClick={() => setShowMarketInfo(true)}
+                            className="text-gray-500 hover:text-white transition-colors p-0.5 rounded bg-zinc-800/40 border border-zinc-700/50"
+                          >
+                            <Info size={11} />
+                          </button>
+                        </div>
+                      </th>
                     </>
                   ) : (
                     <>
@@ -617,9 +619,9 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
         <div className="mt-6 bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 shadow-xl">
           <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">Ranking Methodology</h3>
           <div className="text-xs text-gray-400 space-y-2 font-medium leading-relaxed">
-            <p>• Projections are pulled directly from live DraftKings sportsbook player prop Over/Under totals.</p>
+            <p>• Projections are pulled directly from live sportsbook player prop Over/Under totals.</p>
             <p>• Player fantasy points recalculate instantly to mirror custom PPR and Tight End premium modifiers.</p>
-            <p>• <strong>Dynasty Matrix Scores</strong> run Vegas projected baseline output across position-specific age curves tilted by your specific team timeline setting (Win Now, Balanced, or Rebuild).</p>
+            <p>• <strong>Dynasty Matrix Scores</strong> run projected baseline output across position-specific age curves tilted by your specific team timeline setting (Win Now, Balanced, or Rebuild).</p>
           </div>
         </div>
 
