@@ -116,16 +116,17 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                   <th className="px-4 py-3 text-[10px] font-black text-red-500 uppercase tracking-widest text-center bg-red-900/10 border-x border-gray-800">Proj Pts</th>
                   
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Pass Yds</th>
-                  <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Pass TD</th>
-                  {/* Replaced INTs with combined TOs */}
-                  <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center border-r border-gray-800">TOs</th>
+                  <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center border-r border-gray-800">Pass TD</th>
                   
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Rush Yds</th>
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center border-r border-gray-800">Rush TD</th>
                   
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Recs</th>
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Rec Yds</th>
-                  <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Rec TD</th>
+                  <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center border-r border-gray-800">Rec TD</th>
+                  
+                  {/* Moved TOs to the very end */}
+                  <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">TOs</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800/50">
@@ -160,16 +161,17 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                       </td>
 
                       <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{player.pass_yds || '-'}</td>
-                      <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{player.pass_tds || '-'}</td>
-                      {/* Using the combined turnovers property */}
-                      <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400 border-r border-gray-800/50">{player.turnovers !== undefined && player.turnovers > 0 ? player.turnovers : '-'}</td>
+                      <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400 border-r border-gray-800/50">{player.pass_tds || '-'}</td>
                       
                       <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{player.rush_yds || '-'}</td>
                       <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400 border-r border-gray-800/50">{player.rush_tds || '-'}</td>
                       
                       <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{player.receptions || '-'}</td>
                       <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{player.rec_yds || '-'}</td>
-                      <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{player.rec_tds || '-'}</td>
+                      <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400 border-r border-gray-800/50">{player.rec_tds || '-'}</td>
+                      
+                      {/* Using the combined turnovers property at the end */}
+                      <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{player.turnovers !== undefined && player.turnovers > 0 ? player.turnovers : '-'}</td>
                     </tr>
                   ))
                 ) : (
