@@ -260,7 +260,10 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
 
                       <td className="px-4 py-2.5">
                          <div className="flex items-center gap-3">
-                           {/* 🏈 The ESPN CDN Team Logo rendered dynamically */}
+                           {/* Name first, then Logo to the right! */}
+                           <span className="text-sm font-black text-gray-100 tracking-tight">
+                             {player.name}
+                           </span>
                            {player.team && (
                              <img 
                                src={`https://a.espncdn.com/i/teamlogos/nfl/500/${player.team.toLowerCase()}.png`} 
@@ -269,9 +272,6 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                                onError={(e) => e.target.style.display = 'none'}
                              />
                            )}
-                           <span className="text-sm font-black text-gray-100 tracking-tight">
-                             {player.name}
-                           </span>
                          </div>
                       </td>
                       
