@@ -6,69 +6,69 @@ export default function RankingsModelClient({ initialRankings }) {
   const [rankings, setRankings] = useState(initialRankings);
 
   return (
-    <div className="max-w-7xl mx-auto p-4">
-      <div className="bg-gray-900 text-white p-6 rounded-t-lg">
+    <div className="max-w-7xl mx-auto">
+      <div className="bg-[#1a1a1a] text-white p-6 rounded-t-lg border border-gray-800">
         <h1 className="text-3xl font-bold">Vegas Implied Fantasy Rankings</h1>
         <p className="text-sm text-gray-400 mt-2">
           Projected fantasy points based directly on sportsbook player props (Full PPR).
         </p>
       </div>
       
-      <div className="bg-white shadow-md rounded-b-lg overflow-hidden">
+      <div className="bg-white shadow-xl rounded-b-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse whitespace-nowrap">
+          <table className="w-full text-left border-collapse whitespace-nowrap min-w-[800px]">
             <thead>
-              <tr className="bg-gray-100 text-gray-700 uppercase text-xs border-b-2 border-gray-200">
-                <th className="p-3 font-semibold">Rank</th>
-                <th className="p-3 font-semibold">Player</th>
-                <th className="p-3 font-semibold">Pos</th>
-                <th className="p-3 font-semibold">Game</th>
-                <th className="p-3 font-semibold text-green-700 bg-green-50 border-x border-gray-300">Proj Pts</th>
+              <tr className="bg-gray-100 text-gray-700 uppercase text-xs border-b-2 border-gray-300">
+                <th className="p-4 font-semibold">Rank</th>
+                <th className="p-4 font-semibold">Player</th>
+                <th className="p-4 font-semibold">Pos</th>
+                <th className="p-4 font-semibold">Game</th>
+                <th className="p-4 font-extrabold text-green-800 bg-green-100 border-x border-green-200 shadow-sm">Proj Pts</th>
                 
                 {/* Passing Stats */}
-                <th className="p-3 font-semibold">Pass Yds</th>
-                <th className="p-3 font-semibold">Pass TD</th>
+                <th className="p-4 font-semibold text-gray-500">Pass Yds</th>
+                <th className="p-4 font-semibold text-gray-500 border-r border-gray-200">Pass TD</th>
                 
                 {/* Rushing Stats */}
-                <th className="p-3 font-semibold border-l border-gray-300">Rush Yds</th>
-                <th className="p-3 font-semibold">Rush TD</th>
+                <th className="p-4 font-semibold text-gray-500">Rush Yds</th>
+                <th className="p-4 font-semibold text-gray-500 border-r border-gray-200">Rush TD</th>
                 
                 {/* Receiving Stats */}
-                <th className="p-3 font-semibold border-l border-gray-300">Recs</th>
-                <th className="p-3 font-semibold">Rec Yds</th>
-                <th className="p-3 font-semibold">Rec TD</th>
+                <th className="p-4 font-semibold text-gray-500">Recs</th>
+                <th className="p-4 font-semibold text-gray-500">Rec Yds</th>
+                <th className="p-4 font-semibold text-gray-500">Rec TD</th>
               </tr>
             </thead>
             <tbody>
               {rankings && rankings.length > 0 ? (
                 rankings.map((player, index) => (
-                  <tr key={index} className="border-b hover:bg-gray-50 transition-colors text-sm">
-                    <td className="p-3 font-bold text-gray-600">{index + 1}</td>
-                    <td className="p-3 font-medium text-gray-900">{player.name}</td>
-                    <td className="p-3">
-                      <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded">
+                  <tr key={index} className="border-b hover:bg-blue-50 transition-colors text-sm">
+                    <td className="p-4 font-bold text-gray-500">{index + 1}</td>
+                    <td className="p-4 font-bold text-gray-900">{player.name}</td>
+                    <td className="p-4">
+                      <span className="bg-[#1a1a1a] text-white text-xs font-bold px-2 py-1 rounded">
                         {player.position}
                       </span>
                     </td>
-                    <td className="p-3 text-gray-500">{player.game}</td>
+                    <td className="p-4 text-gray-500 font-medium">{player.game}</td>
                     
                     {/* Highlighted Projection Column */}
-                    <td className="p-3 font-bold text-green-700 bg-green-50 border-x border-gray-200">
+                    <td className="p-4 font-black text-green-700 bg-green-50 border-x border-green-100 text-base">
                       {player.projected_points.toFixed(2)}
                     </td>
                     
                     {/* Passing */}
-                    <td className="p-3 text-gray-600">{player.pass_yds || '-'}</td>
-                    <td className="p-3 text-gray-600">{player.pass_tds || '-'}</td>
+                    <td className="p-4 text-gray-600">{player.pass_yds || '-'}</td>
+                    <td className="p-4 text-gray-600 border-r border-gray-100">{player.pass_tds || '-'}</td>
                     
                     {/* Rushing */}
-                    <td className="p-3 text-gray-600 border-l border-gray-100">{player.rush_yds || '-'}</td>
-                    <td className="p-3 text-gray-600">{player.rush_tds || '-'}</td>
+                    <td className="p-4 text-gray-600">{player.rush_yds || '-'}</td>
+                    <td className="p-4 text-gray-600 border-r border-gray-100">{player.rush_tds || '-'}</td>
                     
                     {/* Receiving */}
-                    <td className="p-3 text-gray-600 border-l border-gray-100">{player.receptions || '-'}</td>
-                    <td className="p-3 text-gray-600">{player.rec_yds || '-'}</td>
-                    <td className="p-3 text-gray-600">{player.rec_tds || '-'}</td>
+                    <td className="p-4 text-gray-600">{player.receptions || '-'}</td>
+                    <td className="p-4 text-gray-600">{player.rec_yds || '-'}</td>
+                    <td className="p-4 text-gray-600">{player.rec_tds || '-'}</td>
                   </tr>
                 ))
               ) : (
