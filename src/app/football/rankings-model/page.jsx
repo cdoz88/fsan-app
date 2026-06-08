@@ -24,7 +24,6 @@ export default async function RankingsModelPage() {
     console.error(e);
   }
 
-  // Directly executes the cached server function, completely eliminating fetch errors
   const { rankings, mode, error } = await getCachedVegasData();
 
   return (

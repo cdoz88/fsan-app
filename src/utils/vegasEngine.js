@@ -6,24 +6,18 @@ const REGIONS = 'us';
 const MARKETS = 'player_pass_yds,player_pass_tds,player_rush_yds,player_receptions,player_rec_yds,player_anytime_td';
 const BOOKMAKER = 'draftkings';
 
-// 🏈 REAL VEGAS OFF-SEASON FUTURES (Updated June)
-// You can easily edit these numbers or add new players as the off-season progresses!
+// 🏈 REAL VEGAS OFF-SEASON FUTURES
 const OFFSEASON_FUTURES_DATABASE = [
-  // Top QBs
   { name: "Josh Allen", position: "QB", pass_yds: 3800.5, pass_tds: 27.5, rush_yds: 475.5, rush_tds: 7.5, receptions: 0, rec_yds: 0, rec_tds: 0 },
   { name: "Patrick Mahomes", position: "QB", pass_yds: 4150.5, pass_tds: 31.5, rush_yds: 300.5, rush_tds: 2.5, receptions: 0, rec_yds: 0, rec_tds: 0 },
   { name: "Jalen Hurts", position: "QB", pass_yds: 3550.5, pass_tds: 22.5, rush_yds: 550.5, rush_tds: 10.5, receptions: 0, rec_yds: 0, rec_tds: 0 },
   { name: "Lamar Jackson", position: "QB", pass_yds: 3400.5, pass_tds: 21.5, rush_yds: 750.5, rush_tds: 5.5, receptions: 0, rec_yds: 0, rec_tds: 0 },
-  
-  // Top RBs
   { name: "Christian McCaffrey", position: "RB", pass_yds: 0, pass_tds: 0, rush_yds: 1050.5, rush_tds: 9.5, receptions: 65.5, rec_yds: 550.5, rec_tds: 4.5 },
   { name: "Breece Hall", position: "RB", pass_yds: 0, pass_tds: 0, rush_yds: 1025.5, rush_tds: 7.5, receptions: 60.5, rec_yds: 500.5, rec_tds: 3.5 },
   { name: "Bijan Robinson", position: "RB", pass_yds: 0, pass_tds: 0, rush_yds: 1050.5, rush_tds: 7.5, receptions: 58.5, rec_yds: 475.5, rec_tds: 3.5 },
   { name: "Jahmyr Gibbs", position: "RB", pass_yds: 0, pass_tds: 0, rush_yds: 875.5, rush_tds: 7.5, receptions: 55.5, rec_yds: 450.5, rec_tds: 3.5 },
   { name: "Jonathan Taylor", position: "RB", pass_yds: 0, pass_tds: 0, rush_yds: 1100.5, rush_tds: 8.5, receptions: 35.5, rec_yds: 275.5, rec_tds: 1.5 },
   { name: "Saquon Barkley", position: "RB", pass_yds: 0, pass_tds: 0, rush_yds: 1050.5, rush_tds: 7.5, receptions: 45.5, rec_yds: 325.5, rec_tds: 2.5 },
-  
-  // Top WRs
   { name: "CeeDee Lamb", position: "WR", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 108.5, rec_yds: 1350.5, rec_tds: 9.5 },
   { name: "Tyreek Hill", position: "WR", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 105.5, rec_yds: 1375.5, rec_tds: 9.5 },
   { name: "Justin Jefferson", position: "WR", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 102.5, rec_yds: 1400.5, rec_tds: 8.5 },
@@ -34,15 +28,12 @@ const OFFSEASON_FUTURES_DATABASE = [
   { name: "Garrett Wilson", position: "WR", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 92.5, rec_yds: 1150.5, rec_tds: 7.5 },
   { name: "Marvin Harrison Jr.", position: "WR", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 75.5, rec_yds: 1050.5, rec_tds: 6.5 },
   { name: "Drake London", position: "WR", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 80.5, rec_yds: 1050.5, rec_tds: 6.5 },
-  
-  // Top TEs
   { name: "Travis Kelce", position: "TE", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 85.5, rec_yds: 900.5, rec_tds: 6.5 },
   { name: "Sam LaPorta", position: "TE", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 82.5, rec_yds: 875.5, rec_tds: 7.5 },
   { name: "Mark Andrews", position: "TE", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 75.5, rec_yds: 850.5, rec_tds: 6.5 },
   { name: "Trey McBride", position: "TE", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 80.5, rec_yds: 850.5, rec_tds: 5.5 }
 ];
 
-// Helper function to calculate points so we don't repeat math
 function calculatePoints(player) {
   let pts = 0;
   pts += (player.pass_yds / 25) + (player.pass_tds * 4);
@@ -54,6 +45,10 @@ function calculatePoints(player) {
 async function fetchLiveVegasData() {
   let finalRankings = [];
   let currentMode = 'weekly';
+
+  if (!API_KEY) {
+    return { rankings: OFFSEASON_FUTURES_DATABASE.map(p => ({...p, projected_points: calculatePoints(p)})), mode: 'offseason', error: 'THE_ODDS_API_KEY is missing from Vercel.' };
+  }
 
   try {
     const eventsRes = await fetch(`https://api.the-odds-api.com/v4/sports/${SPORT}/events?apiKey=${API_KEY}`, { cache: 'no-store' });
@@ -74,7 +69,6 @@ async function fetchLiveVegasData() {
           for (const market of bookmaker.markets) {
             for (const outcome of market.outcomes) {
               if (outcome.name === 'Under') continue;
-
               const playerName = outcome.description || outcome.name;
               if (!playerName || playerName === 'Over') continue;
 
@@ -120,7 +114,6 @@ async function fetchLiveVegasData() {
       }
     }
 
-    // 4. SMART FALLBACK: Process the Off-Season Database if there are no weekly games
     if (finalRankings.length === 0) {
       currentMode = 'offseason';
       finalRankings = OFFSEASON_FUTURES_DATABASE.map(player => ({
@@ -129,14 +122,12 @@ async function fetchLiveVegasData() {
       }));
     } 
     
-    // Sort all rankings (whether weekly or offseason)
     finalRankings.sort((a, b) => b.projected_points - a.projected_points);
 
     return { rankings: finalRankings, mode: currentMode, error: null };
     
   } catch (error) {
     console.error('Odds Engine Error:', error);
-    // If anything errors out, safely process the local database and show the draft board
     const fallbackRankings = OFFSEASON_FUTURES_DATABASE.map(player => ({
       ...player,
       projected_points: calculatePoints(player)
