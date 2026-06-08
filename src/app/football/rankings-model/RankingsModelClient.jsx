@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { FootballIcon } from '../../../components/icons';
 
 export default function RankingsModelClient({ initialRankings, mode, serverError }) {
   const [currentPosition, setCurrentPosition] = useState('All');
   const isOffseason = mode === 'offseason';
 
-  // Vegas Football Theme Constants (Matching ConsensusRanking.jsx)
+  // Vegas Football Theme Constants
   const bgImage = 'https://admin.fsan.com/wp-content/uploads/2026/04/NFL-Logo.webp';
   const primaryColor = '#e42d38';
   const secondaryColor = '#8a1a20';
@@ -48,7 +49,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
         </div>
       )}
 
-      {/* EXACT DUPLICATE HERO SECTION */}
+      {/* Red Hero Section */}
       <div className="relative w-full h-[220px] md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-8 mt-6 shadow-2xl">
         <div 
           className="absolute inset-0 opacity-80 z-0" 
@@ -76,7 +77,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
       </div>
 
       <div className="w-full">
-        {/* EXACT DUPLICATE FILTER BUTTONS */}
+        {/* Position Filter Buttons */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div className="flex flex-wrap gap-2 bg-[#1a1a1a] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
              {positions.map(pos => (
@@ -95,7 +96,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
           </div>
         </div>
 
-        {/* EXACT DUPLICATE TABLE CONTAINER */}
+        {/* Dark Table Container */}
         <div className="bg-[#111] rounded-3xl shadow-2xl border border-gray-800 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
           
           <div className="px-6 py-4 border-b border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -119,8 +120,10 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                   {/* Highlighted Fantasy Points */}
                   <th className="px-4 py-3 text-[10px] font-black text-red-500 uppercase tracking-widest text-center bg-red-900/10 border-x border-gray-800">Proj Pts</th>
                   
+                  {/* Added INTs to Passing Stats */}
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Pass Yds</th>
-                  <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center border-r border-gray-800">Pass TD</th>
+                  <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Pass TD</th>
+                  <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center border-r border-gray-800">INTs</th>
                   
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Rush Yds</th>
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center border-r border-gray-800">Rush TD</th>
@@ -135,7 +138,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                   visibleData.map((player) => (
                     <tr key={player.name} className="hover:bg-[#151515] transition-colors group">
                       
-                      {/* Ovr Rank Circle (Matching Consensus) */}
+                      {/* Ovr Rank Circle */}
                       <td className="px-4 py-2.5">
                         <div className="w-8 h-8 mx-auto rounded-full flex items-center justify-center text-xs font-black shrink-0 bg-gray-800 text-gray-300 border border-gray-700 shadow-inner group-hover:bg-gray-700 group-hover:text-white transition-colors">
                           {player.overallRank}
@@ -166,7 +169,9 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                       </td>
 
                       <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{player.pass_yds || '-'}</td>
-                      <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400 border-r border-gray-800/50">{player.pass_tds || '-'}</td>
+                      <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{player.pass_tds || '-'}</td>
+                      {/* INTs Column */}
+                      <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400 border-r border-gray-800/50">{player.ints || '-'}</td>
                       
                       <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{player.rush_yds || '-'}</td>
                       <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400 border-r border-gray-800/50">{player.rush_tds || '-'}</td>
@@ -178,7 +183,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="12" className="py-20 text-center">
+                    <td colSpan="13" className="py-20 text-center">
                       <h3 className="text-xl font-black text-white uppercase tracking-wider mb-2">No Data Available</h3>
                       <p className="text-gray-500 font-bold">No {currentPosition} projections exist yet.</p>
                     </td>
@@ -194,7 +199,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
           <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">Ranking Methodology</h3>
           <div className="text-xs text-gray-400 space-y-2 font-medium leading-relaxed">
             <p>• Projections are pulled directly from live DraftKings sportsbook player prop Over/Under totals.</p>
-            <p>• Player fantasy points are calculated using standard Full-PPR scoring logic (1 pt per reception, 4 pt passing TDs).</p>
+            <p>• Player fantasy points are calculated using standard Full-PPR scoring logic (1 pt per reception, 4 pt passing TDs, -2 pts per Interception).</p>
             <p>• Touchdown projections are derived using the implied probability mathematically extracted from the "Anytime TD" betting odds.</p>
             <p>• During the offseason, these numbers utilize DraftKings season-long player futures.</p>
           </div>

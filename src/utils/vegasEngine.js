@@ -3,40 +3,45 @@ import { unstable_cache } from 'next/cache';
 const API_KEY = process.env.THE_ODDS_API_KEY;
 const SPORT = 'americanfootball_nfl';
 const REGIONS = 'us';
-const MARKETS = 'player_pass_yds,player_pass_tds,player_rush_yds,player_receptions,player_rec_yds,player_anytime_td';
+// Added player_pass_ints to the requested markets
+const MARKETS = 'player_pass_yds,player_pass_tds,player_pass_ints,player_rush_yds,player_receptions,player_rec_yds,player_anytime_td';
 const BOOKMAKER = 'draftkings';
 
-// 🏈 REAL VEGAS OFF-SEASON FUTURES
+// 🏈 REAL VEGAS OFF-SEASON FUTURES (Added Interceptions)
 const OFFSEASON_FUTURES_DATABASE = [
-  { name: "Josh Allen", position: "QB", pass_yds: 3800.5, pass_tds: 27.5, rush_yds: 475.5, rush_tds: 7.5, receptions: 0, rec_yds: 0, rec_tds: 0 },
-  { name: "Patrick Mahomes", position: "QB", pass_yds: 4150.5, pass_tds: 31.5, rush_yds: 300.5, rush_tds: 2.5, receptions: 0, rec_yds: 0, rec_tds: 0 },
-  { name: "Jalen Hurts", position: "QB", pass_yds: 3550.5, pass_tds: 22.5, rush_yds: 550.5, rush_tds: 10.5, receptions: 0, rec_yds: 0, rec_tds: 0 },
-  { name: "Lamar Jackson", position: "QB", pass_yds: 3400.5, pass_tds: 21.5, rush_yds: 750.5, rush_tds: 5.5, receptions: 0, rec_yds: 0, rec_tds: 0 },
-  { name: "Christian McCaffrey", position: "RB", pass_yds: 0, pass_tds: 0, rush_yds: 1050.5, rush_tds: 9.5, receptions: 65.5, rec_yds: 550.5, rec_tds: 4.5 },
-  { name: "Breece Hall", position: "RB", pass_yds: 0, pass_tds: 0, rush_yds: 1025.5, rush_tds: 7.5, receptions: 60.5, rec_yds: 500.5, rec_tds: 3.5 },
-  { name: "Bijan Robinson", position: "RB", pass_yds: 0, pass_tds: 0, rush_yds: 1050.5, rush_tds: 7.5, receptions: 58.5, rec_yds: 475.5, rec_tds: 3.5 },
-  { name: "Jahmyr Gibbs", position: "RB", pass_yds: 0, pass_tds: 0, rush_yds: 875.5, rush_tds: 7.5, receptions: 55.5, rec_yds: 450.5, rec_tds: 3.5 },
-  { name: "Jonathan Taylor", position: "RB", pass_yds: 0, pass_tds: 0, rush_yds: 1100.5, rush_tds: 8.5, receptions: 35.5, rec_yds: 275.5, rec_tds: 1.5 },
-  { name: "Saquon Barkley", position: "RB", pass_yds: 0, pass_tds: 0, rush_yds: 1050.5, rush_tds: 7.5, receptions: 45.5, rec_yds: 325.5, rec_tds: 2.5 },
-  { name: "CeeDee Lamb", position: "WR", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 108.5, rec_yds: 1350.5, rec_tds: 9.5 },
-  { name: "Tyreek Hill", position: "WR", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 105.5, rec_yds: 1375.5, rec_tds: 9.5 },
-  { name: "Justin Jefferson", position: "WR", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 102.5, rec_yds: 1400.5, rec_tds: 8.5 },
-  { name: "Amon-Ra St. Brown", position: "WR", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 105.5, rec_yds: 1250.5, rec_tds: 8.5 },
-  { name: "Ja'Marr Chase", position: "WR", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 95.5, rec_yds: 1300.5, rec_tds: 9.5 },
-  { name: "A.J. Brown", position: "WR", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 90.5, rec_yds: 1250.5, rec_tds: 7.5 },
-  { name: "Puka Nacua", position: "WR", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 95.5, rec_yds: 1200.5, rec_tds: 7.5 },
-  { name: "Garrett Wilson", position: "WR", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 92.5, rec_yds: 1150.5, rec_tds: 7.5 },
-  { name: "Marvin Harrison Jr.", position: "WR", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 75.5, rec_yds: 1050.5, rec_tds: 6.5 },
-  { name: "Drake London", position: "WR", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 80.5, rec_yds: 1050.5, rec_tds: 6.5 },
-  { name: "Travis Kelce", position: "TE", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 85.5, rec_yds: 900.5, rec_tds: 6.5 },
-  { name: "Sam LaPorta", position: "TE", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 82.5, rec_yds: 875.5, rec_tds: 7.5 },
-  { name: "Mark Andrews", position: "TE", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 75.5, rec_yds: 850.5, rec_tds: 6.5 },
-  { name: "Trey McBride", position: "TE", pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0, receptions: 80.5, rec_yds: 850.5, rec_tds: 5.5 }
+  { name: "Josh Allen", position: "QB", pass_yds: 3800.5, pass_tds: 27.5, ints: 13.5, rush_yds: 475.5, rush_tds: 7.5, receptions: 0, rec_yds: 0, rec_tds: 0 },
+  { name: "Patrick Mahomes", position: "QB", pass_yds: 4150.5, pass_tds: 31.5, ints: 11.5, rush_yds: 300.5, rush_tds: 2.5, receptions: 0, rec_yds: 0, rec_tds: 0 },
+  { name: "Jalen Hurts", position: "QB", pass_yds: 3550.5, pass_tds: 22.5, ints: 12.5, rush_yds: 550.5, rush_tds: 10.5, receptions: 0, rec_yds: 0, rec_tds: 0 },
+  { name: "Lamar Jackson", position: "QB", pass_yds: 3400.5, pass_tds: 21.5, ints: 9.5, rush_yds: 750.5, rush_tds: 5.5, receptions: 0, rec_yds: 0, rec_tds: 0 },
+  
+  { name: "Christian McCaffrey", position: "RB", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 1050.5, rush_tds: 9.5, receptions: 65.5, rec_yds: 550.5, rec_tds: 4.5 },
+  { name: "Breece Hall", position: "RB", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 1025.5, rush_tds: 7.5, receptions: 60.5, rec_yds: 500.5, rec_tds: 3.5 },
+  { name: "Bijan Robinson", position: "RB", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 1050.5, rush_tds: 7.5, receptions: 58.5, rec_yds: 475.5, rec_tds: 3.5 },
+  { name: "Jahmyr Gibbs", position: "RB", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 875.5, rush_tds: 7.5, receptions: 55.5, rec_yds: 450.5, rec_tds: 3.5 },
+  { name: "Jonathan Taylor", position: "RB", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 1100.5, rush_tds: 8.5, receptions: 35.5, rec_yds: 275.5, rec_tds: 1.5 },
+  { name: "Saquon Barkley", position: "RB", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 1050.5, rush_tds: 7.5, receptions: 45.5, rec_yds: 325.5, rec_tds: 2.5 },
+  
+  { name: "CeeDee Lamb", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 108.5, rec_yds: 1350.5, rec_tds: 9.5 },
+  { name: "Tyreek Hill", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 105.5, rec_yds: 1375.5, rec_tds: 9.5 },
+  { name: "Justin Jefferson", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 102.5, rec_yds: 1400.5, rec_tds: 8.5 },
+  { name: "Amon-Ra St. Brown", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 105.5, rec_yds: 1250.5, rec_tds: 8.5 },
+  { name: "Ja'Marr Chase", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 95.5, rec_yds: 1300.5, rec_tds: 9.5 },
+  { name: "A.J. Brown", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 90.5, rec_yds: 1250.5, rec_tds: 7.5 },
+  { name: "Puka Nacua", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 95.5, rec_yds: 1200.5, rec_tds: 7.5 },
+  { name: "Garrett Wilson", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 92.5, rec_yds: 1150.5, rec_tds: 7.5 },
+  { name: "Marvin Harrison Jr.", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 75.5, rec_yds: 1050.5, rec_tds: 6.5 },
+  { name: "Drake London", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 80.5, rec_yds: 1050.5, rec_tds: 6.5 },
+  
+  { name: "Travis Kelce", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 85.5, rec_yds: 900.5, rec_tds: 6.5 },
+  { name: "Sam LaPorta", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 82.5, rec_yds: 875.5, rec_tds: 7.5 },
+  { name: "Mark Andrews", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 75.5, rec_yds: 850.5, rec_tds: 6.5 },
+  { name: "Trey McBride", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 80.5, rec_yds: 850.5, rec_tds: 5.5 }
 ];
 
 function calculatePoints(player) {
   let pts = 0;
   pts += (player.pass_yds / 25) + (player.pass_tds * 4);
+  pts -= ((player.ints || 0) * 2); // Minus 2 points per Interception
   pts += (player.rush_yds / 10) + (player.rec_yds / 10) + (player.receptions * 1);
   pts += ((player.rush_tds || 0) * 6) + ((player.rec_tds || 0) * 6);
   return Number(pts.toFixed(2));
@@ -75,13 +80,15 @@ async function fetchLiveVegasData() {
               if (!playerStats[playerName]) {
                 playerStats[playerName] = { 
                   name: playerName, game: `${gameOdds.away_team} @ ${gameOdds.home_team}`,
-                  pass_yds: 0, pass_tds: 0, rush_yds: 0, rush_tds: 0,
+                  pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0,
                   receptions: 0, rec_yds: 0, rec_tds: 0, anytime_td_odds: 0, position: "FLEX"
                 };
               }
 
               if (market.key === 'player_anytime_td') {
                 playerStats[playerName].anytime_td_odds = outcome.price;
+              } else if (market.key === 'player_pass_ints') {
+                playerStats[playerName].ints = outcome.point;
               } else {
                 playerStats[playerName][market.key.replace('player_', '')] = outcome.point;
               }
@@ -91,6 +98,7 @@ async function fetchLiveVegasData() {
 
         finalRankings = Object.values(playerStats).map(player => {
           let pts = (player.pass_yds / 25) + (player.pass_tds * 4) + (player.rush_yds / 10) + (player.rec_yds / 10) + (player.receptions * 1);
+          pts -= (player.ints * 2); // Minus 2 points per Interception
           
           if (player.anytime_td_odds) {
             let prob = 0;
