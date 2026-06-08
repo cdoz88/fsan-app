@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Settings, ShieldAlert, TrendingUp, RefreshCw } from 'lucide-react'; 
+import { Settings, ShieldAlert, TrendingUp, RefreshCw, Info, X } from 'lucide-react'; 
 import { FootballIcon } from '../../../components/icons';
 
 export default function RankingsModelClient({ initialRankings, mode, serverError }) {
   const [currentPosition, setCurrentPosition] = useState('All');
   const [showSettings, setShowSettings] = useState(false);
+  const [showMarketInfo, setShowMarketInfo] = useState(false);
   const [rankingMode, setRankingMode] = useState('redraft'); // 'redraft' or 'dynasty'
   const [dynastyStrategy, setDynastyStrategy] = useState('neutral'); // 'win_now', 'neutral', 'build'
   const isOffseason = mode === 'offseason';
@@ -117,25 +118,64 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
     return 1;
   };
 
-  // 📈 Algorithmic Market Status Engine
-  const getMarketStatus = (position, age, strategy, points) => {
-    if (!age) return { text: 'FAIR VALUE', color: 'text-gray-400 bg-gray-800/40 border-gray-700/50' };
+  // 📊 COMPREHENSIVE DYNASTY CORE MATRIX ENGINE
+  const getDynastyMetrics = (position, age, strategy, points) => {
+    let assetProfile = { text: 'Roster Depth', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
+    let marketAction = { text: 'Fair Value', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
 
+    if (!age) return { assetProfile, marketAction };
+
+    // Axis 1: Roster Asset Profiling
+    if (points > 210) {
+      if (age <= 25) {
+        assetProfile = { text: '💎 Cornerstone', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' };
+      } else if (age >= 28) {
+        assetProfile = { text: '🏆 Win-Now Asset', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
+      } else {
+        assetProfile = { text: '💎 Cornerstone', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' };
+      }
+    } else if (points > 130) {
+      if (age <= 23) {
+        assetProfile = { text: '📈 High Upside', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+      } else if (age >= 28) {
+        assetProfile = { text: '🏆 Win-Now Asset', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
+      } else {
+        assetProfile = { text: '⚔️ Core Starter', color: 'text-zinc-300 bg-zinc-800/40 border-zinc-700/40' };
+      }
+    } else {
+      if (age <= 23) {
+        assetProfile = { text: '🌱 High Upside / Stash', color: 'text-teal-400 bg-teal-950/20 border-teal-900/30' };
+      }
+    }
+
+    // Axis 2: Actionable Market Recommendations (Tilted by Manager Strategy Strategy)
     if (strategy === 'build') {
-      if (age <= 23 && points > 180) return { text: '🟢 SCREAMING BUY', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
-      if (age >= 28) return { text: '🔴 SELL HIGH', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
+      if (age <= 23 && points > 150) {
+        marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+      } else if (age <= 24) {
+        marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+      } else if (age >= 29) {
+        marketAction = { text: 'Sell Now', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
+      } else if (age >= 26) {
+        marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
+      }
+    } else if (strategy === 'win_now') {
+      if (age >= 27 && points > 170) {
+        marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+      } else if (age >= 28 && points > 130) {
+        marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+      } else if (age <= 23 && points < 120) {
+        marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
+      }
+    } else {
+      // Balanced Timeline Logics
+      if (age <= 22 && points > 160) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+      else if (age <= 24 && points < 140) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+      else if (age >= 30) marketAction = { text: 'Sell Now', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
+      else if (age >= 28 && points > 190) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
     }
-    if (strategy === 'win_now') {
-      if (age >= 27 && points > 200) return { text: '🟢 WIN-NOW BUY', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
-      if (age <= 22) return { text: '🟡 HOLD / OVERPRICED', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
-    }
-    
-    // Balanced Base Logics
-    if (position === 'RB' && age <= 22) return { text: '🟢 SCREAMING BUY', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
-    if (position === 'WR' && age <= 23 && points > 220) return { text: '🟢 SCREAMING BUY', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
-    if (age >= 30) return { text: '🔴 AGING ASSET', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
-    
-    return { text: '🟡 FAIR VALUE', color: 'text-zinc-400 bg-zinc-800/40 border-zinc-700/50' };
+
+    return { assetProfile, marketAction };
   };
 
   // ⚡ DYNAMIC RECALCULATION ENGINE
@@ -158,16 +198,17 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
       }
       pts += recPoints;
 
-      // Calculate Dynasty Score
+      // Calculate Dynasty Scores and Matrix Tags
       const ageMult = getAgeMultiplier(player.position, player.age, dynastyStrategy);
       const dynastyScore = Math.round(pts * ageMult * 2.5);
-      const marketStatus = getMarketStatus(player.position, player.age, dynastyStrategy, pts);
+      const { assetProfile, marketAction } = getDynastyMetrics(player.position, player.age, dynastyStrategy, pts);
 
       return {
         ...player,
         projected_points: Number(pts.toFixed(1)),
         dynasty_score: dynastyScore,
-        market_status: marketStatus
+        asset_profile: assetProfile,
+        market_action: marketAction
       };
     });
 
@@ -203,8 +244,48 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
   const positions = ['All', 'QB', 'RB', 'WR', 'TE'];
 
   return (
-    <div className="w-full animate-in fade-in duration-500 pb-24">
+    <div className="w-full animate-in fade-in duration-500 pb-24 relative">
       
+      {/* ℹ️ Upgraded Explanation Modal */}
+      {showMarketInfo && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#161616] border border-gray-800 w-full max-w-xl rounded-3xl p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setShowMarketInfo(false)}
+              className="absolute right-4 top-4 text-gray-500 hover:text-white transition-colors"
+            >
+              <X size={20} />
+            </button>
+            
+            <h3 className="text-base font-black text-white uppercase tracking-wider mb-5 flex items-center gap-2">
+              <Info size={18} className="text-zinc-400" /> Valuation Architecture & Matrix Labels
+            </h3>
+            
+            <div className="space-y-5 text-xs font-medium text-gray-400 leading-relaxed">
+              <p>Our dynasty model indexes **implied market output (Vegas season expectations)** directly across historical **position-specific production age cliffs** using two unique diagnostic columns:</p>
+              
+              <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60">
+                <h4 className="text-[10px] uppercase font-black tracking-widest text-white">Axis 1: Asset Profiling</h4>
+                <p>• <span className="text-sky-400 font-bold">💎 Cornerstone:</span> Elite premium assets with extensive production runways. Essential foundational builds.</p>
+                <p>• <span className="text-amber-400 font-bold">🏆 Win-Now Asset:</span> High point production volume. Crucial value anchors for current season title contention.</p>
+                <p>• <span className="text-teal-400 font-bold">📈 High Upside / Stash:</span> Developmentally insulated profiles showing asymmetric breakout metrics relative to age threshold.</p>
+              </div>
+
+              <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60">
+                <h4 className="text-[10px] uppercase font-black tracking-widest text-white">Axis 2: Actionable Market Recommendation</h4>
+                <p>• <span className="text-emerald-400 font-bold">Buy Now:</span> Deep inefficiencies identified between production volume and market perception. Acquire immediately.</p>
+                <p>• <span className="text-teal-400 font-bold">Buy Low:</span> Price point optimization window opened due to macro roster trends or strategic mismatch.</p>
+                <p>• <span className="text-zinc-400 font-bold">Fair Value:</span> Valued completely accurately on standard baseline equilibrium metrics.</p>
+                <p>• <span className="text-rose-400 font-bold">Sell High:</span> Asset valuation apex. Historical models indicate exchanging for future values right now optimizes returns.</p>
+                <p>• <span className="text-red-400 font-bold">Sell Now / Peak Value:</span> High value erosion risk. Rapid asset degradation threshold approaching. Exit positioning advised.</p>
+              </div>
+
+              <p className="text-[10px] italic text-gray-500">Note: Identifiers shift instantly in real-time based on your specific team strategy selection (Win Now, Balanced, or Rebuild).</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {serverError && (
         <div className="mt-6 mb-2 p-4 bg-red-900/30 border border-red-800 rounded-2xl text-red-200 text-xs font-mono font-bold tracking-wide">
           ⚠️ Vegas Engine Diagnostics Notice: {serverError}
@@ -241,11 +322,11 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
       </div>
 
       <div className="w-full">
-        {/* Top Controls Row: Mode Toggle, Position Filters + Settings */}
+        {/* Controls Row */}
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6">
           
           <div className="flex flex-wrap gap-4 items-center w-full xl:w-auto">
-            {/* Mode Toggle (Redraft vs Dynasty) */}
+            {/* Mode Toggle */}
             <div className="flex bg-[#111] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
               <button 
                 onClick={() => setRankingMode('redraft')}
@@ -287,7 +368,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
             </div>
           </div>
 
-          {/* Dynamic Strategy Matrix Block (Visible only in Dynasty Mode) */}
+          {/* Dynamic Strategy Matrix Block */}
           <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto xl:justify-end">
             {rankingMode === 'dynasty' && (
               <div className="flex items-zinc bg-[#111] p-1.5 rounded-2xl border border-gray-800 w-fit animate-in fade-in zoom-in-95 duration-300">
@@ -394,8 +475,16 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
         <div className="bg-[#111] rounded-3xl shadow-2xl border border-gray-800 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
           
           <div className="px-6 py-4 border-b border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <h2 className="text-lg font-black text-white uppercase tracking-wider">
+            <h2 className="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
               {rankingMode === 'dynasty' ? 'Age-Decay Valuation Matrix' : `Vegas Implied ${currentPosition === 'All' ? 'Overall' : currentPosition} Projections`}
+              {rankingMode === 'dynasty' && (
+                <button 
+                  onClick={() => setShowMarketInfo(true)}
+                  className="text-gray-500 hover:text-white transition-colors p-1 rounded-lg bg-[#1a1a1a] border border-gray-800"
+                >
+                  <Info size={14} />
+                </button>
+              )}
             </h2>
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-gray-800">
               Data Engine: <span className="text-white">DraftKings Sportsbook Inputs</span>
@@ -415,7 +504,8 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                     <>
                       <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center">Age</th>
                       <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center bg-zinc-900/20 border-x border-gray-800">Dynasty Score</th>
-                      <th className="px-5 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest">Market Recommendation</th>
+                      <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest">Roster Asset Type</th>
+                      <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest">Market Recommendation</th>
                     </>
                   ) : (
                     <>
@@ -479,9 +569,14 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                                {player.dynasty_score}
                              </div>
                           </td>
-                          <td className="px-5 py-2.5">
-                            <span className={`text-[10px] font-black tracking-wider px-3 py-1 rounded-lg border uppercase ${player.market_status.color}`}>
-                              {player.market_status.text}
+                          <td className="px-4 py-2.5">
+                            <span className={`text-[10px] font-black tracking-wider px-3 py-1 rounded-lg border uppercase ${player.asset_profile.color}`}>
+                              {player.asset_profile.text}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <span className={`text-[10px] font-black tracking-wider px-3 py-1 rounded-lg border uppercase ${player.market_action.color}`}>
+                              {player.market_action.text}
                             </span>
                           </td>
                         </>
