@@ -1,20 +1,62 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { Settings } from 'lucide-react'; // Added Settings Icon
 import { FootballIcon } from '../../../components/icons';
 
 export default function RankingsModelClient({ initialRankings, mode, serverError }) {
   const [currentPosition, setCurrentPosition] = useState('All');
+  const [showSettings, setShowSettings] = useState(false);
   const isOffseason = mode === 'offseason';
+
+  // Scoring Format State Variables
+  const [pprValue, setPprValue] = useState(1);       // Default: Full PPR (1 pt)
+  const [passTdValue, setPassTdValue] = useState(4); // Default: 4 pts per Pass TD
+  const [tePremium, setTePremium] = useState(0);     // Default: 0 bonus pts per TE reception
 
   // Vegas Football Theme Constants
   const bgImage = 'https://admin.fsan.com/wp-content/uploads/2026/04/NFL-Logo.webp';
   const primaryColor = '#e42d38';
   const secondaryColor = '#8a1a20';
 
+  // ⚡ DYNAMIC RECALCULATION ENGINE
+  // This watches the scoring state and instantly recalculates everything when a button is clicked
   const processedRankings = useMemo(() => {
+    
+    // 1. Recalculate Fantasy Points based on user settings
+    const recalculated = (initialRankings || []).map(player => {
+      let pts = 0;
+      
+      pts += ((player.pass_yds || 0) / 25);
+      pts += ((player.pass_tds || 0) * passTdValue); // Uses custom Pass TD value
+      pts -= ((player.turnovers || 0) * 2);
+      pts += ((player.rush_yds || 0) / 10);
+      pts += ((player.rush_tds || 0) * 6);
+      pts += ((player.rec_yds || 0) / 10);
+      pts += ((player.rec_tds || 0) * 6);
+      
+      // Calculate Receptions using custom PPR value
+      let recPoints = ((player.receptions || 0) * pprValue);
+      
+      // Add TE Premium Bonus if applicable
+      if (player.position === 'TE' || player.position === 'WR/TE') {
+        recPoints += ((player.receptions || 0) * tePremium);
+      }
+      
+      pts += recPoints;
+
+      return {
+        ...player,
+        projected_points: Number(pts.toFixed(2)) // Override the server's baseline points
+      };
+    });
+
+    // 2. Sort the array by the NEW projected points from highest to lowest
+    recalculated.sort((a, b) => b.projected_points - a.projected_points);
+
+    // 3. Assign the new Overall Ranks and Position Ranks based on the new sorted order
     const posCounters = {};
-    return (initialRankings || []).map((player, index) => {
+    return recalculated.map((player, index) => {
       const pos = player.position || 'UNK';
       
       if (!posCounters[pos]) posCounters[pos] = 0;
@@ -26,8 +68,9 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
         posRank: `${pos}${posCounters[pos]}`
       };
     });
-  }, [initialRankings]);
+  }, [initialRankings, pprValue, passTdValue, tePremium]); // Re-runs instantly if these variables change
 
+  // Filter rankings based on selected position
   const visibleData = processedRankings.filter((player) => {
     if (currentPosition === 'All') return true;
     if (player.position === 'WR/TE') {
@@ -67,7 +110,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
             </h1>
             <p className="text-gray-300 font-medium md:text-lg">
               {isOffseason 
-                ? 'Aggregated PPR projections modeled directly from Vegas season-long player futures.'
+                ? 'Aggregated projections modeled directly from Vegas season-long player futures.'
                 : 'Projected fantasy points calculated dynamically from live sportsbook player props.'}
             </p>
           </div>
@@ -75,7 +118,8 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
       </div>
 
       <div className="w-full">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        {/* Top Controls Row: Position Filters + Settings Toggle */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div className="flex flex-wrap gap-2 bg-[#1a1a1a] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
              {positions.map(pos => (
                 <button 
@@ -91,8 +135,79 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                 </button>
              ))}
           </div>
+
+          <button 
+            onClick={() => setShowSettings(!showSettings)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${
+              showSettings 
+                ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.2)] border-transparent' 
+                : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-gray-800 shadow-sm'
+            }`}
+          >
+            <Settings size={16} className={showSettings ? 'animate-spin-slow' : ''} /> 
+            {showSettings ? 'Hide Scoring' : 'Custom Scoring'}
+          </button>
         </div>
 
+        {/* Custom Scoring Panel (Expands when toggled) */}
+        {showSettings && (
+          <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 mb-8 shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
+            <h3 className="text-sm font-black text-white uppercase tracking-wider mb-6 flex items-center gap-2">
+               Adjust League Scoring Format
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              
+              {/* Receptions Toggle */}
+              <div className="flex flex-col gap-3">
+                <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Receptions (PPR)</span>
+                <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
+                  {[{ label: 'STD', val: 0 }, { label: 'HALF', val: 0.5 }, { label: 'FULL', val: 1 }].map(opt => (
+                    <button 
+                      key={opt.label} onClick={() => setPprValue(opt.val)}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${pprValue === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Pass TD Toggle */}
+              <div className="flex flex-col gap-3">
+                <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Passing TDs</span>
+                <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
+                  {[{ label: '4 PTS', val: 4 }, { label: '6 PTS', val: 6 }].map(opt => (
+                    <button 
+                      key={opt.label} onClick={() => setPassTdValue(opt.val)}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${passTdValue === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* TE Premium Toggle */}
+              <div className="flex flex-col gap-3">
+                <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">TE Premium Bonus</span>
+                <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
+                  {[{ label: 'NONE', val: 0 }, { label: '+0.5', val: 0.5 }, { label: '+1.0', val: 1 }].map(opt => (
+                    <button 
+                      key={opt.label} onClick={() => setTePremium(opt.val)}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${tePremium === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* Dark Table Container */}
         <div className="bg-[#111] rounded-3xl shadow-2xl border border-gray-800 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
           
           <div className="px-6 py-4 border-b border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -125,7 +240,6 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Rec Yds</th>
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center border-r border-gray-800">Rec TD</th>
                   
-                  {/* Moved TOs to the very end */}
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">TOs</th>
                 </tr>
               </thead>
@@ -170,7 +284,6 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                       <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{player.rec_yds || '-'}</td>
                       <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400 border-r border-gray-800/50">{player.rec_tds || '-'}</td>
                       
-                      {/* Using the combined turnovers property at the end */}
                       <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{player.turnovers !== undefined && player.turnovers > 0 ? player.turnovers : '-'}</td>
                     </tr>
                   ))
@@ -191,7 +304,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
           <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">Ranking Methodology</h3>
           <div className="text-xs text-gray-400 space-y-2 font-medium leading-relaxed">
             <p>• Projections are pulled directly from live DraftKings sportsbook player prop Over/Under totals.</p>
-            <p>• Player fantasy points are calculated using standard Full-PPR scoring logic (1 pt per reception, 4 pt passing TDs, -2 pts per Turnover).</p>
+            <p>• Player fantasy points are calculated dynamically based on your selected scoring format.</p>
             <p>• Touchdown projections are derived using the implied probability mathematically extracted from the "Anytime TD" betting odds.</p>
             <p>• During the offseason, these numbers utilize DraftKings season-long player futures.</p>
           </div>
