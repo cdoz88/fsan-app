@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { FootballIcon } from '../../../components/icons';
 
 export default function RankingsModelClient({ initialRankings, mode, serverError }) {
   const [activePosition, setActivePosition] = useState('All');
@@ -35,20 +36,18 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
   const positions = ['All', 'QB', 'RB', 'WR', 'TE'];
 
   return (
-    <div className="w-full flex flex-col items-center">
+    <div className="max-w-7xl mx-auto flex flex-col items-center w-full">
       {serverError && (
-        <div className="mb-6 w-full p-4 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm font-mono text-center">
+        <div className="mb-6 w-full p-4 bg-amber-900/50 border border-amber-700 rounded-xl text-amber-200 text-sm font-mono text-center">
           <strong>Vegas Engine Diagnostics Notice:</strong> {serverError}
         </div>
       )}
 
-      {/* 1. Red Hero Section exactly matching the Football Theme screenshot */}
-      <div className="relative w-full overflow-hidden bg-[#dc2626] rounded-3xl p-10 md:p-14 mb-8 shadow-xl flex flex-col items-center justify-center text-center border border-red-700">
-        {/* NFL Logo Watermark Background (Stylized Shield) */}
-        <div className="absolute right-[-5%] top-[-10%] opacity-20 pointer-events-none w-64 h-64 md:w-96 md:h-96">
-          <svg viewBox="0 0 100 100" fill="currentColor" className="text-white" xmlns="http://www.w3.org/2000/svg">
-            <path d="M50 5L90 25V75L50 95L10 75V25L50 5Z" />
-          </svg>
+      {/* 1. Red Hero Section */}
+      <div className="relative w-full overflow-hidden bg-red-600 rounded-3xl p-10 md:p-14 mb-8 shadow-2xl flex flex-col items-center justify-center text-center">
+        {/* NFL Logo Watermark Background using your existing FootballIcon */}
+        <div className="absolute right-[-5%] top-[-10%] opacity-20 pointer-events-none w-64 h-64 md:w-96 md:h-96 text-black">
+          <FootballIcon />
         </div>
 
         <span className="relative z-10 text-white/90 text-sm md:text-base font-bold uppercase tracking-[0.2em] mb-2 drop-shadow-sm">
@@ -67,8 +66,8 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
             onClick={() => setActivePosition(pos)}
             className={`px-8 py-3 text-sm font-black uppercase tracking-widest rounded-full transition-all duration-200 ${
               activePosition === pos
-                ? 'bg-[#dc2626] text-white shadow-lg shadow-red-600/30 scale-105'
-                : 'bg-white text-gray-700 hover:bg-red-50 hover:text-[#dc2626] border border-gray-200 shadow-sm'
+                ? 'bg-red-600 text-white shadow-lg shadow-red-600/30 scale-105'
+                : 'bg-[#1a1a1a] text-gray-400 hover:bg-gray-800 hover:text-white border border-gray-800 shadow-sm'
             }`}
           >
             {pos}
@@ -76,25 +75,25 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
         ))}
       </div>
       
-      {/* 3. Clean Light-Mode Table Container */}
-      <div className="w-full bg-white shadow-2xl rounded-3xl border border-gray-200 overflow-hidden mb-12">
+      {/* 3. Dark Table Container */}
+      <div className="w-full bg-[#1a1a1a] shadow-2xl rounded-3xl border border-gray-800 overflow-hidden mb-12">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse whitespace-nowrap min-w-[900px]">
             <thead>
-              <tr className="bg-gray-100 text-gray-600 uppercase text-xs border-b-2 border-gray-200">
+              <tr className="bg-[#111111] text-gray-400 uppercase text-xs border-b-2 border-gray-800">
                 <th className="p-4 font-bold tracking-wider text-center">Ovr Rank</th>
                 <th className="p-4 font-bold tracking-wider text-center">Pos Rank</th>
                 <th className="p-4 font-semibold tracking-wider">Player</th>
                 {!isOffseason && <th className="p-4 font-semibold tracking-wider">Game</th>}
-                <th className="p-4 font-extrabold text-green-800 bg-green-100 border-x border-green-200 shadow-sm text-center">Proj Pts</th>
+                <th className="p-4 font-extrabold text-red-400 bg-red-900/10 border-x border-gray-800 shadow-sm text-center">Proj Pts</th>
                 
                 {/* Passing Stats */}
                 <th className="p-4 font-semibold tracking-wider text-center text-gray-500">Pass Yds</th>
-                <th className="p-4 font-semibold tracking-wider text-center text-gray-500 border-r border-gray-200">Pass TD</th>
+                <th className="p-4 font-semibold tracking-wider text-center text-gray-500 border-r border-gray-800">Pass TD</th>
                 
                 {/* Rushing Stats */}
                 <th className="p-4 font-semibold tracking-wider text-center text-gray-500">Rush Yds</th>
-                <th className="p-4 font-semibold tracking-wider text-center text-gray-500 border-r border-gray-200">Rush TD</th>
+                <th className="p-4 font-semibold tracking-wider text-center text-gray-500 border-r border-gray-800">Rush TD</th>
                 
                 {/* Receiving Stats */}
                 <th className="p-4 font-semibold tracking-wider text-center text-gray-500">Recs</th>
@@ -102,44 +101,44 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                 <th className="p-4 font-semibold tracking-wider text-center text-gray-500">Rec TD</th>
               </tr>
             </thead>
-            <tbody className="text-gray-700">
+            <tbody className="text-gray-200">
               {filteredRankings && filteredRankings.length > 0 ? (
                 filteredRankings.map((player) => (
-                  <tr key={player.name} className="border-b border-gray-100 hover:bg-gray-50 transition-colors text-sm">
+                  <tr key={player.name} className="border-b border-gray-800/60 hover:bg-gray-800/40 transition-colors text-sm">
                     {/* Overall Rank */}
-                    <td className="p-4 font-bold text-gray-400 text-center">
+                    <td className="p-4 font-bold text-gray-500 text-center">
                       {player.overallRank}
                     </td>
                     
                     {/* Position Rank */}
                     <td className="p-4 text-center">
-                      <span className="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-md">
+                      <span className="bg-gray-800 text-gray-300 text-xs font-bold px-3 py-1.5 rounded-md">
                         {player.posRank}
                       </span>
                     </td>
 
-                    <td className="p-4 font-bold text-gray-900 text-base">{player.name}</td>
+                    <td className="p-4 font-bold text-white text-base">{player.name}</td>
                     
-                    {!isOffseason && <td className="p-4 text-gray-500 font-medium">{player.game}</td>}
+                    {!isOffseason && <td className="p-4 text-gray-400 font-medium">{player.game}</td>}
                     
-                    <td className="p-4 font-black text-green-700 bg-green-50 border-x border-green-100 text-lg text-center">
+                    <td className="p-4 font-black text-red-400 bg-red-900/10 border-x border-gray-800 text-lg text-center">
                       {player.projected_points.toFixed(1)}
                     </td>
                     
-                    <td className="p-4 text-gray-500 text-center">{player.pass_yds || '-'}</td>
-                    <td className="p-4 text-gray-500 text-center border-r border-gray-100">{player.pass_tds || '-'}</td>
+                    <td className="p-4 text-gray-400 text-center">{player.pass_yds || '-'}</td>
+                    <td className="p-4 text-gray-400 text-center border-r border-gray-800/60">{player.pass_tds || '-'}</td>
                     
-                    <td className="p-4 text-gray-500 text-center">{player.rush_yds || '-'}</td>
-                    <td className="p-4 text-gray-500 text-center border-r border-gray-100">{player.rush_tds || '-'}</td>
+                    <td className="p-4 text-gray-400 text-center">{player.rush_yds || '-'}</td>
+                    <td className="p-4 text-gray-400 text-center border-r border-gray-800/60">{player.rush_tds || '-'}</td>
                     
-                    <td className="p-4 text-gray-500 text-center">{player.receptions || '-'}</td>
-                    <td className="p-4 text-gray-500 text-center">{player.rec_yds || '-'}</td>
-                    <td className="p-4 text-gray-500 text-center">{player.rec_tds || '-'}</td>
+                    <td className="p-4 text-gray-400 text-center">{player.receptions || '-'}</td>
+                    <td className="p-4 text-gray-400 text-center">{player.rec_yds || '-'}</td>
+                    <td className="p-4 text-gray-400 text-center">{player.rec_tds || '-'}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="13" className="p-12 text-center text-gray-400 text-lg">
+                  <td colSpan="13" className="p-12 text-center text-gray-500 text-lg">
                     No players found matching the selected position filter.
                   </td>
                 </tr>
