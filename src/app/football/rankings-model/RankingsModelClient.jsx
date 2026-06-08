@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Settings } from 'lucide-react'; // Added Settings Icon
+import { Settings } from 'lucide-react'; 
 import { FootballIcon } from '../../../components/icons';
 
 export default function RankingsModelClient({ initialRankings, mode, serverError }) {
@@ -10,9 +10,9 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
   const isOffseason = mode === 'offseason';
 
   // Scoring Format State Variables
-  const [pprValue, setPprValue] = useState(1);       // Default: Full PPR (1 pt)
-  const [passTdValue, setPassTdValue] = useState(4); // Default: 4 pts per Pass TD
-  const [tePremium, setTePremium] = useState(0);     // Default: 0 bonus pts per TE reception
+  const [pprValue, setPprValue] = useState(1);       
+  const [passTdValue, setPassTdValue] = useState(4); 
+  const [tePremium, setTePremium] = useState(0);     
 
   // Vegas Football Theme Constants
   const bgImage = 'https://admin.fsan.com/wp-content/uploads/2026/04/NFL-Logo.webp';
@@ -20,15 +20,13 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
   const secondaryColor = '#8a1a20';
 
   // ⚡ DYNAMIC RECALCULATION ENGINE
-  // This watches the scoring state and instantly recalculates everything when a button is clicked
   const processedRankings = useMemo(() => {
-    
     // 1. Recalculate Fantasy Points based on user settings
     const recalculated = (initialRankings || []).map(player => {
       let pts = 0;
       
       pts += ((player.pass_yds || 0) / 25);
-      pts += ((player.pass_tds || 0) * passTdValue); // Uses custom Pass TD value
+      pts += ((player.pass_tds || 0) * passTdValue); 
       pts -= ((player.turnovers || 0) * 2);
       pts += ((player.rush_yds || 0) / 10);
       pts += ((player.rush_tds || 0) * 6);
@@ -47,7 +45,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
 
       return {
         ...player,
-        projected_points: Number(pts.toFixed(2)) // Override the server's baseline points
+        projected_points: Number(pts.toFixed(2)) 
       };
     });
 
@@ -68,7 +66,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
         posRank: `${pos}${posCounters[pos]}`
       };
     });
-  }, [initialRankings, pprValue, passTdValue, tePremium]); // Re-runs instantly if these variables change
+  }, [initialRankings, pprValue, passTdValue, tePremium]); 
 
   // Filter rankings based on selected position
   const visibleData = processedRankings.filter((player) => {
@@ -261,9 +259,20 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                       </td>
 
                       <td className="px-4 py-2.5">
-                         <span className="text-sm font-black text-gray-100 tracking-tight">
-                           {player.name}
-                         </span>
+                         <div className="flex items-center gap-3">
+                           {/* 🏈 The ESPN CDN Team Logo rendered dynamically */}
+                           {player.team && (
+                             <img 
+                               src={`https://a.espncdn.com/i/teamlogos/nfl/500/${player.team.toLowerCase()}.png`} 
+                               alt={player.team}
+                               className="w-6 h-6 object-contain drop-shadow-md"
+                               onError={(e) => e.target.style.display = 'none'}
+                             />
+                           )}
+                           <span className="text-sm font-black text-gray-100 tracking-tight">
+                             {player.name}
+                           </span>
+                         </div>
                       </td>
                       
                       {!isOffseason && <td className="px-4 py-2.5 text-xs font-bold text-gray-400 uppercase tracking-wider">{player.game}</td>}
@@ -305,7 +314,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
           <div className="text-xs text-gray-400 space-y-2 font-medium leading-relaxed">
             <p>• Projections are pulled directly from live DraftKings sportsbook player prop Over/Under totals.</p>
             <p>• Player fantasy points are calculated dynamically based on your selected scoring format.</p>
-            <p>• Touchdown projections are derived using the implied probability mathematically extracted from the "Anytime TD" betting odds.</p>
+            <p>• Touchdown projections are derived using the true expected value calculated via a Poisson Distribution of the "Anytime TD" betting odds.</p>
             <p>• During the offseason, these numbers utilize DraftKings season-long player futures.</p>
           </div>
         </div>

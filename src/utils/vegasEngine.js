@@ -91,7 +91,8 @@ async function fetchLiveVegasData() {
                 playerStats[playerName] = { 
                   name: playerName, game: `${gameOdds.away_team} @ ${gameOdds.home_team}`,
                   pass_yds: 0, pass_tds: 0, ints: 0, fumbles: 0, rush_yds: 0, rush_tds: 0,
-                  receptions: 0, rec_yds: 0, rec_tds: 0, anytime_td_odds: 0, position: "FLEX"
+                  receptions: 0, rec_yds: 0, rec_tds: 0, anytime_td_odds: 0, position: "FLEX",
+                  team: null // Initialize team for the roster cross-reference
                 };
               }
 
@@ -110,6 +111,12 @@ async function fetchLiveVegasData() {
         // Process final math for every scraped player
         finalRankings = Object.values(playerStats).map(player => {
           
+          // 🏈 Look up the player in the Master Roster to attach their team abbreviation
+          const masterPlayer = OFFSEASON_FUTURES_DATABASE.find(p => p.name === player.name);
+          if (masterPlayer && masterPlayer.team) {
+            player.team = masterPlayer.team;
+          }
+
           // POISSON DISTRIBUTION EV CALCULATION
           if (player.anytime_td_odds) {
             const rawProb = getImpliedProb(player.anytime_td_odds);
