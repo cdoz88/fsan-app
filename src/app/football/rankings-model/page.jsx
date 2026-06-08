@@ -1,13 +1,29 @@
+import React from 'react';
+import Header from '../../../components/Header';
+import Sidebar from '../../../components/Sidebar';
 import RankingsModelClient from './RankingsModelClient';
-import Header from '@/components/Header';
-import Sidebar from '@/components/Sidebar';
+import { PlayerProvider } from '../../../context/PlayerContext';
+import { getMenuBySlug } from '../../../utils/api';
 
 export const metadata = {
   title: 'Vegas Implied Rankings | FSAN',
   description: 'Weekly fantasy football rankings calculated directly from Vegas prop bets.',
 };
 
-export default function RankingsModelPage() {
+export default async function RankingsModelPage() {
+  let proToolsMenu = [];
+  let connectMenu = [];
+
+  // Fetch the menus so the Sidebar renders correctly
+  try {
+    if (typeof getMenuBySlug === 'function') {
+      proToolsMenu = await getMenuBySlug('pro-tools-football');
+      connectMenu = await getMenuBySlug('connect-football');
+    }
+  } catch (e) {
+    console.error(e);
+  }
+
   // Hardcoded mock data to guarantee it displays on Vercel while we wait for your API key.
   const mockRankings = [
     { 
@@ -38,14 +54,17 @@ export default function RankingsModelPage() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <div className="flex flex-1 pt-16"> {/* Adjust pt-16 based on your Header's height */}
-        <Sidebar sport="football" />
-        <main className="flex-1 w-full bg-gray-50 overflow-x-hidden p-4 md:p-8">
-          <RankingsModelClient initialRankings={mockRankings} />
-        </main>
+    <>
+      <Header activeSport="Football" />
+      <div className="max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-8 w-full pb-24">
+        <Sidebar activeSport="Football" proToolsMenu={proToolsMenu} connectMenu={connectMenu} />
+        
+        <div className="flex-1 w-full min-w-0">
+          <PlayerProvider>
+            <RankingsModelClient initialRankings={mockRankings} />
+          </PlayerProvider>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
