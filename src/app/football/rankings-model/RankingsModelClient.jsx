@@ -3,9 +3,24 @@
 import React, { useState } from 'react';
 
 export default function RankingsModelClient({ initialRankings, mode, serverError }) {
-  const [rankings, setRankings] = useState(initialRankings);
+  const [rankings] = useState(initialRankings);
+  const [activePosition, setActivePosition] = useState('All');
   
   const isOffseason = mode === 'offseason';
+
+  // Filter rankings based on selected position
+  const filteredRankings = rankings.filter((player) => {
+    if (activePosition === 'All') return true;
+    
+    // Handle combined "WR/TE" tags from the weekly engine gracefully
+    if (player.position === 'WR/TE') {
+      return activePosition === 'WR' || activePosition === 'TE';
+    }
+    
+    return player.position === activePosition;
+  });
+
+  const positions = ['All', 'QB', 'RB', 'WR', 'TE'];
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -15,20 +30,41 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
         </div>
       )}
 
-      {/* Header Area */}
-      <div className="bg-[#111111] text-white p-6 rounded-t-lg border border-gray-800 border-b-0">
-        <h1 className="text-3xl font-bold tracking-tight">
-          {isOffseason ? 'Vegas Consensus Draft Rankings' : 'Vegas Implied Weekly Rankings'}
-        </h1>
-        <p className="text-sm text-gray-400 mt-2">
-          {isOffseason 
-            ? 'Preseason fantasy projections based directly on Vegas season-long player futures (Full PPR).'
-            : 'Projected fantasy points based directly on sportsbook player props (Full PPR).'}
-        </p>
+      {/* 1. Hero Section & Filter Header Container */}
+      <div className="bg-[#111111] text-white p-6 rounded-lg border border-gray-800 shadow-xl">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              {isOffseason ? 'Vegas Consensus Draft Rankings' : 'Vegas Implied Weekly Rankings'}
+            </h1>
+            <p className="text-sm text-gray-400 mt-2">
+              {isOffseason 
+                ? 'Preseason fantasy projections based directly on Vegas season-long player futures (Full PPR).'
+                : 'Projected fantasy points based directly on sportsbook player props (Full PPR).'}
+            </p>
+          </div>
+
+          {/* Premium Segmented Position Filter */}
+          <div className="flex items-center bg-[#1a1a1a] p-1 rounded-lg border border-gray-800 self-start md:self-center">
+            {positions.map((pos) => (
+              <button
+                key={pos}
+                onClick={() => setActivePosition(pos)}
+                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition-all ${
+                  activePosition === pos
+                    ? 'bg-green-500 text-black shadow-lg shadow-green-500/10'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                }`}
+              >
+                {pos}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
       
-      {/* Dark Table Area */}
-      <div className="bg-[#1a1a1a] shadow-2xl rounded-b-lg border border-gray-800 overflow-hidden">
+      {/* 2. Standalone Dark Table Container (With Clean mt-6 Spacing Gap) */}
+      <div className="bg-[#1a1a1a] shadow-2xl rounded-lg border border-gray-800 overflow-hidden mt-6">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse whitespace-nowrap min-w-[800px]">
             <thead>
@@ -54,10 +90,13 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
               </tr>
             </thead>
             <tbody className="text-gray-200">
-              {rankings && rankings.length > 0 ? (
-                rankings.map((player, index) => (
+              {filteredRankings && filteredRankings.length > 0 ? (
+                filteredRankings.map((player, index) => (
                   <tr key={index} className="border-b border-gray-800/60 hover:bg-gray-800/40 transition-colors text-sm">
-                    <td className="p-4 font-bold text-gray-500">{index + 1}</td>
+                    {/* Maintain absolute rank placement based on full list */}
+                    <td className="p-4 font-bold text-gray-500">
+                      {rankings.findIndex((p) => p.name === player.name) + 1}
+                    </td>
                     <td className="p-4 font-bold text-white">{player.name}</td>
                     <td className="p-4">
                       <span className="bg-gray-800 text-gray-300 text-xs font-bold px-2 py-1 rounded">
@@ -85,7 +124,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
               ) : (
                 <tr>
                   <td colSpan="12" className="p-8 text-center text-gray-500">
-                    Waiting for odds data...
+                    No players found matching the selected position filter.
                   </td>
                 </tr>
               )}
