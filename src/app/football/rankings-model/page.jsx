@@ -11,24 +11,33 @@ export const metadata = {
 };
 
 async function getVegasData() {
-  // Gracefully fallback to localhost if production URL isn't set yet
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  // 1. Bulletproof URL Resolver
+  let baseUrl = 'http://localhost:3000';
+  
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  } else if (process.env.VERCEL_URL) {
+    // Vercel automatically populates this, but we must add the https:// protocol manually
+    baseUrl = `https://${process.env.VERCEL_URL}`;
+  }
+
+  // Strip any accidental trailing slashes to prevent //api/odds-engine
+  baseUrl = baseUrl.replace(/\/$/, "");
   
   try {
     const res = await fetch(`${baseUrl}/api/odds-engine`, {
       next: { tags: ['vegas-rankings'] },
-      cache: 'no-store' // Avoid caching empty responses during debugging
+      cache: 'no-store' // Prevents Vercel from permanently caching an error state during debugging
     });
     
     if (!res.ok) {
       const errorText = await res.text();
-      console.error(`API response was not OK (${res.status}):`, errorText);
-      return { rankings: [], mode: 'offseason', error: `Server error: ${res.status}` };
+      return { rankings: [], mode: 'offseason', error: `API status code ${res.status}: ${errorText}` };
     }
     return await res.json();
   } catch (error) {
     console.error("Internal fetch exception calling /api/odds-engine:", error);
-    return { rankings: [], mode: 'offseason', error: error.message };
+    return { rankings: [], mode: 'offseason', error: `Network connection error (${error.message}) using base target: ${baseUrl}` };
   }
 }
 

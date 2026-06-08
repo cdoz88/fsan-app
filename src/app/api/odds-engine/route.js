@@ -24,7 +24,6 @@ export async function GET(request) {
     let finalRankings = [];
     let currentMode = 'weekly';
 
-    // If API key is missing, log it on the server and drop directly into offseason mock view
     if (!API_KEY) {
       console.warn("THE_ODDS_API_KEY environment variable is not defined. Falling back to offseason mock data.");
       return NextResponse.json({ rankings: MOCK_DRAFT_RANKINGS, mode: 'offseason', note: 'Running on preview mock data' });
@@ -116,7 +115,7 @@ export async function GET(request) {
     
   } catch (error) {
     console.error('Odds Engine Error:', error);
-    // Even on structural catch blocks, serve mock data so the app doesn't break
+    // Serve mock data even on massive crashes so the UI never breaks
     return NextResponse.json({ rankings: MOCK_DRAFT_RANKINGS, mode: 'offseason', error: error.message });
   }
 }
