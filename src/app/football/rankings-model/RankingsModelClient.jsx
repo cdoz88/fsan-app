@@ -2,15 +2,21 @@
 
 import React, { useState } from 'react';
 
-export default function RankingsModelClient({ initialRankings }) {
+export default function RankingsModelClient({ initialRankings, mode }) {
   const [rankings, setRankings] = useState(initialRankings);
+  
+  const isOffseason = mode === 'offseason';
 
   return (
     <div className="max-w-7xl mx-auto">
       <div className="bg-[#1a1a1a] text-white p-6 rounded-t-lg border border-gray-800">
-        <h1 className="text-3xl font-bold">Vegas Implied Fantasy Rankings</h1>
+        <h1 className="text-3xl font-bold">
+          {isOffseason ? 'Vegas Consensus Draft Rankings' : 'Vegas Implied Weekly Rankings'}
+        </h1>
         <p className="text-sm text-gray-400 mt-2">
-          Projected fantasy points based directly on sportsbook player props (Full PPR).
+          {isOffseason 
+            ? 'Preseason fantasy projections based directly on Vegas season-long player futures (Full PPR).'
+            : 'Projected fantasy points based directly on sportsbook player props (Full PPR).'}
         </p>
       </div>
       
@@ -22,7 +28,8 @@ export default function RankingsModelClient({ initialRankings }) {
                 <th className="p-4 font-semibold">Rank</th>
                 <th className="p-4 font-semibold">Player</th>
                 <th className="p-4 font-semibold">Pos</th>
-                <th className="p-4 font-semibold">Game</th>
+                {/* Hide Game column during off-season */}
+                {!isOffseason && <th className="p-4 font-semibold">Game</th>}
                 <th className="p-4 font-extrabold text-green-800 bg-green-100 border-x border-green-200 shadow-sm">Proj Pts</th>
                 
                 {/* Passing Stats */}
@@ -50,22 +57,19 @@ export default function RankingsModelClient({ initialRankings }) {
                         {player.position}
                       </span>
                     </td>
-                    <td className="p-4 text-gray-500 font-medium">{player.game}</td>
                     
-                    {/* Highlighted Projection Column */}
+                    {!isOffseason && <td className="p-4 text-gray-500 font-medium">{player.game}</td>}
+                    
                     <td className="p-4 font-black text-green-700 bg-green-50 border-x border-green-100 text-base">
                       {player.projected_points.toFixed(2)}
                     </td>
                     
-                    {/* Passing */}
                     <td className="p-4 text-gray-600">{player.pass_yds || '-'}</td>
                     <td className="p-4 text-gray-600 border-r border-gray-100">{player.pass_tds || '-'}</td>
                     
-                    {/* Rushing */}
                     <td className="p-4 text-gray-600">{player.rush_yds || '-'}</td>
                     <td className="p-4 text-gray-600 border-r border-gray-100">{player.rush_tds || '-'}</td>
                     
-                    {/* Receiving */}
                     <td className="p-4 text-gray-600">{player.receptions || '-'}</td>
                     <td className="p-4 text-gray-600">{player.rec_yds || '-'}</td>
                     <td className="p-4 text-gray-600">{player.rec_tds || '-'}</td>
@@ -74,7 +78,7 @@ export default function RankingsModelClient({ initialRankings }) {
               ) : (
                 <tr>
                   <td colSpan="12" className="p-8 text-center text-gray-500">
-                    Waiting for odds data for the upcoming week...
+                    Waiting for odds data...
                   </td>
                 </tr>
               )}

@@ -7,8 +7,24 @@ import { getMenuBySlug } from '../../../utils/api';
 
 export const metadata = {
   title: 'Vegas Implied Rankings | FSAN',
-  description: 'Weekly fantasy football rankings calculated directly from Vegas prop bets.',
+  description: 'Fantasy football rankings calculated directly from Vegas prop bets.',
 };
+
+async function getVegasData() {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  
+  try {
+    const res = await fetch(`${baseUrl}/api/odds-engine`, {
+      next: { tags: ['vegas-rankings'] } 
+    });
+    
+    if (!res.ok) return { rankings: [], mode: 'weekly' };
+    return await res.json();
+  } catch (error) {
+    console.error("Error fetching local rankings API:", error);
+    return { rankings: [], mode: 'weekly' };
+  }
+}
 
 export default async function RankingsModelPage() {
   let proToolsMenu = [];
@@ -24,34 +40,8 @@ export default async function RankingsModelPage() {
     console.error(e);
   }
 
-  // Hardcoded mock data to guarantee it displays on Vercel while we wait for your API key.
-  const mockRankings = [
-    { 
-      name: "Justin Jefferson", position: "WR", game: "MIN @ DET", 
-      projected_points: 21.5, 
-      receptions: 7.5, rec_yds: 95.5, rec_tds: 0.75 
-    },
-    { 
-      name: "Christian McCaffrey", position: "RB", game: "SF @ LAR", 
-      projected_points: 24.2, 
-      rush_yds: 82.5, rush_tds: 0.85, receptions: 4.5, rec_yds: 35.5, rec_tds: 0.25 
-    },
-    { 
-      name: "Josh Allen", position: "QB", game: "BUF @ MIA", 
-      projected_points: 22.1, 
-      pass_yds: 265.5, pass_tds: 1.8, rush_yds: 40.5, rush_tds: 0.4 
-    },
-    { 
-      name: "Travis Kelce", position: "TE", game: "KC @ LV", 
-      projected_points: 16.8, 
-      receptions: 6.5, rec_yds: 70.5, rec_tds: 0.55 
-    },
-    { 
-      name: "Breece Hall", position: "RB", game: "NYJ @ NE", 
-      projected_points: 18.5, 
-      rush_yds: 75.5, rush_tds: 0.65, receptions: 3.5, rec_yds: 25.5, rec_tds: 0.15
-    }
-  ];
+  // Fetch from our smart engine
+  const { rankings, mode } = await getVegasData();
 
   return (
     <>
@@ -61,7 +51,8 @@ export default async function RankingsModelPage() {
         
         <div className="flex-1 w-full min-w-0">
           <PlayerProvider>
-            <RankingsModelClient initialRankings={mockRankings} />
+            {/* We now pass the mode to the client so the UI knows how to display itself */}
+            <RankingsModelClient initialRankings={rankings} mode={mode} />
           </PlayerProvider>
         </div>
       </div>
