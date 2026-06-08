@@ -11,7 +11,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
     <div className="max-w-7xl mx-auto">
       {serverError && (
         <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs font-mono">
-          <strong>Vegas Engine Diagnostics Notice:</strong> {serverError} (Falling back to draft preview mode).
+          <strong>Vegas Engine Diagnostics Notice:</strong> {serverError}
         </div>
       )}
 
