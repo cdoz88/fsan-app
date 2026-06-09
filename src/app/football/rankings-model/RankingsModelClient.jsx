@@ -1,14 +1,18 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Settings, ShieldAlert, TrendingUp, RefreshCw, Info, X } from 'lucide-react'; 
-import { FootballIcon } from '../../../components/icons';
 
 export default function RankingsModelClient({ initialRankings, mode, serverError }) {
+  // --- NEW: Live Data State ---
+  const [playersData, setPlayersData] = useState(initialRankings || []);
+  const [isSyncing, setIsSyncing] = useState(true);
+
+  // --- UI State Variables ---
   const [currentPosition, setCurrentPosition] = useState('All');
   const [showSettings, setShowSettings] = useState(false);
   const [showMarketInfo, setShowMarketInfo] = useState(false);
-  const [rankingMode, setRankingMode] = useState('redraft'); // 'redraft' or 'dynasty'
+  const [rankingMode, setRankingMode] = useState('dynasty'); // Defaulted to dynasty
   const [dynastyStrategy, setDynastyStrategy] = useState('neutral'); // 'win_now', 'neutral', 'build'
   const isOffseason = mode === 'offseason';
 
@@ -22,11 +26,28 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
   const primaryColor = '#e42d38';
   const secondaryColor = '#8a1a20';
 
+  // 🔄 FETCH LIVE HYBRID DATABASE ON LOAD
+  useEffect(() => {
+    async function loadLiveDatabase() {
+      try {
+        const res = await fetch('/api/dynasty-players');
+        const data = await res.json();
+        if (data.success && data.players) {
+          setPlayersData(data.players);
+        }
+      } catch (err) {
+        console.error("Error connecting to database api", err);
+      } finally {
+        setIsSyncing(false);
+      }
+    }
+    loadLiveDatabase();
+  }, []);
+
   // 🧠 Algorithmic Dynasty Age Multiplier tilted by Team Strategy
   const getAgeMultiplier = (position, age, strategy) => {
     if (!age) return 1; 
 
-    // STRATEGY A: PRODUCTIVE STRUGGLE / REBUILD (Heavy premium on youth, completely crush older assets)
     if (strategy === 'build') {
       if (position === 'RB') {
         if (age <= 23) return 1.65;
@@ -54,7 +75,6 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
       }
     }
 
-    // STRATEGY B: WIN NOW (Protect veteran production baselines, downplay unproven youth spikes)
     if (strategy === 'win_now') {
       if (position === 'RB') {
         if (age <= 23) return 1.20;
@@ -86,7 +106,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
       }
     }
 
-    // STRATEGY C: BALANCED / NEUTRAL (Standard baseline settings)
+    // BALANCED / NEUTRAL LOGICS
     if (position === 'RB') {
       if (age <= 23) return 1.45;
       if (age <= 25) return 1.20;
@@ -125,48 +145,27 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
 
     if (!age) return { assetProfile, marketAction };
 
-    // Axis 1: Roster Asset Profiling
     if (points > 210) {
-      if (age <= 25) {
-        assetProfile = { text: '💎 Cornerstone', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' };
-      } else if (age >= 28) {
-        assetProfile = { text: '🏆 Win-Now Asset', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
-      } else {
-        assetProfile = { text: '💎 Cornerstone', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' };
-      }
+      if (age <= 25) assetProfile = { text: '💎 Cornerstone', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' };
+      else if (age >= 28) assetProfile = { text: '🏆 Win-Now Asset', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
+      else assetProfile = { text: '💎 Cornerstone', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' };
     } else if (points > 130) {
-      if (age <= 23) {
-        assetProfile = { text: '📈 High Upside', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
-      } else if (age >= 28) {
-        assetProfile = { text: '🏆 Win-Now Asset', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
-      } else {
-        assetProfile = { text: '⚔️ Core Starter', color: 'text-zinc-300 bg-zinc-800/40 border-zinc-700/40' };
-      }
+      if (age <= 23) assetProfile = { text: '📈 High Upside', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+      else if (age >= 28) assetProfile = { text: '🏆 Win-Now Asset', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
+      else assetProfile = { text: '⚔️ Core Starter', color: 'text-zinc-300 bg-zinc-800/40 border-zinc-700/40' };
     } else {
-      if (age <= 23) {
-        assetProfile = { text: '🌱 High Upside / Stash', color: 'text-teal-400 bg-teal-950/20 border-teal-900/30' };
-      }
+      if (age <= 23) assetProfile = { text: '🌱 High Upside / Stash', color: 'text-teal-400 bg-teal-950/20 border-teal-900/30' };
     }
 
-    // Axis 2: Actionable Market Recommendations
     if (strategy === 'build') {
-      if (age <= 23 && points > 150) {
-        marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
-      } else if (age <= 24) {
-        marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
-      } else if (age >= 29) {
-        marketAction = { text: 'Sell Now', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
-      } else if (age >= 26) {
-        marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
-      }
+      if (age <= 23 && points > 150) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+      else if (age <= 24) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+      else if (age >= 29) marketAction = { text: 'Sell Now', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
+      else if (age >= 26) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
     } else if (strategy === 'win_now') {
-      if (age >= 27 && points > 170) {
-        marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
-      } else if (age >= 28 && points > 130) {
-        marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
-      } else if (age <= 23 && points < 120) {
-        marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
-      }
+      if (age >= 27 && points > 170) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+      else if (age >= 28 && points > 130) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+      else if (age <= 23 && points < 120) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
     } else {
       if (age <= 22 && points > 160) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
       else if (age <= 24 && points < 140) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
@@ -177,15 +176,14 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
     return { assetProfile, marketAction };
   };
 
-  // ⚡ DYNAMIC RECALCULATION ENGINE
+  // ⚡ DYNAMIC RECALCULATION ENGINE (Using playersData instead of initialRankings)
   const processedRankings = useMemo(() => {
-    const recalculated = (initialRankings || []).map(player => {
+    const recalculated = (playersData || []).map(player => {
       let pts = 0;
       
-      // Calculate Base Vegas Points
       pts += ((player.pass_yds || 0) / 25);
       pts += ((player.pass_tds || 0) * passTdValue); 
-      pts -= ((player.turnovers || 0) * 2);
+      pts -= ((player.turnovers || player.ints || player.fumbles || 0) * 2);
       pts += ((player.rush_yds || 0) / 10);
       pts += ((player.rush_tds || 0) * 6);
       pts += ((player.rec_yds || 0) / 10);
@@ -197,7 +195,6 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
       }
       pts += recPoints;
 
-      // Calculate Dynasty Scores and Matrix Tags
       const ageMult = getAgeMultiplier(player.position, player.age, dynastyStrategy);
       const dynastyScore = Math.round(pts * ageMult * 2.5);
       const { assetProfile, marketAction } = getDynastyMetrics(player.position, player.age, dynastyStrategy, pts);
@@ -211,7 +208,6 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
       };
     });
 
-    // Sort based on chosen format
     if (rankingMode === 'dynasty') {
       recalculated.sort((a, b) => b.dynasty_score - a.dynasty_score);
     } else {
@@ -230,7 +226,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
         posRank: `${pos}${posCounters[pos]}`
       };
     });
-  }, [initialRankings, pprValue, passTdValue, tePremium, rankingMode, dynastyStrategy]); 
+  }, [playersData, pprValue, passTdValue, tePremium, rankingMode, dynastyStrategy]); 
 
   const visibleData = processedRankings.filter((player) => {
     if (currentPosition === 'All') return true;
@@ -261,7 +257,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
             </h3>
             
             <div className="space-y-5 text-xs font-medium text-gray-400 leading-relaxed">
-              <p>Our dynasty model indexes **implied market output (Vegas season expectations)** directly across historical **position-specific production age cliffs** using two unique diagnostic metrics:</p>
+              <p>Our dynasty model indexes **implied market output (Consensus / Vegas season expectations)** directly across historical **position-specific production age cliffs** using two unique diagnostic metrics:</p>
               
               <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60">
                 <h4 className="text-[10px] uppercase font-black tracking-widest text-white">Axis 1: Asset Profiling</h4>
@@ -313,7 +309,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
               {rankingMode === 'dynasty'
                 ? 'Projected metrics run through an interactive, strategy-tilted age decay index and ADP consideration.'
                 : isOffseason 
-                  ? 'Aggregated projections modeled directly from Vegas season-long player futures.'
+                  ? 'Aggregated hybrid projections modeled from Vegas lines & consensus data.'
                   : 'Projected fantasy points calculated dynamically from live sportsbook player props.'}
             </p>
           </div>
@@ -471,7 +467,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
         )}
 
         {/* Dark Table Container */}
-        <div className="bg-[#111] rounded-3xl shadow-2xl border border-gray-800 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
+        <div className="bg-[#111] rounded-3xl shadow-2xl border border-gray-800 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 relative min-h-[400px]">
           
           <div className="overflow-x-auto scrollbar-hide">
             <table className="min-w-full text-left whitespace-nowrap">
@@ -525,8 +521,19 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                   )}
                 </tr>
               </thead>
+              
               <tbody className="divide-y divide-gray-800/50">
-                {visibleData && visibleData.length > 0 ? (
+                {isSyncing ? (
+                  <tr>
+                    <td colSpan="14" className="py-32 text-center">
+                      <div className="flex flex-col items-center justify-center text-red-500 animate-in fade-in duration-500">
+                        <RefreshCw className="animate-spin mb-4" size={36} />
+                        <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">Syncing Live Player Data</h3>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Connecting to Sleeper API & Vegas Baseline</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : visibleData && visibleData.length > 0 ? (
                   visibleData.map((player) => (
                     <tr key={player.name} className="hover:bg-[#151515] transition-colors group">
                       
@@ -547,7 +554,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                            <span className="text-sm font-black text-gray-100 tracking-tight">
                              {player.name}
                            </span>
-                           {player.team && (
+                           {player.team && player.team !== 'fa' && (
                              <img 
                                src={`https://a.espncdn.com/i/teamlogos/nfl/500/${player.team.toLowerCase()}.png`} 
                                alt={player.team}
@@ -558,7 +565,6 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                          </div>
                       </td>
                       
-                      {/* Dynamic Columns Render logic */}
                       {rankingMode === 'dynasty' ? (
                         <>
                           <td className="px-4 py-2.5 text-center">
@@ -597,7 +603,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                           <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{player.receptions || '-'}</td>
                           <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{player.rec_yds || '-'}</td>
                           <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400 border-r border-gray-800/50">{player.rec_tds || '-'}</td>
-                          <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{player.turnovers !== undefined && player.turnovers > 0 ? player.turnovers : '-'}</td>
+                          <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{(player.turnovers || player.ints || player.fumbles) ? (player.ints || 0) + (player.fumbles || 0) : '-'}</td>
                         </>
                       )}
 
@@ -619,7 +625,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
         <div className="mt-6 bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 shadow-xl">
           <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">Ranking Methodology</h3>
           <div className="text-xs text-gray-400 space-y-2 font-medium leading-relaxed">
-            <p>• Projections are pulled directly from live sportsbook player prop Over/Under totals.</p>
+            <p>• Projections are a hybrid compilation of live DraftKings sportsbook player props anchored with multi-site consensus baseline stats.</p>
             <p>• Player fantasy points recalculate instantly to mirror custom PPR and Tight End premium modifiers.</p>
             <p>• <strong>Dynasty Matrix Scores</strong> run projected baseline output across position-specific age curves tilted by your specific team timeline setting (Win Now, Balanced, or Rebuild).</p>
           </div>
