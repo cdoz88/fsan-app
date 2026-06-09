@@ -13,7 +13,6 @@ export async function GET() {
     const sleeperPlayers = Object.values(sleeperData);
 
     // 2. Fetch the REAL 2026 Season Projections from Tank01
-    // Notice the magic parameter you found: week=season
     const tankRes = await fetch('https://tank01-nfl-live-in-game-real-time-statistics-nfl.p.rapidapi.com/getNFLProjections?week=season&itemFormat=list', {
       method: 'GET',
       headers: {
@@ -24,7 +23,15 @@ export async function GET() {
     
     if (!tankRes.ok) throw new Error("Tank01 API failed.");
     const tankData = await tankRes.json();
-    const projections = tankData.body || [];
+    
+    // THE FIX: Check if Tank01 gave us an Object instead of an Array, and convert it!
+    let projections = [];
+    if (Array.isArray(tankData.body)) {
+      projections = tankData.body;
+    } else if (typeof tankData.body === 'object' && tankData.body !== null) {
+      // If it's a giant map of Player IDs, convert it to an array
+      projections = Object.values(tankData.body);
+    }
 
     // 3. Format and Merge into our exact engine structure
     const formattedDatabase = projections
@@ -47,7 +54,6 @@ export async function GET() {
           position: p.pos,
           
           // Map Tank01's projection keys perfectly to our engine's keys
-          // Using parseFloat to ensure decimals are handled correctly
           pass_yds: p.passYards ? parseFloat(p.passYards) : 0,
           pass_tds: p.passTD ? parseFloat(p.passTD) : 0,
           ints: p.passInterceptions ? parseFloat(p.passInterceptions) : 0,
