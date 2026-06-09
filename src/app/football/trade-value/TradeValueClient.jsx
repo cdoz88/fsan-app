@@ -70,54 +70,77 @@ export default function TradeValueClient() {
     return 1;
   };
 
+  // 📊 UPGRADED DYNASTY MATRIX (Position-Specific Age Cliffs)
   const getDynastyMetrics = (position, age, strategy, points) => {
     let assetProfile = { text: 'Roster Depth', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
     let marketAction = { text: 'Fair Value', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
 
     if (!age) return { assetProfile, marketAction };
 
-    if (points > 180) {
-      if (age <= 25) assetProfile = { text: '💎 Cornerstone', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' };
-      else if (age >= 28) assetProfile = { text: '🏆 Win-Now Asset', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
-      else assetProfile = { text: '💎 Cornerstone', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' };
-    } else if (points > 115) {
-      if (age <= 24) assetProfile = { text: '📈 High Upside', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
-      else if (age >= 28) assetProfile = { text: '🏆 Win-Now Asset', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
-      else assetProfile = { text: '⚔️ Core Starter', color: 'text-zinc-300 bg-zinc-800/40 border-zinc-700/40' };
-    } else {
-      if (age <= 23) assetProfile = { text: '🌱 High Upside / Stash', color: 'text-teal-400 bg-teal-950/20 border-teal-900/30' };
+    // 1. Define specific age thresholds based on position
+    let cornerstoneAge, winNowAge, stashAge;
+    let sellNowAge, sellHighAge, buyLowAge;
+
+    if (position === 'RB') {
+      cornerstoneAge = 23; winNowAge = 26; stashAge = 23;
+      sellNowAge = 28; sellHighAge = 25; buyLowAge = 24;
+    } else if (position === 'WR') {
+      cornerstoneAge = 24; winNowAge = 28; stashAge = 23;
+      sellNowAge = 30; sellHighAge = 27; buyLowAge = 25;
+    } else if (position === 'QB') {
+      cornerstoneAge = 26; winNowAge = 32; stashAge = 24;
+      sellNowAge = 35; sellHighAge = 32; buyLowAge = 26;
+    } else { // TEs
+      cornerstoneAge = 25; winNowAge = 29; stashAge = 24;
+      sellNowAge = 31; sellHighAge = 28; buyLowAge = 25;
     }
 
-    if (strategy === 'build') {
-      if (age <= 23 && points > 130) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
-      else if (age <= 24) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
-      else if (age >= 29) marketAction = { text: 'Sell Now', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
-      else if (age >= 26) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
-    } else if (strategy === 'win_now') {
-      if (age >= 27 && points > 150) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
-      else if (age >= 28 && points > 110) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
-      else if (age <= 23 && points < 100) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
+    // 2. Assign Asset Profile using positional thresholds
+    if (points > 180) {
+      if (age <= cornerstoneAge) assetProfile = { text: '💎 Cornerstone', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' };
+      else if (age >= winNowAge) assetProfile = { text: '🏆 Win-Now Asset', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
+      else assetProfile = { text: '💎 Cornerstone', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' }; // Players in their prime
+    } else if (points > 115) {
+      if (age <= stashAge + 1) assetProfile = { text: '📈 High Upside', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+      else if (age >= winNowAge) assetProfile = { text: '🏆 Win-Now Asset', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
+      else assetProfile = { text: '⚔️ Core Starter', color: 'text-zinc-300 bg-zinc-800/40 border-zinc-700/40' };
     } else {
-      if (age <= 23 && points > 140) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
-      else if (age <= 24 && points < 120) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
-      else if (age >= 30) marketAction = { text: 'Sell Now', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
-      else if (age >= 28 && points > 170) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
+      if (age <= stashAge) assetProfile = { text: '🌱 High Upside / Stash', color: 'text-teal-400 bg-teal-950/20 border-teal-900/30' };
+    }
+
+    // 3. Assign Market Action using positional thresholds and team strategy
+    if (strategy === 'build') {
+      if (age <= buyLowAge && points > 130) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+      else if (age <= buyLowAge) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+      else if (age >= sellNowAge) marketAction = { text: 'Sell Now', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
+      else if (age >= sellHighAge) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
+    } else if (strategy === 'win_now') {
+      if (age >= sellHighAge && points > 150) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+      else if (age >= sellHighAge && points > 110) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+      else if (age <= stashAge && points < 100) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' }; 
+    } else {
+      // Balanced
+      if (age <= buyLowAge && points > 140) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+      else if (age <= buyLowAge && points < 120) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+      else if (age >= sellNowAge) marketAction = { text: 'Sell Now', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
+      else if (age >= sellHighAge && points > 170) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
     }
 
     return { assetProfile, marketAction };
   };
 
-  const getRedraftMetrics = (points) => {
+  // 📈 UPGRADED REDRAFT MATRIX (Tied strictly to universal Trade Value)
+  const getRedraftMetrics = (tradeValue) => {
     let assetProfile = { text: 'Bench Depth', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
     let marketAction = { text: 'Fair Value', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
 
-    if (points > 190) {
+    if (tradeValue >= 320) {
       assetProfile = { text: '🌟 League Winner', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
       marketAction = { text: 'Anchor / Hold', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' };
-    } else if (points > 140) {
+    } else if (tradeValue >= 215) {
       assetProfile = { text: '⚔️ Core Starter', color: 'text-zinc-300 bg-zinc-800/40 border-zinc-700/40' };
       marketAction = { text: 'Target Deal', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
-    } else if (points > 100) {
+    } else if (tradeValue >= 130) {
       assetProfile = { text: '🔄 Flex Play', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
       marketAction = { text: 'Fair Value', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
     } else {
@@ -171,7 +194,7 @@ export default function TradeValueClient() {
         market_action = metrics.marketAction;
       } else {
         trade_value = Math.round(pts * 1.5); 
-        const metrics = getRedraftMetrics(pts);
+        const metrics = getRedraftMetrics(trade_value); // Fixed to use trade_value for accurate Redraft tags
         asset_profile = metrics.assetProfile;
         market_action = metrics.marketAction;
       }
