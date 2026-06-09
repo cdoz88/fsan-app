@@ -12,7 +12,7 @@ export default function TradeValueClient() {
   const [showSettings, setShowSettings] = useState(false);
   const [showMarketInfo, setShowMarketInfo] = useState(false);
   
-  // Format toggles (Simplified strings)
+  // Format toggles
   const [formatMode, setFormatMode] = useState('dynasty'); // 'dynasty' or 'redraft'
   const [dynastyStrategy, setDynastyStrategy] = useState('neutral'); // 'win_now', 'neutral', 'build'
 
@@ -43,7 +43,7 @@ export default function TradeValueClient() {
     loadLiveDatabase();
   }, []);
 
-  // 🧠 Algorithmic Dynasty Age Multiplier tilted by Team Strategy
+  // 🧠 Algorithmic Dynasty Age Multiplier
   const getAgeMultiplier = (position, age, strategy) => {
     if (!age) return 1; 
 
@@ -61,7 +61,6 @@ export default function TradeValueClient() {
       if (position === 'TE' || position === 'WR/TE') return age <= 27 ? 1.10 : age <= 30 ? 1.05 : age <= 32 ? 0.85 : 0.55;
     }
 
-    // BALANCED / NEUTRAL LOGICS
     if (position === 'RB') return age <= 23 ? 1.45 : age <= 25 ? 1.20 : age <= 27 ? 0.90 : age <= 29 ? 0.50 : 0.20;
     if (position === 'WR') return age <= 23 ? 1.35 : age <= 26 ? 1.15 : age <= 29 ? 0.95 : age <= 31 ? 0.70 : 0.40;
     if (position === 'QB') return age <= 24 ? 1.30 : age <= 28 ? 1.10 : age <= 32 ? 0.95 : age <= 36 ? 0.70 : 0.40;
@@ -70,7 +69,7 @@ export default function TradeValueClient() {
     return 1;
   };
 
-  // 📊 COMPREHENSIVE DYNASTY CORE MATRIX ENGINE
+  // 📊 COMPREHENSIVE DYNASTY MATRIX ENGINE
   const getDynastyMetrics = (position, age, strategy, points) => {
     let assetProfile = { text: 'Roster Depth', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
     let marketAction = { text: 'Fair Value', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
@@ -108,6 +107,28 @@ export default function TradeValueClient() {
     return { assetProfile, marketAction };
   };
 
+  // 📈 REDRAFT MATRIX ENGINE (Volume/Value Driven)
+  const getRedraftMetrics = (points) => {
+    let assetProfile = { text: 'Bench Depth', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
+    let marketAction = { text: 'Fair Value', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
+
+    if (points > 230) {
+      assetProfile = { text: '🌟 League Winner', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
+      marketAction = { text: 'Anchor / Hold', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' };
+    } else if (points > 160) {
+      assetProfile = { text: '⚔️ Core Starter', color: 'text-zinc-300 bg-zinc-800/40 border-zinc-700/40' };
+      marketAction = { text: 'Target Deal', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+    } else if (points > 120) {
+      assetProfile = { text: '🔄 Flex Play', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+      marketAction = { text: 'Fair Value', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
+    } else {
+      assetProfile = { text: 'Bench Depth', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
+      marketAction = { text: 'Waiver Wire', color: 'text-zinc-500 bg-zinc-900/30 border-zinc-800/50' };
+    }
+
+    return { assetProfile, marketAction };
+  };
+
   // ⚡ DYNAMIC RECALCULATION ENGINE
   const processedValues = useMemo(() => {
     const recalculated = (playersData || []).map(player => {
@@ -127,20 +148,29 @@ export default function TradeValueClient() {
       }
       pts += recPoints;
 
-      // Base Trade Value for Redraft is strictly projected output modified by a slight scarcity curve
-      const redraftScore = Math.round(pts * 1.5); 
+      // Calculate the specific score and grab the correct metrics based on format Mode
+      let trade_value = 0;
+      let asset_profile = {};
+      let market_action = {};
 
-      // Dynasty uses the complex age-decay matrix
-      const ageMult = getAgeMultiplier(player.position, player.age, dynastyStrategy);
-      const dynastyScore = Math.round(pts * ageMult * 2.5);
-      
-      const { assetProfile, marketAction } = getDynastyMetrics(player.position, player.age, dynastyStrategy, pts);
+      if (formatMode === 'dynasty') {
+        const ageMult = getAgeMultiplier(player.position, player.age, dynastyStrategy);
+        trade_value = Math.round(pts * ageMult * 2.5);
+        const metrics = getDynastyMetrics(player.position, player.age, dynastyStrategy, pts);
+        asset_profile = metrics.assetProfile;
+        market_action = metrics.marketAction;
+      } else {
+        trade_value = Math.round(pts * 1.5); 
+        const metrics = getRedraftMetrics(pts);
+        asset_profile = metrics.assetProfile;
+        market_action = metrics.marketAction;
+      }
 
       return {
         ...player,
-        trade_value: formatMode === 'dynasty' ? dynastyScore : redraftScore,
-        asset_profile: assetProfile,
-        market_action: marketAction
+        trade_value,
+        asset_profile,
+        market_action
       };
     });
 
@@ -172,7 +202,7 @@ export default function TradeValueClient() {
   return (
     <div className="w-full animate-in fade-in duration-500 pb-24 relative">
       
-      {/* ℹ️ Valuation Details Modal */}
+      {/* ℹ️ Restored Full Valuation Details Modal */}
       {showMarketInfo && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-[#161616] border border-gray-800 w-full max-w-xl rounded-3xl p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
@@ -180,14 +210,29 @@ export default function TradeValueClient() {
               <X size={20} />
             </button>
             <h3 className="text-base font-black text-white uppercase tracking-wider mb-5 flex items-center gap-2">
-              <Info size={18} className="text-zinc-400" /> Valuation Architecture
+              <Info size={18} className="text-zinc-400" /> Valuation Architecture & Matrix Labels
             </h3>
-            <div className="space-y-4 text-xs font-medium text-gray-400 leading-relaxed">
-              <p>Our dynasty model indexes implied market output directly across historical position-specific age cliffs.</p>
-              <div className="bg-[#111] p-4 rounded-2xl border border-gray-800/60">
-                <p>• <span className="text-emerald-400 font-bold">Buy Now:</span> Deep inefficiencies identified between production volume and market perception.</p>
-                <p>• <span className="text-rose-400 font-bold">Sell High:</span> Asset valuation apex. Historical models indicate exchanging for future values right now optimizes returns.</p>
+            
+            <div className="space-y-5 text-xs font-medium text-gray-400 leading-relaxed">
+              <p>Our model indexes implied market output directly across historical position-specific production tiers and age cliffs using two unique diagnostic metrics:</p>
+              
+              <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60">
+                <h4 className="text-[10px] uppercase font-black tracking-widest text-white">Axis 1: Asset Profiling</h4>
+                <p>• <span className="text-sky-400 font-bold">💎 Cornerstone:</span> Elite premium assets with extensive production runways. Essential foundational builds.</p>
+                <p>• <span className="text-amber-400 font-bold">🏆 Win-Now Asset / League Winner:</span> High point production volume. Crucial value anchors for current season title contention.</p>
+                <p>• <span className="text-teal-400 font-bold">📈 High Upside / Stash:</span> Developmentally insulated profiles showing asymmetric breakout metrics relative to age threshold.</p>
               </div>
+
+              <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60">
+                <h4 className="text-[10px] uppercase font-black tracking-widest text-white">Axis 2: Actionable Market Recommendation</h4>
+                <p>• <span className="text-emerald-400 font-bold">Buy Now:</span> Deep inefficiencies identified between production volume and market perception. Acquire immediately.</p>
+                <p>• <span className="text-teal-400 font-bold">Buy Low:</span> Price point optimization window opened due to macro roster trends or strategic mismatch.</p>
+                <p>• <span className="text-zinc-400 font-bold">Fair Value:</span> Valued completely accurately on standard baseline equilibrium metrics.</p>
+                <p>• <span className="text-rose-400 font-bold">Sell High:</span> Asset valuation apex. Historical models indicate exchanging for future values right now optimizes returns.</p>
+                <p>• <span className="text-red-400 font-bold">Sell Now / Peak Value:</span> High value erosion risk. Rapid asset degradation threshold approaching. Exit positioning advised.</p>
+              </div>
+
+              <p className="text-[10px] italic text-gray-500">Note: Identifiers shift instantly in real-time based on your specific format (Dynasty vs Redraft) and team strategy selection.</p>
             </div>
           </div>
         </div>
@@ -216,7 +261,7 @@ export default function TradeValueClient() {
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div className="flex flex-wrap gap-4 items-center">
             
-            {/* Shortened Mode Switcher (Dynasty / Redraft) */}
+            {/* Format Switcher */}
             <div className="flex bg-[#111] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
               <button 
                 onClick={() => setFormatMode('redraft')} 
@@ -306,16 +351,18 @@ export default function TradeValueClient() {
                     <>
                       <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center">Age</th>
                       <th className="px-4 py-3 text-[10px] font-black text-red-400 uppercase tracking-widest text-center bg-red-900/10 border-x border-gray-800">Trade Value</th>
-                      <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest">
-                        <div className="flex items-center gap-1.5">Asset Type <button onClick={() => setShowMarketInfo(true)} className="text-gray-500 hover:text-white"><Info size={11} /></button></div>
-                      </th>
-                      <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest">
-                        <div className="flex items-center gap-1.5">Action <button onClick={() => setShowMarketInfo(true)} className="text-gray-500 hover:text-white"><Info size={11} /></button></div>
-                      </th>
                     </>
                   ) : (
                     <th className="px-4 py-3 text-[10px] font-black text-red-400 uppercase tracking-widest text-center bg-red-900/10 border-x border-gray-800">Trade Value (ROS)</th>
                   )}
+
+                  <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest">
+                    <div className="flex items-center gap-1.5">Asset Type <button onClick={() => setShowMarketInfo(true)} className="text-gray-500 hover:text-white"><Info size={11} /></button></div>
+                  </th>
+                  <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest">
+                    <div className="flex items-center gap-1.5">Action <button onClick={() => setShowMarketInfo(true)} className="text-gray-500 hover:text-white"><Info size={11} /></button></div>
+                  </th>
+
                 </tr>
               </thead>
               
@@ -349,12 +396,13 @@ export default function TradeValueClient() {
                         <>
                           <td className="px-4 py-2.5 text-center"><span className="text-xs font-bold text-gray-300 bg-gray-800/80 px-2.5 py-1 rounded-md">{player.age || '-'}</span></td>
                           <td className="px-4 py-2.5 text-center bg-red-900/10 border-x border-gray-800/50"><div className="text-sm font-black text-white">{player.trade_value}</div></td>
-                          <td className="px-4 py-2.5"><span className={`text-[10px] font-black tracking-wider px-3 py-1 rounded-lg border uppercase ${player.asset_profile.color}`}>{player.asset_profile.text}</span></td>
-                          <td className="px-4 py-2.5"><span className={`text-[10px] font-black tracking-wider px-3 py-1 rounded-lg border uppercase ${player.market_action.color}`}>{player.market_action.text}</span></td>
                         </>
                       ) : (
                           <td className="px-4 py-2.5 text-center bg-red-900/10 border-x border-gray-800/50"><div className="text-sm font-black text-white">{player.trade_value}</div></td>
                       )}
+                      
+                      <td className="px-4 py-2.5"><span className={`text-[10px] font-black tracking-wider px-3 py-1 rounded-lg border uppercase ${player.asset_profile.color}`}>{player.asset_profile.text}</span></td>
+                      <td className="px-4 py-2.5"><span className={`text-[10px] font-black tracking-wider px-3 py-1 rounded-lg border uppercase ${player.market_action.color}`}>{player.market_action.text}</span></td>
                     </tr>
                 ))}
               </tbody>
