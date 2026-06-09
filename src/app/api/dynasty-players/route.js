@@ -3,7 +3,7 @@ import { OFFSEASON_FUTURES_DATABASE } from '@/utils/offseasonData';
 
 export async function GET() {
   try {
-    // 1. Fetch live player records from Sleeper to get current ages/teams
+    // 1. Fetch live player records from Sleeper to get current ages/teams/positions
     const sleeperRes = await fetch('https://api.sleeper.app/v1/players/nfl');
     if (!sleeperRes.ok) throw new Error("Failed to reach Sleeper API");
     const sleeperData = await sleeperRes.json();
@@ -21,15 +21,16 @@ export async function GET() {
 
       return {
         ...vegasPlayer,
+        // THE FIX: Automatically correct the position using Sleeper's database!
+        position: match && match.position ? match.position : vegasPlayer.position,
         team: match && match.team ? match.team.toLowerCase() : (vegasPlayer.team || 'fa'),
-        age: match && match.age ? parseInt(match.age) : (vegasPlayer.age || 24) // Fallback default for incoming rookies
+        age: match && match.age ? parseInt(match.age) : (vegasPlayer.age || 24) 
       };
     });
 
     return NextResponse.json({ success: true, players: runtimeDatabase });
   } catch (error) {
     console.error("Dynasty runtime sync failed:", error);
-    // Secure fallback to original file data if the external API rate-limits
     return NextResponse.json({ success: false, players: OFFSEASON_FUTURES_DATABASE });
   }
 }
