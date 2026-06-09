@@ -43,28 +43,28 @@ export default function TradeValueClient() {
     loadLiveDatabase();
   }, []);
 
-  // 🧠 FLATTENED & REALISTIC AGE MULTIPLIERS
+  // 🧠 UPDATED AGE CURVE (Extended QB Prime to 33)
   const getAgeMultiplier = (position, age, strategy) => {
     if (!age) return 1; 
 
     if (strategy === 'build') {
       if (position === 'RB') return age <= 23 ? 1.35 : age <= 25 ? 1.10 : age <= 27 ? 0.75 : 0.30;
       if (position === 'WR') return age <= 24 ? 1.30 : age <= 26 ? 1.15 : age <= 29 ? 0.85 : 0.40;
-      if (position === 'QB') return age <= 25 ? 1.20 : age <= 28 ? 1.05 : age <= 32 ? 0.85 : 0.50;
+      if (position === 'QB') return age <= 26 ? 1.25 : age <= 33 ? 1.05 : age <= 36 ? 0.80 : 0.40;
       if (position === 'TE' || position === 'WR/TE') return age <= 25 ? 1.25 : age <= 28 ? 1.05 : age <= 30 ? 0.80 : 0.35;
     }
 
     if (strategy === 'win_now') {
       if (position === 'RB') return age <= 25 ? 1.10 : age <= 27 ? 1.05 : age <= 29 ? 0.90 : 0.60;
       if (position === 'WR') return age <= 26 ? 1.05 : age <= 29 ? 1.05 : age <= 31 ? 0.95 : 0.75;
-      if (position === 'QB') return age <= 28 ? 1.05 : age <= 32 ? 1.00 : age <= 36 ? 0.95 : 0.75;
+      if (position === 'QB') return age <= 33 ? 1.05 : age <= 36 ? 0.95 : 0.75;
       if (position === 'TE' || position === 'WR/TE') return age <= 27 ? 1.05 : age <= 30 ? 1.00 : age <= 32 ? 0.90 : 0.65;
     }
 
     // Neutral / Balanced Base
     if (position === 'RB') return age <= 23 ? 1.20 : age <= 25 ? 1.05 : age <= 27 ? 0.85 : age <= 29 ? 0.55 : 0.25;
     if (position === 'WR') return age <= 24 ? 1.15 : age <= 27 ? 1.05 : age <= 29 ? 0.90 : age <= 31 ? 0.70 : 0.45;
-    if (position === 'QB') return age <= 25 ? 1.10 : age <= 29 ? 1.00 : age <= 32 ? 0.90 : age <= 36 ? 0.75 : 0.50;
+    if (position === 'QB') return age <= 26 ? 1.15 : age <= 33 ? 1.05 : age <= 36 ? 0.85 : 0.50;
     if (position === 'TE' || position === 'WR/TE') return age <= 25 ? 1.15 : age <= 28 ? 1.00 : age <= 30 ? 0.85 : age <= 32 ? 0.65 : 0.40;
     
     return 1;
@@ -146,14 +146,12 @@ export default function TradeValueClient() {
       }
       pts += recPoints;
 
-      // ⚖️ POSITIONAL WEIGHTING (VORP SIMULATION)
-      // Since QBs score inherently more raw points, we apply a scarcity adjustment 
-      // so WRs and RBs correctly surface to the top of standard 1QB rankings.
+      // ⚖️ BALANCED POSITIONAL WEIGHTING (VORP SIMULATION)
       if (player.position === 'QB') {
         if (isSuperflex) {
-          pts *= 0.85; // Bumps QBs to the top tier in Superflex
+          pts *= 0.95; // Bumps QBs to the absolute top tier in Superflex
         } else {
-          pts *= 0.45; // Heavily discounts QBs in 1QB formats
+          pts *= 0.65; // Softened 1QB penalty so they aren't completely buried
         }
       } else if (player.position === 'TE' || player.position === 'WR/TE') {
         pts *= 1.15; // Tight End Scarcity Bump
