@@ -13,10 +13,11 @@ export default function TradeValueClient() {
   const [showMarketInfo, setShowMarketInfo] = useState(false);
   
   // Format toggles
-  const [formatMode, setFormatMode] = useState('dynasty'); // 'dynasty' or 'redraft'
-  const [dynastyStrategy, setDynastyStrategy] = useState('neutral'); // 'win_now', 'neutral', 'build'
+  const [formatMode, setFormatMode] = useState('dynasty'); 
+  const [dynastyStrategy, setDynastyStrategy] = useState('neutral'); 
 
   // Scoring Format Settings
+  const [isSuperflex, setIsSuperflex] = useState(false); // NEW: Superflex Toggle
   const [pprValue, setPprValue] = useState(1);       
   const [passTdValue, setPassTdValue] = useState(4); 
   const [tePremium, setTePremium] = useState(0);     
@@ -25,7 +26,6 @@ export default function TradeValueClient() {
   const primaryColor = '#e42d38';
   const secondaryColor = '#8a1a20';
 
-  // 🔄 FETCH LIVE HYBRID DATABASE ON LOAD
   useEffect(() => {
     async function loadLiveDatabase() {
       try {
@@ -43,7 +43,6 @@ export default function TradeValueClient() {
     loadLiveDatabase();
   }, []);
 
-  // 🧠 Algorithmic Dynasty Age Multiplier
   const getAgeMultiplier = (position, age, strategy) => {
     if (!age) return 1; 
 
@@ -69,7 +68,6 @@ export default function TradeValueClient() {
     return 1;
   };
 
-  // 📊 COMPREHENSIVE DYNASTY MATRIX ENGINE
   const getDynastyMetrics = (position, age, strategy, points) => {
     let assetProfile = { text: 'Roster Depth', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
     let marketAction = { text: 'Fair Value', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
@@ -107,7 +105,6 @@ export default function TradeValueClient() {
     return { assetProfile, marketAction };
   };
 
-  // 📈 REDRAFT MATRIX ENGINE (Volume/Value Driven)
   const getRedraftMetrics = (points) => {
     let assetProfile = { text: 'Bench Depth', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
     let marketAction = { text: 'Fair Value', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
@@ -129,7 +126,6 @@ export default function TradeValueClient() {
     return { assetProfile, marketAction };
   };
 
-  // ⚡ DYNAMIC RECALCULATION ENGINE
   const processedValues = useMemo(() => {
     const recalculated = (playersData || []).map(player => {
       let pts = 0;
@@ -148,7 +144,12 @@ export default function TradeValueClient() {
       }
       pts += recPoints;
 
-      // Calculate the specific score and grab the correct metrics based on format Mode
+      // 💥 SUPERFLEX SCARCITY MODIFIER
+      // Boosts QB Points by 55% behind the scenes to accurately shift their Asset Profiles and Trade Values
+      if (isSuperflex && player.position === 'QB') {
+        pts *= 1.55; 
+      }
+
       let trade_value = 0;
       let asset_profile = {};
       let market_action = {};
@@ -166,15 +167,9 @@ export default function TradeValueClient() {
         market_action = metrics.marketAction;
       }
 
-      return {
-        ...player,
-        trade_value,
-        asset_profile,
-        market_action
-      };
+      return { ...player, trade_value, asset_profile, market_action };
     });
 
-    // Sort by whichever mode is currently active
     recalculated.sort((a, b) => b.trade_value - a.trade_value);
 
     const posCounters = {};
@@ -183,13 +178,9 @@ export default function TradeValueClient() {
       if (!posCounters[pos]) posCounters[pos] = 0;
       posCounters[pos] += 1;
       
-      return {
-        ...player,
-        overallRank: index + 1,
-        posRank: `${pos}${posCounters[pos]}`
-      };
+      return { ...player, overallRank: index + 1, posRank: `${pos}${posCounters[pos]}` };
     });
-  }, [playersData, pprValue, passTdValue, tePremium, formatMode, dynastyStrategy]); 
+  }, [playersData, pprValue, passTdValue, tePremium, formatMode, dynastyStrategy, isSuperflex]); 
 
   const visibleData = processedValues.filter((player) => {
     if (currentPosition === 'All') return true;
@@ -202,7 +193,6 @@ export default function TradeValueClient() {
   return (
     <div className="w-full animate-in fade-in duration-500 pb-24 relative">
       
-      {/* ℹ️ Restored Full Valuation Details Modal */}
       {showMarketInfo && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-[#161616] border border-gray-800 w-full max-w-xl rounded-3xl p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
@@ -225,14 +215,12 @@ export default function TradeValueClient() {
 
               <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60">
                 <h4 className="text-[10px] uppercase font-black tracking-widest text-white">Axis 2: Actionable Market Recommendation</h4>
-                <p>• <span className="text-emerald-400 font-bold">Buy Now:</span> Deep inefficiencies identified between production volume and market perception. Acquire immediately.</p>
+                <p>• <span className="text-emerald-400 font-bold">Buy Now / Target Deal:</span> Deep inefficiencies identified between production volume and market perception. Acquire immediately.</p>
                 <p>• <span className="text-teal-400 font-bold">Buy Low:</span> Price point optimization window opened due to macro roster trends or strategic mismatch.</p>
                 <p>• <span className="text-zinc-400 font-bold">Fair Value:</span> Valued completely accurately on standard baseline equilibrium metrics.</p>
                 <p>• <span className="text-rose-400 font-bold">Sell High:</span> Asset valuation apex. Historical models indicate exchanging for future values right now optimizes returns.</p>
                 <p>• <span className="text-red-400 font-bold">Sell Now / Peak Value:</span> High value erosion risk. Rapid asset degradation threshold approaching. Exit positioning advised.</p>
               </div>
-
-              <p className="text-[10px] italic text-gray-500">Note: Identifiers shift instantly in real-time based on your specific format (Dynasty vs Redraft) and team strategy selection.</p>
             </div>
           </div>
         </div>
@@ -261,46 +249,28 @@ export default function TradeValueClient() {
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div className="flex flex-wrap gap-4 items-center">
             
-            {/* Format Switcher */}
             <div className="flex bg-[#111] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
-              <button 
-                onClick={() => setFormatMode('redraft')} 
-                className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${
-                  formatMode === 'redraft' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-white'
-                }`}
-              >
-                Redraft
-              </button>
-              <button 
-                onClick={() => setFormatMode('dynasty')} 
-                className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${
-                  formatMode === 'dynasty' ? 'bg-zinc-700 text-white shadow-md' : 'text-gray-500 hover:text-white'
-                }`}
-              >
-                Dynasty
-              </button>
+              <button onClick={() => setFormatMode('redraft')} className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${formatMode === 'redraft' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-white'}`}>Redraft</button>
+              <button onClick={() => setFormatMode('dynasty')} className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${formatMode === 'dynasty' ? 'bg-zinc-700 text-white shadow-md' : 'text-gray-500 hover:text-white'}`}>Dynasty</button>
             </div>
 
-            {/* Position Filters */}
             <div className="flex flex-wrap gap-2 bg-[#1a1a1a] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
                {positions.map(pos => (
-                  <button key={pos} onClick={() => setCurrentPosition(pos)} className={`px-4 py-1.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${currentPosition === pos ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'text-gray-500 hover:text-white hover:bg-[#252525]'}`}>
-                     {pos}
-                  </button>
+                  <button key={pos} onClick={() => setCurrentPosition(pos)} className={`px-4 py-1.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${currentPosition === pos ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'text-gray-500 hover:text-white hover:bg-[#252525]'}`}>{pos}</button>
                ))}
             </div>
           </div>
 
           <div className="flex items-center gap-4">
             {formatMode === 'dynasty' && (
-              <div className="flex items-center bg-[#111] p-1.5 rounded-2xl border border-gray-800 w-fit animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center bg-[#111] p-1.5 rounded-2xl border border-gray-800 w-fit animate-in fade-in zoom-in-95 duration-200 hidden md:flex">
                 <button onClick={() => setDynastyStrategy('win_now')} className={`px-4 py-1.5 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all ${dynastyStrategy === 'win_now' ? 'bg-zinc-200 text-black shadow-sm' : 'text-gray-500 hover:text-white'}`}>🏆 Win Now</button>
                 <button onClick={() => setDynastyStrategy('neutral')} className={`px-4 py-1.5 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all ${dynastyStrategy === 'neutral' ? 'bg-zinc-200 text-black shadow-sm' : 'text-gray-500 hover:text-white'}`}>⚖️ Balanced</button>
                 <button onClick={() => setDynastyStrategy('build')} className={`px-4 py-1.5 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all ${dynastyStrategy === 'build' ? 'bg-zinc-200 text-black shadow-sm' : 'text-gray-500 hover:text-white'}`}>🌱 Rebuild</button>
               </div>
             )}
             <button onClick={() => setShowSettings(!showSettings)} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${showSettings ? 'bg-white text-black' : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-gray-800'}`}>
-              <Settings size={16} /> {showSettings ? 'Hide Scoring' : 'Custom Scoring'}
+              <Settings size={16} /> {showSettings ? 'Hide Settings' : 'League Settings'}
             </button>
           </div>
         </div>
@@ -308,7 +278,16 @@ export default function TradeValueClient() {
         {/* Custom Scoring Panel */}
         {showSettings && (
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 mb-8 shadow-xl animate-in fade-in slide-in-from-top-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              
+              <div className="flex flex-col gap-3">
+                <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">League Type</span>
+                <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
+                  <button onClick={() => setIsSuperflex(false)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!isSuperflex ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>1QB</button>
+                  <button onClick={() => setIsSuperflex(true)} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${isSuperflex ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>SUPERFLEX</button>
+                </div>
+              </div>
+
               <div className="flex flex-col gap-3">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Receptions (PPR)</span>
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
@@ -317,6 +296,7 @@ export default function TradeValueClient() {
                   ))}
                 </div>
               </div>
+
               <div className="flex flex-col gap-3">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Passing TDs</span>
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
@@ -325,14 +305,16 @@ export default function TradeValueClient() {
                   ))}
                 </div>
               </div>
+
               <div className="flex flex-col gap-3">
-                <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">TE Premium Bonus</span>
+                <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">TE Premium</span>
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
                   {[{ label: 'NONE', val: 0 }, { label: '+0.5', val: 0.5 }, { label: '+1.0', val: 1 }].map(opt => (
                     <button key={opt.label} onClick={() => setTePremium(opt.val)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${tePremium === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>{opt.label}</button>
                   ))}
                 </div>
               </div>
+
             </div>
           </div>
         )}
