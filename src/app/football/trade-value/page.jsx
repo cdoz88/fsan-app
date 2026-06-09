@@ -1,20 +1,38 @@
 import React from 'react';
-import DashboardLayout from '@/components/layout/DashboardLayout'; // Adjust path if needed
+import Header from '../../../components/Header';
+import Sidebar from '../../../components/Sidebar';
 import TradeValueClient from './TradeValueClient';
+import { getMenuBySlug } from '../../../utils/api';
 
 export const metadata = {
   title: 'Trade Value Charts | FSAN',
   description: 'Dynasty and Redraft fantasy football trade value charts.',
 };
 
-export default function TradeValuePage() {
+export default async function TradeValuePage() {
+  let proToolsMenu = [];
+  let connectMenu = [];
+
+  // Fetch the dynamic menus for the Sidebar
+  try {
+    if (typeof getMenuBySlug === 'function') {
+      proToolsMenu = await getMenuBySlug('pro-tools-football');
+      connectMenu = await getMenuBySlug('connect-football');
+    }
+  } catch (e) {
+    console.error(e);
+  }
+
   return (
-    <DashboardLayout>
-      <div className="min-h-screen bg-[#0a0a0a] text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <>
+      <Header activeSport="Football" />
+      <div className="max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-8 w-full pb-24">
+        <Sidebar activeSport="Football" proToolsMenu={proToolsMenu} connectMenu={connectMenu} />
+        
+        <div className="flex-1 w-full min-w-0">
           <TradeValueClient />
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
