@@ -17,7 +17,7 @@ export default function TradeValueClient() {
   const [dynastyStrategy, setDynastyStrategy] = useState('neutral'); 
 
   // Scoring Format Settings
-  const [isSuperflex, setIsSuperflex] = useState(false); // NEW: Superflex Toggle
+  const [isSuperflex, setIsSuperflex] = useState(false); 
   const [pprValue, setPprValue] = useState(1);       
   const [passTdValue, setPassTdValue] = useState(4); 
   const [tePremium, setTePremium] = useState(0);     
@@ -43,27 +43,29 @@ export default function TradeValueClient() {
     loadLiveDatabase();
   }, []);
 
+  // 🧠 FLATTENED & REALISTIC AGE MULTIPLIERS
   const getAgeMultiplier = (position, age, strategy) => {
     if (!age) return 1; 
 
     if (strategy === 'build') {
-      if (position === 'RB') return age <= 23 ? 1.65 : age <= 25 ? 1.15 : age <= 27 ? 0.65 : 0.10;
-      if (position === 'WR') return age <= 23 ? 1.55 : age <= 26 ? 1.25 : age <= 29 ? 0.80 : 0.20;
-      if (position === 'QB') return age <= 24 ? 1.45 : age <= 28 ? 1.15 : age <= 32 ? 0.80 : 0.30;
-      if (position === 'TE' || position === 'WR/TE') return age <= 24 ? 1.50 : age <= 27 ? 1.15 : age <= 30 ? 0.75 : 0.15;
+      if (position === 'RB') return age <= 23 ? 1.35 : age <= 25 ? 1.10 : age <= 27 ? 0.75 : 0.30;
+      if (position === 'WR') return age <= 24 ? 1.30 : age <= 26 ? 1.15 : age <= 29 ? 0.85 : 0.40;
+      if (position === 'QB') return age <= 25 ? 1.20 : age <= 28 ? 1.05 : age <= 32 ? 0.85 : 0.50;
+      if (position === 'TE' || position === 'WR/TE') return age <= 25 ? 1.25 : age <= 28 ? 1.05 : age <= 30 ? 0.80 : 0.35;
     }
 
     if (strategy === 'win_now') {
-      if (position === 'RB') return age <= 25 ? 1.20 : age <= 27 ? 1.05 : age <= 29 ? 0.85 : 0.50;
-      if (position === 'WR') return age <= 26 ? 1.15 : age <= 29 ? 1.10 : age <= 31 ? 0.95 : 0.70;
-      if (position === 'QB') return age <= 28 ? 1.10 : age <= 32 ? 1.05 : age <= 36 ? 0.90 : 0.65;
-      if (position === 'TE' || position === 'WR/TE') return age <= 27 ? 1.10 : age <= 30 ? 1.05 : age <= 32 ? 0.85 : 0.55;
+      if (position === 'RB') return age <= 25 ? 1.10 : age <= 27 ? 1.05 : age <= 29 ? 0.90 : 0.60;
+      if (position === 'WR') return age <= 26 ? 1.05 : age <= 29 ? 1.05 : age <= 31 ? 0.95 : 0.75;
+      if (position === 'QB') return age <= 28 ? 1.05 : age <= 32 ? 1.00 : age <= 36 ? 0.95 : 0.75;
+      if (position === 'TE' || position === 'WR/TE') return age <= 27 ? 1.05 : age <= 30 ? 1.00 : age <= 32 ? 0.90 : 0.65;
     }
 
-    if (position === 'RB') return age <= 23 ? 1.45 : age <= 25 ? 1.20 : age <= 27 ? 0.90 : age <= 29 ? 0.50 : 0.20;
-    if (position === 'WR') return age <= 23 ? 1.35 : age <= 26 ? 1.15 : age <= 29 ? 0.95 : age <= 31 ? 0.70 : 0.40;
-    if (position === 'QB') return age <= 24 ? 1.30 : age <= 28 ? 1.10 : age <= 32 ? 0.95 : age <= 36 ? 0.70 : 0.40;
-    if (position === 'TE' || position === 'WR/TE') return age <= 24 ? 1.30 : age <= 27 ? 1.10 : age <= 30 ? 0.90 : age <= 32 ? 0.60 : 0.30;
+    // Neutral / Balanced Base
+    if (position === 'RB') return age <= 23 ? 1.20 : age <= 25 ? 1.05 : age <= 27 ? 0.85 : age <= 29 ? 0.55 : 0.25;
+    if (position === 'WR') return age <= 24 ? 1.15 : age <= 27 ? 1.05 : age <= 29 ? 0.90 : age <= 31 ? 0.70 : 0.45;
+    if (position === 'QB') return age <= 25 ? 1.10 : age <= 29 ? 1.00 : age <= 32 ? 0.90 : age <= 36 ? 0.75 : 0.50;
+    if (position === 'TE' || position === 'WR/TE') return age <= 25 ? 1.15 : age <= 28 ? 1.00 : age <= 30 ? 0.85 : age <= 32 ? 0.65 : 0.40;
     
     return 1;
   };
@@ -74,12 +76,12 @@ export default function TradeValueClient() {
 
     if (!age) return { assetProfile, marketAction };
 
-    if (points > 210) {
+    if (points > 180) {
       if (age <= 25) assetProfile = { text: '💎 Cornerstone', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' };
       else if (age >= 28) assetProfile = { text: '🏆 Win-Now Asset', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
       else assetProfile = { text: '💎 Cornerstone', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' };
-    } else if (points > 130) {
-      if (age <= 23) assetProfile = { text: '📈 High Upside', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+    } else if (points > 115) {
+      if (age <= 24) assetProfile = { text: '📈 High Upside', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
       else if (age >= 28) assetProfile = { text: '🏆 Win-Now Asset', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
       else assetProfile = { text: '⚔️ Core Starter', color: 'text-zinc-300 bg-zinc-800/40 border-zinc-700/40' };
     } else {
@@ -87,19 +89,19 @@ export default function TradeValueClient() {
     }
 
     if (strategy === 'build') {
-      if (age <= 23 && points > 150) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+      if (age <= 23 && points > 130) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
       else if (age <= 24) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
       else if (age >= 29) marketAction = { text: 'Sell Now', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
       else if (age >= 26) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
     } else if (strategy === 'win_now') {
-      if (age >= 27 && points > 170) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
-      else if (age >= 28 && points > 130) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
-      else if (age <= 23 && points < 120) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
+      if (age >= 27 && points > 150) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+      else if (age >= 28 && points > 110) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+      else if (age <= 23 && points < 100) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
     } else {
-      if (age <= 22 && points > 160) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
-      else if (age <= 24 && points < 140) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+      if (age <= 23 && points > 140) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+      else if (age <= 24 && points < 120) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
       else if (age >= 30) marketAction = { text: 'Sell Now', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
-      else if (age >= 28 && points > 190) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
+      else if (age >= 28 && points > 170) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
     }
 
     return { assetProfile, marketAction };
@@ -109,13 +111,13 @@ export default function TradeValueClient() {
     let assetProfile = { text: 'Bench Depth', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
     let marketAction = { text: 'Fair Value', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
 
-    if (points > 230) {
+    if (points > 190) {
       assetProfile = { text: '🌟 League Winner', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
       marketAction = { text: 'Anchor / Hold', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' };
-    } else if (points > 160) {
+    } else if (points > 140) {
       assetProfile = { text: '⚔️ Core Starter', color: 'text-zinc-300 bg-zinc-800/40 border-zinc-700/40' };
       marketAction = { text: 'Target Deal', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
-    } else if (points > 120) {
+    } else if (points > 100) {
       assetProfile = { text: '🔄 Flex Play', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
       marketAction = { text: 'Fair Value', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
     } else {
@@ -144,10 +146,19 @@ export default function TradeValueClient() {
       }
       pts += recPoints;
 
-      // 💥 SUPERFLEX SCARCITY MODIFIER
-      // Boosts QB Points by 55% behind the scenes to accurately shift their Asset Profiles and Trade Values
-      if (isSuperflex && player.position === 'QB') {
-        pts *= 1.55; 
+      // ⚖️ POSITIONAL WEIGHTING (VORP SIMULATION)
+      // Since QBs score inherently more raw points, we apply a scarcity adjustment 
+      // so WRs and RBs correctly surface to the top of standard 1QB rankings.
+      if (player.position === 'QB') {
+        if (isSuperflex) {
+          pts *= 0.85; // Bumps QBs to the top tier in Superflex
+        } else {
+          pts *= 0.45; // Heavily discounts QBs in 1QB formats
+        }
+      } else if (player.position === 'TE' || player.position === 'WR/TE') {
+        pts *= 1.15; // Tight End Scarcity Bump
+      } else {
+        pts *= 1.05; // Standard RB/WR Boost
       }
 
       let trade_value = 0;
