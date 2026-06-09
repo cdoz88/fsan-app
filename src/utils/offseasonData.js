@@ -1,6 +1,5 @@
 export const OFFSEASON_FUTURES_DATABASE = [
   // === QUARTERBACKS ===
-  // === QUARTERBACKS ===
   { name: "Josh Allen", position: "QB", pass_yds: 3826, pass_tds: 28, ints: 12, rush_yds: 595, rush_tds: 12, receptions: 0, rec_yds: 0, rec_tds: 0, fumbles: 2 },
   { name: "Lamar Jackson", position: "QB", pass_yds: 3622, pass_tds: 29, ints: 10, rush_yds: 637, rush_tds: 3, receptions: 0, rec_yds: 0, rec_tds: 0, fumbles: 2 },
   { name: "Jalen Hurts", position: "QB", pass_yds: 3576, pass_tds: 25, ints: 8, rush_yds: 464, rush_tds: 9, receptions: 0, rec_yds: 0, rec_tds: 0, fumbles: 2 },
@@ -35,7 +34,6 @@ export const OFFSEASON_FUTURES_DATABASE = [
   { name: "Deshaun Watson", position: "QB", pass_yds: 2675, pass_tds: 15, ints: 11, rush_yds: 250, rush_tds: 2, receptions: 0, rec_yds: 0, rec_tds: 0, fumbles: 2 },
 
   // === RUNNING BACKS ===
-  // === RUNNING BACKS ===
   { name: "Derrick Henry", position: "RB", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 1566, rush_tds: 14, receptions: 15, rec_yds: 120, rec_tds: 0, fumbles: 2 },
   { name: "Jonathan Taylor", position: "RB", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 1547, rush_tds: 13, receptions: 30, rec_yds: 220, rec_tds: 1, fumbles: 2 },
   { name: "Bijan Robinson", position: "RB", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 1439, rush_tds: 10, receptions: 77, rec_yds: 753, rec_tds: 4, fumbles: 2 },
@@ -68,7 +66,6 @@ export const OFFSEASON_FUTURES_DATABASE = [
   { name: "Brian Robinson Jr.", position: "RB", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 564, rush_tds: 4, receptions: 25, rec_yds: 200, rec_tds: 1, fumbles: 1 },
 
   // === WIDE RECEIVERS ===
-// === WIDE RECEIVERS ===
   { name: "Jaxon Smith-Njigba", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 119, rec_yds: 1671, rec_tds: 11, fumbles: 1 },
   { name: "Puka Nacua", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 126, rec_yds: 1646, rec_tds: 9, fumbles: 1 },
   { name: "Ja'Marr Chase", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 124, rec_yds: 1528, rec_tds: 10, fumbles: 1 },
@@ -98,23 +95,22 @@ export const OFFSEASON_FUTURES_DATABASE = [
   { name: "Courtland Sutton", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 73, rec_yds: 931, rec_tds: 8, fumbles: 1 },
   { name: "DK Metcalf", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 65, rec_yds: 921, rec_tds: 6, fumbles: 1 },
   { name: "Mike Evans", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 63, rec_yds: 906, rec_tds: 7, fumbles: 1 },
-  { name: "DJ Moore", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 68, rec_yds: 872, rec_tds: 7, fumbles: 1 }
+  { name: "DJ Moore", position: "WR", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 68, rec_yds: 872, rec_tds: 7, fumbles: 1 },
 
   // === TIGHT ENDS ===
-// === TIGHT ENDS ===
-{ name: "Trey McBride", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 113, rec_yds: 1074, rec_tds: 7, fumbles: 0 },
-{ name: "Brock Bowers", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 93, rec_yds: 994, rec_tds: 8, fumbles: 0 },
-{ name: "Colston Loveland", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 80, rec_yds: 949, rec_tds: 7, fumbles: 0 },
-{ name: "Kyle Pitts Sr.", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 81, rec_yds: 896, rec_tds: 5, fumbles: 0 },
-{ name: "Sam LaPorta", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 75, rec_yds: 847, rec_tds: 6, fumbles: 0 },
-{ name: "Harold Fannin Jr.", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 79, rec_yds: 822, rec_tds: 6, fumbles: 0 },
-{ name: "Isaiah Likely", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 66, rec_yds: 792, rec_tds: 6, fumbles: 0 },
-{ name: "Travis Kelce", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 76, rec_yds: 789, rec_tds: 5, fumbles: 0 },
-{ name: "Tucker Kraft", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 60, rec_yds: 772, rec_tds: 7, fumbles: 0 },
-{ name: "George Kittle", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 68, rec_yds: 769, rec_tds: 6, fumbles: 0 },
-{ name: "Jake Ferguson", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 75, rec_yds: 750, rec_tds: 6, fumbles: 0 },
-{ name: "Mark Andrews", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 60, rec_yds: 700, rec_tds: 8, fumbles: 0 },
-{ name: "Dallas Goedert", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 69, rec_yds: 650, rec_tds: 8, fumbles: 0 },
-{ name: "Dalton Kincaid", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 65, rec_yds: 650, rec_tds: 6, fumbles: 0 },
-{ name: "Juwan Johnson", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 67, rec_yds: 751, rec_tds: 4, fumbles: 0 }
+  { name: "Trey McBride", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 113, rec_yds: 1074, rec_tds: 7, fumbles: 0 },
+  { name: "Brock Bowers", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 93, rec_yds: 994, rec_tds: 8, fumbles: 0 },
+  { name: "Colston Loveland", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 80, rec_yds: 949, rec_tds: 7, fumbles: 0 },
+  { name: "Kyle Pitts Sr.", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 81, rec_yds: 896, rec_tds: 5, fumbles: 0 },
+  { name: "Sam LaPorta", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 75, rec_yds: 847, rec_tds: 6, fumbles: 0 },
+  { name: "Harold Fannin Jr.", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 79, rec_yds: 822, rec_tds: 6, fumbles: 0 },
+  { name: "Isaiah Likely", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 66, rec_yds: 792, rec_tds: 6, fumbles: 0 },
+  { name: "Travis Kelce", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 76, rec_yds: 789, rec_tds: 5, fumbles: 0 },
+  { name: "Tucker Kraft", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 60, rec_yds: 772, rec_tds: 7, fumbles: 0 },
+  { name: "George Kittle", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 68, rec_yds: 769, rec_tds: 6, fumbles: 0 },
+  { name: "Jake Ferguson", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 75, rec_yds: 750, rec_tds: 6, fumbles: 0 },
+  { name: "Mark Andrews", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 60, rec_yds: 700, rec_tds: 8, fumbles: 0 },
+  { name: "Dallas Goedert", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 69, rec_yds: 650, rec_tds: 8, fumbles: 0 },
+  { name: "Dalton Kincaid", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 65, rec_yds: 650, rec_tds: 6, fumbles: 0 },
+  { name: "Juwan Johnson", position: "TE", pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 67, rec_yds: 751, rec_tds: 4, fumbles: 0 }
 ];
