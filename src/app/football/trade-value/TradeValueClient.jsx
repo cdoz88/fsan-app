@@ -12,7 +12,7 @@ export default function TradeValueClient() {
   const [showSettings, setShowSettings] = useState(false);
   const [showMarketInfo, setShowMarketInfo] = useState(false);
   
-  // Format toggles
+  // Format toggles (Simplified strings)
   const [formatMode, setFormatMode] = useState('dynasty'); // 'dynasty' or 'redraft'
   const [dynastyStrategy, setDynastyStrategy] = useState('neutral'); // 'win_now', 'neutral', 'build'
 
@@ -212,17 +212,27 @@ export default function TradeValueClient() {
       </div>
 
       <div className="w-full">
-        {/* Controls Row */}
-        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6">
-          <div className="flex flex-wrap gap-4 items-center w-full xl:w-auto">
+        {/* Unified Single-Line Controls Row */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="flex flex-wrap gap-4 items-center">
             
-            {/* Format Toggle */}
+            {/* Shortened Mode Switcher (Dynasty / Redraft) */}
             <div className="flex bg-[#111] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
-              <button onClick={() => setFormatMode('dynasty')} className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${formatMode === 'dynasty' ? 'bg-zinc-700 text-white shadow-md' : 'text-gray-500 hover:text-white'}`}>
-                Dynasty Values
+              <button 
+                onClick={() => setFormatMode('redraft')} 
+                className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${
+                  formatMode === 'redraft' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-white'
+                }`}
+              >
+                Redraft
               </button>
-              <button onClick={() => setFormatMode('redraft')} className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${formatMode === 'redraft' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-white'}`}>
-                Redraft Values
+              <button 
+                onClick={() => setFormatMode('dynasty')} 
+                className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${
+                  formatMode === 'dynasty' ? 'bg-zinc-700 text-white shadow-md' : 'text-gray-500 hover:text-white'
+                }`}
+              >
+                Dynasty
               </button>
             </div>
 
@@ -236,15 +246,15 @@ export default function TradeValueClient() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto xl:justify-end">
+          <div className="flex items-center gap-4">
             {formatMode === 'dynasty' && (
-              <div className="flex items-center bg-[#111] p-1.5 rounded-2xl border border-gray-800 w-fit">
+              <div className="flex items-center bg-[#111] p-1.5 rounded-2xl border border-gray-800 w-fit animate-in fade-in zoom-in-95 duration-200">
                 <button onClick={() => setDynastyStrategy('win_now')} className={`px-4 py-1.5 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all ${dynastyStrategy === 'win_now' ? 'bg-zinc-200 text-black shadow-sm' : 'text-gray-500 hover:text-white'}`}>🏆 Win Now</button>
                 <button onClick={() => setDynastyStrategy('neutral')} className={`px-4 py-1.5 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all ${dynastyStrategy === 'neutral' ? 'bg-zinc-200 text-black shadow-sm' : 'text-gray-500 hover:text-white'}`}>⚖️ Balanced</button>
                 <button onClick={() => setDynastyStrategy('build')} className={`px-4 py-1.5 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all ${dynastyStrategy === 'build' ? 'bg-zinc-200 text-black shadow-sm' : 'text-gray-500 hover:text-white'}`}>🌱 Rebuild</button>
               </div>
             )}
-            <button onClick={() => setShowSettings(!showSettings)} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ml-auto xl:ml-0 ${showSettings ? 'bg-white text-black' : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-gray-800'}`}>
+            <button onClick={() => setShowSettings(!showSettings)} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${showSettings ? 'bg-white text-black' : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-gray-800'}`}>
               <Settings size={16} /> {showSettings ? 'Hide Scoring' : 'Custom Scoring'}
             </button>
           </div>
@@ -253,7 +263,6 @@ export default function TradeValueClient() {
         {/* Custom Scoring Panel */}
         {showSettings && (
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 mb-8 shadow-xl animate-in fade-in slide-in-from-top-4">
-             {/* ... (Kept exactly the same custom scoring sliders as the rankings page) ... */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="flex flex-col gap-3">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Receptions (PPR)</span>
