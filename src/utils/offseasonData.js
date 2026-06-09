@@ -106,3 +106,4 @@ export const OFFSEASON_FUTURES_DATABASE = [
     { name: "Mark Andrews", position: "TE", team: null, age: null, pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 0, rec_yds: 524.5, rec_tds: 0, fumbles: 0 },
     { name: "Jake Ferguson", position: "TE", team: null, age: null, pass_yds: 0, pass_tds: 0, ints: 0, rush_yds: 0, rush_tds: 0, receptions: 0, rec_yds: 524.5, rec_tds: 0, fumbles: 0 }
   ];
+  
