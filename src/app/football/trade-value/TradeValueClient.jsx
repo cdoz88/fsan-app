@@ -149,19 +149,15 @@ export default function TradeValueClient() {
       }
       pts += recPoints;
 
-      // VORP Positional Adjustments (Fixed TE overvaluation)
+      // VORP Positional Adjustments (Reset to neutral baseline now that data is fixed)
       if (player.position === 'QB') {
         if (isSuperflex) {
-          pts *= 1.0;  // Superflex makes QBs incredibly valuable, no penalty needed.
+          pts *= 1.0;  // Superflex makes QBs equal to flex assets
         } else {
-          pts *= 0.60; // Standard 1QB penalty so they don't break the flex rankings.
+          pts *= 0.60; // Standard 1QB penalty so QBs don't break the flex rankings
         }
-      } else if (player.position === 'TE' || player.position === 'WR/TE') {
-        pts *= 0.90; // Baseline TE adjustment. Users can boost them via the TE Premium slider!
-      } else if (player.position === 'RB') {
-        pts *= 0.95; // Slight positional penalty for RBs to account for shorter shelf life/committees.
       } else {
-        pts *= 1.0;  // Wide Receivers act as the baseline standard 1.0x multiplier.
+        pts *= 1.0;  // RB, WR, and TE share a 1.0 baseline. Custom scoring sliders handle the rest!
       }
 
       let trade_value = 0;
@@ -403,7 +399,6 @@ export default function TradeValueClient() {
                     </td>
                   </tr>
                 ) : visibleData.map((player, idx) => (
-                    // 🛡️ THE FIX: We map with (player, idx) and use idx in the key to prevent freezing!
                     <tr key={`${player.name}-${player.position}-${idx}`} className="hover:bg-[#151515] transition-colors group">
                       <td className="px-4 py-2.5">
                         <div className="w-8 h-8 mx-auto rounded-full flex items-center justify-center text-xs font-black shrink-0 bg-gray-800 text-gray-300 border border-gray-700">{player.overallRank}</div>
