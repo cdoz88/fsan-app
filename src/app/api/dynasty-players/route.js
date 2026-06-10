@@ -25,7 +25,9 @@ export async function GET() {
         ...vegasPlayer,
         position: match && match.position ? match.position : vegasPlayer.position,
         team: match && match.team ? match.team.toLowerCase() : (vegasPlayer.team || 'fa'),
-        age: match && match.age ? parseInt(match.age) : (vegasPlayer.age || 24) 
+        age: match && match.age ? parseInt(match.age) : (vegasPlayer.age || 24),
+        // Grab experience from Sleeper. If 0 (or undefined for college players), they are a Rookie!
+        years_exp: match && match.years_exp !== undefined ? match.years_exp : 0 
       };
     });
 
