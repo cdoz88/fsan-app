@@ -102,8 +102,9 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
       pts += recPoints;
 
       if (rankingMode === 'bestball') {
-         if (player.position === 'WR') pts *= 1.05; 
-         if (player.position === 'QB' && player.rush_yds > 300) pts *= 1.05; 
+         if (player.position === 'WR') pts *= 1.05; // Spike week WR bump
+         if (player.position === 'QB' && player.rush_yds > 300) pts *= 1.05; // Konami Code QB bump
+         if (player.position === 'RB' && player.receptions > 40) pts *= 1.05; // Receiving RB bump
       }
 
       if (player.position === 'QB') {
@@ -420,7 +421,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
           <div className="text-xs text-gray-400 space-y-2 font-medium leading-relaxed">
             <p>• Projections are an aggregation of custom Vegas lines & Consensus expected output metrics.</p>
             <p>• Player fantasy points recalculate instantly to mirror custom PPR, TE Premium, and Superflex scarcity modifiers.</p>
-            <p>• <strong>Best Ball</strong> mode algorithmically isolates and bumps variance-heavy profiles (like Konami-code QBs and deep-threat WRs).</p>
+            <p>• <strong>Best Ball</strong> mode algorithmically isolates and bumps variance-heavy profiles (like Konami-code QBs, pass-catching RBs, and deep-threat WRs).</p>
           </div>
         </div>
 
