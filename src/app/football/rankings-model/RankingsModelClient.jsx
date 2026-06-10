@@ -327,8 +327,9 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                     </td>
                   </tr>
                 ) : visibleData && visibleData.length > 0 ? (
-                  visibleData.map((player) => (
-                    <tr key={player.name} className="hover:bg-[#151515] transition-colors group">
+                  // 🛡️ THE FIX: We map with (player, idx) and use idx in the key to prevent freezing!
+                  visibleData.map((player, idx) => (
+                    <tr key={`${player.name}-${player.position}-${idx}`} className="hover:bg-[#151515] transition-colors group">
                       
                       <td className="px-4 py-2.5">
                         <div className="w-8 h-8 mx-auto rounded-full flex items-center justify-center text-xs font-black shrink-0 bg-gray-800 text-gray-300 border border-gray-700 shadow-inner group-hover:bg-gray-700 group-hover:text-white transition-colors">

@@ -9,24 +9,28 @@ export async function GET() {
     const sleeperPlayers = Object.values(sleeperData);
 
     const runtimeDatabase = OFFSEASON_FUTURES_DATABASE.map(vegasPlayer => {
+      if (!vegasPlayer.name) return vegasPlayer;
+      
       const cleanVegasName = vegasPlayer.name.toLowerCase().replace(/[^a-z]/g, '');
 
       const match = sleeperPlayers.find(sp => {
         if (!sp.first_name || !sp.last_name) return false;
-        
-        // THE FIX: Ensure we only match Offensive Skill Positions! No Guards or DEs.
         if (!['QB', 'RB', 'WR', 'TE'].includes(sp.position)) return false;
 
         const cleanSleeperName = `${sp.first_name}${sp.last_name}`.toLowerCase().replace(/[^a-z]/g, '');
-        return cleanSleeperName.includes(cleanVegasName) || cleanVegasName.includes(cleanSleeperName);
+        
+        // 🛡️ THE FIX: Strict matching prevents short names (like "Brown") from hijacking the wrong players
+        return cleanSleeperName === cleanVegasName || 
+               (cleanSleeperName.startsWith(cleanVegasName) && cleanVegasName.length > 5) ||
+               (cleanVegasName.startsWith(cleanSleeperName) && cleanSleeperName.length > 5);
       });
 
       return {
         ...vegasPlayer,
-        position: match && match.position ? match.position : vegasPlayer.position,
+        // 🛡️ THE FIX: We force the CSV position to remain the source of truth!
+        position: vegasPlayer.position, 
         team: match && match.team ? match.team.toLowerCase() : (vegasPlayer.team || 'fa'),
         age: match && match.age ? parseInt(match.age) : (vegasPlayer.age || 24),
-        // Grab experience from Sleeper. If 0 (or undefined for college players), they are a Rookie!
         years_exp: match && match.years_exp !== undefined ? match.years_exp : 0 
       };
     });

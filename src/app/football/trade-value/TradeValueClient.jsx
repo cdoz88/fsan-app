@@ -125,7 +125,6 @@ export default function TradeValueClient() {
 
   const getRedraftMetrics = () => {
     // 🏈 Offseason Placeholder Logic
-    // In-season, this will be replaced with Live Performance Actuals vs Projected Volume formulas
     return { 
       assetProfile: { text: 'Offseason', color: 'text-zinc-500 bg-zinc-900/30 border-zinc-800/50' }, 
       marketAction: { text: 'Offseason', color: 'text-zinc-500 bg-zinc-900/30 border-zinc-800/50' } 
@@ -400,8 +399,9 @@ export default function TradeValueClient() {
                       </div>
                     </td>
                   </tr>
-                ) : visibleData.map((player) => (
-                    <tr key={player.name} className="hover:bg-[#151515] transition-colors group">
+                ) : visibleData.map((player, idx) => (
+                    // 🛡️ THE FIX: We map with (player, idx) and use idx in the key to prevent freezing!
+                    <tr key={`${player.name}-${player.position}-${idx}`} className="hover:bg-[#151515] transition-colors group">
                       <td className="px-4 py-2.5">
                         <div className="w-8 h-8 mx-auto rounded-full flex items-center justify-center text-xs font-black shrink-0 bg-gray-800 text-gray-300 border border-gray-700">{player.overallRank}</div>
                       </td>
