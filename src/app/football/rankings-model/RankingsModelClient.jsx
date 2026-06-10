@@ -26,6 +26,39 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
   const primaryColor = '#e42d38';
   const secondaryColor = '#8a1a20';
 
+  // 🔗 EFFECT 1: Read initial state from URL parameters on page load
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      
+      const modeParam = params.get('mode');
+      if (['redraft', 'bestball', 'rookies'].includes(modeParam)) {
+        setRankingMode(modeParam);
+      }
+      
+      const posParam = params.get('pos');
+      if (posParam) {
+        const upperPos = posParam.toUpperCase();
+        if (['ALL', 'QB', 'RB', 'WR', 'TE'].includes(upperPos)) {
+          setCurrentPosition(upperPos === 'ALL' ? 'All' : upperPos);
+        }
+      }
+    }
+  }, []);
+
+  // 🔗 EFFECT 2: Write state shifts out to the browser URL string silently
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      
+      params.set('mode', rankingMode);
+      params.set('pos', currentPosition.toLowerCase());
+
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+    }
+  }, [rankingMode, currentPosition]);
+
   useEffect(() => {
     async function loadLiveDatabase() {
       try {
@@ -47,7 +80,6 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
   const processedRankings = useMemo(() => {
     let filteredData = playersData || [];
 
-    // If Rookies mode is active, filter out veterans (years_exp > 0)
     if (rankingMode === 'rookies') {
       filteredData = filteredData.filter(player => player.years_exp === 0);
     }
@@ -69,21 +101,19 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
       }
       pts += recPoints;
 
-      // Best Ball bumps volatile, high-ceiling assets (like Deep Threat WRs or Mobile QBs)
       if (rankingMode === 'bestball') {
-         if (player.position === 'WR') pts *= 1.05; // Spike week bump
-         if (player.position === 'QB' && player.rush_yds > 300) pts *= 1.05; // Konami Code bump
+         if (player.position === 'WR') pts *= 1.05; 
+         if (player.position === 'QB' && player.rush_yds > 300) pts *= 1.05; 
       }
 
-      // VORP Positional Adjustments (Reset to neutral baseline now that data is fixed)
       if (player.position === 'QB') {
         if (isSuperflex) {
-          pts *= 1.0;  // Superflex makes QBs equal to flex assets
+          pts *= 1.0;  
         } else {
-          pts *= 0.60; // Standard 1QB penalty so QBs don't break the flex rankings
+          pts *= 0.60; 
         }
       } else {
-        pts *= 1.0;  // RB, WR, and TE share a 1.0 baseline. Custom scoring sliders handle the rest!
+        pts *= 1.0;  
       }
 
       return {

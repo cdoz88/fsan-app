@@ -26,6 +26,49 @@ export default function TradeValueClient() {
   const primaryColor = '#e42d38';
   const secondaryColor = '#8a1a20';
 
+  // 🔗 EFFECT 1: Read initial state from URL parameters on page load
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      
+      const modeParam = params.get('mode');
+      if (modeParam === 'redraft' || modeParam === 'dynasty') {
+        setFormatMode(modeParam);
+      }
+      
+      const posParam = params.get('pos');
+      if (posParam) {
+        const upperPos = posParam.toUpperCase();
+        if (['ALL', 'QB', 'RB', 'WR', 'TE'].includes(upperPos)) {
+          setCurrentPosition(upperPos === 'ALL' ? 'All' : upperPos);
+        }
+      }
+
+      const stratParam = params.get('strategy');
+      if (stratParam === 'win_now' || stratParam === 'neutral' || stratParam === 'build') {
+        setDynastyStrategy(stratParam);
+      }
+    }
+  }, []);
+
+  // 🔗 EFFECT 2: Write state shifts out to the browser URL string silently
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      
+      params.set('mode', formatMode);
+      params.set('pos', currentPosition.toLowerCase());
+      if (formatMode === 'dynasty') {
+        params.set('strategy', dynastyStrategy);
+      } else {
+        params.delete('strategy');
+      }
+
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+    }
+  }, [formatMode, currentPosition, dynastyStrategy]);
+
   useEffect(() => {
     async function loadLiveDatabase() {
       try {
@@ -124,7 +167,6 @@ export default function TradeValueClient() {
   };
 
   const getRedraftMetrics = () => {
-    // 🏈 Offseason Placeholder Logic
     return { 
       assetProfile: { text: 'Offseason', color: 'text-zinc-500 bg-zinc-900/30 border-zinc-800/50' }, 
       marketAction: { text: 'Offseason', color: 'text-zinc-500 bg-zinc-900/30 border-zinc-800/50' } 
@@ -149,15 +191,14 @@ export default function TradeValueClient() {
       }
       pts += recPoints;
 
-      // VORP Positional Adjustments (Reset to neutral baseline now that data is fixed)
       if (player.position === 'QB') {
         if (isSuperflex) {
-          pts *= 1.0;  // Superflex makes QBs equal to flex assets
+          pts *= 1.0;  
         } else {
-          pts *= 0.60; // Standard 1QB penalty so QBs don't break the flex rankings
+          pts *= 0.60; 
         }
       } else {
-        pts *= 1.0;  // RB, WR, and TE share a 1.0 baseline. Custom scoring sliders handle the rest!
+        pts *= 1.0;  
       }
 
       let trade_value = 0;
@@ -226,7 +267,7 @@ export default function TradeValueClient() {
                 <p>• <span className="text-sky-400 font-bold">💎 Cornerstone:</span> Elite premium assets with extensive production runways. Essential foundational builds.</p>
                 <p>• <span className="text-amber-400 font-bold">🏆 Win-Now Asset / League Winner:</span> High point production volume. Crucial value anchors for current season title contention.</p>
                 <p>• <span className="text-teal-400 font-bold">📈 High Upside / Stash:</span> Developmentally insulated profiles showing asymmetric breakout metrics relative to age thresholds.</p>
-                <p>• <span className="text-zinc-300 font-bold">⚔️ Core Starter:</span> Reliable roster assets providing baseline weekly utility.</p>
+                <p>• <span className="text-zinc-300 font-bold">⚔️ Core Starter:</span> Reliable roster assets providing weekly utility.</p>
                 <p>• <span className="text-zinc-400 font-bold">🔄 Flex Play / Bench Depth:</span> Roster insulation and depth chart fillers.</p>
               </div>
             </div>
