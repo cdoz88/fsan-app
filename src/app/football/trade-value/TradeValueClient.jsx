@@ -43,7 +43,6 @@ export default function TradeValueClient() {
     loadLiveDatabase();
   }, []);
 
-  // 🧠 UPDATED AGE CURVE (Extended QB Prime to 33)
   const getAgeMultiplier = (position, age, strategy) => {
     if (!age) return 1; 
 
@@ -70,14 +69,12 @@ export default function TradeValueClient() {
     return 1;
   };
 
-  // 📊 UPGRADED DYNASTY MATRIX (Position-Specific Age Cliffs)
   const getDynastyMetrics = (position, age, strategy, points) => {
     let assetProfile = { text: 'Roster Depth', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
     let marketAction = { text: 'Fair Value', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
 
     if (!age) return { assetProfile, marketAction };
 
-    // 1. Define specific age thresholds based on position
     let cornerstoneAge, winNowAge, stashAge;
     let sellNowAge, sellHighAge, buyLowAge;
 
@@ -95,11 +92,10 @@ export default function TradeValueClient() {
       sellNowAge = 31; sellHighAge = 28; buyLowAge = 25;
     }
 
-    // 2. Assign Asset Profile using positional thresholds
     if (points > 180) {
       if (age <= cornerstoneAge) assetProfile = { text: '💎 Cornerstone', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' };
       else if (age >= winNowAge) assetProfile = { text: '🏆 Win-Now Asset', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
-      else assetProfile = { text: '💎 Cornerstone', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' }; // Players in their prime
+      else assetProfile = { text: '💎 Cornerstone', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' }; 
     } else if (points > 115) {
       if (age <= stashAge + 1) assetProfile = { text: '📈 High Upside', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
       else if (age >= winNowAge) assetProfile = { text: '🏆 Win-Now Asset', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
@@ -108,28 +104,26 @@ export default function TradeValueClient() {
       if (age <= stashAge) assetProfile = { text: '🌱 High Upside / Stash', color: 'text-teal-400 bg-teal-950/20 border-teal-900/30' };
     }
 
-    // 3. Assign Market Action using positional thresholds and team strategy
     if (strategy === 'build') {
-      if (age <= buyLowAge && points > 130) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+      if (age <= buyLowAge && points > 130) marketAction = { text: 'Acquisition Target', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
       else if (age <= buyLowAge) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
-      else if (age >= sellNowAge) marketAction = { text: 'Sell Now', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
+      else if (age >= sellNowAge) marketAction = { text: 'Exit Strategy', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
       else if (age >= sellHighAge) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
     } else if (strategy === 'win_now') {
-      if (age >= sellHighAge && points > 150) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+      if (age >= sellHighAge && points > 150) marketAction = { text: 'Acquisition Target', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
       else if (age >= sellHighAge && points > 110) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
       else if (age <= stashAge && points < 100) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' }; 
     } else {
       // Balanced
-      if (age <= buyLowAge && points > 140) marketAction = { text: 'Buy Now', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+      if (age <= buyLowAge && points > 140) marketAction = { text: 'Acquisition Target', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
       else if (age <= buyLowAge && points < 120) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
-      else if (age >= sellNowAge) marketAction = { text: 'Sell Now', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
+      else if (age >= sellNowAge) marketAction = { text: 'Exit Strategy', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
       else if (age >= sellHighAge && points > 170) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
     }
 
     return { assetProfile, marketAction };
   };
 
-  // 📈 UPGRADED REDRAFT MATRIX (Tied strictly to universal Trade Value)
   const getRedraftMetrics = (tradeValue) => {
     let assetProfile = { text: 'Bench Depth', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
     let marketAction = { text: 'Fair Value', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
@@ -169,17 +163,16 @@ export default function TradeValueClient() {
       }
       pts += recPoints;
 
-      // ⚖️ BALANCED POSITIONAL WEIGHTING (VORP SIMULATION)
       if (player.position === 'QB') {
         if (isSuperflex) {
-          pts *= 0.95; // Bumps QBs to the absolute top tier in Superflex
+          pts *= 0.95; 
         } else {
-          pts *= 0.65; // Softened 1QB penalty so they aren't completely buried
+          pts *= 0.65; 
         }
       } else if (player.position === 'TE' || player.position === 'WR/TE') {
-        pts *= 1.15; // Tight End Scarcity Bump
+        pts *= 1.15; 
       } else {
-        pts *= 1.05; // Standard RB/WR Boost
+        pts *= 1.05; 
       }
 
       let trade_value = 0;
@@ -194,7 +187,7 @@ export default function TradeValueClient() {
         market_action = metrics.marketAction;
       } else {
         trade_value = Math.round(pts * 1.5); 
-        const metrics = getRedraftMetrics(trade_value); // Fixed to use trade_value for accurate Redraft tags
+        const metrics = getRedraftMetrics(trade_value); 
         asset_profile = metrics.assetProfile;
         market_action = metrics.marketAction;
       }
@@ -246,12 +239,12 @@ export default function TradeValueClient() {
               </div>
 
               <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60">
-                <h4 className="text-[10px] uppercase font-black tracking-widest text-white">Axis 2: Actionable Market Recommendation</h4>
-                <p>• <span className="text-emerald-400 font-bold">Buy Now / Target Deal:</span> Deep inefficiencies identified between production volume and market perception. Acquire immediately.</p>
+                <h4 className="text-[10px] uppercase font-black tracking-widest text-white">Axis 2: Market Recommendation</h4>
+                <p>• <span className="text-emerald-400 font-bold">Acquisition Target:</span> Deep inefficiencies identified between production volume and market perception. Strong buy recommendation.</p>
                 <p>• <span className="text-teal-400 font-bold">Buy Low:</span> Price point optimization window opened due to macro roster trends or strategic mismatch.</p>
                 <p>• <span className="text-zinc-400 font-bold">Fair Value:</span> Valued completely accurately on standard baseline equilibrium metrics.</p>
                 <p>• <span className="text-rose-400 font-bold">Sell High:</span> Asset valuation apex. Historical models indicate exchanging for future values right now optimizes returns.</p>
-                <p>• <span className="text-red-400 font-bold">Sell Now / Peak Value:</span> High value erosion risk. Rapid asset degradation threshold approaching. Exit positioning advised.</p>
+                <p>• <span className="text-red-400 font-bold">Exit Strategy:</span> High value erosion risk. Rapid asset degradation threshold approaching. Divestment advised.</p>
               </div>
             </div>
           </div>
@@ -374,7 +367,7 @@ export default function TradeValueClient() {
                     <div className="flex items-center gap-1.5">Asset Type <button onClick={() => setShowMarketInfo(true)} className="text-gray-500 hover:text-white"><Info size={11} /></button></div>
                   </th>
                   <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest">
-                    <div className="flex items-center gap-1.5">Action <button onClick={() => setShowMarketInfo(true)} className="text-gray-500 hover:text-white"><Info size={11} /></button></div>
+                    <div className="flex items-center gap-1.5">Market Recommendation <button onClick={() => setShowMarketInfo(true)} className="text-gray-500 hover:text-white"><Info size={11} /></button></div>
                   </th>
 
                 </tr>
