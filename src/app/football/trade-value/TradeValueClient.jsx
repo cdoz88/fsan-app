@@ -149,16 +149,19 @@ export default function TradeValueClient() {
       }
       pts += recPoints;
 
+      // VORP Positional Adjustments (Fixed TE overvaluation)
       if (player.position === 'QB') {
         if (isSuperflex) {
-          pts *= 0.95; 
+          pts *= 1.0;  // Superflex makes QBs incredibly valuable, no penalty needed.
         } else {
-          pts *= 0.65; 
+          pts *= 0.60; // Standard 1QB penalty so they don't break the flex rankings.
         }
       } else if (player.position === 'TE' || player.position === 'WR/TE') {
-        pts *= 1.15; 
+        pts *= 0.90; // Baseline TE adjustment. Users can boost them via the TE Premium slider!
+      } else if (player.position === 'RB') {
+        pts *= 0.95; // Slight positional penalty for RBs to account for shorter shelf life/committees.
       } else {
-        pts *= 1.05; 
+        pts *= 1.0;  // Wide Receivers act as the baseline standard 1.0x multiplier.
       }
 
       let trade_value = 0;

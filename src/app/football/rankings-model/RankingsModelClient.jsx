@@ -75,17 +75,19 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
          if (player.position === 'QB' && player.rush_yds > 300) pts *= 1.05; // Konami Code bump
       }
 
-      // VORP Positional Adjustments
+      // VORP Positional Adjustments (Fixed TE overvaluation)
       if (player.position === 'QB') {
         if (isSuperflex) {
-          pts *= 0.95; 
+          pts *= 1.0;  // Superflex makes QBs incredibly valuable, no penalty needed.
         } else {
-          pts *= 0.65; 
+          pts *= 0.60; // Standard 1QB penalty so they don't break the flex rankings.
         }
       } else if (player.position === 'TE' || player.position === 'WR/TE') {
-        pts *= 1.15; 
+        pts *= 0.90; // Baseline TE adjustment. Users can boost them via the TE Premium slider!
+      } else if (player.position === 'RB') {
+        pts *= 0.95; // Slight positional penalty for RBs to account for shorter shelf life/committees.
       } else {
-        pts *= 1.05; 
+        pts *= 1.0;  // Wide Receivers act as the baseline standard 1.0x multiplier.
       }
 
       return {
@@ -327,7 +329,6 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                     </td>
                   </tr>
                 ) : visibleData && visibleData.length > 0 ? (
-                  // 🛡️ THE FIX: We map with (player, idx) and use idx in the key to prevent freezing!
                   visibleData.map((player, idx) => (
                     <tr key={`${player.name}-${player.position}-${idx}`} className="hover:bg-[#151515] transition-colors group">
                       
