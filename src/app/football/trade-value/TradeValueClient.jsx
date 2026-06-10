@@ -10,7 +10,7 @@ export default function TradeValueClient() {
   // --- UI State Variables ---
   const [currentPosition, setCurrentPosition] = useState('All');
   const [showSettings, setShowSettings] = useState(false);
-  const [showMarketInfo, setShowMarketInfo] = useState(false);
+  const [activeModal, setActiveModal] = useState(null); 
   
   // Format toggles
   const [formatMode, setFormatMode] = useState('dynasty'); 
@@ -114,7 +114,6 @@ export default function TradeValueClient() {
       else if (age >= sellHighAge && points > 110) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
       else if (age <= stashAge && points < 100) marketAction = { text: 'Sell High', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' }; 
     } else {
-      // Balanced
       if (age <= buyLowAge && points > 140) marketAction = { text: 'Acquisition Target', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
       else if (age <= buyLowAge && points < 120) marketAction = { text: 'Buy Low', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
       else if (age >= sellNowAge) marketAction = { text: 'Exit Strategy', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
@@ -124,25 +123,13 @@ export default function TradeValueClient() {
     return { assetProfile, marketAction };
   };
 
-  const getRedraftMetrics = (tradeValue) => {
-    let assetProfile = { text: 'Bench Depth', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
-    let marketAction = { text: 'Fair Value', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
-
-    if (tradeValue >= 320) {
-      assetProfile = { text: '🌟 League Winner', color: 'text-amber-400 bg-amber-950/30 border-amber-800/40' };
-      marketAction = { text: 'Anchor / Hold', color: 'text-sky-400 bg-sky-950/30 border-sky-800/40' };
-    } else if (tradeValue >= 215) {
-      assetProfile = { text: '⚔️ Core Starter', color: 'text-zinc-300 bg-zinc-800/40 border-zinc-700/40' };
-      marketAction = { text: 'Target Deal', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
-    } else if (tradeValue >= 130) {
-      assetProfile = { text: '🔄 Flex Play', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
-      marketAction = { text: 'Fair Value', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
-    } else {
-      assetProfile = { text: 'Bench Depth', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
-      marketAction = { text: 'Waiver Wire', color: 'text-zinc-500 bg-zinc-900/30 border-zinc-800/50' };
-    }
-
-    return { assetProfile, marketAction };
+  const getRedraftMetrics = () => {
+    // 🏈 Offseason Placeholder Logic
+    // In-season, this will be replaced with Live Performance Actuals vs Projected Volume formulas
+    return { 
+      assetProfile: { text: 'Offseason', color: 'text-zinc-500 bg-zinc-900/30 border-zinc-800/50' }, 
+      marketAction: { text: 'Offseason', color: 'text-zinc-500 bg-zinc-900/30 border-zinc-800/50' } 
+    };
   };
 
   const processedValues = useMemo(() => {
@@ -187,7 +174,7 @@ export default function TradeValueClient() {
         market_action = metrics.marketAction;
       } else {
         trade_value = Math.round(pts * 1.5); 
-        const metrics = getRedraftMetrics(trade_value); 
+        const metrics = getRedraftMetrics(); 
         asset_profile = metrics.assetProfile;
         market_action = metrics.marketAction;
       }
@@ -218,28 +205,57 @@ export default function TradeValueClient() {
   return (
     <div className="w-full animate-in fade-in duration-500 pb-24 relative">
       
-      {showMarketInfo && (
+      {/* ℹ️ Asset Type Modal */}
+      {activeModal === 'assetType' && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-[#161616] border border-gray-800 w-full max-w-xl rounded-3xl p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
-            <button onClick={() => setShowMarketInfo(false)} className="absolute right-4 top-4 text-gray-500 hover:text-white transition-colors">
+            <button onClick={() => setActiveModal(null)} className="absolute right-4 top-4 text-gray-500 hover:text-white transition-colors">
               <X size={20} />
             </button>
-            <h3 className="text-base font-black text-white uppercase tracking-wider mb-5 flex items-center gap-2">
-              <Info size={18} className="text-zinc-400" /> Valuation Architecture & Matrix Labels
+            <h3 className="text-base font-black text-white uppercase tracking-wider mb-2 flex items-center gap-2">
+              <Info size={18} className="text-zinc-400" /> Asset Type Methodology
             </h3>
             
-            <div className="space-y-5 text-xs font-medium text-gray-400 leading-relaxed">
-              <p>Our model indexes implied market output directly across historical position-specific production tiers and age cliffs using two unique diagnostic metrics:</p>
+            <div className="space-y-4 text-xs font-medium text-gray-400 leading-relaxed mt-4">
+              <p>
+                <strong>Dynasty Formats:</strong> Evaluates base projected output against position-specific age cliffs. For example, a 28-year-old RB is penalized heavily, while a 28-year-old QB remains in their prime window.
+              </p>
+              <p>
+                <strong>Redraft Formats:</strong> Currently in Offseason mode. Once the season begins, this column will dynamically evaluate live performance actuals versus projected volume to identify positive/negative regression candidates.
+              </p>
               
-              <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60">
-                <h4 className="text-[10px] uppercase font-black tracking-widest text-white">Axis 1: Asset Profiling</h4>
+              <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60 mt-4">
                 <p>• <span className="text-sky-400 font-bold">💎 Cornerstone:</span> Elite premium assets with extensive production runways. Essential foundational builds.</p>
                 <p>• <span className="text-amber-400 font-bold">🏆 Win-Now Asset / League Winner:</span> High point production volume. Crucial value anchors for current season title contention.</p>
-                <p>• <span className="text-teal-400 font-bold">📈 High Upside / Stash:</span> Developmentally insulated profiles showing asymmetric breakout metrics relative to age threshold.</p>
+                <p>• <span className="text-teal-400 font-bold">📈 High Upside / Stash:</span> Developmentally insulated profiles showing asymmetric breakout metrics relative to age thresholds.</p>
+                <p>• <span className="text-zinc-300 font-bold">⚔️ Core Starter:</span> Reliable roster assets providing baseline weekly utility.</p>
+                <p>• <span className="text-zinc-400 font-bold">🔄 Flex Play / Bench Depth:</span> Roster insulation and depth chart fillers.</p>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-              <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60">
-                <h4 className="text-[10px] uppercase font-black tracking-widest text-white">Axis 2: Market Recommendation</h4>
+      {/* ℹ️ Market Recommendation Modal */}
+      {activeModal === 'marketAction' && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#161616] border border-gray-800 w-full max-w-xl rounded-3xl p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <button onClick={() => setActiveModal(null)} className="absolute right-4 top-4 text-gray-500 hover:text-white transition-colors">
+              <X size={20} />
+            </button>
+            <h3 className="text-base font-black text-white uppercase tracking-wider mb-2 flex items-center gap-2">
+              <Info size={18} className="text-zinc-400" /> Market Recommendation Methodology
+            </h3>
+            
+            <div className="space-y-4 text-xs font-medium text-gray-400 leading-relaxed mt-4">
+              <p>
+                <strong>Dynasty Formats:</strong> Dynamically adjusts based on your selected Team Strategy (Build, Balanced, Win Now). It surfaces action markers by identifying inefficiencies between a player's age-adjusted value and their current production volume.
+              </p>
+              <p>
+                <strong>Redraft Formats:</strong> Currently in Offseason mode. During the season, this will surface actionable insights (e.g., triggering a "Buy Low" recommendation on an underperforming high-volume asset).
+              </p>
+              
+              <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60 mt-4">
                 <p>• <span className="text-emerald-400 font-bold">Acquisition Target:</span> Deep inefficiencies identified between production volume and market perception. Strong buy recommendation.</p>
                 <p>• <span className="text-teal-400 font-bold">Buy Low:</span> Price point optimization window opened due to macro roster trends or strategic mismatch.</p>
                 <p>• <span className="text-zinc-400 font-bold">Fair Value:</span> Valued completely accurately on standard baseline equilibrium metrics.</p>
@@ -364,10 +380,10 @@ export default function TradeValueClient() {
                   )}
 
                   <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest">
-                    <div className="flex items-center gap-1.5">Asset Type <button onClick={() => setShowMarketInfo(true)} className="text-gray-500 hover:text-white"><Info size={11} /></button></div>
+                    <div className="flex items-center gap-1.5">Asset Type <button onClick={() => setActiveModal('assetType')} className="text-gray-500 hover:text-white"><Info size={11} /></button></div>
                   </th>
                   <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest">
-                    <div className="flex items-center gap-1.5">Market Recommendation <button onClick={() => setShowMarketInfo(true)} className="text-gray-500 hover:text-white"><Info size={11} /></button></div>
+                    <div className="flex items-center gap-1.5">Market Recommendation <button onClick={() => setActiveModal('marketAction')} className="text-gray-500 hover:text-white"><Info size={11} /></button></div>
                   </th>
 
                 </tr>
