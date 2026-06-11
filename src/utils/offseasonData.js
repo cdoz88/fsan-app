@@ -14,7 +14,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 4.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 27
   },
   {
     "name": "Jayden Daniels",
@@ -30,7 +31,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 2.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 65
   },
   {
     "name": "Drake Maye",
@@ -46,7 +48,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 5.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 61.5
   },
   {
     "name": "Lamar Jackson",
@@ -62,7 +65,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 4.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 51
   },
   {
     "name": "Jalen Hurts",
@@ -78,7 +82,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 4,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 72.5
   },
   {
     "name": "Jaxson Dart",
@@ -94,7 +99,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 2.9,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 89.5
   },
   {
     "name": "Joe Burrow",
@@ -110,7 +116,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 1.9,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 59
   },
   {
     "name": "Brock Purdy",
@@ -126,7 +133,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 4.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 96.5
   },
   {
     "name": "Dak Prescott",
@@ -142,7 +150,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 2.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 78.5
   },
   {
     "name": "Trevor Lawrence",
@@ -158,7 +167,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 3.4,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 81.5
   },
   {
     "name": "Patrick Mahomes II",
@@ -174,7 +184,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 95.5
   },
   {
     "name": "Justin Herbert",
@@ -190,7 +201,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 2.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 77.5
   },
   {
     "name": "Caleb Williams",
@@ -206,7 +218,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 69.5
   },
   {
     "name": "Matthew Stafford",
@@ -222,7 +235,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 2.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 93
   },
   {
     "name": "Bo Nix",
@@ -238,7 +252,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 106
   },
   {
     "name": "Daniel Jones",
@@ -254,7 +269,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 3.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 141
   },
   {
     "name": "Baker Mayfield",
@@ -270,7 +286,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 3.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 114
   },
   {
     "name": "Jared Goff",
@@ -286,7 +303,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 3.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 103.5
   },
   {
     "name": "Tyler Shough",
@@ -302,7 +320,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 3.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 112.5
   },
   {
     "name": "Kyler Murray",
@@ -318,7 +337,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 3.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 109.5
   },
   {
     "name": "Malik Willis",
@@ -334,7 +354,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 6.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 127.5
   },
   {
     "name": "C.J. Stroud",
@@ -350,7 +371,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 3.5,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 137.5
   },
   {
     "name": "Jordan Love",
@@ -366,7 +388,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 112
   },
   {
     "name": "Sam Darnold",
@@ -382,7 +405,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 5.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 140
   },
   {
     "name": "Bryce Young",
@@ -398,7 +422,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 152.5
   },
   {
     "name": "Jacoby Brissett",
@@ -414,7 +439,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 4.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 177
   },
   {
     "name": "Geno Smith",
@@ -430,7 +456,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 2.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 176
   },
   {
     "name": "Cam Ward",
@@ -446,7 +473,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 5.4,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 134.5
   },
   {
     "name": "Aaron Rodgers",
@@ -462,7 +490,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 2.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 165.5
   },
   {
     "name": "Fernando Mendoza",
@@ -478,7 +507,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 2.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 171.5
   },
   {
     "name": "Deshaun Watson",
@@ -494,7 +524,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 4.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 222.5
   },
   {
     "name": "Tua Tagovailoa",
@@ -510,7 +541,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 2.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 205
   },
   {
     "name": "Michael Penix Jr.",
@@ -526,7 +558,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 230
   },
   {
     "name": "Shedeur Sanders",
@@ -542,7 +575,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 237.5
   },
   {
     "name": "Kirk Cousins",
@@ -558,7 +592,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.9,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 248.5
   },
   {
     "name": "J.J. McCarthy",
@@ -574,7 +609,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.4,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 353
   },
   {
     "name": "Ty Simpson",
@@ -590,7 +626,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 343
   },
   {
     "name": "Carson Beck",
@@ -606,7 +643,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 301.5
   },
   {
     "name": "Marcus Mariota",
@@ -622,7 +660,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 370
   },
   {
     "name": "Joe Milton III",
@@ -638,7 +677,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 277
   },
   {
     "name": "Shane Buechele",
@@ -654,7 +694,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jarrett Stidham",
@@ -670,7 +711,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 315
   },
   {
     "name": "Jake Browning",
@@ -686,7 +728,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Will Levis",
@@ -702,7 +745,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Tyson Bagent",
@@ -718,7 +762,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 332
   },
   {
     "name": "Teddy Bridgewater",
@@ -734,7 +779,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Justin Fields",
@@ -750,7 +796,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 326.5
   },
   {
     "name": "Tommy DeVito",
@@ -766,7 +813,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Tyler Huntley",
@@ -782,7 +830,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 346
   },
   {
     "name": "Davis Mills",
@@ -798,7 +847,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Trey Lance",
@@ -814,7 +864,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Mason Rudolph",
@@ -830,7 +881,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 267
   },
   {
     "name": "Tanner McKee",
@@ -846,7 +898,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 269
   },
   {
     "name": "Joe Flacco",
@@ -862,7 +915,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 383
   },
   {
     "name": "Mac Jones",
@@ -878,7 +932,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 363
   },
   {
     "name": "Spencer Rattler",
@@ -894,7 +949,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 290
   },
   {
     "name": "Riley Leonard",
@@ -910,7 +966,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Drew Lock",
@@ -926,7 +983,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 302
   },
   {
     "name": "Andy Dalton",
@@ -942,7 +1000,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 260
   },
   {
     "name": "Behren Morton",
@@ -958,7 +1017,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Kenny Pickett",
@@ -974,7 +1034,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Nick Mullens",
@@ -990,7 +1051,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 318
   },
   {
     "name": "Chris Oladokun",
@@ -1006,7 +1068,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Gardner Minshew II",
@@ -1022,7 +1085,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 299
   },
   {
     "name": "Tyrod Taylor",
@@ -1038,7 +1102,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 272
   },
   {
     "name": "Adrian Martinez",
@@ -1054,7 +1119,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jameis Winston",
@@ -1070,7 +1136,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 361
   },
   {
     "name": "Garrett Nussmeier",
@@ -1086,7 +1153,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Cole Payton",
@@ -1102,7 +1170,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jalen Milroe",
@@ -1118,7 +1187,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Drew Allar",
@@ -1134,7 +1204,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Mitchell Trubisky",
@@ -1150,7 +1221,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Quinn Ewers",
@@ -1166,7 +1238,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 309
   },
   {
     "name": "Cade Klubnik",
@@ -1182,7 +1255,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Kyle Allen",
@@ -1198,7 +1272,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Brady Cook",
@@ -1214,7 +1289,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Will Howard",
@@ -1230,7 +1306,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 317
   },
   {
     "name": "Josh Johnson",
@@ -1246,7 +1323,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Stetson Bennett IV",
@@ -1262,7 +1340,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Aidan O'Connell",
@@ -1278,7 +1357,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Bijan Robinson",
@@ -1294,7 +1374,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.7,
     "fumbles": 1.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 1.5
   },
   {
     "name": "Jahmyr Gibbs",
@@ -1310,7 +1391,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.2,
     "fumbles": 1.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 1.5
   },
   {
     "name": "Christian McCaffrey",
@@ -1326,7 +1408,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5,
     "fumbles": 1.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 6
   },
   {
     "name": "Jonathan Taylor",
@@ -1342,7 +1425,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.6,
     "fumbles": 1.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 8
   },
   {
     "name": "De'Von Achane",
@@ -1358,7 +1442,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.4,
     "fumbles": 1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 15
   },
   {
     "name": "Chase Brown",
@@ -1374,7 +1459,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.9,
     "fumbles": 1.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 14.5
   },
   {
     "name": "Derrick Henry",
@@ -1390,7 +1476,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.1,
     "fumbles": 1.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 21
   },
   {
     "name": "Ashton Jeanty",
@@ -1406,7 +1493,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.5,
     "fumbles": 1.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 9.5
   },
   {
     "name": "James Cook III",
@@ -1422,7 +1510,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.8,
     "fumbles": 2.4,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 11
   },
   {
     "name": "Saquon Barkley",
@@ -1438,7 +1527,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.1,
     "fumbles": 1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 14.5
   },
   {
     "name": "Josh Jacobs",
@@ -1454,7 +1544,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.3,
     "fumbles": 1.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 38
   },
   {
     "name": "Omarion Hampton",
@@ -1470,7 +1561,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.9,
     "fumbles": 1.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 15.5
   },
   {
     "name": "Breece Hall",
@@ -1486,7 +1578,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.4,
     "fumbles": 1.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 28.5
   },
   {
     "name": "Jeremiyah Love",
@@ -1502,7 +1595,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.1,
     "fumbles": 2.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 23
   },
   {
     "name": "Kenneth Walker III",
@@ -1518,7 +1612,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.8,
     "fumbles": 0.9,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 16
   },
   {
     "name": "Cam Skattebo",
@@ -1534,7 +1629,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.8,
     "fumbles": 1.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 44
   },
   {
     "name": "Kyren Williams",
@@ -1550,7 +1646,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.3,
     "fumbles": 1.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 32
   },
   {
     "name": "Travis Etienne Jr.",
@@ -1566,7 +1663,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.5,
     "fumbles": 1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 32.5
   },
   {
     "name": "Javonte Williams",
@@ -1582,7 +1680,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.3,
     "fumbles": 1.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 34.5
   },
   {
     "name": "Bucky Irving",
@@ -1598,7 +1697,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.4,
     "fumbles": 1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 54
   },
   {
     "name": "D'Andre Swift",
@@ -1614,7 +1714,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.1,
     "fumbles": 1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 51
   },
   {
     "name": "Quinshon Judkins",
@@ -1630,7 +1731,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.4,
     "fumbles": 0.9,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 55
   },
   {
     "name": "TreVeyon Henderson",
@@ -1646,7 +1748,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.3,
     "fumbles": 0.9,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 50.5
   },
   {
     "name": "Bhayshul Tuten",
@@ -1662,7 +1765,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.2,
     "fumbles": 2.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 60
   },
   {
     "name": "Rico Dowdle",
@@ -1678,7 +1782,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.5,
     "fumbles": 1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 88.5
   },
   {
     "name": "Jaylen Warren",
@@ -1694,7 +1799,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.7,
     "fumbles": 0.9,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 69.5
   },
   {
     "name": "Chuba Hubbard",
@@ -1710,7 +1816,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.3,
     "fumbles": 1.5,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 69
   },
   {
     "name": "Jadarian Price",
@@ -1726,7 +1833,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.2,
     "fumbles": 2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 62.5
   },
   {
     "name": "Rhamondre Stevenson",
@@ -1742,7 +1850,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.9,
     "fumbles": 2.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 78
   },
   {
     "name": "David Montgomery",
@@ -1758,7 +1867,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 49
   },
   {
     "name": "Tony Pollard",
@@ -1774,7 +1884,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 2.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 80
   },
   {
     "name": "RJ Harvey",
@@ -1790,7 +1901,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.8,
     "fumbles": 0.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 81
   },
   {
     "name": "Kenneth Gainwell",
@@ -1806,7 +1918,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2,
     "fumbles": 0.9,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 88
   },
   {
     "name": "Aaron Jones Sr.",
@@ -1822,7 +1935,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2,
     "fumbles": 1.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 121
   },
   {
     "name": "J.K. Dobbins",
@@ -1838,7 +1952,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.4,
     "fumbles": 0.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 107.5
   },
   {
     "name": "Kyle Monangai",
@@ -1854,7 +1969,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.6,
     "fumbles": 0.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 94
   },
   {
     "name": "Rachaad White",
@@ -1870,7 +1986,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.4,
     "fumbles": 0.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 113
   },
   {
     "name": "Jacory Croskey-Merritt",
@@ -1886,7 +2003,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 1.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 130
   },
   {
     "name": "Tyjae Spears",
@@ -1902,7 +2020,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.8,
     "fumbles": 0.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 157
   },
   {
     "name": "Jordan Mason",
@@ -1918,7 +2037,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 122.5
   },
   {
     "name": "Blake Corum",
@@ -1934,7 +2054,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 99
   },
   {
     "name": "Zach Charbonnet",
@@ -1950,7 +2071,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 174.5
   },
   {
     "name": "Woody Marks",
@@ -1966,7 +2088,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.2,
     "fumbles": 0.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 142.5
   },
   {
     "name": "Isiah Pacheco",
@@ -1982,7 +2105,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.9,
     "fumbles": 0.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 150.5
   },
   {
     "name": "Jonathon Brooks",
@@ -1998,7 +2122,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.1,
     "fumbles": 1.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 109
   },
   {
     "name": "Alvin Kamara",
@@ -2014,7 +2139,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.9,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 179.5
   },
   {
     "name": "Justice Hill",
@@ -2030,7 +2156,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.8,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 233
   },
   {
     "name": "Tyrone Tracy Jr.",
@@ -2046,7 +2173,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.3,
     "fumbles": 0.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 131.5
   },
   {
     "name": "Dylan Sampson",
@@ -2062,7 +2190,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.1,
     "fumbles": 1.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 152
   },
   {
     "name": "Samaje Perine",
@@ -2078,7 +2207,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.4,
     "fumbles": 1.9,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 302.5
   },
   {
     "name": "Tyler Allgeier",
@@ -2094,7 +2224,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 147
   },
   {
     "name": "Ty Johnson",
@@ -2110,7 +2241,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.2,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 297.5
   },
   {
     "name": "Jordan James",
@@ -2126,7 +2258,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.7,
     "fumbles": 1.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 213
   },
   {
     "name": "AJ Dillon",
@@ -2142,7 +2275,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 5,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Brian Robinson Jr.",
@@ -2158,7 +2292,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 0.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 170.5
   },
   {
     "name": "Braelon Allen",
@@ -2174,7 +2309,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.7,
     "fumbles": 1.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 197
   },
   {
     "name": "Chris Rodriguez Jr.",
@@ -2190,7 +2326,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 127
   },
   {
     "name": "Kimani Vidal",
@@ -2206,7 +2343,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.8,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 195.5
   },
   {
     "name": "Mike Washington Jr.",
@@ -2222,7 +2360,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.6,
     "fumbles": 0.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 192.5
   },
   {
     "name": "Kaelon Black",
@@ -2238,7 +2377,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.6,
     "fumbles": 1.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 225.5
   },
   {
     "name": "Malik Davis",
@@ -2254,7 +2394,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 264
   },
   {
     "name": "Tank Bigsby",
@@ -2270,7 +2411,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 177.5
   },
   {
     "name": "Chris Brooks",
@@ -2286,7 +2428,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 230.5
   },
   {
     "name": "Adam Randall",
@@ -2302,7 +2445,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.1,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 313
   },
   {
     "name": "Emanuel Wilson",
@@ -2318,7 +2462,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 175
   },
   {
     "name": "MarShawn Lloyd",
@@ -2334,7 +2479,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.6,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 230
   },
   {
     "name": "James Conner",
@@ -2350,7 +2496,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 211.5
   },
   {
     "name": "Brashard Smith",
@@ -2366,7 +2513,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 395
   },
   {
     "name": "Kyle Juszczyk",
@@ -2382,7 +2530,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.5,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Keaton Mitchell",
@@ -2398,7 +2547,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 144
   },
   {
     "name": "Emari Demercado",
@@ -2414,7 +2564,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.5,
     "fumbles": 1.5,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 367
   },
   {
     "name": "Jawhar Jordan",
@@ -2430,7 +2581,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.5,
     "fumbles": 0.5,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 259
   },
   {
     "name": "Jaylen Wright",
@@ -2446,7 +2598,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 1.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 238.5
   },
   {
     "name": "LeQuint Allen Jr.",
@@ -2462,7 +2615,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.8,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 315
   },
   {
     "name": "Kendre Miller",
@@ -2478,7 +2632,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Emmett Johnson",
@@ -2494,7 +2649,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 171
   },
   {
     "name": "Ty Chandler",
@@ -2510,7 +2666,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Isaiah Davis",
@@ -2526,7 +2683,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 377
   },
   {
     "name": "DJ Giddens",
@@ -2542,7 +2700,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 319.5
   },
   {
     "name": "Ray Davis",
@@ -2558,7 +2717,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.4,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 196
   },
   {
     "name": "Jaydon Blue",
@@ -2574,7 +2734,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 246.5
   },
   {
     "name": "Frank Gore Jr.",
@@ -2590,7 +2751,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 284
   },
   {
     "name": "Roschon Johnson",
@@ -2606,7 +2768,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Phil Mafah",
@@ -2622,7 +2785,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 254
   },
   {
     "name": "Ollie Gordon II",
@@ -2638,7 +2802,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 323.5
   },
   {
     "name": "Tyler Badie",
@@ -2654,7 +2819,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.6,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Will Shipley",
@@ -2670,7 +2836,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.4,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 264
   },
   {
     "name": "Devin Singletary",
@@ -2686,7 +2853,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 385
   },
   {
     "name": "Jeremy McNichols",
@@ -2702,7 +2870,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Sean Tucker",
@@ -2718,7 +2887,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 179.5
   },
   {
     "name": "Elijah Mitchell",
@@ -2734,7 +2904,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jam Miller",
@@ -2750,7 +2921,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 293
   },
   {
     "name": "Hunter Luepke",
@@ -2766,7 +2938,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.4,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Demond Claiborne",
@@ -2782,7 +2955,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 237
   },
   {
     "name": "Salvon Ahmed",
@@ -2798,7 +2972,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jarquez Hunter",
@@ -2814,7 +2989,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 313
   },
   {
     "name": "Seth McGowan",
@@ -2830,7 +3006,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 337
   },
   {
     "name": "Israel Abanikanda",
@@ -2846,7 +3023,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Donovan Edwards",
@@ -2862,7 +3040,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Carlos Washington Jr.",
@@ -2878,7 +3057,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jonah Coleman",
@@ -2894,7 +3074,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 157.5
   },
   {
     "name": "Najee Harris",
@@ -2910,7 +3091,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 333
   },
   {
     "name": "Dameon Pierce",
@@ -2926,7 +3108,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Kaytron Allen",
@@ -2942,7 +3125,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 179.5
   },
   {
     "name": "Nicholas Singleton",
@@ -2958,7 +3142,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 192
   },
   {
     "name": "Devin Neal",
@@ -2974,7 +3159,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 407
   },
   {
     "name": "Jerome Ford",
@@ -2990,7 +3176,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 327
   },
   {
     "name": "Tahj Brooks",
@@ -3006,7 +3193,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 352
   },
   {
     "name": "Trevor Etienne",
@@ -3022,7 +3210,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 295
   },
   {
     "name": "Michael Burton",
@@ -3038,7 +3227,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.6,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Alec Ingold",
@@ -3054,7 +3244,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Isaac Guerendo",
@@ -3070,7 +3261,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 296
   },
   {
     "name": "Andrew Beck",
@@ -3086,7 +3278,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Adam Prentice",
@@ -3102,7 +3295,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Connor Heyward",
@@ -3118,7 +3312,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "George Holani",
@@ -3134,7 +3329,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 314
   },
   {
     "name": "Max Bredeson",
@@ -3150,7 +3346,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Reggie Gilliam",
@@ -3166,7 +3363,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Patrick Ricard",
@@ -3182,7 +3380,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Kaleb Johnson",
@@ -3198,7 +3397,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 398
   },
   {
     "name": "British Brooks",
@@ -3214,7 +3414,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "DeeJay Dallas",
@@ -3230,7 +3431,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Kene Nwangwu",
@@ -3246,7 +3448,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Bam Knight",
@@ -3262,7 +3465,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Trey Benson",
@@ -3278,7 +3482,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 331
   },
   {
     "name": "Jacob Saylors",
@@ -3294,7 +3499,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Zavier Scott",
@@ -3310,7 +3516,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Rasheen Ali",
@@ -3326,7 +3533,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Dylan Laube",
@@ -3342,7 +3550,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Chris Collier",
@@ -3358,7 +3567,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Josh Williams",
@@ -3374,7 +3584,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Puka Nacua",
@@ -3390,7 +3601,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 9.4,
     "fumbles": 1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 4
   },
   {
     "name": "Jaxon Smith-Njigba",
@@ -3406,7 +3618,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 10.8,
     "fumbles": 1.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 5
   },
   {
     "name": "Ja'Marr Chase",
@@ -3422,7 +3635,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 10.3,
     "fumbles": 1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 3
   },
   {
     "name": "Amon-Ra St. Brown",
@@ -3438,7 +3652,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 10.7,
     "fumbles": 0.4,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 7
   },
   {
     "name": "Drake London",
@@ -3454,7 +3669,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 10.7,
     "fumbles": 1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 17
   },
   {
     "name": "Rashee Rice",
@@ -3470,7 +3686,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 10.9,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 29.5
   },
   {
     "name": "CeeDee Lamb",
@@ -3486,7 +3703,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 7.3,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 11
   },
   {
     "name": "George Pickens",
@@ -3502,7 +3720,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 9.1,
     "fumbles": 0.5,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 24
   },
   {
     "name": "A.J. Brown",
@@ -3518,7 +3737,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 8,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 23
   },
   {
     "name": "Justin Jefferson",
@@ -3534,7 +3754,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 6.7,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 11
   },
   {
     "name": "Nico Collins",
@@ -3550,7 +3771,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 7.4,
     "fumbles": 0.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 23
   },
   {
     "name": "Chris Olave",
@@ -3566,7 +3788,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 8.2,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 27
   },
   {
     "name": "Zay Flowers",
@@ -3582,7 +3805,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 6.8,
     "fumbles": 1.5,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 36
   },
   {
     "name": "Tee Higgins",
@@ -3598,7 +3822,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 9.7,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 37
   },
   {
     "name": "Emeka Egbuka",
@@ -3614,7 +3839,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 7.6,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 39
   },
   {
     "name": "Davante Adams",
@@ -3630,7 +3856,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 10.3,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 49
   },
   {
     "name": "Jameson Williams",
@@ -3646,7 +3873,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 6.3,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 51
   },
   {
     "name": "Rome Odunze",
@@ -3662,7 +3890,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 8.7,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 56.5
   },
   {
     "name": "Tetairoa McMillan",
@@ -3678,7 +3907,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 6.6,
     "fumbles": 0.9,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 38.5
   },
   {
     "name": "Garrett Wilson",
@@ -3694,7 +3924,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 7.2,
     "fumbles": 1.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 37
   },
   {
     "name": "Alec Pierce",
@@ -3710,7 +3941,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 7.2,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 73
   },
   {
     "name": "DeVonta Smith",
@@ -3726,7 +3958,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 6,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 31
   },
   {
     "name": "Malik Nabers",
@@ -3742,7 +3975,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 8.3,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 35
   },
   {
     "name": "Terry McLaurin",
@@ -3758,7 +3992,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 7.9,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 45.5
   },
   {
     "name": "DJ Moore",
@@ -3774,7 +4009,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 7.5,
     "fumbles": 0.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 52.5
   },
   {
     "name": "Courtland Sutton",
@@ -3790,7 +4026,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 7.8,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 78
   },
   {
     "name": "Ladd McConkey",
@@ -3806,7 +4043,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 6.6,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 36.5
   },
   {
     "name": "Jaylen Waddle",
@@ -3822,7 +4060,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 6,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 50
   },
   {
     "name": "Luther Burden III",
@@ -3838,7 +4077,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5.6,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 42.5
   },
   {
     "name": "Christian Watson",
@@ -3854,7 +4094,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 7.6,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 54.5
   },
   {
     "name": "DK Metcalf",
@@ -3870,7 +4111,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 6.1,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 73
   },
   {
     "name": "Marvin Harrison Jr.",
@@ -3886,7 +4128,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 6,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 66.5
   },
   {
     "name": "Mike Evans",
@@ -3902,7 +4145,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 6.6,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 55
   },
   {
     "name": "Parker Washington",
@@ -3918,7 +4162,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 6.1,
     "fumbles": 0.4,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 70.5
   },
   {
     "name": "Brian Thomas Jr.",
@@ -3934,7 +4179,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5.5,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 72
   },
   {
     "name": "Quentin Johnston",
@@ -3950,7 +4196,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 7.3,
     "fumbles": 0.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 94
   },
   {
     "name": "Jakobi Meyers",
@@ -3966,7 +4213,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5.6,
     "fumbles": 0.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 101
   },
   {
     "name": "Jordan Addison",
@@ -3982,7 +4230,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5.6,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 98
   },
   {
     "name": "Jordyn Tyson",
@@ -3998,7 +4247,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.5,
     "fumbles": 1.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 70
   },
   {
     "name": "Carnell Tate",
@@ -4014,7 +4264,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.3,
     "fumbles": 1.4,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 61.5
   },
   {
     "name": "Xavier Worthy",
@@ -4030,7 +4281,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.3,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 110
   },
   {
     "name": "Jayden Reed",
@@ -4046,7 +4298,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.7,
     "fumbles": 0.4,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 94
   },
   {
     "name": "Romeo Doubs",
@@ -4062,7 +4315,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 6,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 115.5
   },
   {
     "name": "Makai Lemon",
@@ -4078,7 +4332,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.7,
     "fumbles": 1.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 85
   },
   {
     "name": "Chris Godwin Jr.",
@@ -4094,7 +4349,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5.3,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 92
   },
   {
     "name": "Michael Wilson",
@@ -4110,7 +4366,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.6,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 90
   },
   {
     "name": "Ricky Pearsall",
@@ -4126,7 +4383,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.4,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 99
   },
   {
     "name": "Michael Pittman Jr.",
@@ -4142,7 +4400,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.9,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 92.5
   },
   {
     "name": "Calvin Ridley",
@@ -4158,7 +4417,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.9,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 202
   },
   {
     "name": "Matthew Golden",
@@ -4174,7 +4434,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.9,
     "fumbles": 0.4,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 116.5
   },
   {
     "name": "Wan'Dale Robinson",
@@ -4190,7 +4451,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 110
   },
   {
     "name": "Rashid Shaheed",
@@ -4206,7 +4468,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.7,
     "fumbles": 0.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 147.5
   },
   {
     "name": "Khalil Shakir",
@@ -4222,7 +4485,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.3,
     "fumbles": 0.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 125
   },
   {
     "name": "Theo Wease Jr.",
@@ -4238,7 +4502,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5,
     "fumbles": 1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 286
   },
   {
     "name": "Josh Downs",
@@ -4254,7 +4519,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.3,
     "fumbles": 0.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 104
   },
   {
     "name": "Rashod Bateman",
@@ -4270,7 +4536,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 6,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300.5
   },
   {
     "name": "Tre Tucker",
@@ -4286,7 +4553,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.8,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 158
   },
   {
     "name": "Tank Dell",
@@ -4302,7 +4570,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.8,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 213
   },
   {
     "name": "Jalen Coker",
@@ -4318,7 +4587,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.1,
     "fumbles": 0.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 132
   },
   {
     "name": "Jerry Jeudy",
@@ -4334,7 +4604,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.9,
     "fumbles": 0.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 175
   },
   {
     "name": "John Metchie III",
@@ -4350,7 +4621,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 292
   },
   {
     "name": "KC Concepcion",
@@ -4366,7 +4638,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.1,
     "fumbles": 1.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 125
   },
   {
     "name": "Jayden Higgins",
@@ -4382,7 +4655,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.7,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 122.5
   },
   {
     "name": "Jalen McMillan",
@@ -4398,7 +4672,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.9,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 148
   },
   {
     "name": "Omar Cooper Jr.",
@@ -4414,7 +4689,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.8,
     "fumbles": 1.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 158
   },
   {
     "name": "Jauan Jennings",
@@ -4430,7 +4706,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5.2,
     "fumbles": 0.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 148
   },
   {
     "name": "Jalen Nailor",
@@ -4446,7 +4723,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.4,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 160
   },
   {
     "name": "Antonio Williams",
@@ -4462,7 +4740,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.6,
     "fumbles": 1.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 174
   },
   {
     "name": "Denzel Boston",
@@ -4478,7 +4757,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3,
     "fumbles": 0.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 163.5
   },
   {
     "name": "Cooper Kupp",
@@ -4494,7 +4774,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.4,
     "fumbles": 0.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 222.5
   },
   {
     "name": "Germie Bernard",
@@ -4510,7 +4791,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.1,
     "fumbles": 0.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 216
   },
   {
     "name": "Darnell Mooney",
@@ -4526,7 +4808,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.8,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 202.5
   },
   {
     "name": "Kayshon Boutte",
@@ -4542,7 +4825,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 212
   },
   {
     "name": "Travis Hunter",
@@ -4558,7 +4842,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.3,
     "fumbles": 0.4,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 167
   },
   {
     "name": "Chris Bell",
@@ -4574,7 +4859,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.1,
     "fumbles": 0.5,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 223.5
   },
   {
     "name": "Bub Means",
@@ -4590,7 +4876,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3,
     "fumbles": 1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Christian Kirk",
@@ -4606,7 +4893,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.1,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 216.5
   },
   {
     "name": "Tyquan Thornton",
@@ -4622,7 +4910,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.4,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 311
   },
   {
     "name": "Ja'Kobi Lane",
@@ -4638,7 +4927,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.4,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 337.5
   },
   {
     "name": "Caleb Douglas",
@@ -4654,7 +4944,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.5,
     "fumbles": 0.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 307.5
   },
   {
     "name": "Tory Horton",
@@ -4670,7 +4961,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.2,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 294
   },
   {
     "name": "Darius Slayton",
@@ -4686,7 +4978,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2,
     "fumbles": 0.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 334.5
   },
   {
     "name": "Troy Franklin",
@@ -4702,7 +4995,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.9,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 214.5
   },
   {
     "name": "Malik Washington",
@@ -4718,7 +5012,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.2,
     "fumbles": 0.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 191
   },
   {
     "name": "Nick Westbrook-Ikhine",
@@ -4734,7 +5029,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 303
   },
   {
     "name": "De'Zhaun Stribling",
@@ -4750,7 +5046,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.6,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 212.5
   },
   {
     "name": "Isaac TeSlaa",
@@ -4766,7 +5063,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.1,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 182
   },
   {
     "name": "Devaughn Vele",
@@ -4782,7 +5080,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.8,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 333.5
   },
   {
     "name": "Hollywood Brown",
@@ -4798,7 +5097,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.3,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 308
   },
   {
     "name": "Jack Bech",
@@ -4814,7 +5114,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.8,
     "fumbles": 0.4,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 313
   },
   {
     "name": "Andrei Iosivas",
@@ -4830,7 +5131,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.9,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 337.5
   },
   {
     "name": "Ryan Flournoy",
@@ -4846,7 +5148,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.7,
     "fumbles": 0.4,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 177
   },
   {
     "name": "Dyami Brown",
@@ -4862,7 +5165,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.7,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 285
   },
   {
     "name": "Tre' Harris",
@@ -4878,7 +5182,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.5,
     "fumbles": 0.4,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 175.5
   },
   {
     "name": "Ted Hurst III",
@@ -4894,7 +5199,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.6,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 273.5
   },
   {
     "name": "Adonai Mitchell",
@@ -4910,7 +5216,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.3,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 207.5
   },
   {
     "name": "Jahan Dotson",
@@ -4926,7 +5233,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.1,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 328.5
   },
   {
     "name": "Ashton Dulin",
@@ -4942,7 +5250,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.5,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Olamide Zaccheaus",
@@ -4958,7 +5267,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.1,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 373
   },
   {
     "name": "Chimere Dike",
@@ -4974,7 +5284,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.3,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 248
   },
   {
     "name": "Dontayvion Wicks",
@@ -4990,7 +5301,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.3,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 262
   },
   {
     "name": "Van Jefferson",
@@ -5006,7 +5318,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.9,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Keon Coleman",
@@ -5022,7 +5335,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.6,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 294.5
   },
   {
     "name": "Xavier Hutchinson",
@@ -5038,7 +5352,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.1,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "KaVontae Turpin",
@@ -5054,7 +5369,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.7,
     "fumbles": 0.4,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 268
   },
   {
     "name": "Savion Williams",
@@ -5070,7 +5386,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 285.5
   },
   {
     "name": "Jalen Tolbert",
@@ -5086,7 +5403,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.4,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 334
   },
   {
     "name": "Elic Ayomanor",
@@ -5102,7 +5420,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.6,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 307
   },
   {
     "name": "Xavier Legette",
@@ -5118,7 +5437,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.1,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 339
   },
   {
     "name": "Pat Bryant",
@@ -5134,7 +5454,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.1,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 290.5
   },
   {
     "name": "Joshua Palmer",
@@ -5150,7 +5471,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.6,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 308
   },
   {
     "name": "Marvin Mims Jr.",
@@ -5166,7 +5488,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.6,
     "fumbles": 0.4,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 342
   },
   {
     "name": "Jahdae Walker",
@@ -5182,7 +5505,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.8,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 282
   },
   {
     "name": "Calvin Austin III",
@@ -5198,7 +5522,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.2,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 280
   },
   {
     "name": "Cedric Tillman",
@@ -5214,7 +5539,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.3,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Elijah Sarratt",
@@ -5230,7 +5556,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.8,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 304
   },
   {
     "name": "DeMario Douglas",
@@ -5246,7 +5573,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.5,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 326
   },
   {
     "name": "Jaylin Lane",
@@ -5262,7 +5590,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.8,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Chris Brazzell II",
@@ -5278,7 +5607,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.7,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 304.5
   },
   {
     "name": "Kalif Raymond",
@@ -5294,7 +5624,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.3,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 290
   },
   {
     "name": "Demarcus Robinson",
@@ -5310,7 +5641,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.7,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jaylin Noel",
@@ -5326,7 +5658,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.4,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 298.5
   },
   {
     "name": "Tutu Atwell",
@@ -5342,7 +5675,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.4,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 345
   },
   {
     "name": "Zachariah Branch",
@@ -5358,7 +5692,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.3,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 211.5
   },
   {
     "name": "Luke McCaffrey",
@@ -5374,7 +5709,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 255
   },
   {
     "name": "Treylon Burks",
@@ -5390,7 +5726,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.3,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 282
   },
   {
     "name": "Jalen Royals",
@@ -5406,7 +5743,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.5,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 330
   },
   {
     "name": "Kendrick Bourne",
@@ -5422,7 +5760,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.7,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 318.5
   },
   {
     "name": "Jordan Whittington",
@@ -5438,7 +5777,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.2,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 253
   },
   {
     "name": "Bryce Lance",
@@ -5454,7 +5794,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.9,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 307.5
   },
   {
     "name": "Dont'e Thornton Jr.",
@@ -5470,7 +5811,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.8,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 281
   },
   {
     "name": "Devontez Walker",
@@ -5486,7 +5828,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.2,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 251
   },
   {
     "name": "Odell Beckham Jr.",
@@ -5502,7 +5845,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 329
   },
   {
     "name": "Skyler Bell",
@@ -5518,7 +5862,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 320.5
   },
   {
     "name": "Malachi Fields",
@@ -5534,7 +5879,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.9,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 229.5
   },
   {
     "name": "Konata Mumpfield",
@@ -5550,7 +5896,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.2,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 291
   },
   {
     "name": "Brenen Thompson",
@@ -5566,7 +5913,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.7,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 299.5
   },
   {
     "name": "Mack Hollins",
@@ -5582,7 +5930,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.8,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 379
   },
   {
     "name": "KeAndre Lambert-Smith",
@@ -5598,7 +5947,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.9,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Kyle Williams",
@@ -5614,7 +5964,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.6,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 401
   },
   {
     "name": "Tez Johnson",
@@ -5630,7 +5981,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.6,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 392
   },
   {
     "name": "Mitch Tinsley",
@@ -5646,7 +5998,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.8,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Kevin Coleman Jr.",
@@ -5662,7 +6015,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 271
   },
   {
     "name": "Xavier Smith",
@@ -5678,7 +6032,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.7,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Cyrus Allen",
@@ -5694,7 +6049,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.5,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Greg Dortch",
@@ -5710,7 +6066,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 312
   },
   {
     "name": "Anthony Gould",
@@ -5726,7 +6083,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Bo Melton",
@@ -5742,7 +6100,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Isaiah Bond",
@@ -5758,7 +6117,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 334
   },
   {
     "name": "Mason Tipton",
@@ -5774,7 +6134,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Tyrell Shavers",
@@ -5790,7 +6151,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Derius Davis",
@@ -5806,7 +6168,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Ben Skowronek",
@@ -5822,7 +6185,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "David Moore",
@@ -5838,7 +6202,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "CJ Daniels",
@@ -5854,7 +6219,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Isaiah Williams",
@@ -5870,7 +6236,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Colbie Young",
@@ -5886,7 +6253,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 311
   },
   {
     "name": "Zavion Thomas",
@@ -5902,7 +6270,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 289
   },
   {
     "name": "Malachi Corley",
@@ -5918,7 +6287,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jonathan Mingo",
@@ -5934,7 +6304,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Justin Watson",
@@ -5950,7 +6321,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Darius Cooper",
@@ -5966,7 +6338,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Tai Felton",
@@ -5982,7 +6355,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Reggie Virgil",
@@ -5998,7 +6372,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Kaden Wetjen",
@@ -6014,7 +6389,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Arian Smith",
@@ -6030,7 +6406,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jimmy Horn Jr.",
@@ -6046,7 +6423,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Kameron Johnson",
@@ -6062,7 +6440,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "JuJu Smith-Schuster",
@@ -6078,7 +6457,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Braxton Berrios",
@@ -6094,7 +6474,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Devin Duvernay",
@@ -6110,7 +6491,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Mason Kinsey",
@@ -6126,7 +6508,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Michael Bandy",
@@ -6142,7 +6525,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Skyy Moore",
@@ -6158,7 +6542,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Britain Covey",
@@ -6174,7 +6559,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Dareke Young",
@@ -6190,7 +6576,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jacob Cowing",
@@ -6206,7 +6593,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 283
   },
   {
     "name": "Charlie Jones",
@@ -6222,7 +6610,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Barion Brown",
@@ -6238,7 +6627,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jalen Brooks",
@@ -6254,7 +6644,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Brycen Tremayne",
@@ -6270,7 +6661,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Nikko Remigio",
@@ -6286,7 +6678,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jeshaun Jones",
@@ -6302,7 +6695,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Efton Chism III",
@@ -6318,7 +6712,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 279
   },
   {
     "name": "LaJohntay Wester",
@@ -6334,7 +6729,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Ke'Shawn Williams",
@@ -6350,7 +6746,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Myles Price",
@@ -6366,7 +6763,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Gage Larvadain",
@@ -6382,7 +6780,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Josh Cameron",
@@ -6398,7 +6797,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Trey McBride",
@@ -6414,7 +6814,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 6.8,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 21
   },
   {
     "name": "Brock Bowers",
@@ -6430,7 +6831,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 7.8,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 19.5
   },
   {
     "name": "Colston Loveland",
@@ -6446,7 +6848,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 7,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 41
   },
   {
     "name": "Tyler Warren",
@@ -6462,7 +6865,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5.6,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 65
   },
   {
     "name": "Dallas Goedert",
@@ -6478,7 +6882,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 8.3,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 129.5
   },
   {
     "name": "Kyle Pitts Sr.",
@@ -6494,7 +6899,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5.1,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 95
   },
   {
     "name": "Tucker Kraft",
@@ -6510,7 +6916,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 7,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 86
   },
   {
     "name": "Sam LaPorta",
@@ -6526,7 +6933,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5.7,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 95
   },
   {
     "name": "Harold Fannin Jr.",
@@ -6542,7 +6950,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5.6,
     "fumbles": 0.8,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 89.5
   },
   {
     "name": "Isaiah Likely",
@@ -6558,7 +6967,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5.6,
     "fumbles": 1.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 125
   },
   {
     "name": "Travis Kelce",
@@ -6574,7 +6984,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5.2,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 120
   },
   {
     "name": "Dalton Kincaid",
@@ -6590,7 +7001,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5.7,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 120
   },
   {
     "name": "Mark Andrews",
@@ -6606,7 +7018,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 8.1,
     "fumbles": 0.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 134
   },
   {
     "name": "George Kittle",
@@ -6622,7 +7035,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5.6,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 122.5
   },
   {
     "name": "Hunter Henry",
@@ -6638,7 +7052,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5.6,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 156.5
   },
   {
     "name": "Jake Ferguson",
@@ -6654,7 +7069,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 6.4,
     "fumbles": 1.4,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 126.5
   },
   {
     "name": "Brenton Strange",
@@ -6670,7 +7086,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.5,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 152.5
   },
   {
     "name": "Juwan Johnson",
@@ -6686,7 +7103,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.4,
     "fumbles": 1.3,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 145.5
   },
   {
     "name": "Kenyon Sadiq",
@@ -6702,7 +7120,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5.2,
     "fumbles": 0.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 153.5
   },
   {
     "name": "Dalton Schultz",
@@ -6718,7 +7137,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.6,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 174
   },
   {
     "name": "Pat Freiermuth",
@@ -6734,7 +7154,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.9,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 197
   },
   {
     "name": "Cade Otton",
@@ -6750,7 +7171,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.2,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 198.5
   },
   {
     "name": "T.J. Hockenson",
@@ -6766,7 +7188,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.4,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 166.5
   },
   {
     "name": "Oronde Gadsden II",
@@ -6782,7 +7205,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.4,
     "fumbles": 0.7,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 139.5
   },
   {
     "name": "Terrance Ferguson",
@@ -6798,7 +7222,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.5,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 222.5
   },
   {
     "name": "AJ Barner",
@@ -6814,7 +7239,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 5.3,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 188
   },
   {
     "name": "Greg Dulcich",
@@ -6830,7 +7256,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.8,
     "fumbles": 1.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 211.5
   },
   {
     "name": "Chig Okonkwo",
@@ -6846,7 +7273,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.6,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 148
   },
   {
     "name": "Mike Gesicki",
@@ -6862,7 +7290,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.8,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 275.5
   },
   {
     "name": "David Njoku",
@@ -6878,7 +7307,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.6,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 207.5
   },
   {
     "name": "Evan Engram",
@@ -6894,7 +7324,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.6,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 296
   },
   {
     "name": "Colby Parkinson",
@@ -6910,7 +7341,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 4.3,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 215
   },
   {
     "name": "Gunnar Helm",
@@ -6926,7 +7358,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.2,
     "fumbles": 0.2,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 189
   },
   {
     "name": "Theo Johnson",
@@ -6942,7 +7375,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 3.3,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 295
   },
   {
     "name": "Dawson Knox",
@@ -6958,7 +7392,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.9,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 336.5
   },
   {
     "name": "Mason Taylor",
@@ -6974,7 +7409,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.6,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 305.5
   },
   {
     "name": "Tyler Higbee",
@@ -6990,7 +7426,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.6,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 362
   },
   {
     "name": "Michael Mayer",
@@ -7006,7 +7443,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.7,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 315
   },
   {
     "name": "Darnell Washington",
@@ -7022,7 +7460,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.9,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 335
   },
   {
     "name": "Ja'Tavion Sanders",
@@ -7038,7 +7477,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 325.5
   },
   {
     "name": "Tommy Tremble",
@@ -7054,7 +7494,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 270
   },
   {
     "name": "Noah Fant",
@@ -7070,7 +7511,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.5,
     "fumbles": 1.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Will Kacmarek",
@@ -7086,7 +7528,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.9,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Josh Oliver",
@@ -7102,7 +7545,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.6,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Charlie Kolar",
@@ -7118,7 +7562,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.3,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 301
   },
   {
     "name": "Cole Kmet",
@@ -7134,7 +7579,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.8,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 397
   },
   {
     "name": "Erick All Jr.",
@@ -7150,7 +7596,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.6,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Daniel Bellinger",
@@ -7166,7 +7613,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.7,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 288
   },
   {
     "name": "Austin Hooper",
@@ -7182,7 +7630,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.4,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Brock Wright",
@@ -7198,7 +7647,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2.3,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Eli Stowers",
@@ -7214,7 +7664,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.5,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 219
   },
   {
     "name": "Adam Trautman",
@@ -7230,7 +7681,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.5,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Luke Musgrave",
@@ -7246,7 +7698,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.4,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 261
   },
   {
     "name": "Eli Raridon",
@@ -7262,7 +7715,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.5,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 324
   },
   {
     "name": "Ben Sims",
@@ -7278,7 +7732,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.2,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jake Tonges",
@@ -7294,7 +7749,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.5,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 222
   },
   {
     "name": "Noah Gray",
@@ -7310,7 +7766,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.2,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 369
   },
   {
     "name": "Elijah Arroyo",
@@ -7326,7 +7783,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.4,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 340
   },
   {
     "name": "Davis Allen",
@@ -7342,7 +7800,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.9,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "John Bates",
@@ -7358,7 +7817,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.6,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Marlin Klein",
@@ -7374,7 +7834,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.1,
     "fumbles": 0.5,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Elijah Higgins",
@@ -7390,7 +7851,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.8,
     "fumbles": 0.6,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Nick Vannett",
@@ -7406,7 +7868,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Connor Heyward",
@@ -7422,7 +7885,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 2,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Nate Boerkircher",
@@ -7438,7 +7902,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.3,
     "fumbles": 0.5,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jeremy Ruckert",
@@ -7454,7 +7919,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.3,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Drew Sample",
@@ -7470,7 +7936,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.2,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jackson Hawes",
@@ -7486,7 +7953,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.4,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Grant Calcaterra",
@@ -7502,7 +7970,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Ben Sinnott",
@@ -7518,7 +7987,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.4,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 306
   },
   {
     "name": "Nate Adkins",
@@ -7534,7 +8004,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.8,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Mitchell Evans",
@@ -7550,7 +8021,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Will Mallory",
@@ -7566,7 +8038,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jack Endries",
@@ -7582,7 +8055,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Foster Moreau",
@@ -7598,7 +8072,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.3,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Cade Stover",
@@ -7614,7 +8089,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.9,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Luke Schoonmaker",
@@ -7630,7 +8106,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.9,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Bauer Sharp",
@@ -7646,7 +8123,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Rivaldo Fairweather",
@@ -7662,7 +8140,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Zaire Mitchell-Paden",
@@ -7678,7 +8157,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Justin Joly",
@@ -7694,7 +8174,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 366
   },
   {
     "name": "Charlie Woerner",
@@ -7710,7 +8191,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.6,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Tanner Hudson",
@@ -7726,7 +8208,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.9,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Mo Alie-Cox",
@@ -7742,7 +8225,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.9,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Thomas Fidone II",
@@ -7758,7 +8242,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Cam Grandy",
@@ -7774,7 +8259,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jared Wiley",
@@ -7790,7 +8276,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jaren Kanak",
@@ -7806,7 +8293,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Josh Whyle",
@@ -7822,7 +8310,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Devin Culp",
@@ -7838,7 +8327,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1.2,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Durham Smythe",
@@ -7854,7 +8344,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.7,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Payne Durham",
@@ -7870,7 +8361,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.8,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Max Klare",
@@ -7886,7 +8378,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.7,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 396
   },
   {
     "name": "Brevyn Spann-Ford",
@@ -7902,7 +8395,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.7,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Sam Roush",
@@ -7918,7 +8412,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.6,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 274
   },
   {
     "name": "Hunter Long",
@@ -7934,7 +8429,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Lucas Krull",
@@ -7950,7 +8446,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.6,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Tip Reiman",
@@ -7966,7 +8463,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.6,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Ian Thomas",
@@ -7982,7 +8480,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.6,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Blake Whiteheart",
@@ -7998,7 +8497,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0.1,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Luke Farrell",
@@ -8014,7 +8514,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.4,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Tanner Koziol",
@@ -8030,7 +8531,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Josh Cuevas",
@@ -8046,7 +8548,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "CJ Dippre",
@@ -8062,7 +8565,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Tyler Conklin",
@@ -8078,7 +8582,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Eric Saubert",
@@ -8094,7 +8599,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Oscar Delp",
@@ -8110,7 +8616,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 327.5
   },
   {
     "name": "Drew Ogletree",
@@ -8126,7 +8633,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.3,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Joe Royer",
@@ -8142,7 +8650,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Riley Nowakowski",
@@ -8158,7 +8667,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.2,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Chris Manhertz",
@@ -8174,7 +8684,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0.1,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Johnny Mundt",
@@ -8190,7 +8701,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Quintin Morris",
@@ -8206,7 +8718,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jack Stoll",
@@ -8222,7 +8735,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Cole Turner",
@@ -8238,7 +8752,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jelani Woods",
@@ -8254,7 +8769,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Julian Hill",
@@ -8270,7 +8786,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "rec_tds": 0,
     "fumbles": 0,
     "age": 26,
-    "years_exp": 3
+    "years_exp": 3,
+    "adp": 300
   },
   {
     "name": "Jason Myers",
@@ -8289,7 +8806,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 36,
     "fg_att": 40.9,
-    "xp_made": 46.3
+    "xp_made": 46.3,
+    "adp": 300
   },
   {
     "name": "Brandon Aubrey",
@@ -8308,7 +8826,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 35.2,
     "fg_att": 39.8,
-    "xp_made": 47.5
+    "xp_made": 47.5,
+    "adp": 300
   },
   {
     "name": "Ka'imi Fairbairn",
@@ -8327,7 +8846,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 37.5,
     "fg_att": 41.7,
-    "xp_made": 35.6
+    "xp_made": 35.6,
+    "adp": 300
   },
   {
     "name": "Cameron Dicker",
@@ -8346,7 +8866,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 34.5,
     "fg_att": 38.4,
-    "xp_made": 40.2
+    "xp_made": 40.2,
+    "adp": 300
   },
   {
     "name": "Harrison Mevis",
@@ -8365,7 +8886,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 29.5,
     "fg_att": 32.7,
-    "xp_made": 54.9
+    "xp_made": 54.9,
+    "adp": 300
   },
   {
     "name": "Jake Bates",
@@ -8384,7 +8906,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 29.4,
     "fg_att": 35.2,
-    "xp_made": 51
+    "xp_made": 51,
+    "adp": 300
   },
   {
     "name": "Nick Folk",
@@ -8403,7 +8926,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 33,
     "fg_att": 36.2,
-    "xp_made": 39
+    "xp_made": 39,
+    "adp": 300
   },
   {
     "name": "Cairo Santos",
@@ -8422,7 +8946,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 31,
     "fg_att": 35.7,
-    "xp_made": 42.8
+    "xp_made": 42.8,
+    "adp": 300
   },
   {
     "name": "Eddy Pineiro",
@@ -8441,7 +8966,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 31.6,
     "fg_att": 35,
-    "xp_made": 39.5
+    "xp_made": 39.5,
+    "adp": 300
   },
   {
     "name": "Tyler Loop",
@@ -8460,7 +8986,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 29.1,
     "fg_att": 33.2,
-    "xp_made": 46.7
+    "xp_made": 46.7,
+    "adp": 300
   },
   {
     "name": "Harrison Butker",
@@ -8479,7 +9006,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 31.9,
     "fg_att": 37.3,
-    "xp_made": 37.9
+    "xp_made": 37.9,
+    "adp": 300
   },
   {
     "name": "Chase McLaughlin",
@@ -8498,7 +9026,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 31.8,
     "fg_att": 37.2,
-    "xp_made": 38.3
+    "xp_made": 38.3,
+    "adp": 300
   },
   {
     "name": "Will Reichard",
@@ -8517,7 +9046,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 31.8,
     "fg_att": 34.8,
-    "xp_made": 38
+    "xp_made": 38,
+    "adp": 300
   },
   {
     "name": "Evan McPherson",
@@ -8536,7 +9066,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 29,
     "fg_att": 33.2,
-    "xp_made": 45.7
+    "xp_made": 45.7,
+    "adp": 300
   },
   {
     "name": "Cam Little",
@@ -8555,7 +9086,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 29.2,
     "fg_att": 33.2,
-    "xp_made": 43.6
+    "xp_made": 43.6,
+    "adp": 300
   },
   {
     "name": "Wil Lutz",
@@ -8574,7 +9106,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 29,
     "fg_att": 34.5,
-    "xp_made": 41.4
+    "xp_made": 41.4,
+    "adp": 300
   },
   {
     "name": "Trey Smack",
@@ -8593,7 +9126,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 28.9,
     "fg_att": 34.7,
-    "xp_made": 39.6
+    "xp_made": 39.6,
+    "adp": 300
   },
   {
     "name": "Charlie Smyth",
@@ -8612,7 +9146,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 30.3,
     "fg_att": 36,
-    "xp_made": 34.2
+    "xp_made": 34.2,
+    "adp": 300
   },
   {
     "name": "Tyler Bass",
@@ -8631,7 +9166,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 25.9,
     "fg_att": 30.8,
-    "xp_made": 46.7
+    "xp_made": 46.7,
+    "adp": 300
   },
   {
     "name": "Jake Moody",
@@ -8650,7 +9186,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 27.9,
     "fg_att": 34.2,
-    "xp_made": 38.6
+    "xp_made": 38.6,
+    "adp": 300
   },
   {
     "name": "Andy Borregales",
@@ -8669,7 +9206,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 26.2,
     "fg_att": 31.3,
-    "xp_made": 43
+    "xp_made": 43,
+    "adp": 300
   },
   {
     "name": "Jake Elliott",
@@ -8688,7 +9226,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 26.6,
     "fg_att": 32.8,
-    "xp_made": 41.7
+    "xp_made": 41.7,
+    "adp": 300
   },
   {
     "name": "Chris Boswell",
@@ -8707,7 +9246,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 28.7,
     "fg_att": 32.6,
-    "xp_made": 34.3
+    "xp_made": 34.3,
+    "adp": 300
   },
   {
     "name": "Zane Gonzalez",
@@ -8726,7 +9266,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 28.3,
     "fg_att": 32.6,
-    "xp_made": 30.5
+    "xp_made": 30.5,
+    "adp": 300
   },
   {
     "name": "Joey Slye",
@@ -8745,7 +9286,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 27.6,
     "fg_att": 32.7,
-    "xp_made": 30.5
+    "xp_made": 30.5,
+    "adp": 300
   },
   {
     "name": "Chad Ryland",
@@ -8764,7 +9306,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 26.9,
     "fg_att": 33.6,
-    "xp_made": 31.8
+    "xp_made": 31.8,
+    "adp": 300
   },
   {
     "name": "Cade York",
@@ -8783,7 +9326,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 27.3,
     "fg_att": 32.4,
-    "xp_made": 27.9
+    "xp_made": 27.9,
+    "adp": 300
   },
   {
     "name": "Matt Gay",
@@ -8802,7 +9346,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 25.8,
     "fg_att": 32.7,
-    "xp_made": 30.1
+    "xp_made": 30.1,
+    "adp": 300
   },
   {
     "name": "Ben Sauls",
@@ -8821,7 +9366,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 24.8,
     "fg_att": 30.2,
-    "xp_made": 30.4
+    "xp_made": 30.4,
+    "adp": 300
   },
   {
     "name": "Andre Szmyt",
@@ -8840,7 +9386,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 25.5,
     "fg_att": 29.2,
-    "xp_made": 28.1
+    "xp_made": 28.1,
+    "adp": 300
   },
   {
     "name": "Ryan Fitzgerald",
@@ -8859,7 +9406,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 24.8,
     "fg_att": 29.7,
-    "xp_made": 29.4
+    "xp_made": 29.4,
+    "adp": 300
   },
   {
     "name": "Spencer Shrader",
@@ -8878,7 +9426,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 17,
     "fg_att": 19.5,
-    "xp_made": 25.5
+    "xp_made": 25.5,
+    "adp": 300
   },
   {
     "name": "Jason Sanders",
@@ -8897,7 +9446,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 14.5,
     "fg_att": 17,
-    "xp_made": 17.5
+    "xp_made": 17.5,
+    "adp": 300
   },
   {
     "name": "Blake Grupe",
@@ -8916,7 +9466,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 14.3,
     "fg_att": 17.2,
-    "xp_made": 17.4
+    "xp_made": 17.4,
+    "adp": 300
   },
   {
     "name": "Riley Patterson",
@@ -8935,7 +9486,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 13.5,
     "fg_att": 15.5,
-    "xp_made": 19
+    "xp_made": 19,
+    "adp": 300
   },
   {
     "name": "Dominic Zvada",
@@ -8954,7 +9506,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 7,
     "fg_att": 9,
-    "xp_made": 9
+    "xp_made": 9,
+    "adp": 300
   },
   {
     "name": "Lucas Havrisik",
@@ -8973,7 +9526,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "years_exp": 3,
     "fg_made": 0,
     "fg_att": 0,
-    "xp_made": 0
+    "xp_made": 0,
+    "adp": 300
   },
   {
     "name": "Houston Texans",
@@ -8994,7 +9548,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 14.2,
     "dst_fumbles_rec": 12.4,
     "dst_tds": 2.7,
-    "dst_pts_allowed": 320.1
+    "dst_pts_allowed": 320.1,
+    "adp": 142
   },
   {
     "name": "Denver Broncos",
@@ -9015,7 +9570,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 14,
     "dst_fumbles_rec": 8.4,
     "dst_tds": 2.6,
-    "dst_pts_allowed": 314.3
+    "dst_pts_allowed": 314.3,
+    "adp": 160
   },
   {
     "name": "Minnesota Vikings",
@@ -9036,7 +9592,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 11.9,
     "dst_fumbles_rec": 12.6,
     "dst_tds": 2.5,
-    "dst_pts_allowed": 368.5
+    "dst_pts_allowed": 368.5,
+    "adp": 186
   },
   {
     "name": "Pittsburgh Steelers",
@@ -9057,7 +9614,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 11.9,
     "dst_fumbles_rec": 13.3,
     "dst_tds": 2.6,
-    "dst_pts_allowed": 340.7
+    "dst_pts_allowed": 340.7,
+    "adp": 190
   },
   {
     "name": "Seattle Seahawks",
@@ -9078,7 +9636,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 13.4,
     "dst_fumbles_rec": 9.6,
     "dst_tds": 3.3,
-    "dst_pts_allowed": 314
+    "dst_pts_allowed": 314,
+    "adp": 156
   },
   {
     "name": "Detroit Lions",
@@ -9099,7 +9658,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 13.4,
     "dst_fumbles_rec": 9.4,
     "dst_tds": 2.7,
-    "dst_pts_allowed": 366.3
+    "dst_pts_allowed": 366.3,
+    "adp": 218
   },
   {
     "name": "Atlanta Falcons",
@@ -9120,7 +9680,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 12.9,
     "dst_fumbles_rec": 9.1,
     "dst_tds": 2.5,
-    "dst_pts_allowed": 413.3
+    "dst_pts_allowed": 413.3,
+    "adp": 215
   },
   {
     "name": "Los Angeles Chargers",
@@ -9141,7 +9702,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 14.4,
     "dst_fumbles_rec": 8.5,
     "dst_tds": 2.5,
-    "dst_pts_allowed": 375.2
+    "dst_pts_allowed": 375.2,
+    "adp": 198
   },
   {
     "name": "Los Angeles Rams",
@@ -9162,7 +9724,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 13.6,
     "dst_fumbles_rec": 10.2,
     "dst_tds": 2.5,
-    "dst_pts_allowed": 337.3
+    "dst_pts_allowed": 337.3,
+    "adp": 162
   },
   {
     "name": "Chicago Bears",
@@ -9183,7 +9746,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 14.5,
     "dst_fumbles_rec": 11.5,
     "dst_tds": 2.6,
-    "dst_pts_allowed": 384.6
+    "dst_pts_allowed": 384.6,
+    "adp": 204
   },
   {
     "name": "Baltimore Ravens",
@@ -9204,7 +9768,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 12.7,
     "dst_fumbles_rec": 9.8,
     "dst_tds": 2.5,
-    "dst_pts_allowed": 353.3
+    "dst_pts_allowed": 353.3,
+    "adp": 199
   },
   {
     "name": "Buffalo Bills",
@@ -9225,7 +9790,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 13.9,
     "dst_fumbles_rec": 8.8,
     "dst_tds": 2.7,
-    "dst_pts_allowed": 405.2
+    "dst_pts_allowed": 405.2,
+    "adp": 214
   },
   {
     "name": "Philadelphia Eagles",
@@ -9246,7 +9812,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 13.5,
     "dst_fumbles_rec": 10,
     "dst_tds": 2.6,
-    "dst_pts_allowed": 326.3
+    "dst_pts_allowed": 326.3,
+    "adp": 185
   },
   {
     "name": "New Orleans Saints",
@@ -9267,7 +9834,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 12.5,
     "dst_fumbles_rec": 9.4,
     "dst_tds": 2.4,
-    "dst_pts_allowed": 401.6
+    "dst_pts_allowed": 401.6,
+    "adp": 220
   },
   {
     "name": "Tennessee Titans",
@@ -9288,7 +9856,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 11,
     "dst_fumbles_rec": 9.3,
     "dst_tds": 2.6,
-    "dst_pts_allowed": 463.3
+    "dst_pts_allowed": 463.3,
+    "adp": 249
   },
   {
     "name": "Cincinnati Bengals",
@@ -9309,7 +9878,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 12.6,
     "dst_fumbles_rec": 9.7,
     "dst_tds": 2.7,
-    "dst_pts_allowed": 404.1
+    "dst_pts_allowed": 404.1,
+    "adp": 314
   },
   {
     "name": "New England Patriots",
@@ -9330,7 +9900,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 12.9,
     "dst_fumbles_rec": 8.9,
     "dst_tds": 2.8,
-    "dst_pts_allowed": 357.7
+    "dst_pts_allowed": 357.7,
+    "adp": 181
   },
   {
     "name": "Cleveland Browns",
@@ -9351,7 +9922,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 12.2,
     "dst_fumbles_rec": 8.9,
     "dst_tds": 2.3,
-    "dst_pts_allowed": 371.4
+    "dst_pts_allowed": 371.4,
+    "adp": 196
   },
   {
     "name": "Washington Commanders",
@@ -9372,7 +9944,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 11.1,
     "dst_fumbles_rec": 9.5,
     "dst_tds": 2.6,
-    "dst_pts_allowed": 446.9
+    "dst_pts_allowed": 446.9,
+    "adp": 323
   },
   {
     "name": "Miami Dolphins",
@@ -9393,7 +9966,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 10.7,
     "dst_fumbles_rec": 9.6,
     "dst_tds": 2.5,
-    "dst_pts_allowed": 467.9
+    "dst_pts_allowed": 467.9,
+    "adp": 325
   },
   {
     "name": "Jacksonville Jaguars",
@@ -9414,7 +9988,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 12.9,
     "dst_fumbles_rec": 9.3,
     "dst_tds": 2.9,
-    "dst_pts_allowed": 386.2
+    "dst_pts_allowed": 386.2,
+    "adp": 191
   },
   {
     "name": "Tampa Bay Buccaneers",
@@ -9435,7 +10010,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 12.1,
     "dst_fumbles_rec": 9.6,
     "dst_tds": 2.4,
-    "dst_pts_allowed": 389.8
+    "dst_pts_allowed": 389.8,
+    "adp": 243
   },
   {
     "name": "Green Bay Packers",
@@ -9456,7 +10032,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 12.4,
     "dst_fumbles_rec": 9.6,
     "dst_tds": 2.4,
-    "dst_pts_allowed": 371.3
+    "dst_pts_allowed": 371.3,
+    "adp": 210
   },
   {
     "name": "Las Vegas Raiders",
@@ -9477,7 +10054,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 10.9,
     "dst_fumbles_rec": 10.1,
     "dst_tds": 2.2,
-    "dst_pts_allowed": 439.6
+    "dst_pts_allowed": 439.6,
+    "adp": 294
   },
   {
     "name": "Kansas City Chiefs",
@@ -9498,7 +10076,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 12.1,
     "dst_fumbles_rec": 8.4,
     "dst_tds": 2.3,
-    "dst_pts_allowed": 360.8
+    "dst_pts_allowed": 360.8,
+    "adp": 221
   },
   {
     "name": "New York Giants",
@@ -9519,7 +10098,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 11.2,
     "dst_fumbles_rec": 8.7,
     "dst_tds": 2.5,
-    "dst_pts_allowed": 433.4
+    "dst_pts_allowed": 433.4,
+    "adp": 222
   },
   {
     "name": "Indianapolis Colts",
@@ -9540,7 +10120,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 11.9,
     "dst_fumbles_rec": 8.5,
     "dst_tds": 2.4,
-    "dst_pts_allowed": 384.2
+    "dst_pts_allowed": 384.2,
+    "adp": 232
   },
   {
     "name": "Arizona Cardinals",
@@ -9561,7 +10142,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 12.1,
     "dst_fumbles_rec": 10.2,
     "dst_tds": 2.4,
-    "dst_pts_allowed": 486.2
+    "dst_pts_allowed": 486.2,
+    "adp": 355
   },
   {
     "name": "Dallas Cowboys",
@@ -9582,7 +10164,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 10.1,
     "dst_fumbles_rec": 9.2,
     "dst_tds": 2.3,
-    "dst_pts_allowed": 448
+    "dst_pts_allowed": 448,
+    "adp": 238
   },
   {
     "name": "New York Jets",
@@ -9603,7 +10186,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 10.9,
     "dst_fumbles_rec": 8,
     "dst_tds": 2.9,
-    "dst_pts_allowed": 431.7
+    "dst_pts_allowed": 431.7,
+    "adp": 341
   },
   {
     "name": "San Francisco 49ers",
@@ -9624,7 +10208,8 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 11.1,
     "dst_fumbles_rec": 10.5,
     "dst_tds": 2.4,
-    "dst_pts_allowed": 395.5
+    "dst_pts_allowed": 395.5,
+    "adp": 234
   },
   {
     "name": "Carolina Panthers",
@@ -9645,6 +10230,7 @@ export const OFFSEASON_FUTURES_DATABASE = [
     "dst_ints": 11.9,
     "dst_fumbles_rec": 7.1,
     "dst_tds": 2.2,
-    "dst_pts_allowed": 397.3
+    "dst_pts_allowed": 397.3,
+    "adp": 235
   }
 ];
