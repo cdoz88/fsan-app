@@ -91,7 +91,6 @@ export default function TradeCalculatorClient() {
     loadLiveDatabase();
   }, []);
 
-  // 🚀 PHASE 2 FIX: Deepened baselines to represent actual Dynasty waiver wire depth
   const baselines = useMemo(() => {
     if (!playersData || playersData.length === 0) return { QB: 0, RB: 0, WR: 0, TE: 0 };
 
@@ -158,6 +157,7 @@ export default function TradeCalculatorClient() {
         return val;
     }
 
+    // Step 1: Base Projections
     let pts = 0;
     pts += ((player.pass_yds || 0) / 25);
     pts += ((player.pass_tds || 0) * passTdValue); 
@@ -173,7 +173,7 @@ export default function TradeCalculatorClient() {
     }
     pts += recPoints;
 
-    // Apply VORP
+    // Step 2: VORP and Youth Floor
     let vorp = 0;
     if (player.position === 'QB') vorp = pts - baselines.QB;
     else if (player.position === 'RB') vorp = pts - baselines.RB;
@@ -181,25 +181,32 @@ export default function TradeCalculatorClient() {
     else if (player.position === 'TE' || player.position === 'WR/TE') vorp = pts - baselines.TE;
     else vorp = pts;
 
-    if (vorp < 0) vorp = 0; 
-
-    // Apply Positional Format Multipliers
-    if (player.position === 'QB') {
-      vorp *= isSuperflex ? 1.50 : 0.75; 
-    } else if (player.position === 'RB') {
-      vorp *= 1.10;  
-    } else if (player.position === 'TE' || player.position === 'WR/TE') {
-      vorp *= 1.10; 
-    } else {
-      vorp *= 1.0; 
+    if (vorp <= 0) {
+        if (player.age && player.age <= 25) {
+            vorp = 35 - ((player.age - 20) * 5); // Ex: 22yo gets 25 raw floor
+            if (vorp < 0) vorp = 2; 
+        } else {
+            vorp = 2; // Flat minimum prevents hard 0s
+        }
     }
 
-    // Apply Final Scaling & Age Multipliers
+    // Step 3: Positional Formats
+    let productionValue = vorp;
+    if (player.position === 'QB') productionValue *= isSuperflex ? 1.50 : 0.75;
+    else if (player.position === 'RB' || player.position === 'TE' || player.position === 'WR/TE') productionValue *= 1.10;
+
+    // 🚀 PHASE 3: MARKET VALUE BLENDING
+    const adp = player.adp || player.AVG || 300; // Safe fallback if compile script hasn't run
+    const marketScore = 100 * Math.pow(0.985, adp - 1); // 1=100, 50=47, 100=22
+    const marketValue = marketScore * 3.5; // Scales 100 score up to Elite VORP level
+
     if (formatMode === 'dynasty') {
+      const baseAssetValue = (productionValue * 0.50) + (marketValue * 0.50);
       const ageMult = getAgeMultiplier(player.position, player.age, strategy);
-      return Math.round(vorp * ageMult * 3.0); 
+      return Math.round(baseAssetValue * ageMult * 3.0); 
     } else {
-      return Math.round(vorp * 2.0);
+      const baseAssetValue = (productionValue * 0.75) + (marketValue * 0.25);
+      return Math.round(baseAssetValue * 2.0);
     }
   };
 
@@ -229,7 +236,6 @@ export default function TradeCalculatorClient() {
 
     const effA = getEfficiency(teamA_assets.length);
     const effB = getEfficiency(teamB_assets.length);
-
     const premium = Math.round(maxVal * 0.10);
     
     let finalA = Math.round(sumA * effA);
