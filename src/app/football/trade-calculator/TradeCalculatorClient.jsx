@@ -6,7 +6,6 @@ import { Settings, Search, X, RefreshCw } from 'lucide-react';
 // --- Generate Draft Picks Data ---
 const generatePicks = () => {
   const picks = [];
-  // Steep decaying curve for 2026 Picks
   const pickValues26 = [650, 550, 480, 420, 360, 310, 270, 230, 190, 160, 140, 120, 100, 90, 80, 70, 60, 55, 50, 45, 40, 35, 30, 25]; 
   
   for(let i=1; i<=12; i++) picks.push({ id: `26-1.${i < 10 ? '0'+i : i}`, name: `2026 Pick 1.${i < 10 ? '0'+i : i}`, position: 'PICK', baseValue: pickValues26[i-1], year: 2026 });
@@ -14,7 +13,6 @@ const generatePicks = () => {
   picks.push({ id: '26-3', name: '2026 3rd Round', position: 'PICK', baseValue: 20, year: 2026 });
   picks.push({ id: '26-4', name: '2026 4th Round', position: 'PICK', baseValue: 5, year: 2026 });
 
-  // 2027 & 2028 Future Picks (Discounted by time)
   [2027, 2028].forEach(year => {
      const discount = year === 2027 ? 0.85 : 0.70; 
      picks.push({ id: `${year}-e1`, name: `${year} Early 1st`, position: 'PICK', baseValue: Math.round(500 * discount), year });
@@ -115,17 +113,14 @@ export default function TradeCalculatorClient() {
   };
 
   const getPlayerValue = (player, strategy) => {
-    // Determine Draft Pick Value
     if (player.position === 'PICK') {
         let val = player.baseValue;
-        if (isSuperflex && val > 100) val = Math.round(val * 1.3); // SF boost for early 1sts
-        
-        if (strategy === 'build') return Math.round(val * 1.15); // Rebuilders overvalue picks
-        if (strategy === 'win_now') return Math.round(val * 0.85); // Contenders undervalue picks
+        if (isSuperflex && val > 100) val = Math.round(val * 1.3); 
+        if (strategy === 'build') return Math.round(val * 1.15); 
+        if (strategy === 'win_now') return Math.round(val * 0.85); 
         return val;
     }
 
-    // Determine Player Value
     let pts = 0;
     pts += ((player.pass_yds || 0) / 25);
     pts += ((player.pass_tds || 0) * passTdValue); 
@@ -155,19 +150,56 @@ export default function TradeCalculatorClient() {
     }
   };
 
-  // --- Dynamic Totals ---
-  const totalA = useMemo(() => {
-    return teamAPlayers.reduce((sum, p) => sum + getPlayerValue(p, teamAStrategy), 0);
-  }, [teamAPlayers, teamAStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
+  // 🚀 PHASE 1 IMPLEMENTATION: Package Tax & Elite Asset Premium Logic
+  const tradeEvaluation = useMemo(() => {
+    const teamA_assets = teamAPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamAStrategy) }));
+    const teamB_assets = teamBPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamBStrategy) }));
 
-  const totalB = useMemo(() => {
-    return teamBPlayers.reduce((sum, p) => sum + getPlayerValue(p, teamBStrategy), 0);
-  }, [teamBPlayers, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
+    const sumA = teamA_assets.reduce((sum, p) => sum + p.calcValue, 0);
+    const sumB = teamB_assets.reduce((sum, p) => sum + p.calcValue, 0);
 
-  // --- Verdict Logic ---
+    if (sumA === 0 && sumB === 0) return { totalA: 0, totalB: 0, bestAsset: null };
+
+    // 1. Identify the Elite Asset
+    let bestAsset = null;
+    let maxVal = -1;
+    let bestAssetSide = null;
+
+    teamA_assets.forEach(p => { if(p.calcValue > maxVal) { maxVal = p.calcValue; bestAsset = p; bestAssetSide = 'A'; }});
+    teamB_assets.forEach(p => { if(p.calcValue > maxVal) { maxVal = p.calcValue; bestAsset = p; bestAssetSide = 'B'; }});
+
+    // 2. Package Efficiency Modifier (Taxing the 3-for-1 trades)
+    const getEfficiency = (count) => {
+        if (count <= 1) return 1.00;
+        if (count === 2) return 0.95;
+        if (count === 3) return 0.85;
+        if (count === 4) return 0.75;
+        return 0.65;
+    };
+
+    const effA = getEfficiency(teamA_assets.length);
+    const effB = getEfficiency(teamB_assets.length);
+
+    // 3. Elite Asset Premium (+10% bump for the best player)
+    const premium = Math.round(maxVal * 0.10);
+    
+    let finalA = Math.round(sumA * effA);
+    let finalB = Math.round(sumB * effB);
+
+    if (bestAssetSide === 'A') finalA += premium;
+    if (bestAssetSide === 'B') finalB += premium;
+
+    return { totalA: finalA, totalB: finalB, bestAsset, bestAssetSide, premium, effA, effB };
+  }, [teamAPlayers, teamBPlayers, teamAStrategy, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
+
+  const { totalA, totalB, bestAsset, bestAssetSide, premium, effA, effB } = tradeEvaluation;
   const totalBoth = totalA + totalB;
   const diff = Math.abs(totalA - totalB);
-  let verdictText = "Add assets to evaluate trade";
+  const diffPct = totalBoth > 0 ? (diff / totalBoth) * 100 : 0;
+
+  // --- Advanced Verdict Generation ---
+  let verdictTitle = "Add assets to evaluate trade";
+  let verdictSubtitle = "Select players or picks to see the package analysis.";
   let verdictColor = "text-gray-500";
   let barAWidth = 50;
   let barBWidth = 50;
@@ -176,29 +208,39 @@ export default function TradeCalculatorClient() {
       barAWidth = (totalA / totalBoth) * 100;
       barBWidth = (totalB / totalBoth) * 100;
 
-      if (diff <= (totalBoth * 0.05)) {
-          verdictText = "🤝 Fair Trade for Both Managers";
+      const winner = totalA > totalB ? 'Team A' : 'Team B';
+      const loser = totalA > totalB ? 'Team B' : 'Team A';
+      
+      if (diffPct <= 5) {
+          verdictTitle = "🤝 Fair Trade";
           verdictColor = "text-zinc-300";
-      } else if (totalA > totalB) {
-          verdictText = `🏆 Team A wins by ${diff} points`;
-          verdictColor = "text-red-500";
+          verdictSubtitle = "Highly balanced deal. Both managers extract equitable value based on their current roster strategies.";
+      } else if (diffPct <= 12) {
+          verdictTitle = `⚖️ Slight Edge: ${winner}`;
+          verdictColor = totalA > totalB ? "text-red-400" : "text-blue-400";
+          verdictSubtitle = `A viable trade, but ${winner} extracts roughly ${Math.round(diffPct)}% more value overall.`;
+      } else if (diffPct <= 22) {
+          verdictTitle = `🏆 Clear Win: ${winner}`;
+          verdictColor = totalA > totalB ? "text-red-500" : "text-blue-500";
+          verdictSubtitle = `${loser} is sacrificing too much value. Consider adding a draft pick or prospect to balance the scales.`;
       } else {
-          verdictText = `🏆 Team B wins by ${diff} points`;
-          verdictColor = "text-blue-500";
+          verdictTitle = `🚨 Major Overpay by ${loser}`;
+          verdictColor = totalA > totalB ? "text-red-600" : "text-blue-600";
+          verdictSubtitle = `This trade is heavily lopsided. ${winner} completely dominates the value exchange.`;
+      }
+
+      if (bestAsset && diffPct > 5) {
+          const receivesBest = bestAssetSide === (totalA > totalB ? 'A' : 'B');
+          verdictSubtitle += ` ${receivesBest ? winner : loser} receives a structural premium for acquiring ${bestAsset.name}, the best standalone asset in the deal.`;
       }
   }
 
   // --- Helpers ---
   const addPlayer = (item, team) => {
-      const newItem = { ...item, uniqueId: item.name + Date.now() }; // Allows trading multiple generic picks
-
-      // Prevent adding the same specific player/1.01 pick to both sides
+      const newItem = { ...item, uniqueId: item.name + Date.now() }; 
       if (item.position !== 'PICK' || item.id.includes('.')) {
-          if (teamAPlayers.some(p => p.name === item.name) || teamBPlayers.some(p => p.name === item.name)) {
-              return; 
-          }
+          if (teamAPlayers.some(p => p.name === item.name) || teamBPlayers.some(p => p.name === item.name)) return; 
       }
-
       if (team === 'A') setTeamAPlayers([...teamAPlayers, newItem]);
       else setTeamBPlayers([...teamBPlayers, newItem]);
   };
@@ -212,7 +254,7 @@ export default function TradeCalculatorClient() {
       if (!e.target.value) return;
       const pick = DRAFT_PICKS.find(p => p.id === e.target.value);
       if (pick) addPlayer(pick, team);
-      e.target.value = ""; // reset dropdown
+      e.target.value = ""; 
   };
 
   return (
@@ -297,13 +339,16 @@ export default function TradeCalculatorClient() {
             <div className="flex flex-col gap-8">
                 
                 {/* VERDICT BAR */}
-                <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 shadow-xl">
-                    <h2 className={`text-center text-xl font-black uppercase tracking-widest mb-6 ${verdictColor}`}>
-                        {verdictText}
+                <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+                    <h2 className={`text-center text-2xl font-black uppercase tracking-widest mb-2 ${verdictColor}`}>
+                        {verdictTitle}
                     </h2>
+                    <p className="text-center text-xs font-bold text-gray-400 max-w-2xl mx-auto mb-6 leading-relaxed">
+                        {verdictSubtitle}
+                    </p>
                     <div className="w-full h-4 rounded-full bg-[#111] flex overflow-hidden border border-gray-800 shadow-inner">
-                        <div className="h-full bg-red-600 transition-all duration-500" style={{ width: `${barAWidth}%` }} />
-                        <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${barBWidth}%` }} />
+                        <div className="h-full bg-red-600 transition-all duration-500 relative" style={{ width: `${barAWidth}%` }} />
+                        <div className="h-full bg-blue-600 transition-all duration-500 relative" style={{ width: `${barBWidth}%` }} />
                     </div>
                 </div>
 
@@ -409,8 +454,12 @@ export default function TradeCalculatorClient() {
                         </div>
 
                         {/* Team A Totals */}
-                        <div className="mt-8 pt-4 border-t border-red-900/30 flex justify-between items-center">
-                            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Total Value Received</span>
+                        <div className="mt-8 pt-4 border-t border-red-900/30 flex justify-between items-end">
+                            <div className="flex flex-col">
+                                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Final Package Value</span>
+                                {bestAssetSide === 'A' && <span className="text-[10px] text-amber-500 font-bold uppercase mt-1">Includes Elite Premium (+{premium})</span>}
+                                {effA < 1.0 && <span className="text-[10px] text-red-400 font-bold uppercase mt-1">Package Size Penalty Applied</span>}
+                            </div>
                             <span className="text-4xl font-black text-red-500">{totalA}</span>
                         </div>
                     </div>
@@ -514,8 +563,12 @@ export default function TradeCalculatorClient() {
                         </div>
 
                         {/* Team B Totals */}
-                        <div className="mt-8 pt-4 border-t border-blue-900/30 flex justify-between items-center">
-                            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Total Value Received</span>
+                        <div className="mt-8 pt-4 border-t border-blue-900/30 flex justify-between items-end">
+                            <div className="flex flex-col">
+                                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Final Package Value</span>
+                                {bestAssetSide === 'B' && <span className="text-[10px] text-amber-500 font-bold uppercase mt-1">Includes Elite Premium (+{premium})</span>}
+                                {effB < 1.0 && <span className="text-[10px] text-red-400 font-bold uppercase mt-1">Package Size Penalty Applied</span>}
+                            </div>
                             <span className="text-4xl font-black text-blue-500">{totalB}</span>
                         </div>
                     </div>
