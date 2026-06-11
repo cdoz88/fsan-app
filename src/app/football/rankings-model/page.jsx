@@ -7,7 +7,7 @@ import { getMenuBySlug } from '../../../utils/api';
 import { getCachedVegasData } from '../../../utils/vegasEngine';
 
 export const metadata = {
-  title: 'Vegas Implied Rankings | FSAN',
+  title: 'Player Rankings | FSAN',
   description: 'Fantasy football rankings calculated directly from Vegas prop bets.',
 };
 
