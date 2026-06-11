@@ -151,16 +151,23 @@ function compile() {
 
   if (fs.existsSync(adpFilePath)) {
     const adpContent = fs.readFileSync(adpFilePath, 'utf-8');
+    
+    // FIX: Added 'relax_column_count: true' to ignore blank rows at the bottom of the CSV
     const adpRecords = parse(adpContent, {
-      columns: true, // Auto-maps to headers: Rank, Player, Team, bye, POS, AVG
-      skip_empty_lines: true
+      columns: headers => headers.map(h => h ? h.trim() : ''), 
+      skip_empty_lines: true,
+      relax_column_count: true 
     });
 
     adpRecords.forEach(row => {
-      if (row.Player && row.AVG) {
+      // Check for 'Player' and 'AVG' (or 'ADP' just in case)
+      const playerName = row.Player;
+      const adpVal = row.AVG || row.ADP;
+
+      if (playerName && adpVal) {
         // Clean name to ensure perfect matching
-        const cleanName = row.Player.replace(/\u00a0/g, ' ').trim().toLowerCase();
-        marketData[cleanName] = parseFloat(row.AVG) || 300;
+        const cleanName = playerName.replace(/\u00a0/g, ' ').trim().toLowerCase();
+        marketData[cleanName] = parseFloat(adpVal) || 300;
       }
     });
     console.log(`✅ Loaded ${adpRecords.length} Market ADP records from 2026 ADP Rankings PPR.csv`);
