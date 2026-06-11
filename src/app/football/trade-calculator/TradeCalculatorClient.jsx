@@ -3,6 +3,34 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Settings, Search, X, RefreshCw } from 'lucide-react'; 
 
+// --- Generate Draft Picks Data ---
+const generatePicks = () => {
+  const picks = [];
+  // Steep decaying curve for 2026 Picks
+  const pickValues26 = [650, 550, 480, 420, 360, 310, 270, 230, 190, 160, 140, 120, 100, 90, 80, 70, 60, 55, 50, 45, 40, 35, 30, 25]; 
+  
+  for(let i=1; i<=12; i++) picks.push({ id: `26-1.${i < 10 ? '0'+i : i}`, name: `2026 Pick 1.${i < 10 ? '0'+i : i}`, position: 'PICK', baseValue: pickValues26[i-1], year: 2026 });
+  for(let i=1; i<=12; i++) picks.push({ id: `26-2.${i < 10 ? '0'+i : i}`, name: `2026 Pick 2.${i < 10 ? '0'+i : i}`, position: 'PICK', baseValue: pickValues26[i+11] || 40, year: 2026 });
+  picks.push({ id: '26-3', name: '2026 3rd Round', position: 'PICK', baseValue: 20, year: 2026 });
+  picks.push({ id: '26-4', name: '2026 4th Round', position: 'PICK', baseValue: 5, year: 2026 });
+
+  // 2027 & 2028 Future Picks (Discounted by time)
+  [2027, 2028].forEach(year => {
+     const discount = year === 2027 ? 0.85 : 0.70; 
+     picks.push({ id: `${year}-e1`, name: `${year} Early 1st`, position: 'PICK', baseValue: Math.round(500 * discount), year });
+     picks.push({ id: `${year}-m1`, name: `${year} Mid 1st`, position: 'PICK', baseValue: Math.round(270 * discount), year });
+     picks.push({ id: `${year}-l1`, name: `${year} Late 1st`, position: 'PICK', baseValue: Math.round(140 * discount), year });
+     picks.push({ id: `${year}-e2`, name: `${year} Early 2nd`, position: 'PICK', baseValue: Math.round(90 * discount), year });
+     picks.push({ id: `${year}-m2`, name: `${year} Mid 2nd`, position: 'PICK', baseValue: Math.round(60 * discount), year });
+     picks.push({ id: `${year}-l2`, name: `${year} Late 2nd`, position: 'PICK', baseValue: Math.round(45 * discount), year });
+     picks.push({ id: `${year}-3`, name: `${year} 3rd Round`, position: 'PICK', baseValue: Math.round(20 * discount), year });
+     picks.push({ id: `${year}-4`, name: `${year} 4th Round`, position: 'PICK', baseValue: Math.round(5 * discount), year });
+  });
+  return picks;
+};
+
+const DRAFT_PICKS = generatePicks();
+
 export default function TradeCalculatorClient() {
   const [playersData, setPlayersData] = useState([]);
   const [isSyncing, setIsSyncing] = useState(true);
@@ -29,7 +57,6 @@ export default function TradeCalculatorClient() {
   const primaryColor = '#e42d38';
   const secondaryColor = '#8a1a20';
 
-  // 🔗 EFFECT 1: Read initial state from URL parameters on page load
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -40,7 +67,6 @@ export default function TradeCalculatorClient() {
     }
   }, []);
 
-  // 🔗 EFFECT 2: Write state shifts out to the browser URL string silently
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -81,7 +107,6 @@ export default function TradeCalculatorClient() {
       if (position === 'QB') return age <= 33 ? 1.05 : age <= 36 ? 0.95 : 0.75;
       if (position === 'TE' || position === 'WR/TE') return age <= 27 ? 1.05 : age <= 30 ? 1.00 : age <= 32 ? 0.90 : 0.65;
     }
-    // Neutral / Balanced Base
     if (position === 'RB') return age <= 23 ? 1.20 : age <= 25 ? 1.05 : age <= 27 ? 0.85 : age <= 29 ? 0.55 : 0.25;
     if (position === 'WR') return age <= 24 ? 1.15 : age <= 27 ? 1.05 : age <= 29 ? 0.90 : age <= 31 ? 0.70 : 0.45;
     if (position === 'QB') return age <= 26 ? 1.15 : age <= 33 ? 1.05 : age <= 36 ? 0.85 : 0.50;
@@ -90,6 +115,17 @@ export default function TradeCalculatorClient() {
   };
 
   const getPlayerValue = (player, strategy) => {
+    // Determine Draft Pick Value
+    if (player.position === 'PICK') {
+        let val = player.baseValue;
+        if (isSuperflex && val > 100) val = Math.round(val * 1.3); // SF boost for early 1sts
+        
+        if (strategy === 'build') return Math.round(val * 1.15); // Rebuilders overvalue picks
+        if (strategy === 'win_now') return Math.round(val * 0.85); // Contenders undervalue picks
+        return val;
+    }
+
+    // Determine Player Value
     let pts = 0;
     pts += ((player.pass_yds || 0) / 25);
     pts += ((player.pass_tds || 0) * passTdValue); 
@@ -115,7 +151,6 @@ export default function TradeCalculatorClient() {
       const ageMult = getAgeMultiplier(player.position, player.age, strategy);
       return Math.round(pts * ageMult * 2.5);
     } else {
-      // Redraft formula ignores age and strategy
       return Math.round(pts * 1.5);
     }
   };
@@ -132,7 +167,7 @@ export default function TradeCalculatorClient() {
   // --- Verdict Logic ---
   const totalBoth = totalA + totalB;
   const diff = Math.abs(totalA - totalB);
-  let verdictText = "Add players to evaluate trade";
+  let verdictText = "Add assets to evaluate trade";
   let verdictColor = "text-gray-500";
   let barAWidth = 50;
   let barBWidth = 50;
@@ -154,24 +189,30 @@ export default function TradeCalculatorClient() {
   }
 
   // --- Helpers ---
-  const addPlayer = (player, team) => {
-      if (team === 'A') {
-          if (!teamAPlayers.some(p => p.name === player.name) && !teamBPlayers.some(p => p.name === player.name)) {
-              setTeamAPlayers([...teamAPlayers, player]);
-          }
-      } else {
-          if (!teamAPlayers.some(p => p.name === player.name) && !teamBPlayers.some(p => p.name === player.name)) {
-              setTeamBPlayers([...teamBPlayers, player]);
+  const addPlayer = (item, team) => {
+      const newItem = { ...item, uniqueId: item.name + Date.now() }; // Allows trading multiple generic picks
+
+      // Prevent adding the same specific player/1.01 pick to both sides
+      if (item.position !== 'PICK' || item.id.includes('.')) {
+          if (teamAPlayers.some(p => p.name === item.name) || teamBPlayers.some(p => p.name === item.name)) {
+              return; 
           }
       }
+
+      if (team === 'A') setTeamAPlayers([...teamAPlayers, newItem]);
+      else setTeamBPlayers([...teamBPlayers, newItem]);
   };
 
-  const removePlayer = (player, team) => {
-      if (team === 'A') {
-          setTeamAPlayers(teamAPlayers.filter(p => p.name !== player.name));
-      } else {
-          setTeamBPlayers(teamBPlayers.filter(p => p.name !== player.name));
-      }
+  const removePlayer = (uniqueId, team) => {
+      if (team === 'A') setTeamAPlayers(teamAPlayers.filter(p => p.uniqueId !== uniqueId));
+      else setTeamBPlayers(teamBPlayers.filter(p => p.uniqueId !== uniqueId));
+  };
+
+  const handlePickSelect = (e, team) => {
+      if (!e.target.value) return;
+      const pick = DRAFT_PICKS.find(p => p.id === e.target.value);
+      if (pick) addPlayer(pick, team);
+      e.target.value = ""; // reset dropdown
   };
 
   return (
@@ -286,53 +327,79 @@ export default function TradeCalculatorClient() {
                             )}
                         </div>
 
-                        {/* Search Bar A */}
-                        <div className="relative mb-6">
-                            <div className="flex items-center bg-[#1a1a1a] border border-gray-800 rounded-xl px-4 py-3">
-                                <Search size={18} className="text-gray-500 mr-3" />
-                                <input 
-                                    type="text" 
-                                    placeholder="Search players to add to Team A..." 
-                                    className="bg-transparent text-white outline-none w-full text-sm font-bold placeholder-gray-600"
-                                    value={queryA}
-                                    onChange={e => setQueryA(e.target.value)}
-                                />
-                            </div>
-                            {queryA.length > 1 && (
-                                <div className="absolute z-50 top-full mt-2 w-full bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
-                                    {playersData.filter(p => p.name.toLowerCase().includes(queryA.toLowerCase())).slice(0, 8).map(p => (
-                                        <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { addPlayer(p, 'A'); setQueryA(''); }}>
-                                            <div className="flex items-center gap-3">
-                                                {p.team && p.team !== 'fa' && (
-                                                    <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
-                                                )}
-                                                <span className="text-sm font-bold text-white">{p.name}</span>
-                                                <span className="text-[10px] font-black bg-gray-800 text-gray-400 px-2 py-0.5 rounded uppercase">{p.position}</span>
-                                            </div>
-                                            <span className="text-xs font-black text-gray-400">{getPlayerValue(p, teamAStrategy)} pts</span>
-                                        </div>
-                                    ))}
+                        {/* Search & Pick Header */}
+                        <div className="flex flex-col xl:flex-row gap-3 mb-6">
+                            <div className="relative flex-1">
+                                <div className="flex items-center bg-[#1a1a1a] border border-gray-800 rounded-xl px-4 py-3">
+                                    <Search size={18} className="text-gray-500 mr-3" />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search players..." 
+                                        className="bg-transparent text-white outline-none w-full text-sm font-bold placeholder-gray-600"
+                                        value={queryA}
+                                        onChange={e => setQueryA(e.target.value)}
+                                    />
                                 </div>
+                                {queryA.length > 1 && (
+                                    <div className="absolute z-50 top-full mt-2 w-full bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
+                                        {playersData.filter(p => p.name.toLowerCase().includes(queryA.toLowerCase())).slice(0, 8).map(p => (
+                                            <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { addPlayer(p, 'A'); setQueryA(''); }}>
+                                                <div className="flex items-center gap-3">
+                                                    {p.team && p.team !== 'fa' && (
+                                                        <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                                                    )}
+                                                    <span className="text-sm font-bold text-white">{p.name}</span>
+                                                    <span className="text-[10px] font-black bg-gray-800 text-gray-400 px-2 py-0.5 rounded uppercase">{p.position}</span>
+                                                </div>
+                                                <span className="text-xs font-black text-gray-400">{getPlayerValue(p, teamAStrategy)} pts</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {formatMode === 'dynasty' && (
+                                <select 
+                                    onChange={(e) => handlePickSelect(e, 'A')}
+                                    className="bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors xl:w-40 cursor-pointer"
+                                >
+                                    <option value="">+ Add Pick</option>
+                                    <optgroup label="2026 Picks">
+                                        {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                    </optgroup>
+                                    <optgroup label="2027 Picks">
+                                        {DRAFT_PICKS.filter(p => p.year === 2027).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                    </optgroup>
+                                    <optgroup label="2028 Picks">
+                                        {DRAFT_PICKS.filter(p => p.year === 2028).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                    </optgroup>
+                                </select>
                             )}
                         </div>
 
-                        {/* Team A Players */}
+                        {/* Team A Asset List */}
                         <div className="space-y-3 min-h-[150px]">
                             {teamAPlayers.length === 0 ? (
-                                <div className="text-center py-10 text-gray-600 font-bold text-xs uppercase tracking-widest">No players added</div>
+                                <div className="text-center py-10 text-gray-600 font-bold text-xs uppercase tracking-widest">No assets added</div>
                             ) : teamAPlayers.map(p => (
-                                <div key={p.name} className="flex justify-between items-center bg-[#1a1a1a] border border-red-900/20 p-4 rounded-2xl group transition-all hover:border-red-500/50">
+                                <div key={p.uniqueId} className="flex justify-between items-center bg-[#1a1a1a] border border-red-900/20 p-4 rounded-2xl group transition-all hover:border-red-500/50">
                                     <div className="flex items-center gap-4">
-                                        <button onClick={() => removePlayer(p, 'A')} className="text-gray-600 hover:text-red-500 transition-colors">
+                                        <button onClick={() => removePlayer(p.uniqueId, 'A')} className="text-gray-600 hover:text-red-500 transition-colors">
                                             <X size={18} />
                                         </button>
                                         <div className="flex items-center gap-3">
-                                            {p.team && p.team !== 'fa' && (
-                                                <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-8 h-8 object-contain drop-shadow-md" onError={(e) => e.target.style.display = 'none'} />
+                                            {p.position === 'PICK' ? (
+                                                <div className="w-8 h-8 rounded-full bg-yellow-600 flex items-center justify-center text-xs font-black text-white shadow-md">
+                                                    {p.year.toString().slice(-2)}
+                                                </div>
+                                            ) : (
+                                                p.team && p.team !== 'fa' && (
+                                                    <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-8 h-8 object-contain drop-shadow-md" onError={(e) => e.target.style.display = 'none'} />
+                                                )
                                             )}
                                             <div>
                                                 <div className="text-sm font-black text-white">{p.name}</div>
-                                                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} {formatMode === 'dynasty' ? `• ${p.age} y/o` : ''}</div>
+                                                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} {formatMode === 'dynasty' && p.age ? `• ${p.age} y/o` : ''}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -365,53 +432,79 @@ export default function TradeCalculatorClient() {
                             )}
                         </div>
 
-                        {/* Search Bar B */}
-                        <div className="relative mb-6">
-                            <div className="flex items-center bg-[#1a1a1a] border border-gray-800 rounded-xl px-4 py-3">
-                                <Search size={18} className="text-gray-500 mr-3" />
-                                <input 
-                                    type="text" 
-                                    placeholder="Search players to add to Team B..." 
-                                    className="bg-transparent text-white outline-none w-full text-sm font-bold placeholder-gray-600"
-                                    value={queryB}
-                                    onChange={e => setQueryB(e.target.value)}
-                                />
-                            </div>
-                            {queryB.length > 1 && (
-                                <div className="absolute z-50 top-full mt-2 w-full bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
-                                    {playersData.filter(p => p.name.toLowerCase().includes(queryB.toLowerCase())).slice(0, 8).map(p => (
-                                        <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { addPlayer(p, 'B'); setQueryB(''); }}>
-                                            <div className="flex items-center gap-3">
-                                                {p.team && p.team !== 'fa' && (
-                                                    <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
-                                                )}
-                                                <span className="text-sm font-bold text-white">{p.name}</span>
-                                                <span className="text-[10px] font-black bg-gray-800 text-gray-400 px-2 py-0.5 rounded uppercase">{p.position}</span>
-                                            </div>
-                                            <span className="text-xs font-black text-gray-400">{getPlayerValue(p, teamBStrategy)} pts</span>
-                                        </div>
-                                    ))}
+                        {/* Search & Pick Header */}
+                        <div className="flex flex-col xl:flex-row gap-3 mb-6">
+                            <div className="relative flex-1">
+                                <div className="flex items-center bg-[#1a1a1a] border border-gray-800 rounded-xl px-4 py-3">
+                                    <Search size={18} className="text-gray-500 mr-3" />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search players..." 
+                                        className="bg-transparent text-white outline-none w-full text-sm font-bold placeholder-gray-600"
+                                        value={queryB}
+                                        onChange={e => setQueryB(e.target.value)}
+                                    />
                                 </div>
+                                {queryB.length > 1 && (
+                                    <div className="absolute z-50 top-full mt-2 w-full bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
+                                        {playersData.filter(p => p.name.toLowerCase().includes(queryB.toLowerCase())).slice(0, 8).map(p => (
+                                            <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { addPlayer(p, 'B'); setQueryB(''); }}>
+                                                <div className="flex items-center gap-3">
+                                                    {p.team && p.team !== 'fa' && (
+                                                        <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                                                    )}
+                                                    <span className="text-sm font-bold text-white">{p.name}</span>
+                                                    <span className="text-[10px] font-black bg-gray-800 text-gray-400 px-2 py-0.5 rounded uppercase">{p.position}</span>
+                                                </div>
+                                                <span className="text-xs font-black text-gray-400">{getPlayerValue(p, teamBStrategy)} pts</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {formatMode === 'dynasty' && (
+                                <select 
+                                    onChange={(e) => handlePickSelect(e, 'B')}
+                                    className="bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors xl:w-40 cursor-pointer"
+                                >
+                                    <option value="">+ Add Pick</option>
+                                    <optgroup label="2026 Picks">
+                                        {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                    </optgroup>
+                                    <optgroup label="2027 Picks">
+                                        {DRAFT_PICKS.filter(p => p.year === 2027).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                    </optgroup>
+                                    <optgroup label="2028 Picks">
+                                        {DRAFT_PICKS.filter(p => p.year === 2028).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                    </optgroup>
+                                </select>
                             )}
                         </div>
 
-                        {/* Team B Players */}
+                        {/* Team B Asset List */}
                         <div className="space-y-3 min-h-[150px]">
                             {teamBPlayers.length === 0 ? (
-                                <div className="text-center py-10 text-gray-600 font-bold text-xs uppercase tracking-widest">No players added</div>
+                                <div className="text-center py-10 text-gray-600 font-bold text-xs uppercase tracking-widest">No assets added</div>
                             ) : teamBPlayers.map(p => (
-                                <div key={p.name} className="flex justify-between items-center bg-[#1a1a1a] border border-blue-900/20 p-4 rounded-2xl group transition-all hover:border-blue-500/50">
+                                <div key={p.uniqueId} className="flex justify-between items-center bg-[#1a1a1a] border border-blue-900/20 p-4 rounded-2xl group transition-all hover:border-blue-500/50">
                                     <div className="flex items-center gap-4">
-                                        <button onClick={() => removePlayer(p, 'B')} className="text-gray-600 hover:text-blue-500 transition-colors">
+                                        <button onClick={() => removePlayer(p.uniqueId, 'B')} className="text-gray-600 hover:text-blue-500 transition-colors">
                                             <X size={18} />
                                         </button>
                                         <div className="flex items-center gap-3">
-                                            {p.team && p.team !== 'fa' && (
-                                                <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-8 h-8 object-contain drop-shadow-md" onError={(e) => e.target.style.display = 'none'} />
+                                            {p.position === 'PICK' ? (
+                                                <div className="w-8 h-8 rounded-full bg-yellow-600 flex items-center justify-center text-xs font-black text-white shadow-md">
+                                                    {p.year.toString().slice(-2)}
+                                                </div>
+                                            ) : (
+                                                p.team && p.team !== 'fa' && (
+                                                    <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-8 h-8 object-contain drop-shadow-md" onError={(e) => e.target.style.display = 'none'} />
+                                                )
                                             )}
                                             <div>
                                                 <div className="text-sm font-black text-white">{p.name}</div>
-                                                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} {formatMode === 'dynasty' ? `• ${p.age} y/o` : ''}</div>
+                                                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} {formatMode === 'dynasty' && p.age ? `• ${p.age} y/o` : ''}</div>
                                             </div>
                                         </div>
                                     </div>
