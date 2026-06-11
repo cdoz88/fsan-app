@@ -157,7 +157,6 @@ export default function TradeCalculatorClient() {
         return val;
     }
 
-    // Step 1: Base Projections
     let pts = 0;
     pts += ((player.pass_yds || 0) / 25);
     pts += ((player.pass_tds || 0) * passTdValue); 
@@ -173,7 +172,6 @@ export default function TradeCalculatorClient() {
     }
     pts += recPoints;
 
-    // Step 2: VORP and Youth Floor
     let vorp = 0;
     if (player.position === 'QB') vorp = pts - baselines.QB;
     else if (player.position === 'RB') vorp = pts - baselines.RB;
@@ -183,22 +181,20 @@ export default function TradeCalculatorClient() {
 
     if (vorp <= 0) {
         if (player.age && player.age <= 25) {
-            vorp = 35 - ((player.age - 20) * 5); // Ex: 22yo gets 25 raw floor
+            vorp = 35 - ((player.age - 20) * 5); 
             if (vorp < 0) vorp = 2; 
         } else {
-            vorp = 2; // Flat minimum prevents hard 0s
+            vorp = 2; 
         }
     }
 
-    // Step 3: Positional Formats
     let productionValue = vorp;
     if (player.position === 'QB') productionValue *= isSuperflex ? 1.50 : 0.75;
     else if (player.position === 'RB' || player.position === 'TE' || player.position === 'WR/TE') productionValue *= 1.10;
 
-    // 🚀 PHASE 3: MARKET VALUE BLENDING
-    const adp = player.adp || player.AVG || 300; // Safe fallback if compile script hasn't run
-    const marketScore = 100 * Math.pow(0.985, adp - 1); // 1=100, 50=47, 100=22
-    const marketValue = marketScore * 3.5; // Scales 100 score up to Elite VORP level
+    const adp = player.adp || player.AVG || 300; 
+    const marketScore = 100 * Math.pow(0.985, adp - 1); 
+    const marketValue = marketScore * 3.5; 
 
     if (formatMode === 'dynasty') {
       const baseAssetValue = (productionValue * 0.50) + (marketValue * 0.50);
@@ -211,14 +207,15 @@ export default function TradeCalculatorClient() {
   };
 
   const tradeEvaluation = useMemo(() => {
-    const teamA_assets = teamAPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamAStrategy) }));
-    const teamB_assets = teamBPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamBStrategy) }));
+    // We sort the arrays from highest value to lowest value to apply the tiered decay correctly
+    const teamA_assets = teamAPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamAStrategy) }))
+                                     .sort((a, b) => b.calcValue - a.calcValue);
+    const teamB_assets = teamBPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamBStrategy) }))
+                                     .sort((a, b) => b.calcValue - a.calcValue);
 
-    const sumA = teamA_assets.reduce((sum, p) => sum + p.calcValue, 0);
-    const sumB = teamB_assets.reduce((sum, p) => sum + p.calcValue, 0);
+    if (teamA_assets.length === 0 && teamB_assets.length === 0) return { totalA: 0, totalB: 0, bestAsset: null, hasPenaltyA: false, hasPenaltyB: false };
 
-    if (sumA === 0 && sumB === 0) return { totalA: 0, totalB: 0, bestAsset: null };
-
+    // 1. Identify the single Elite Asset
     let bestAsset = null;
     let maxVal = -1;
     let bestAssetSide = null;
@@ -226,28 +223,40 @@ export default function TradeCalculatorClient() {
     teamA_assets.forEach(p => { if(p.calcValue > maxVal) { maxVal = p.calcValue; bestAsset = p; bestAssetSide = 'A'; }});
     teamB_assets.forEach(p => { if(p.calcValue > maxVal) { maxVal = p.calcValue; bestAsset = p; bestAssetSide = 'B'; }});
 
-    const getEfficiency = (count) => {
-        if (count <= 1) return 1.00;
-        if (count === 2) return 0.95;
-        if (count === 3) return 0.85;
-        if (count === 4) return 0.75;
-        return 0.65;
+    // 2. The Tiered Decay Math (Fixing the scrub logic)
+    const getTieredSum = (assets) => {
+        let sum = 0;
+        assets.forEach((asset, idx) => {
+            let multiplier = 1.0;
+            if (idx === 1) multiplier = 0.90; // 2nd asset loses 10%
+            else if (idx === 2) multiplier = 0.80; // 3rd asset loses 20%
+            else if (idx === 3) multiplier = 0.70; // 4th asset loses 30%
+            else if (idx >= 4) multiplier = 0.60;  // 5th+ asset loses 40%
+            sum += (asset.calcValue * multiplier);
+        });
+        return Math.round(sum);
     };
 
-    const effA = getEfficiency(teamA_assets.length);
-    const effB = getEfficiency(teamB_assets.length);
-    const premium = Math.round(maxVal * 0.10);
-    
-    let finalA = Math.round(sumA * effA);
-    let finalB = Math.round(sumB * effB);
+    let finalA = getTieredSum(teamA_assets);
+    let finalB = getTieredSum(teamB_assets);
 
+    // 3. Elite Asset Premium (+10% bump for the side receiving the superstar)
+    const premium = Math.round(maxVal * 0.10);
     if (bestAssetSide === 'A') finalA += premium;
     if (bestAssetSide === 'B') finalB += premium;
 
-    return { totalA: finalA, totalB: finalB, bestAsset, bestAssetSide, premium, effA, effB };
+    return { 
+        totalA: finalA, 
+        totalB: finalB, 
+        bestAsset, 
+        bestAssetSide, 
+        premium, 
+        hasPenaltyA: teamA_assets.length > 1, 
+        hasPenaltyB: teamB_assets.length > 1 
+    };
   }, [teamAPlayers, teamBPlayers, teamAStrategy, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode, baselines]);
 
-  const { totalA, totalB, bestAsset, bestAssetSide, premium, effA, effB } = tradeEvaluation;
+  const { totalA, totalB, bestAsset, bestAssetSide, premium, hasPenaltyA, hasPenaltyB } = tradeEvaluation;
   const totalBoth = totalA + totalB;
   const diff = Math.abs(totalA - totalB);
   const diffPct = totalBoth > 0 ? (diff / totalBoth) * 100 : 0;
@@ -512,7 +521,7 @@ export default function TradeCalculatorClient() {
                             <div className="flex flex-col">
                                 <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Final Package Value</span>
                                 {bestAssetSide === 'A' && <span className="text-[10px] text-amber-500 font-bold uppercase mt-1">Includes Elite Premium (+{premium})</span>}
-                                {effA < 1.0 && <span className="text-[10px] text-red-400 font-bold uppercase mt-1">Package Size Penalty Applied</span>}
+                                {hasPenaltyA && <span className="text-[10px] text-red-400 font-bold uppercase mt-1">Tiered Package Tax Applied</span>}
                             </div>
                             <span className="text-4xl font-black text-red-500">{totalA}</span>
                         </div>
@@ -621,7 +630,7 @@ export default function TradeCalculatorClient() {
                             <div className="flex flex-col">
                                 <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Final Package Value</span>
                                 {bestAssetSide === 'B' && <span className="text-[10px] text-amber-500 font-bold uppercase mt-1">Includes Elite Premium (+{premium})</span>}
-                                {effB < 1.0 && <span className="text-[10px] text-red-400 font-bold uppercase mt-1">Package Size Penalty Applied</span>}
+                                {hasPenaltyB && <span className="text-[10px] text-red-400 font-bold uppercase mt-1">Tiered Package Tax Applied</span>}
                             </div>
                             <span className="text-4xl font-black text-blue-500">{totalB}</span>
                         </div>
