@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Settings, Search, X, RefreshCw, ArrowRightLeft } from 'lucide-react'; 
+import { Settings, Search, X, RefreshCw } from 'lucide-react'; 
 
 export default function TradeCalculatorClient() {
   const [playersData, setPlayersData] = useState([]);
   const [isSyncing, setIsSyncing] = useState(true);
 
   // --- Trade Teams State ---
+  const [formatMode, setFormatMode] = useState('dynasty'); 
   const [teamAStrategy, setTeamAStrategy] = useState('win_now');
   const [teamBStrategy, setTeamBStrategy] = useState('build');
   const [teamAPlayers, setTeamAPlayers] = useState([]);
@@ -27,6 +28,27 @@ export default function TradeCalculatorClient() {
   const bgImage = 'https://admin.fsan.com/wp-content/uploads/2026/04/NFL-Logo.webp';
   const primaryColor = '#e42d38';
   const secondaryColor = '#8a1a20';
+
+  // 🔗 EFFECT 1: Read initial state from URL parameters on page load
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const modeParam = params.get('mode');
+      if (modeParam === 'redraft' || modeParam === 'dynasty') {
+        setFormatMode(modeParam);
+      }
+    }
+  }, []);
+
+  // 🔗 EFFECT 2: Write state shifts out to the browser URL string silently
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      params.set('mode', formatMode);
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+    }
+  }, [formatMode]);
 
   useEffect(() => {
     async function loadLiveDatabase() {
@@ -89,18 +111,23 @@ export default function TradeCalculatorClient() {
       pts *= 1.0;  
     }
 
-    const ageMult = getAgeMultiplier(player.position, player.age, strategy);
-    return Math.round(pts * ageMult * 2.5);
+    if (formatMode === 'dynasty') {
+      const ageMult = getAgeMultiplier(player.position, player.age, strategy);
+      return Math.round(pts * ageMult * 2.5);
+    } else {
+      // Redraft formula ignores age and strategy
+      return Math.round(pts * 1.5);
+    }
   };
 
   // --- Dynamic Totals ---
   const totalA = useMemo(() => {
     return teamAPlayers.reduce((sum, p) => sum + getPlayerValue(p, teamAStrategy), 0);
-  }, [teamAPlayers, teamAStrategy, isSuperflex, pprValue, passTdValue, tePremium]);
+  }, [teamAPlayers, teamAStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
 
   const totalB = useMemo(() => {
     return teamBPlayers.reduce((sum, p) => sum + getPlayerValue(p, teamBStrategy), 0);
-  }, [teamBPlayers, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium]);
+  }, [teamBPlayers, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
 
   // --- Verdict Logic ---
   const totalBoth = totalA + totalB;
@@ -162,7 +189,7 @@ export default function TradeCalculatorClient() {
               Trade Calculator
             </h1>
             <p className="text-gray-300 font-medium md:text-lg">
-              Dynasty trade analyzer with asymmetric strategy evaluations.
+              Analyze multi-player deals using live projections and custom league scoring.
             </p>
           </div>
         </div>
@@ -170,7 +197,12 @@ export default function TradeCalculatorClient() {
 
       <div className="w-full">
         {/* Controls Row */}
-        <div className="flex flex-wrap items-center justify-end gap-4 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="flex bg-[#111] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
+            <button onClick={() => setFormatMode('redraft')} className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${formatMode === 'redraft' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-white'}`}>Redraft</button>
+            <button onClick={() => setFormatMode('dynasty')} className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${formatMode === 'dynasty' ? 'bg-zinc-700 text-white shadow-md' : 'text-gray-500 hover:text-white'}`}>Dynasty</button>
+          </div>
+          
           <button onClick={() => setShowSettings(!showSettings)} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${showSettings ? 'bg-white text-black' : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-gray-800'}`}>
             <Settings size={16} /> {showSettings ? 'Hide Settings' : 'Custom League Scoring'}
           </button>
@@ -241,15 +273,17 @@ export default function TradeCalculatorClient() {
                     <div className="flex-1 bg-[#111] border-2 border-red-900/30 rounded-3xl p-6 shadow-2xl relative">
                         <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
                             <h3 className="text-lg font-black text-white uppercase tracking-wider">Team A Receives</h3>
-                            <select 
-                                value={teamAStrategy} 
-                                onChange={(e) => setTeamAStrategy(e.target.value)}
-                                className="bg-[#1a1a1a] border border-red-900/50 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none font-bold text-xs tracking-wide"
-                            >
-                                <option value="win_now">🏆 Win Now</option>
-                                <option value="neutral">⚖️ Balanced</option>
-                                <option value="build">🌱 Rebuild</option>
-                            </select>
+                            {formatMode === 'dynasty' && (
+                                <select 
+                                    value={teamAStrategy} 
+                                    onChange={(e) => setTeamAStrategy(e.target.value)}
+                                    className="bg-[#1a1a1a] border border-red-900/50 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none font-bold text-xs tracking-wide"
+                                >
+                                    <option value="win_now">🏆 Win Now</option>
+                                    <option value="neutral">⚖️ Balanced</option>
+                                    <option value="build">🌱 Rebuild</option>
+                                </select>
+                            )}
                         </div>
 
                         {/* Search Bar A */}
@@ -269,6 +303,9 @@ export default function TradeCalculatorClient() {
                                     {playersData.filter(p => p.name.toLowerCase().includes(queryA.toLowerCase())).slice(0, 8).map(p => (
                                         <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { addPlayer(p, 'A'); setQueryA(''); }}>
                                             <div className="flex items-center gap-3">
+                                                {p.team && p.team !== 'fa' && (
+                                                    <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                                                )}
                                                 <span className="text-sm font-bold text-white">{p.name}</span>
                                                 <span className="text-[10px] font-black bg-gray-800 text-gray-400 px-2 py-0.5 rounded uppercase">{p.position}</span>
                                             </div>
@@ -289,9 +326,14 @@ export default function TradeCalculatorClient() {
                                         <button onClick={() => removePlayer(p, 'A')} className="text-gray-600 hover:text-red-500 transition-colors">
                                             <X size={18} />
                                         </button>
-                                        <div>
-                                            <div className="text-sm font-black text-white">{p.name}</div>
-                                            <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} • {p.age} y/o</div>
+                                        <div className="flex items-center gap-3">
+                                            {p.team && p.team !== 'fa' && (
+                                                <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-8 h-8 object-contain drop-shadow-md" onError={(e) => e.target.style.display = 'none'} />
+                                            )}
+                                            <div>
+                                                <div className="text-sm font-black text-white">{p.name}</div>
+                                                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} {formatMode === 'dynasty' ? `• ${p.age} y/o` : ''}</div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="text-lg font-black text-white">{getPlayerValue(p, teamAStrategy)}</div>
@@ -310,15 +352,17 @@ export default function TradeCalculatorClient() {
                     <div className="flex-1 bg-[#111] border-2 border-blue-900/30 rounded-3xl p-6 shadow-2xl relative">
                         <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
                             <h3 className="text-lg font-black text-white uppercase tracking-wider">Team B Receives</h3>
-                            <select 
-                                value={teamBStrategy} 
-                                onChange={(e) => setTeamBStrategy(e.target.value)}
-                                className="bg-[#1a1a1a] border border-blue-900/50 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none font-bold text-xs tracking-wide"
-                            >
-                                <option value="win_now">🏆 Win Now</option>
-                                <option value="neutral">⚖️ Balanced</option>
-                                <option value="build">🌱 Rebuild</option>
-                            </select>
+                            {formatMode === 'dynasty' && (
+                                <select 
+                                    value={teamBStrategy} 
+                                    onChange={(e) => setTeamBStrategy(e.target.value)}
+                                    className="bg-[#1a1a1a] border border-blue-900/50 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none font-bold text-xs tracking-wide"
+                                >
+                                    <option value="win_now">🏆 Win Now</option>
+                                    <option value="neutral">⚖️ Balanced</option>
+                                    <option value="build">🌱 Rebuild</option>
+                                </select>
+                            )}
                         </div>
 
                         {/* Search Bar B */}
@@ -338,6 +382,9 @@ export default function TradeCalculatorClient() {
                                     {playersData.filter(p => p.name.toLowerCase().includes(queryB.toLowerCase())).slice(0, 8).map(p => (
                                         <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { addPlayer(p, 'B'); setQueryB(''); }}>
                                             <div className="flex items-center gap-3">
+                                                {p.team && p.team !== 'fa' && (
+                                                    <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                                                )}
                                                 <span className="text-sm font-bold text-white">{p.name}</span>
                                                 <span className="text-[10px] font-black bg-gray-800 text-gray-400 px-2 py-0.5 rounded uppercase">{p.position}</span>
                                             </div>
@@ -358,9 +405,14 @@ export default function TradeCalculatorClient() {
                                         <button onClick={() => removePlayer(p, 'B')} className="text-gray-600 hover:text-blue-500 transition-colors">
                                             <X size={18} />
                                         </button>
-                                        <div>
-                                            <div className="text-sm font-black text-white">{p.name}</div>
-                                            <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} • {p.age} y/o</div>
+                                        <div className="flex items-center gap-3">
+                                            {p.team && p.team !== 'fa' && (
+                                                <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-8 h-8 object-contain drop-shadow-md" onError={(e) => e.target.style.display = 'none'} />
+                                            )}
+                                            <div>
+                                                <div className="text-sm font-black text-white">{p.name}</div>
+                                                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} {formatMode === 'dynasty' ? `• ${p.age} y/o` : ''}</div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="text-lg font-black text-white">{getPlayerValue(p, teamBStrategy)}</div>
