@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import { Settings, Info, X, RefreshCw } from 'lucide-react'; 
 
 export default function TradeValueClient() {
@@ -439,7 +440,10 @@ export default function TradeValueClient() {
                       </div>
                     </td>
                   </tr>
-                ) : visibleData.map((player, idx) => (
+                ) : visibleData.map((player, idx) => {
+                    const playerUrl = `/player/${player.name.toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`;
+
+                    return (
                     <tr key={`${player.name}-${player.position}-${idx}`} className="hover:bg-[#151515] transition-colors group">
                       <td className="px-4 py-2.5">
                         <div className="w-8 h-8 mx-auto rounded-full flex items-center justify-center text-xs font-black shrink-0 bg-gray-800 text-gray-300 border border-gray-700">{player.overallRank}</div>
@@ -447,7 +451,9 @@ export default function TradeValueClient() {
                       <td className="px-4 py-2.5 text-center"><span className="text-xs font-bold text-gray-400 uppercase">{player.posRank}</span></td>
                       <td className="px-4 py-2.5">
                          <div className="flex items-center gap-3">
-                           <span className="text-sm font-black text-gray-100">{player.name}</span>
+                           <Link href={playerUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-black text-gray-100 tracking-tight hover:text-red-400 transition-colors">
+                             {player.name}
+                           </Link>
                            {player.team && player.team !== 'fa' && (
                              <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${player.team.toLowerCase()}.png`} alt={player.team} className="w-6 h-6 object-contain" onError={(e) => e.target.style.display = 'none'} />
                            )}
@@ -466,7 +472,7 @@ export default function TradeValueClient() {
                       <td className="px-4 py-2.5"><span className={`text-[10px] font-black tracking-wider px-3 py-1 rounded-lg border uppercase ${player.asset_profile.color}`}>{player.asset_profile.text}</span></td>
                       <td className="px-4 py-2.5"><span className={`text-[10px] font-black tracking-wider px-3 py-1 rounded-lg border uppercase ${player.market_action.color}`}>{player.market_action.text}</span></td>
                     </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>

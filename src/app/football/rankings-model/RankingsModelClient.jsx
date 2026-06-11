@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import { Settings, RefreshCw } from 'lucide-react'; 
 
 export default function RankingsModelClient({ initialRankings, mode, serverError }) {
@@ -102,9 +103,9 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
       pts += recPoints;
 
       if (rankingMode === 'bestball') {
-         if (player.position === 'WR') pts *= 1.05; // Spike week WR bump
-         if (player.position === 'QB' && player.rush_yds > 300) pts *= 1.05; // Konami Code QB bump
-         if (player.position === 'RB' && player.receptions > 40) pts *= 1.05; // Receiving RB bump
+         if (player.position === 'WR') pts *= 1.05; 
+         if (player.position === 'QB' && player.rush_yds > 300) pts *= 1.05; 
+         if (player.position === 'RB' && player.receptions > 40) pts *= 1.05; 
       }
 
       if (player.position === 'QB') {
@@ -356,7 +357,10 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                     </td>
                   </tr>
                 ) : visibleData && visibleData.length > 0 ? (
-                  visibleData.map((player, idx) => (
+                  visibleData.map((player, idx) => {
+                    const playerUrl = `/player/${player.name.toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`;
+
+                    return (
                     <tr key={`${player.name}-${player.position}-${idx}`} className="hover:bg-[#151515] transition-colors group">
                       
                       <td className="px-4 py-2.5">
@@ -373,9 +377,9 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
 
                       <td className="px-4 py-2.5">
                          <div className="flex items-center gap-3">
-                           <span className="text-sm font-black text-gray-100 tracking-tight">
+                           <Link href={playerUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-black text-gray-100 tracking-tight hover:text-red-400 transition-colors">
                              {player.name}
-                           </span>
+                           </Link>
                            {player.team && player.team !== 'fa' && (
                              <img 
                                src={`https://a.espncdn.com/i/teamlogos/nfl/500/${player.team.toLowerCase()}.png`} 
@@ -402,7 +406,8 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                       <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400 border-r border-gray-800/50">{player.rec_tds || '-'}</td>
                       <td className="px-4 py-2.5 text-center text-xs font-bold text-gray-400">{(player.turnovers || player.ints || player.fumbles) ? (player.ints || 0) + (player.fumbles || 0) : '-'}</td>
                     </tr>
-                  ))
+                  )
+                 })
                 ) : (
                   <tr>
                     <td colSpan="14" className="py-20 text-center">
