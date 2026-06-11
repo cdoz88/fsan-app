@@ -2,7 +2,7 @@ import React from 'react';
 import TradeCalculatorClient from './TradeCalculatorClient';
 
 export const metadata = {
-  title: 'Dynasty Trade Calculator | FSAN',
+  title: 'Trade Calculator | FSAN',
   description: 'Evaluate dynasty trades using asymmetric strategy modeling and custom league scoring.',
 };
 
