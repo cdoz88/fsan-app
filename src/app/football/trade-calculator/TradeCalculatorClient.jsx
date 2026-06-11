@@ -91,6 +91,46 @@ export default function TradeCalculatorClient() {
     loadLiveDatabase();
   }, []);
 
+  // 🚀 PHASE 2 IMPLEMENTATION: True VORP Dynamic Database Scanner
+  const baselines = useMemo(() => {
+    if (!playersData || playersData.length === 0) return { QB: 0, RB: 0, WR: 0, TE: 0 };
+
+    // Step 1: Calculate raw points for the entire database based on current sliders
+    const rawScored = playersData.map(player => {
+      let pts = 0;
+      pts += ((player.pass_yds || 0) / 25);
+      pts += ((player.pass_tds || 0) * passTdValue); 
+      pts -= ((player.turnovers || player.ints || player.fumbles || 0) * 2);
+      pts += ((player.rush_yds || 0) / 10);
+      pts += ((player.rush_tds || 0) * 6);
+      pts += ((player.rec_yds || 0) / 10);
+      pts += ((player.rec_tds || 0) * 6);
+      let recPoints = ((player.receptions || 0) * pprValue);
+      if (player.position === 'TE' || player.position === 'WR/TE') {
+        recPoints += ((player.receptions || 0) * tePremium);
+      }
+      pts += recPoints;
+      return { ...player, rawPts: pts };
+    });
+
+    // Step 2: Find the Replacement-Level cutoff score for each position
+    const getBaseScore = (pos, rankLimit) => {
+      const posPlayers = rawScored.filter(p => p.position === pos || (pos === 'TE' && p.position === 'WR/TE'))
+                                  .sort((a, b) => b.rawPts - a.rawPts);
+      if (posPlayers.length === 0) return 0;
+      // If the database has fewer players than the limit, grab the lowest available
+      const targetPlayer = posPlayers[Math.min(rankLimit - 1, posPlayers.length - 1)];
+      return targetPlayer.rawPts;
+    };
+
+    return {
+      QB: getBaseScore('QB', isSuperflex ? 24 : 12),
+      RB: getBaseScore('RB', 30),
+      WR: getBaseScore('WR', 36),
+      TE: getBaseScore('TE', 12)
+    };
+  }, [playersData, isSuperflex, pprValue, passTdValue, tePremium]);
+
   const getAgeMultiplier = (position, age, strategy) => {
     if (!age) return 1; 
     if (strategy === 'build') {
@@ -113,6 +153,7 @@ export default function TradeCalculatorClient() {
   };
 
   const getPlayerValue = (player, strategy) => {
+    // Determine Draft Pick Value
     if (player.position === 'PICK') {
         let val = player.baseValue;
         if (isSuperflex && val > 100) val = Math.round(val * 1.3); 
@@ -121,6 +162,7 @@ export default function TradeCalculatorClient() {
         return val;
     }
 
+    // Step 1: Calculate Raw Base Points
     let pts = 0;
     pts += ((player.pass_yds || 0) / 25);
     pts += ((player.pass_tds || 0) * passTdValue); 
@@ -136,21 +178,36 @@ export default function TradeCalculatorClient() {
     }
     pts += recPoints;
 
+    // Step 2: Apply VORP Subtraction
+    let vorp = 0;
+    if (player.position === 'QB') vorp = pts - baselines.QB;
+    else if (player.position === 'RB') vorp = pts - baselines.RB;
+    else if (player.position === 'WR') vorp = pts - baselines.WR;
+    else if (player.position === 'TE' || player.position === 'WR/TE') vorp = pts - baselines.TE;
+    else vorp = pts;
+
+    // Floor at 0 (Replacement level bench players hold no intrinsic standalone trade value)
+    if (vorp < 0) vorp = 0; 
+
+    // Step 3: Apply Positional Format Multipliers
     if (player.position === 'QB') {
-      pts *= isSuperflex ? 1.0 : 0.60; 
+      vorp *= isSuperflex ? 1.50 : 0.60; 
+    } else if (player.position === 'RB') {
+      vorp *= 1.10;  
     } else {
-      pts *= 1.0;  
+      vorp *= 1.0; 
     }
 
+    // Step 4: Apply Final Scaling & Age Multipliers
+    // We scale VORP up by 4.5x so the 1.01 Draft Pick (~650 value) matches the elite superstar VORP values
     if (formatMode === 'dynasty') {
       const ageMult = getAgeMultiplier(player.position, player.age, strategy);
-      return Math.round(pts * ageMult * 2.5);
+      return Math.round(vorp * ageMult * 4.5); 
     } else {
-      return Math.round(pts * 1.5);
+      return Math.round(vorp * 3.0);
     }
   };
 
-  // 🚀 PHASE 1 IMPLEMENTATION: Package Tax & Elite Asset Premium Logic
   const tradeEvaluation = useMemo(() => {
     const teamA_assets = teamAPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamAStrategy) }));
     const teamB_assets = teamBPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamBStrategy) }));
@@ -190,7 +247,7 @@ export default function TradeCalculatorClient() {
     if (bestAssetSide === 'B') finalB += premium;
 
     return { totalA: finalA, totalB: finalB, bestAsset, bestAssetSide, premium, effA, effB };
-  }, [teamAPlayers, teamBPlayers, teamAStrategy, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
+  }, [teamAPlayers, teamBPlayers, teamAStrategy, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode, baselines]);
 
   const { totalA, totalB, bestAsset, bestAssetSide, premium, effA, effB } = tradeEvaluation;
   const totalBoth = totalA + totalB;
@@ -272,7 +329,7 @@ export default function TradeCalculatorClient() {
               Trade Calculator
             </h1>
             <p className="text-gray-300 font-medium md:text-lg">
-              Analyze multi-player deals using live projections and custom league scoring.
+              Analyze multi-player deals using live VORP projections and asymmetric league scoring.
             </p>
           </div>
         </div>
