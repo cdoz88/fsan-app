@@ -91,11 +91,10 @@ export default function TradeCalculatorClient() {
     loadLiveDatabase();
   }, []);
 
-  // 🚀 PHASE 2 IMPLEMENTATION: True VORP Dynamic Database Scanner
+  // 🚀 PHASE 2 FIX: Deepened baselines to represent actual Dynasty waiver wire depth
   const baselines = useMemo(() => {
     if (!playersData || playersData.length === 0) return { QB: 0, RB: 0, WR: 0, TE: 0 };
 
-    // Step 1: Calculate raw points for the entire database based on current sliders
     const rawScored = playersData.map(player => {
       let pts = 0;
       pts += ((player.pass_yds || 0) / 25);
@@ -113,21 +112,19 @@ export default function TradeCalculatorClient() {
       return { ...player, rawPts: pts };
     });
 
-    // Step 2: Find the Replacement-Level cutoff score for each position
     const getBaseScore = (pos, rankLimit) => {
       const posPlayers = rawScored.filter(p => p.position === pos || (pos === 'TE' && p.position === 'WR/TE'))
                                   .sort((a, b) => b.rawPts - a.rawPts);
       if (posPlayers.length === 0) return 0;
-      // If the database has fewer players than the limit, grab the lowest available
       const targetPlayer = posPlayers[Math.min(rankLimit - 1, posPlayers.length - 1)];
       return targetPlayer.rawPts;
     };
 
     return {
-      QB: getBaseScore('QB', isSuperflex ? 24 : 12),
-      RB: getBaseScore('RB', 30),
-      WR: getBaseScore('WR', 36),
-      TE: getBaseScore('TE', 12)
+      QB: getBaseScore('QB', isSuperflex ? 32 : 24),
+      RB: getBaseScore('RB', 60),
+      WR: getBaseScore('WR', 72),
+      TE: getBaseScore('TE', 24)
     };
   }, [playersData, isSuperflex, pprValue, passTdValue, tePremium]);
 
@@ -153,7 +150,6 @@ export default function TradeCalculatorClient() {
   };
 
   const getPlayerValue = (player, strategy) => {
-    // Determine Draft Pick Value
     if (player.position === 'PICK') {
         let val = player.baseValue;
         if (isSuperflex && val > 100) val = Math.round(val * 1.3); 
@@ -162,7 +158,6 @@ export default function TradeCalculatorClient() {
         return val;
     }
 
-    // Step 1: Calculate Raw Base Points
     let pts = 0;
     pts += ((player.pass_yds || 0) / 25);
     pts += ((player.pass_tds || 0) * passTdValue); 
@@ -178,7 +173,7 @@ export default function TradeCalculatorClient() {
     }
     pts += recPoints;
 
-    // Step 2: Apply VORP Subtraction
+    // Apply VORP
     let vorp = 0;
     if (player.position === 'QB') vorp = pts - baselines.QB;
     else if (player.position === 'RB') vorp = pts - baselines.RB;
@@ -186,25 +181,25 @@ export default function TradeCalculatorClient() {
     else if (player.position === 'TE' || player.position === 'WR/TE') vorp = pts - baselines.TE;
     else vorp = pts;
 
-    // Floor at 0 (Replacement level bench players hold no intrinsic standalone trade value)
     if (vorp < 0) vorp = 0; 
 
-    // Step 3: Apply Positional Format Multipliers
+    // Apply Positional Format Multipliers
     if (player.position === 'QB') {
-      vorp *= isSuperflex ? 1.50 : 0.60; 
+      vorp *= isSuperflex ? 1.50 : 0.75; 
     } else if (player.position === 'RB') {
       vorp *= 1.10;  
+    } else if (player.position === 'TE' || player.position === 'WR/TE') {
+      vorp *= 1.10; 
     } else {
       vorp *= 1.0; 
     }
 
-    // Step 4: Apply Final Scaling & Age Multipliers
-    // We scale VORP up by 4.5x so the 1.01 Draft Pick (~650 value) matches the elite superstar VORP values
+    // Apply Final Scaling & Age Multipliers
     if (formatMode === 'dynasty') {
       const ageMult = getAgeMultiplier(player.position, player.age, strategy);
-      return Math.round(vorp * ageMult * 4.5); 
+      return Math.round(vorp * ageMult * 3.0); 
     } else {
-      return Math.round(vorp * 3.0);
+      return Math.round(vorp * 2.0);
     }
   };
 
@@ -217,7 +212,6 @@ export default function TradeCalculatorClient() {
 
     if (sumA === 0 && sumB === 0) return { totalA: 0, totalB: 0, bestAsset: null };
 
-    // 1. Identify the Elite Asset
     let bestAsset = null;
     let maxVal = -1;
     let bestAssetSide = null;
@@ -225,7 +219,6 @@ export default function TradeCalculatorClient() {
     teamA_assets.forEach(p => { if(p.calcValue > maxVal) { maxVal = p.calcValue; bestAsset = p; bestAssetSide = 'A'; }});
     teamB_assets.forEach(p => { if(p.calcValue > maxVal) { maxVal = p.calcValue; bestAsset = p; bestAssetSide = 'B'; }});
 
-    // 2. Package Efficiency Modifier (Taxing the 3-for-1 trades)
     const getEfficiency = (count) => {
         if (count <= 1) return 1.00;
         if (count === 2) return 0.95;
@@ -237,7 +230,6 @@ export default function TradeCalculatorClient() {
     const effA = getEfficiency(teamA_assets.length);
     const effB = getEfficiency(teamB_assets.length);
 
-    // 3. Elite Asset Premium (+10% bump for the best player)
     const premium = Math.round(maxVal * 0.10);
     
     let finalA = Math.round(sumA * effA);
@@ -292,7 +284,6 @@ export default function TradeCalculatorClient() {
       }
   }
 
-  // --- Helpers ---
   const addPlayer = (item, team) => {
       const newItem = { ...item, uniqueId: item.name + Date.now() }; 
       if (item.position !== 'PICK' || item.id.includes('.')) {
