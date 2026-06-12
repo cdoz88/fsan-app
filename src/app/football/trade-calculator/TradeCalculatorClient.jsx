@@ -35,8 +35,8 @@ export default function TradeCalculatorClient() {
 
   // --- Trade Teams State ---
   const [formatMode, setFormatMode] = useState('dynasty'); 
-  const [teamAStrategy, setTeamAStrategy] = useState('win_now');
-  const [teamBStrategy, setTeamBStrategy] = useState('build');
+  const [teamAStrategy, setTeamAStrategy] = useState('neutral');
+  const [teamBStrategy, setTeamBStrategy] = useState('neutral');
   const [teamAPlayers, setTeamAPlayers] = useState([]);
   const [teamBPlayers, setTeamBPlayers] = useState([]);
   
@@ -46,7 +46,7 @@ export default function TradeCalculatorClient() {
 
   // --- Scoring Format Settings ---
   const [showSettings, setShowSettings] = useState(false);
-  const [isSuperflex, setIsSuperflex] = useState(false); 
+  const [isSuperflex, setIsSuperflex] = useState(true); 
   const [pprValue, setPprValue] = useState(1);       
   const [passTdValue, setPassTdValue] = useState(4); 
   const [tePremium, setTePremium] = useState(0);     
@@ -120,35 +120,43 @@ export default function TradeCalculatorClient() {
     };
 
     return {
-      QB: getBaseScore('QB', isSuperflex ? 32 : 24),
-      RB: getBaseScore('RB', 60),
-      WR: getBaseScore('WR', 72),
+      QB: getBaseScore('QB', isSuperflex ? 32 : 16), // Adjusted up so 1QB Mahomes retains base VORP
+      RB: getBaseScore('RB', 48), // Top 4 RBs per team
+      WR: getBaseScore('WR', 60), // Top 5 WRs per team
       TE: getBaseScore('TE', 24)
     };
   }, [playersData, isSuperflex, pprValue, passTdValue, tePremium]);
 
   const getAgeMultiplier = (position, age, strategy) => {
     if (!age) return 1; 
+
+    // REBUILD: Values Youth, Crushes Veterans
     if (strategy === 'build') {
-      if (position === 'RB') return age <= 23 ? 1.35 : age <= 25 ? 1.10 : age <= 27 ? 0.75 : 0.30;
-      if (position === 'WR') return age <= 24 ? 1.30 : age <= 26 ? 1.15 : age <= 29 ? 0.85 : 0.40;
-      if (position === 'QB') return age <= 26 ? 1.25 : age <= 33 ? 1.05 : age <= 36 ? 0.80 : 0.40;
-      if (position === 'TE' || position === 'WR/TE') return age <= 25 ? 1.25 : age <= 28 ? 1.05 : age <= 30 ? 0.80 : 0.35;
+      if (position === 'WR') return age <= 24 ? 1.40 : age <= 27 ? 1.20 : age <= 30 ? 0.90 : 0.40;
+      if (position === 'RB') return age <= 23 ? 1.20 : age <= 25 ? 0.90 : age <= 27 ? 0.60 : 0.20;
+      if (position === 'QB') return age <= 27 ? 1.30 : age <= 33 ? 1.10 : age <= 36 ? 0.85 : 0.40;
+      if (position === 'TE' || position === 'WR/TE') return age <= 25 ? 1.25 : age <= 28 ? 1.05 : age <= 31 ? 0.80 : 0.35;
     }
+
+    // WIN NOW: Protects Veterans, Ignores Youth Premium
     if (strategy === 'win_now') {
-      if (position === 'RB') return age <= 25 ? 1.10 : age <= 27 ? 1.05 : age <= 29 ? 0.90 : 0.60;
-      if (position === 'WR') return age <= 26 ? 1.05 : age <= 29 ? 1.05 : age <= 31 ? 0.95 : 0.75;
+      if (position === 'WR') return age <= 28 ? 1.10 : age <= 31 ? 1.00 : age <= 33 ? 0.85 : 0.60;
+      if (position === 'RB') return age <= 26 ? 1.10 : age <= 28 ? 0.95 : age <= 30 ? 0.70 : 0.40;
       if (position === 'QB') return age <= 33 ? 1.05 : age <= 36 ? 0.95 : 0.75;
-      if (position === 'TE' || position === 'WR/TE') return age <= 27 ? 1.05 : age <= 30 ? 1.00 : age <= 32 ? 0.90 : 0.65;
+      if (position === 'TE' || position === 'WR/TE') return age <= 28 ? 1.05 : age <= 31 ? 1.00 : age <= 33 ? 0.80 : 0.60;
     }
-    if (position === 'RB') return age <= 23 ? 1.20 : age <= 25 ? 1.05 : age <= 27 ? 0.85 : age <= 29 ? 0.55 : 0.25;
-    if (position === 'WR') return age <= 24 ? 1.15 : age <= 27 ? 1.05 : age <= 29 ? 0.90 : age <= 31 ? 0.70 : 0.45;
-    if (position === 'QB') return age <= 26 ? 1.15 : age <= 33 ? 1.05 : age <= 36 ? 0.85 : 0.50;
-    if (position === 'TE' || position === 'WR/TE') return age <= 25 ? 1.15 : age <= 28 ? 1.00 : age <= 30 ? 0.85 : age <= 32 ? 0.65 : 0.40;
+
+    // BALANCED: The Market Equilibrium
+    if (position === 'WR') return age <= 25 ? 1.25 : age <= 28 ? 1.10 : age <= 30 ? 0.95 : age <= 32 ? 0.75 : 0.45;
+    if (position === 'RB') return age <= 24 ? 1.05 : age <= 26 ? 0.90 : age <= 28 ? 0.65 : age <= 30 ? 0.40 : 0.20;
+    if (position === 'QB') return age <= 27 ? 1.15 : age <= 33 ? 1.05 : age <= 36 ? 0.85 : 0.50;
+    if (position === 'TE' || position === 'WR/TE') return age <= 25 ? 1.15 : age <= 29 ? 1.00 : age <= 31 ? 0.85 : age <= 33 ? 0.65 : 0.40;
+    
     return 1;
   };
 
   const getPlayerValue = (player, strategy) => {
+    // --- 1. PICK VALUATION ---
     if (player.position === 'PICK') {
         let val = player.baseValue;
         if (isSuperflex && val > 100) val = Math.round(val * 1.3); 
@@ -157,6 +165,7 @@ export default function TradeCalculatorClient() {
         return val;
     }
 
+    // --- 2. BASE PROJECTIONS ---
     let pts = 0;
     pts += ((player.pass_yds || 0) / 25);
     pts += ((player.pass_tds || 0) * passTdValue); 
@@ -172,6 +181,7 @@ export default function TradeCalculatorClient() {
     }
     pts += recPoints;
 
+    // --- 3. TRUE VORP BASELINE SUBTRACTION ---
     let vorp = 0;
     if (player.position === 'QB') vorp = pts - baselines.QB;
     else if (player.position === 'RB') vorp = pts - baselines.RB;
@@ -179,6 +189,7 @@ export default function TradeCalculatorClient() {
     else if (player.position === 'TE' || player.position === 'WR/TE') vorp = pts - baselines.TE;
     else vorp = pts;
 
+    // The Youth Upside Floor (Prevents deep stash young players from hitting 0)
     if (vorp <= 0) {
         if (player.age && player.age <= 25) {
             vorp = 35 - ((player.age - 20) * 5); 
@@ -188,26 +199,43 @@ export default function TradeCalculatorClient() {
         }
     }
 
+    // --- 4. POSITIONAL MULTIPLIERS (The "WR > RB" Fix) ---
     let productionValue = vorp;
-    if (player.position === 'QB') productionValue *= isSuperflex ? 1.50 : 0.75;
-    else if (player.position === 'RB' || player.position === 'TE' || player.position === 'WR/TE') productionValue *= 1.10;
+    if (player.position === 'QB') productionValue *= isSuperflex ? 1.80 : 1.15;
+    else if (player.position === 'WR') productionValue *= 1.30; // Massive WR Premium
+    else if (player.position === 'RB') productionValue *= 0.90; // RB Shelf-Life Tax
+    else if (player.position === 'TE' || player.position === 'WR/TE') productionValue *= 1.20;
 
-    const adp = player.adp || player.AVG || 300; 
-    const marketScore = 100 * Math.pow(0.985, adp - 1); 
-    const marketValue = marketScore * 3.5; 
+    // --- 5. MARKET VALUE BLENDING ---
+    let adp = player.adp || player.AVG || 300; 
 
+    // The Superflex QB ADP Auto-Corrector
+    if (isSuperflex && player.position === 'QB' && adp < 300) {
+        adp = Math.max(1, adp / 4); // Maps a Redraft 4th round QB into a Dynasty 1st round QB
+    }
+
+    let marketValue = 0;
+
+    // Failsafe: If ADP is missing but the player is producing well, synthesize a market value to prevent them dropping to 0
+    if (adp >= 300 && productionValue > 50) {
+        marketValue = productionValue * 0.9;
+    } else {
+        const marketScore = 100 * Math.pow(0.985, adp - 1); 
+        marketValue = marketScore * 3.5; // Scale 1-100 up to Elite VORP level
+    }
+
+    // --- 6. FINAL ENGINE SCALING ---
     if (formatMode === 'dynasty') {
       const baseAssetValue = (productionValue * 0.50) + (marketValue * 0.50);
       const ageMult = getAgeMultiplier(player.position, player.age, strategy);
-      return Math.round(baseAssetValue * ageMult * 3.0); 
+      return Math.round(baseAssetValue * ageMult * 2.2); // Perfect mathematical scale to align 1.01 with Top 5 players
     } else {
       const baseAssetValue = (productionValue * 0.75) + (marketValue * 0.25);
-      return Math.round(baseAssetValue * 2.0);
+      return Math.round(baseAssetValue * 1.8);
     }
   };
 
   const tradeEvaluation = useMemo(() => {
-    // We sort the arrays from highest value to lowest value to apply the tiered decay correctly
     const teamA_assets = teamAPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamAStrategy) }))
                                      .sort((a, b) => b.calcValue - a.calcValue);
     const teamB_assets = teamBPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamBStrategy) }))
@@ -223,15 +251,15 @@ export default function TradeCalculatorClient() {
     teamA_assets.forEach(p => { if(p.calcValue > maxVal) { maxVal = p.calcValue; bestAsset = p; bestAssetSide = 'A'; }});
     teamB_assets.forEach(p => { if(p.calcValue > maxVal) { maxVal = p.calcValue; bestAsset = p; bestAssetSide = 'B'; }});
 
-    // 2. The Tiered Decay Math (Fixing the scrub logic)
+    // 2. The Tiered Decay Math (Taxes deep 4-for-1 packages)
     const getTieredSum = (assets) => {
         let sum = 0;
         assets.forEach((asset, idx) => {
             let multiplier = 1.0;
-            if (idx === 1) multiplier = 0.90; // 2nd asset loses 10%
-            else if (idx === 2) multiplier = 0.80; // 3rd asset loses 20%
-            else if (idx === 3) multiplier = 0.70; // 4th asset loses 30%
-            else if (idx >= 4) multiplier = 0.60;  // 5th+ asset loses 40%
+            if (idx === 1) multiplier = 0.90; 
+            else if (idx === 2) multiplier = 0.80; 
+            else if (idx === 3) multiplier = 0.70; 
+            else if (idx >= 4) multiplier = 0.60;  
             sum += (asset.calcValue * multiplier);
         });
         return Math.round(sum);
