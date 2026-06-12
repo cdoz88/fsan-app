@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { Settings, Search, X, RefreshCw, Trophy } from 'lucide-react'; // Added Trophy
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { Settings, Search, X, RefreshCw, Trophy, User } from 'lucide-react'; 
 import { HISTORICAL_DATA } from '../../../utils/historicalData'; 
-import { useLeague } from '../../../context/LeagueContext'; // 🚀 NEW: Import Context
+import { useLeague } from '../../../context/LeagueContext'; 
 
 // --- Generate Draft Picks Data ---
 const generatePicks = () => {
@@ -32,12 +32,17 @@ const generatePicks = () => {
 const DRAFT_PICKS = generatePicks();
 
 export default function TradeCalculatorClient() {
-  // 🚀 NEW: Grab active league data from global state
   const { getActiveLeagueData } = useLeague();
   const activeLeague = getActiveLeagueData('football');
 
   const [playersData, setPlayersData] = useState([]);
   const [isSyncing, setIsSyncing] = useState(true);
+
+  // --- League Roster Sync State ---
+  const [leagueUsers, setLeagueUsers] = useState([]);
+  const [leagueRosters, setLeagueRosters] = useState([]);
+  const [teamAManager, setTeamAManager] = useState(''); 
+  const [teamBManager, setTeamBManager] = useState('');
 
   // --- Trade Teams State ---
   const [formatMode, setFormatMode] = useState('dynasty'); 
@@ -49,6 +54,8 @@ export default function TradeCalculatorClient() {
   // --- Search Input States ---
   const [queryA, setQueryA] = useState('');
   const [queryB, setQueryB] = useState('');
+  const [isSearchFocusedA, setIsSearchFocusedA] = useState(false);
+  const [isSearchFocusedB, setIsSearchFocusedB] = useState(false);
 
   // --- Scoring Format Settings (Fallback for non-synced) ---
   const [showSettings, setShowSettings] = useState(false);
@@ -57,7 +64,6 @@ export default function TradeCalculatorClient() {
   const [manualPassTdValue, setManualPassTdValue] = useState(4); 
   const [manualTePremium, setManualTePremium] = useState(0);     
 
-  // 🚀 NEW: Determine exactly which settings the engine should use
   const isSuperflex = activeLeague?.rosterPositions ? activeLeague.rosterPositions.includes('SUPER_FLEX') : manualIsSuperflex;
   const pprValue = activeLeague?.scoringSettings?.rec ?? manualPprValue;
   const passTdValue = activeLeague?.scoringSettings?.pass_td ?? manualPassTdValue;
@@ -86,6 +92,7 @@ export default function TradeCalculatorClient() {
     }
   }, [formatMode]);
 
+  // 🚀 Fetch Global Player DB
   useEffect(() => {
     async function loadLiveDatabase() {
       try {
@@ -103,23 +110,68 @@ export default function TradeCalculatorClient() {
     loadLiveDatabase();
   }, []);
 
-  // 🚀 DYNAMIC POSITIONAL SCARCITY SCANNER
+  // 🚀 NEW: Fetch Sleeper League Rosters & Users
+  useEffect(() => {
+    if (activeLeague && activeLeague.platform === 'sleeper') {
+      const fetchSleeperData = async () => {
+        try {
+          const [usersRes, rostersRes] = await Promise.all([
+            fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/users`),
+            fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/rosters`)
+          ]);
+          const users = await usersRes.json();
+          const rosters = await rostersRes.json();
+          setLeagueUsers(users);
+          setLeagueRosters(rosters);
+        } catch (e) {
+          console.error("Failed to fetch sleeper league data", e);
+        }
+      };
+      fetchSleeperData();
+    } else {
+       setLeagueUsers([]);
+       setLeagueRosters([]);
+       setTeamAManager('');
+       setTeamBManager('');
+    }
+  }, [activeLeague]);
+
+  // 🚀 NEW: Derived Rosters based on Manager Selection
+  const availablePlayersForA = useMemo(() => {
+      // Team A receives players from Team B's roster
+      if (teamBManager && leagueRosters.length > 0) {
+          const roster = leagueRosters.find(r => r.owner_id === teamBManager);
+          if (roster && roster.players) {
+              return playersData.filter(p => roster.players.includes(p.sleeper_id || p.id?.toString()));
+          }
+      }
+      return playersData;
+  }, [playersData, teamBManager, leagueRosters]);
+
+  const availablePlayersForB = useMemo(() => {
+      // Team B receives players from Team A's roster
+      if (teamAManager && leagueRosters.length > 0) {
+          const roster = leagueRosters.find(r => r.owner_id === teamAManager);
+          if (roster && roster.players) {
+              return playersData.filter(p => roster.players.includes(p.sleeper_id || p.id?.toString()));
+          }
+      }
+      return playersData;
+  }, [playersData, teamAManager, leagueRosters]);
+
+  // 🚀 ENGINE SCORING LOGIC
   const positionalScarcity = useMemo(() => {
     if (!playersData || playersData.length === 0) return { QB: 1, RB: 1, WR: 1, TE: 1 };
-
     const top100 = playersData.filter(p => (p.adp || p.AVG || 300) <= 100);
     const counts = { QB: 0, RB: 0, WR: 0, TE: 0 };
-
     top100.forEach(p => {
       let pos = p.position === 'WR/TE' ? 'TE' : p.position;
       if (counts[pos] !== undefined) counts[pos] += 1;
     });
-
     const calcMod = (count) => {
         let mod = 1.0 + ((25 - count) / 100);
         return Math.min(1.35, Math.max(0.75, mod)); 
     };
-
     return {
       QB: calcMod(counts.QB),
       RB: calcMod(counts.RB),
@@ -130,7 +182,6 @@ export default function TradeCalculatorClient() {
 
   const baselines = useMemo(() => {
     if (!playersData || playersData.length === 0) return { QB: 0, RB: 0, WR: 0, TE: 0 };
-
     const rawScored = playersData.map(player => {
       let pts = 0;
       pts += ((player.pass_yds || 0) / 25);
@@ -152,20 +203,12 @@ export default function TradeCalculatorClient() {
       const posPlayers = rawScored.filter(p => p.position === pos || (pos === 'TE' && p.position === 'WR/TE'))
                                   .sort((a, b) => b.rawPts - a.rawPts);
       let dynamicBase = 0;
-      if (posPlayers.length > 0) {
-          dynamicBase = posPlayers[Math.min(rankLimit - 1, posPlayers.length - 1)].rawPts;
-      }
-
+      if (posPlayers.length > 0) dynamicBase = posPlayers[Math.min(rankLimit - 1, posPlayers.length - 1)].rawPts;
       let posKey = pos === 'WR/TE' ? 'TE' : pos;
       let histBase = HISTORICAL_DATA?.BASELINES?.[posKey]?.[`Rank_${rankLimit}`];
-      
-      if (histBase && histBase > 0) {
-          return (dynamicBase * 0.5) + (histBase * 0.5);
-      }
-
+      if (histBase && histBase > 0) return (dynamicBase * 0.5) + (histBase * 0.5);
       return dynamicBase;
     };
-
     return {
       QB: getBaseScore('QB', isSuperflex ? 32 : 16),
       RB: getBaseScore('RB', 48), 
@@ -176,26 +219,19 @@ export default function TradeCalculatorClient() {
 
   const getAgeMultiplier = (position, age, strategy) => {
     if (!age) return 1; 
-
     let posKey = position === 'WR/TE' ? 'TE' : position;
     const curves = HISTORICAL_DATA?.AGE_CURVES?.[posKey];
-
     if (curves && Object.keys(curves).length > 8) {
         const maxAge = posKey === 'QB' ? 38 : (posKey === 'TE' ? 33 : 30);
-        
         let expectedRemainingPts = 0;
         let maxCareerPts = 0;
-
         for (let a = age; a <= maxAge; a++) expectedRemainingPts += (curves[a] || 0);
         for (let a = 21; a <= maxAge; a++) maxCareerPts += (curves[a] || 0);
-
         if (maxCareerPts > 0) {
             let baseFuel = expectedRemainingPts / maxCareerPts; 
             let histMult = (baseFuel * 1.2) + 0.2; 
-
-            if (strategy === 'build') {
-                histMult = (baseFuel * 1.4) + 0.1; 
-            } else if (strategy === 'win_now') {
+            if (strategy === 'build') histMult = (baseFuel * 1.4) + 0.1; 
+            else if (strategy === 'win_now') {
                 let shortTermPts = (curves[age]||0) + (curves[age+1]||0) + (curves[age+2]||0);
                 let peakShortTerm = 0;
                 for (let a = 21; a <= maxAge; a++) {
@@ -208,26 +244,22 @@ export default function TradeCalculatorClient() {
             return Math.max(0.1, Math.min(histMult, 1.5)); 
         }
     }
-
     if (strategy === 'build') {
       if (position === 'WR') return age <= 24 ? 1.40 : age <= 27 ? 1.20 : age <= 30 ? 0.90 : 0.40;
       if (position === 'RB') return age <= 23 ? 1.20 : age <= 25 ? 0.90 : age <= 27 ? 0.60 : 0.20;
       if (position === 'QB') return age <= 27 ? 1.30 : age <= 33 ? 1.10 : age <= 36 ? 0.85 : 0.40;
       if (position === 'TE' || position === 'WR/TE') return age <= 25 ? 1.25 : age <= 28 ? 1.05 : age <= 31 ? 0.80 : 0.35;
     }
-
     if (strategy === 'win_now') {
       if (position === 'WR') return age <= 28 ? 1.10 : age <= 31 ? 1.00 : age <= 33 ? 0.85 : 0.60;
       if (position === 'RB') return age <= 26 ? 1.10 : age <= 28 ? 0.95 : age <= 30 ? 0.70 : 0.40;
       if (position === 'QB') return age <= 33 ? 1.05 : age <= 36 ? 0.95 : 0.75;
       if (position === 'TE' || position === 'WR/TE') return age <= 28 ? 1.05 : age <= 31 ? 1.00 : age <= 33 ? 0.80 : 0.60;
     }
-
     if (position === 'WR') return age <= 25 ? 1.25 : age <= 28 ? 1.10 : age <= 30 ? 0.95 : age <= 32 ? 0.75 : 0.45;
     if (position === 'RB') return age <= 24 ? 1.05 : age <= 26 ? 0.90 : age <= 28 ? 0.65 : age <= 30 ? 0.40 : 0.20;
     if (position === 'QB') return age <= 27 ? 1.15 : age <= 33 ? 1.05 : age <= 36 ? 0.85 : 0.50;
     if (position === 'TE' || position === 'WR/TE') return age <= 25 ? 1.15 : age <= 29 ? 1.00 : age <= 31 ? 0.85 : age <= 33 ? 0.65 : 0.40;
-    
     return 1;
   };
 
@@ -239,7 +271,6 @@ export default function TradeCalculatorClient() {
         if (strategy === 'win_now') return Math.round(val * 0.85); 
         return val;
     }
-
     let pts = 0;
     pts += ((player.pass_yds || 0) / 25);
     pts += ((player.pass_tds || 0) * passTdValue); 
@@ -248,13 +279,11 @@ export default function TradeCalculatorClient() {
     pts += ((player.rush_tds || 0) * 6);
     pts += ((player.rec_yds || 0) / 10);
     pts += ((player.rec_tds || 0) * 6);
-    
     let recPoints = ((player.receptions || 0) * pprValue);
     if (player.position === 'TE' || player.position === 'WR/TE') {
       recPoints += ((player.receptions || 0) * tePremium);
     }
     pts += recPoints;
-
     let vorp = 0;
     if (player.position === 'QB') vorp = pts - baselines.QB;
     else if (player.position === 'RB') vorp = pts - baselines.RB;
@@ -266,31 +295,20 @@ export default function TradeCalculatorClient() {
         if (player.age && player.age <= 25) {
             vorp = 35 - ((player.age - 20) * 5); 
             if (vorp < 0) vorp = 2; 
-        } else {
-            vorp = 2; 
-        }
+        } else vorp = 2; 
     }
 
     let productionValue = vorp;
     let posKey = player.position === 'WR/TE' ? 'TE' : player.position;
     let scarcityMod = positionalScarcity[posKey] || 1.0;
-
-    if (posKey === 'QB') {
-        productionValue *= isSuperflex ? (1.60 * scarcityMod) : (1.0 * scarcityMod);
-    } else {
-        productionValue *= scarcityMod;
-    }
+    if (posKey === 'QB') productionValue *= isSuperflex ? (1.60 * scarcityMod) : (1.0 * scarcityMod);
+    else productionValue *= scarcityMod;
 
     let adp = player.adp || player.AVG || 300; 
-
-    if (isSuperflex && player.position === 'QB' && adp < 300) {
-        adp = Math.max(1, adp / 4); 
-    }
-
+    if (isSuperflex && player.position === 'QB' && adp < 300) adp = Math.max(1, adp / 4); 
     let marketValue = 0;
-    if (adp >= 300 && productionValue > 50) {
-        marketValue = productionValue * 0.9;
-    } else {
+    if (adp >= 300 && productionValue > 50) marketValue = productionValue * 0.9;
+    else {
         const marketScore = 100 * Math.pow(0.985, adp - 1); 
         marketValue = marketScore * 3.5; 
     }
@@ -335,7 +353,6 @@ export default function TradeCalculatorClient() {
 
     let finalA = getTieredSum(teamA_assets);
     let finalB = getTieredSum(teamB_assets);
-
     let premium = 0;
     const isOneForOne = teamA_assets.length === 1 && teamB_assets.length === 1;
 
@@ -362,7 +379,6 @@ export default function TradeCalculatorClient() {
   const diff = Math.abs(totalA - totalB);
   const diffPct = totalBoth > 0 ? (diff / totalBoth) * 100 : 0;
 
-  // --- Advanced Verdict Generation ---
   let verdictTitle = "Add assets to evaluate trade";
   let verdictSubtitle = "Select players or picks to see the package analysis.";
   let verdictColor = "text-gray-500";
@@ -372,7 +388,6 @@ export default function TradeCalculatorClient() {
   if (totalBoth > 0) {
       barAWidth = (totalA / totalBoth) * 100;
       barBWidth = (totalB / totalBoth) * 100;
-
       const winner = totalA > totalB ? 'Team A' : 'Team B';
       const loser = totalA > totalB ? 'Team B' : 'Team A';
       
@@ -452,7 +467,6 @@ export default function TradeCalculatorClient() {
             <button onClick={() => setFormatMode('dynasty')} className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${formatMode === 'dynasty' ? 'bg-zinc-700 text-white shadow-md' : 'text-gray-500 hover:text-white'}`}>Dynasty</button>
           </div>
           
-          {/* 🚀 NEW: Context-Aware Scoring Button */}
           {activeLeague ? (
             <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest bg-green-500/10 text-green-400 border border-green-500/20 pointer-events-none">
               <Trophy size={16} /> Synced to {activeLeague.name}
@@ -530,8 +544,28 @@ export default function TradeCalculatorClient() {
                     
                     {/* TEAM A PANE */}
                     <div className="flex-1 bg-[#111] border-2 border-red-900/30 rounded-3xl p-6 shadow-2xl relative">
-                        <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
-                            <h3 className="text-lg font-black text-white uppercase tracking-wider">Team A Receives</h3>
+                        <div className="flex justify-between items-start mb-6 border-b border-gray-800 pb-4">
+                            <div className="flex flex-col gap-2 w-full max-w-[60%]">
+                                <h3 className="text-lg font-black text-white uppercase tracking-wider">Team A Receives</h3>
+                                
+                                {/* 🚀 NEW: Manager Roster Selector */}
+                                {activeLeague && leagueUsers.length > 0 && (
+                                    <div className="flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-3 py-1.5 border border-gray-800 w-fit">
+                                        <User size={14} className="text-gray-500" />
+                                        <select 
+                                            value={teamAManager}
+                                            onChange={(e) => { setTeamAManager(e.target.value); setTeamAPlayers([]); }}
+                                            className="bg-transparent text-gray-300 text-xs font-bold outline-none cursor-pointer"
+                                        >
+                                            <option value="">Assign Manager A</option>
+                                            {leagueUsers.map(u => (
+                                                <option key={u.user_id} value={u.user_id}>{u.display_name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
+
                             {formatMode === 'dynasty' && (
                                 <select 
                                     value={teamAStrategy} 
@@ -549,29 +583,39 @@ export default function TradeCalculatorClient() {
                         <div className="flex flex-col xl:flex-row gap-3 mb-6">
                             <div className="relative flex-1">
                                 <div className="flex items-center bg-[#1a1a1a] border border-gray-800 rounded-xl px-4 py-3">
-                                    <Search size={18} className="text-gray-500 mr-3" />
+                                    <Search size={18} className="text-gray-500 mr-3 shrink-0" />
                                     <input 
                                         type="text" 
-                                        placeholder="Search players..." 
+                                        placeholder={teamBManager ? "Search Team B's roster..." : "Search players..."}
                                         className="bg-transparent text-white outline-none w-full text-sm font-bold placeholder-gray-600"
                                         value={queryA}
                                         onChange={e => setQueryA(e.target.value)}
+                                        onFocus={() => setIsSearchFocusedA(true)}
+                                        onBlur={() => setTimeout(() => setIsSearchFocusedA(false), 200)}
                                     />
                                 </div>
-                                {queryA.length > 1 && (
-                                    <div className="absolute z-50 top-full mt-2 w-full bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
-                                        {playersData.filter(p => p.name.toLowerCase().includes(queryA.toLowerCase())).slice(0, 8).map(p => (
-                                            <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { addPlayer(p, 'A'); setQueryA(''); }}>
-                                                <div className="flex items-center gap-3">
-                                                    {p.team && p.team !== 'fa' && (
-                                                        <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
-                                                    )}
-                                                    <span className="text-sm font-bold text-white">{p.name}</span>
-                                                    <span className="text-[10px] font-black bg-gray-800 text-gray-400 px-2 py-0.5 rounded uppercase">{p.position}</span>
+                                
+                                {/* 🚀 NEW: Intelligent Roster Search Dropdown */}
+                                {(queryA.length > 1 || (teamBManager && isSearchFocusedA)) && (
+                                    <div className="absolute z-50 top-full mt-2 w-full bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto custom-scroll">
+                                        {availablePlayersForA
+                                            .filter(p => p.name.toLowerCase().includes(queryA.toLowerCase()))
+                                            .slice(0, teamBManager && queryA === '' ? 50 : 8)
+                                            .map(p => (
+                                                <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { addPlayer(p, 'A'); setQueryA(''); setIsSearchFocusedA(false); }}>
+                                                    <div className="flex items-center gap-3">
+                                                        {p.team && p.team !== 'fa' && (
+                                                            <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                                                        )}
+                                                        <span className="text-sm font-bold text-white">{p.name}</span>
+                                                        <span className="text-[10px] font-black bg-gray-800 text-gray-400 px-2 py-0.5 rounded uppercase">{p.position}</span>
+                                                    </div>
+                                                    <span className="text-xs font-black text-gray-400">{getPlayerValue(p, teamAStrategy)} pts</span>
                                                 </div>
-                                                <span className="text-xs font-black text-gray-400">{getPlayerValue(p, teamAStrategy)} pts</span>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        {teamBManager && availablePlayersForA.length === 0 && (
+                                            <div className="px-4 py-6 text-xs text-gray-500 font-bold tracking-widest uppercase text-center">Roster Empty</div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -639,8 +683,28 @@ export default function TradeCalculatorClient() {
 
                     {/* TEAM B PANE */}
                     <div className="flex-1 bg-[#111] border-2 border-blue-900/30 rounded-3xl p-6 shadow-2xl relative">
-                        <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
-                            <h3 className="text-lg font-black text-white uppercase tracking-wider">Team B Receives</h3>
+                        <div className="flex justify-between items-start mb-6 border-b border-gray-800 pb-4">
+                            <div className="flex flex-col gap-2 w-full max-w-[60%]">
+                                <h3 className="text-lg font-black text-white uppercase tracking-wider">Team B Receives</h3>
+                                
+                                {/* 🚀 NEW: Manager Roster Selector */}
+                                {activeLeague && leagueUsers.length > 0 && (
+                                    <div className="flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-3 py-1.5 border border-gray-800 w-fit">
+                                        <User size={14} className="text-gray-500" />
+                                        <select 
+                                            value={teamBManager}
+                                            onChange={(e) => { setTeamBManager(e.target.value); setTeamBPlayers([]); }}
+                                            className="bg-transparent text-gray-300 text-xs font-bold outline-none cursor-pointer"
+                                        >
+                                            <option value="">Assign Manager B</option>
+                                            {leagueUsers.map(u => (
+                                                <option key={u.user_id} value={u.user_id}>{u.display_name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
+
                             {formatMode === 'dynasty' && (
                                 <select 
                                     value={teamBStrategy} 
@@ -658,29 +722,39 @@ export default function TradeCalculatorClient() {
                         <div className="flex flex-col xl:flex-row gap-3 mb-6">
                             <div className="relative flex-1">
                                 <div className="flex items-center bg-[#1a1a1a] border border-gray-800 rounded-xl px-4 py-3">
-                                    <Search size={18} className="text-gray-500 mr-3" />
+                                    <Search size={18} className="text-gray-500 mr-3 shrink-0" />
                                     <input 
                                         type="text" 
-                                        placeholder="Search players..." 
+                                        placeholder={teamAManager ? "Search Team A's roster..." : "Search players..."}
                                         className="bg-transparent text-white outline-none w-full text-sm font-bold placeholder-gray-600"
                                         value={queryB}
                                         onChange={e => setQueryB(e.target.value)}
+                                        onFocus={() => setIsSearchFocusedB(true)}
+                                        onBlur={() => setTimeout(() => setIsSearchFocusedB(false), 200)}
                                     />
                                 </div>
-                                {queryB.length > 1 && (
-                                    <div className="absolute z-50 top-full mt-2 w-full bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
-                                        {playersData.filter(p => p.name.toLowerCase().includes(queryB.toLowerCase())).slice(0, 8).map(p => (
-                                            <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { addPlayer(p, 'B'); setQueryB(''); }}>
-                                                <div className="flex items-center gap-3">
-                                                    {p.team && p.team !== 'fa' && (
-                                                        <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
-                                                    )}
-                                                    <span className="text-sm font-bold text-white">{p.name}</span>
-                                                    <span className="text-[10px] font-black bg-gray-800 text-gray-400 px-2 py-0.5 rounded uppercase">{p.position}</span>
+
+                                {/* 🚀 NEW: Intelligent Roster Search Dropdown */}
+                                {(queryB.length > 1 || (teamAManager && isSearchFocusedB)) && (
+                                    <div className="absolute z-50 top-full mt-2 w-full bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto custom-scroll">
+                                        {availablePlayersForB
+                                            .filter(p => p.name.toLowerCase().includes(queryB.toLowerCase()))
+                                            .slice(0, teamAManager && queryB === '' ? 50 : 8)
+                                            .map(p => (
+                                                <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { addPlayer(p, 'B'); setQueryB(''); setIsSearchFocusedB(false); }}>
+                                                    <div className="flex items-center gap-3">
+                                                        {p.team && p.team !== 'fa' && (
+                                                            <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                                                        )}
+                                                        <span className="text-sm font-bold text-white">{p.name}</span>
+                                                        <span className="text-[10px] font-black bg-gray-800 text-gray-400 px-2 py-0.5 rounded uppercase">{p.position}</span>
+                                                    </div>
+                                                    <span className="text-xs font-black text-gray-400">{getPlayerValue(p, teamBStrategy)} pts</span>
                                                 </div>
-                                                <span className="text-xs font-black text-gray-400">{getPlayerValue(p, teamBStrategy)} pts</span>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        {teamAManager && availablePlayersForB.length === 0 && (
+                                            <div className="px-4 py-6 text-xs text-gray-500 font-bold tracking-widest uppercase text-center">Roster Empty</div>
+                                        )}
                                     </div>
                                 )}
                             </div>
