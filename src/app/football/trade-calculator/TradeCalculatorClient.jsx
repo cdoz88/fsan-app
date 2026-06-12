@@ -36,7 +36,7 @@ export default function TradeCalculatorClient() {
   const activeLeague = getActiveLeagueData('football');
 
   const [playersData, setPlayersData] = useState([]);
-  const [sleeperPlayersMap, setSleeperPlayersMap] = useState({}); // 🚀 NEW: Intelligent fallback map
+  const [sleeperPlayersMap, setSleeperPlayersMap] = useState({}); 
   const [isSyncing, setIsSyncing] = useState(true);
 
   // --- League Roster Sync State ---
@@ -94,7 +94,6 @@ export default function TradeCalculatorClient() {
     }
   }, [formatMode]);
 
-  // 🚀 Fetch Global Player DB
   useEffect(() => {
     async function loadLiveDatabase() {
       try {
@@ -112,7 +111,6 @@ export default function TradeCalculatorClient() {
     loadLiveDatabase();
   }, []);
 
-  // 🚀 NEW: Fetch Sleeper Master Player Map for Fallback Matching
   useEffect(() => {
     if (activeLeague && activeLeague.platform === 'sleeper') {
         const fetchSleeperMap = async () => {
@@ -134,7 +132,6 @@ export default function TradeCalculatorClient() {
     }
   }, [activeLeague]);
 
-  // 🚀 Fetch Sleeper League Rosters & Users
   useEffect(() => {
     if (activeLeague && activeLeague.platform === 'sleeper') {
       const fetchSleeperData = async () => {
@@ -148,7 +145,6 @@ export default function TradeCalculatorClient() {
           setLeagueUsers(users);
           setLeagueRosters(rosters);
 
-          // 🚀 AUTO-ASSIGN TEAM A TO YOU
           if (sleeperUserId) {
             setTeamAManager(sleeperUserId);
           }
@@ -165,7 +161,6 @@ export default function TradeCalculatorClient() {
     }
   }, [activeLeague, sleeperUserId]);
 
-  // 🚀 CORE VALUATION ENGINE
   const positionalScarcity = useMemo(() => {
     if (!playersData || playersData.length === 0) return { QB: 1, RB: 1, WR: 1, TE: 1 };
     const top100 = playersData.filter(p => (p.adp || p.AVG || 300) <= 100);
@@ -329,20 +324,15 @@ export default function TradeCalculatorClient() {
     }
   };
 
-  // 🚀 INTELLIGENT SYNCED ROSTER PARSING
+  // 🚀 INTELLIGENT SYNCED ROSTER PARSING & POSITIONAL SORTING
   const buildRosterList = (managerId, strategy) => {
     if (!managerId || leagueRosters.length === 0) return [];
     const roster = leagueRosters.find(r => r.owner_id === managerId);
     if (!roster || !roster.players) return [];
 
     const mappedPlayers = roster.players.map(sleeperId => {
-      // 1. Try strict Sleeper ID match first
       let p = playersData.find(dbPlayer => String(dbPlayer.sleeper_id) === String(sleeperId));
-      
-      // 2. Try generic ID match
       if (!p) p = playersData.find(dbPlayer => String(dbPlayer.id) === String(sleeperId));
-      
-      // 3. 🚀 THE FALLBACK: Map string ID -> Sleeper Player Object -> Name Match
       if (!p && sleeperPlayersMap[sleeperId]) {
           const sPlayer = sleeperPlayersMap[sleeperId];
           const searchName = sPlayer.search_full_name || sPlayer.full_name?.toLowerCase().replace(/[^a-z]/g, '');
@@ -355,13 +345,21 @@ export default function TradeCalculatorClient() {
       return { ...p, uniqueId: p.name + Date.now(), calcValue: getPlayerValue(p, strategy) };
     }).filter(Boolean);
 
-    return mappedPlayers.sort((a, b) => b.calcValue - a.calcValue);
+    // 🚀 NEW: Positional Sorting Array (QB -> RB -> WR -> TE -> K -> DST)
+    const posOrder = { 'QB': 1, 'RB': 2, 'WR': 3, 'TE': 4, 'WR/TE': 4, 'K': 5, 'DST': 6 };
+    
+    return mappedPlayers.sort((a, b) => {
+        const posA = posOrder[a.position] || 99;
+        const posB = posOrder[b.position] || 99;
+        if (posA !== posB) return posA - posB;
+        // Fallback to value sorting if positions match
+        return b.calcValue - a.calcValue;
+    });
   };
 
   const activeRosterA = useMemo(() => buildRosterList(teamAManager, teamAStrategy), [teamAManager, leagueRosters, playersData, sleeperPlayersMap, teamAStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
   const activeRosterB = useMemo(() => buildRosterList(teamBManager, teamBStrategy), [teamBManager, leagueRosters, playersData, sleeperPlayersMap, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
 
-  // Handle toggling players from the side-by-side roster
   const togglePlayerInTrade = (playerObj, team) => {
     if (team === 'A') {
       const isSelected = teamBPlayers.some(p => p.name === playerObj.name);
@@ -374,7 +372,6 @@ export default function TradeCalculatorClient() {
     }
   };
 
-  // Trade Engine Evaluation
   const tradeEvaluation = useMemo(() => {
     const teamA_assets = teamAPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamAStrategy) }))
                                      .sort((a, b) => b.calcValue - a.calcValue);
@@ -469,7 +466,6 @@ export default function TradeCalculatorClient() {
       }
   }
 
-  // Fallback Manual Add Player
   const addPlayer = (item, team) => {
       const newItem = { ...item, uniqueId: item.name + Date.now() }; 
       if (item.position !== 'PICK' || item.id.includes('.')) {
@@ -491,7 +487,6 @@ export default function TradeCalculatorClient() {
       e.target.value = ""; 
   };
 
-  // 🚀 User / Avatar Helpers
   const myUser = leagueUsers.find(u => u.user_id === teamAManager);
   const myTeamName = myUser?.metadata?.team_name || myUser?.display_name || 'My Team';
   const myAvatar = myUser?.avatar ? `https://sleepercdn.com/avatars/thumbs/${myUser.avatar}` : 'https://placehold.co/40x40/383838/ffffff?text=?';
@@ -603,13 +598,11 @@ export default function TradeCalculatorClient() {
                 {activeLeague ? (
                   <div className="flex flex-col lg:flex-row gap-6">
                     {/* MY ROSTER (Team A) */}
-                    <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col h-[700px]">
+                    <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col">
                       
-                      {/* Header & Strategy */}
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 border-b border-gray-800 pb-4 shrink-0">
-                          
-                          {/* Beautiful Locked Team A Display */}
-                          <div className="flex items-center gap-3 w-full sm:w-auto">
+                      {/* 🚀 FIXED HEADER HEIGHT: min-h-[90px] for perfect alignment */}
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 shrink-0 min-h-[90px]">
+                          <div className="flex items-center gap-3 w-full sm:w-auto mt-1">
                               <img src={myAvatar} className="w-10 h-10 rounded-full border border-gray-600" alt="" />
                               <div className="flex flex-col">
                                   <span className="text-lg font-black text-white truncate max-w-[200px]">{myTeamName}</span>
@@ -630,40 +623,9 @@ export default function TradeCalculatorClient() {
                           )}
                       </div>
 
-                      {/* Picks Dropdown */}
-                      <div className="mb-4 shrink-0">
-                          <select 
-                              onChange={(e) => handlePickSelect(e, 'A')}
-                              className="w-full bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors cursor-pointer"
-                          >
-                              <option value="">+ Add Draft Pick to Trade</option>
-                              <optgroup label="2026 Picks">
-                                  {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                              </optgroup>
-                              <optgroup label="2027 Picks">
-                                  {DRAFT_PICKS.filter(p => p.year === 2027).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                              </optgroup>
-                          </select>
-                      </div>
-
-                      {/* Scrollable Roster List */}
-                      <div className="flex-1 overflow-y-auto custom-scroll pr-2 space-y-2">
-                          {/* Render Manual Picks first */}
-                          {teamAPlayers.filter(p => p.position === 'PICK').map(p => (
-                             <div 
-                                key={p.uniqueId} 
-                                onClick={() => togglePlayerInTrade(p, 'A')}
-                                className="flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border-2 border-red-500 bg-red-900/20"
-                              >
-                                 <div className="flex items-center gap-3">
-                                     <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center text-white"><Check size={14} /></div>
-                                     <span className="text-sm font-black text-white">{p.name}</span>
-                                 </div>
-                                 <span className="text-sm font-black text-white">{getPlayerValue(p, teamAStrategy)}</span>
-                             </div>
-                          ))}
-
-                          {/* Render Actual Roster */}
+                      {/* 🚀 EXPANDING ROSTER LIST */}
+                      <div className="space-y-2">
+                          {/* Render Actual Roster First */}
                           {activeRosterA.map(p => {
                              const isSelected = teamBPlayers.some(traded => traded.name === p.name);
                              return (
@@ -691,17 +653,48 @@ export default function TradeCalculatorClient() {
                                </div>
                              );
                           })}
+
+                          {/* Render Manual Picks Below Roster */}
+                          {teamAPlayers.filter(p => p.position === 'PICK').map(p => (
+                             <div 
+                                key={p.uniqueId} 
+                                onClick={() => togglePlayerInTrade(p, 'A')}
+                                className="flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border-2 border-red-500 bg-red-900/20"
+                              >
+                                 <div className="flex items-center gap-3">
+                                     <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center text-white"><Check size={14} /></div>
+                                     <span className="text-sm font-black text-white">{p.name}</span>
+                                 </div>
+                                 <span className="text-sm font-black text-white">{getPlayerValue(p, teamAStrategy)}</span>
+                             </div>
+                          ))}
+                          
                           {activeRosterA.length === 0 && <div className="text-center py-10 text-gray-600 text-xs font-bold uppercase tracking-widest">Roster not found</div>}
                       </div>
+
+                      {/* 🚀 NEW: Picks Dropdown Moved to Bottom */}
+                      <div className="mt-6 pt-4 border-t border-gray-800 shrink-0">
+                          <select 
+                              onChange={(e) => handlePickSelect(e, 'A')}
+                              className="w-full bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors cursor-pointer"
+                          >
+                              <option value="">+ Add Draft Pick to Trade</option>
+                              <optgroup label="2026 Picks">
+                                  {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                              </optgroup>
+                              <optgroup label="2027 Picks">
+                                  {DRAFT_PICKS.filter(p => p.year === 2027).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                              </optgroup>
+                          </select>
+                      </div>
+
                     </div>
 
                     {/* OPPONENT ROSTER (Team B) */}
-                    <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col h-[700px]">
+                    <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col">
                       
-                      {/* Header & Strategy */}
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 shrink-0">
-                          
-                          {/* 🚀 NEW: Custom Opponent Dropdown */}
+                      {/* 🚀 FIXED HEADER HEIGHT: min-h-[90px] for perfect alignment */}
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 shrink-0 min-h-[90px]">
                           <div className="flex flex-col w-full sm:w-auto gap-1">
                               <div className="relative w-full sm:w-[220px]">
                                 <button 
@@ -766,45 +759,13 @@ export default function TradeCalculatorClient() {
                           )}
                       </div>
 
-                      {/* Picks Dropdown */}
-                      <div className="mb-4 shrink-0">
-                          <select 
-                              onChange={(e) => handlePickSelect(e, 'B')}
-                              disabled={!teamBManager}
-                              className="w-full bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors cursor-pointer disabled:opacity-50"
-                          >
-                              <option value="">+ Add Draft Pick to Trade</option>
-                              <optgroup label="2026 Picks">
-                                  {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                              </optgroup>
-                              <optgroup label="2027 Picks">
-                                  {DRAFT_PICKS.filter(p => p.year === 2027).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                              </optgroup>
-                          </select>
-                      </div>
-
-                      {/* Scrollable Roster List */}
-                      <div className="flex-1 overflow-y-auto custom-scroll pr-2 space-y-2">
+                      {/* 🚀 EXPANDING ROSTER LIST */}
+                      <div className="flex-1 space-y-2">
                           {!teamBManager ? (
                               <div className="text-center py-20 text-gray-600 text-xs font-bold uppercase tracking-widest">Select an opponent to view roster</div>
                           ) : (
                               <>
-                                {/* Render Manual Picks first */}
-                                {teamBPlayers.filter(p => p.position === 'PICK').map(p => (
-                                   <div 
-                                      key={p.uniqueId} 
-                                      onClick={() => togglePlayerInTrade(p, 'B')}
-                                      className="flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border-2 border-blue-500 bg-blue-900/20"
-                                    >
-                                       <div className="flex items-center gap-3">
-                                           <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white"><Check size={14} /></div>
-                                           <span className="text-sm font-black text-white">{p.name}</span>
-                                       </div>
-                                       <span className="text-sm font-black text-white">{getPlayerValue(p, teamBStrategy)}</span>
-                                   </div>
-                                ))}
-
-                                {/* Render Actual Roster */}
+                                {/* Render Actual Roster First */}
                                 {activeRosterB.map(p => {
                                    const isSelected = teamAPlayers.some(traded => traded.name === p.name);
                                    return (
@@ -832,9 +793,42 @@ export default function TradeCalculatorClient() {
                                      </div>
                                    );
                                 })}
+
+                                {/* Render Manual Picks Below Roster */}
+                                {teamBPlayers.filter(p => p.position === 'PICK').map(p => (
+                                   <div 
+                                      key={p.uniqueId} 
+                                      onClick={() => togglePlayerInTrade(p, 'B')}
+                                      className="flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border-2 border-blue-500 bg-blue-900/20"
+                                    >
+                                       <div className="flex items-center gap-3">
+                                           <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white"><Check size={14} /></div>
+                                           <span className="text-sm font-black text-white">{p.name}</span>
+                                       </div>
+                                       <span className="text-sm font-black text-white">{getPlayerValue(p, teamBStrategy)}</span>
+                                   </div>
+                                ))}
                               </>
                           )}
                       </div>
+
+                      {/* 🚀 NEW: Picks Dropdown Moved to Bottom */}
+                      <div className="mt-6 pt-4 border-t border-gray-800 shrink-0">
+                          <select 
+                              onChange={(e) => handlePickSelect(e, 'B')}
+                              disabled={!teamBManager}
+                              className="w-full bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                          >
+                              <option value="">+ Add Draft Pick to Trade</option>
+                              <optgroup label="2026 Picks">
+                                  {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                              </optgroup>
+                              <optgroup label="2027 Picks">
+                                  {DRAFT_PICKS.filter(p => p.year === 2027).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                              </optgroup>
+                          </select>
+                      </div>
+
                     </div>
                   </div>
                 ) : (
