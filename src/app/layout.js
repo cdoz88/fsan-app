@@ -1,5 +1,6 @@
 import "./globals.css";
 import AuthProvider from "../components/AuthProvider";
+import { LeagueProvider } from "../context/LeagueContext"; // 🚀 NEW: Import LeagueProvider
 import Script from "next/script";
 
 export const metadata = {
@@ -15,7 +16,9 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="bg-[#121212] text-gray-200 antialiased">
         <AuthProvider>
-          {children}
+          <LeagueProvider> {/* 🚀 NEW: Wrap children inside the LeagueProvider */}
+            {children}
+          </LeagueProvider>
         </AuthProvider>
         
         {/* Global Cookie Consent Banner */}

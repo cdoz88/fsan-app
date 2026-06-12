@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { User, Mail, Lock, Loader2, CreditCard, ShieldCheck, CheckCircle2, FileText, ShoppingCart, Tag, AlertTriangle, ShieldAlert, Book, Download, Shirt, Users, Settings, Gift, LogOut, ChevronRight, Image as ImageIcon, Zap, Star, Ticket } from 'lucide-react';
+import { User, Mail, Lock, Loader2, CreditCard, ShieldCheck, CheckCircle2, FileText, ShoppingCart, Tag, AlertTriangle, ShieldAlert, Book, Download, Shirt, Users, Settings, Gift, LogOut, ChevronRight, Image as ImageIcon, Zap, Star, Ticket, Link as LinkIcon, RefreshCw } from 'lucide-react'; // 🚀 Added LinkIcon & RefreshCw
+import { useLeague } from '../../context/LeagueContext'; // 🚀 NEW: Import useLeague
 
 // Custom SVG Component for the Premium Community Icon (Supports Color and Monochrome)
 const PremiumCommunityIcon = ({ className = "", size = 24, monochrome = false }) => {
@@ -86,6 +87,12 @@ export default function AccountClient() {
     password: '',
   });
 
+  // 🚀 NEW: League Sync States & Hook
+  const { allLeagues, syncSleeperAccount, isSyncing } = useLeague();
+  const [sleeperUsername, setSleeperUsername] = useState('');
+  const [syncStatus, setSyncStatus] = useState({ message: '', type: '' });
+  const sleeperLeaguesCount = allLeagues ? allLeagues.filter(l => l.platform === 'sleeper').length : 0;
+
   const activeSport = 'All';
 
   // Handle URL Hashes for direct linking
@@ -98,10 +105,7 @@ export default function AccountClient() {
       else if (hash === 'admin-tools') setActiveTab('Admin Tools');
     };
 
-    // Check hash on initial load
     handleHashChange();
-
-    // Listen for hash changes if user navigates back/forward
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
@@ -109,8 +113,6 @@ export default function AccountClient() {
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
     setMessage({type:'', text:''});
-    
-    // Convert Tab ID to hash (e.g., "My Perks" -> "my-perks")
     const hash = tabId.toLowerCase().replace(/\s+/g, '-');
     window.history.pushState(null, '', `#${hash}`);
   };
@@ -134,6 +136,25 @@ export default function AccountClient() {
       fetchDynamicPerks();
     }
   }, [status, session]);
+
+  // 🚀 NEW: Sleeper Sync Function
+  const handleSleeperSync = async (e) => {
+    e.preventDefault();
+    if (!sleeperUsername.trim()) {
+      setSyncStatus({ message: 'Please enter a Sleeper username.', type: 'error' });
+      return;
+    }
+    
+    setSyncStatus({ message: '', type: '' });
+    const result = await syncSleeperAccount(sleeperUsername.trim());
+    
+    if (result.success) {
+      setSyncStatus({ message: `Success! Synced ${result.count} leagues.`, type: 'success' });
+      setSleeperUsername('');
+    } else {
+      setSyncStatus({ message: result.error || 'Failed to sync account.', type: 'error' });
+    }
+  };
 
   const fetchUserData = async () => {
     const query = `
@@ -509,6 +530,84 @@ export default function AccountClient() {
                   </button>
                 </div>
               </form>
+            </div>
+
+            {/* 🚀 NEW: Fantasy Integrations Card */}
+            <div className="mt-12 pt-8 border-t border-gray-800">
+              <h3 className="text-xl font-bold flex items-center gap-2 text-white mb-2">
+                <LinkIcon className="text-blue-500" size={20} /> Fantasy Integrations
+              </h3>
+              <p className="text-sm text-gray-400 mb-6">
+                Link your fantasy platforms to enable auto-syncing for rankings, trade calculators, and scoreboards.
+              </p>
+
+              <div className="space-y-6 relative z-10">
+                {/* Sleeper Integration */}
+                <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <div className="flex items-center gap-3">
+                      <img src="https://sleeperapp.com/img/icon_web.png" alt="Sleeper" className="w-8 h-8 rounded-lg" />
+                      <div>
+                        <h4 className="font-bold text-white">Sleeper</h4>
+                        <p className="text-xs text-gray-400">
+                          {sleeperLeaguesCount > 0 ? `${sleeperLeaguesCount} leagues synced` : 'Not connected'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {sleeperLeaguesCount > 0 && (
+                      <span className="flex items-center gap-1 text-xs font-bold bg-green-500/10 text-green-400 px-3 py-1 rounded-full border border-green-500/20 w-fit">
+                        <CheckCircle2 size={14} /> Connected
+                      </span>
+                    )}
+                  </div>
+
+                  {userTier === 'pro' || userTier === 'pro-plus' ? (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex gap-2">
+                        <input 
+                          type="text" 
+                          placeholder="Enter Sleeper Username" 
+                          value={sleeperUsername}
+                          onChange={(e) => setSleeperUsername(e.target.value)}
+                          className="flex-1 bg-[#111] border border-gray-700 text-white rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                        />
+                        <button 
+                          onClick={handleSleeperSync}
+                          disabled={isSyncing}
+                          className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm px-6 py-2 rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2"
+                        >
+                          {isSyncing ? <RefreshCw size={16} className="animate-spin" /> : 'Sync'}
+                        </button>
+                      </div>
+                      {syncStatus.message && (
+                        <p className={`text-xs font-bold flex items-center gap-1 ${syncStatus.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+                          {syncStatus.type === 'success' ? <CheckCircle2 size={14}/> : <AlertTriangle size={14}/>}
+                          {syncStatus.message}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 flex items-center justify-between">
+                      <span className="text-sm text-gray-400">Pro subscription required to sync leagues.</span>
+                      <button onClick={() => router.push('/subscribe')} className="text-xs font-bold text-red-500 hover:text-red-400 uppercase tracking-wider">
+                        Upgrade Now
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Yahoo & ESPN Placeholders for Future */}
+                <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-5 opacity-50 grayscale">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center font-black text-white text-xs">Y!</div>
+                    <div>
+                      <h4 className="font-bold text-white">Yahoo Fantasy</h4>
+                      <p className="text-xs text-gray-400">Coming soon</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="mt-12 pt-8 border-t border-gray-800">
