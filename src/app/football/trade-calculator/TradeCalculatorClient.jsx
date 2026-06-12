@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Settings, Search, X, RefreshCw, Trophy, User, Check } from 'lucide-react'; 
+import { Settings, Search, X, RefreshCw, Trophy, User, Check, ChevronsUpDown } from 'lucide-react'; 
 import { HISTORICAL_DATA } from '../../../utils/historicalData'; 
 import { useLeague } from '../../../context/LeagueContext'; 
 
@@ -36,6 +36,7 @@ export default function TradeCalculatorClient() {
   const activeLeague = getActiveLeagueData('football');
 
   const [playersData, setPlayersData] = useState([]);
+  const [sleeperPlayersMap, setSleeperPlayersMap] = useState({}); // 🚀 NEW: Intelligent fallback map
   const [isSyncing, setIsSyncing] = useState(true);
 
   // --- League Roster Sync State ---
@@ -43,6 +44,9 @@ export default function TradeCalculatorClient() {
   const [leagueRosters, setLeagueRosters] = useState([]);
   const [teamAManager, setTeamAManager] = useState(''); 
   const [teamBManager, setTeamBManager] = useState('');
+  
+  // Custom Dropdown State for Opponent
+  const [isOpponentDropdownOpen, setIsOpponentDropdownOpen] = useState(false);
 
   // --- Trade Teams State ---
   const [formatMode, setFormatMode] = useState('dynasty'); 
@@ -90,6 +94,7 @@ export default function TradeCalculatorClient() {
     }
   }, [formatMode]);
 
+  // 🚀 Fetch Global Player DB
   useEffect(() => {
     async function loadLiveDatabase() {
       try {
@@ -107,6 +112,28 @@ export default function TradeCalculatorClient() {
     loadLiveDatabase();
   }, []);
 
+  // 🚀 NEW: Fetch Sleeper Master Player Map for Fallback Matching
+  useEffect(() => {
+    if (activeLeague && activeLeague.platform === 'sleeper') {
+        const fetchSleeperMap = async () => {
+            const cached = localStorage.getItem('fsan_sleeper_players');
+            if (cached) {
+                setSleeperPlayersMap(JSON.parse(cached));
+                return;
+            }
+            try {
+                const res = await fetch('https://api.sleeper.app/v1/players/nfl');
+                const data = await res.json();
+                setSleeperPlayersMap(data);
+                try { localStorage.setItem('fsan_sleeper_players', JSON.stringify(data)); } catch(e){}
+            } catch (err) {
+                console.error("Failed to load sleeper master players list", err);
+            }
+        };
+        fetchSleeperMap();
+    }
+  }, [activeLeague]);
+
   // 🚀 Fetch Sleeper League Rosters & Users
   useEffect(() => {
     if (activeLeague && activeLeague.platform === 'sleeper') {
@@ -121,7 +148,7 @@ export default function TradeCalculatorClient() {
           setLeagueUsers(users);
           setLeagueRosters(rosters);
 
-          // 🚀 AUTO-ASSIGN TEAM A: If we know the user's sleeper ID, lock Team A to them!
+          // 🚀 AUTO-ASSIGN TEAM A TO YOU
           if (sleeperUserId) {
             setTeamAManager(sleeperUserId);
           }
@@ -302,35 +329,45 @@ export default function TradeCalculatorClient() {
     }
   };
 
-  // 🚀 SYNCED ROSTER PARSING WITH LIVE VALUES
+  // 🚀 INTELLIGENT SYNCED ROSTER PARSING
   const buildRosterList = (managerId, strategy) => {
     if (!managerId || leagueRosters.length === 0) return [];
     const roster = leagueRosters.find(r => r.owner_id === managerId);
     if (!roster || !roster.players) return [];
 
-    // Map sleeper IDs perfectly to our internal DB
     const mappedPlayers = roster.players.map(sleeperId => {
-      const p = playersData.find(dbPlayer => String(dbPlayer.sleeper_id) === String(sleeperId) || String(dbPlayer.id) === String(sleeperId));
+      // 1. Try strict Sleeper ID match first
+      let p = playersData.find(dbPlayer => String(dbPlayer.sleeper_id) === String(sleeperId));
+      
+      // 2. Try generic ID match
+      if (!p) p = playersData.find(dbPlayer => String(dbPlayer.id) === String(sleeperId));
+      
+      // 3. 🚀 THE FALLBACK: Map string ID -> Sleeper Player Object -> Name Match
+      if (!p && sleeperPlayersMap[sleeperId]) {
+          const sPlayer = sleeperPlayersMap[sleeperId];
+          const searchName = sPlayer.search_full_name || sPlayer.full_name?.toLowerCase().replace(/[^a-z]/g, '');
+          if (searchName) {
+              p = playersData.find(dbPlayer => dbPlayer.name.toLowerCase().replace(/[^a-z]/g, '') === searchName);
+          }
+      }
+
       if (!p) return null;
       return { ...p, uniqueId: p.name + Date.now(), calcValue: getPlayerValue(p, strategy) };
     }).filter(Boolean);
 
-    // Sort descending by calculated value!
     return mappedPlayers.sort((a, b) => b.calcValue - a.calcValue);
   };
 
-  const activeRosterA = useMemo(() => buildRosterList(teamAManager, teamAStrategy), [teamAManager, leagueRosters, playersData, teamAStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
-  const activeRosterB = useMemo(() => buildRosterList(teamBManager, teamBStrategy), [teamBManager, leagueRosters, playersData, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
+  const activeRosterA = useMemo(() => buildRosterList(teamAManager, teamAStrategy), [teamAManager, leagueRosters, playersData, sleeperPlayersMap, teamAStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
+  const activeRosterB = useMemo(() => buildRosterList(teamBManager, teamBStrategy), [teamBManager, leagueRosters, playersData, sleeperPlayersMap, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
 
   // Handle toggling players from the side-by-side roster
   const togglePlayerInTrade = (playerObj, team) => {
     if (team === 'A') {
-      // If Team A gives this player, it means Team B receives them. So they go into teamBPlayers.
       const isSelected = teamBPlayers.some(p => p.name === playerObj.name);
       if (isSelected) setTeamBPlayers(teamBPlayers.filter(p => p.name !== playerObj.name));
       else setTeamBPlayers([...teamBPlayers, playerObj]);
     } else {
-      // If Team B gives this player, Team A receives them.
       const isSelected = teamAPlayers.some(p => p.name === playerObj.name);
       if (isSelected) setTeamAPlayers(teamAPlayers.filter(p => p.name !== playerObj.name));
       else setTeamAPlayers([...teamAPlayers, playerObj]);
@@ -454,6 +491,13 @@ export default function TradeCalculatorClient() {
       e.target.value = ""; 
   };
 
+  // 🚀 User / Avatar Helpers
+  const myUser = leagueUsers.find(u => u.user_id === teamAManager);
+  const myTeamName = myUser?.metadata?.team_name || myUser?.display_name || 'My Team';
+  const myAvatar = myUser?.avatar ? `https://sleepercdn.com/avatars/thumbs/${myUser.avatar}` : 'https://placehold.co/40x40/383838/ffffff?text=?';
+
+  const selectedUserB = leagueUsers.find(u => u.user_id === teamBManager);
+
   return (
     <div className="w-full animate-in fade-in duration-500 pb-24 relative">
       
@@ -555,26 +599,29 @@ export default function TradeCalculatorClient() {
                     </div>
                 </div>
 
-                {/* 🚀 NEW: SIDE-BY-SIDE ROSTER UI (If League Synced) */}
+                {/* 🚀 SIDE-BY-SIDE ROSTER UI (If League Synced) */}
                 {activeLeague ? (
                   <div className="flex flex-col lg:flex-row gap-6">
                     {/* MY ROSTER (Team A) */}
                     <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col h-[700px]">
                       
                       {/* Header & Strategy */}
-                      <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-4 shrink-0">
-                          <div className="flex flex-col">
-                              <h3 className="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
-                                <User size={18} className="text-red-500" /> My Team
-                              </h3>
-                              <span className="text-xs text-red-500 font-bold tracking-widest uppercase mt-1">Sending: {totalA}</span>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 border-b border-gray-800 pb-4 shrink-0">
+                          
+                          {/* Beautiful Locked Team A Display */}
+                          <div className="flex items-center gap-3 w-full sm:w-auto">
+                              <img src={myAvatar} className="w-10 h-10 rounded-full border border-gray-600" alt="" />
+                              <div className="flex flex-col">
+                                  <span className="text-lg font-black text-white truncate max-w-[200px]">{myTeamName}</span>
+                                  <span className="text-[10px] text-red-500 font-bold uppercase tracking-widest">Sending: {totalA}</span>
+                              </div>
                           </div>
 
                           {formatMode === 'dynasty' && (
                               <select 
                                   value={teamAStrategy} 
                                   onChange={(e) => setTeamAStrategy(e.target.value)}
-                                  className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none font-bold text-xs tracking-wide"
+                                  className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full sm:w-auto"
                               >
                                   <option value="win_now">🏆 Win Now</option>
                                   <option value="neutral">⚖️ Balanced</option>
@@ -652,19 +699,58 @@ export default function TradeCalculatorClient() {
                     <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col h-[700px]">
                       
                       {/* Header & Strategy */}
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 border-b border-gray-800 pb-4 shrink-0">
-                          <div className="flex flex-col w-full sm:w-auto">
-                              <select 
-                                  value={teamBManager}
-                                  onChange={(e) => { setTeamBManager(e.target.value); setTeamBPlayers([]); setTeamAPlayers([]); }}
-                                  className="bg-transparent text-lg font-black text-white uppercase tracking-wider outline-none cursor-pointer mb-1 border-b border-dashed border-gray-600 pb-1 hover:border-blue-500 transition-colors"
-                              >
-                                  <option value="">Select Opponent</option>
-                                  {leagueUsers.filter(u => u.user_id !== sleeperUserId).map(u => (
-                                      <option key={u.user_id} value={u.user_id}>{u.display_name}</option>
-                                  ))}
-                              </select>
-                              <span className="text-xs text-blue-500 font-bold tracking-widest uppercase">Receiving: {totalB}</span>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 shrink-0">
+                          
+                          {/* 🚀 NEW: Custom Opponent Dropdown */}
+                          <div className="flex flex-col w-full sm:w-auto gap-1">
+                              <div className="relative w-full sm:w-[220px]">
+                                <button 
+                                  onClick={() => setIsOpponentDropdownOpen(!isOpponentDropdownOpen)}
+                                  className="flex items-center gap-3 bg-[#1a1a1a] border border-gray-700 hover:border-blue-500 text-white rounded-xl py-2 px-3 shadow-sm focus:outline-none transition-all w-full text-left"
+                                >
+                                  {selectedUserB ? (
+                                    <>
+                                      <img 
+                                        src={selectedUserB.avatar ? `https://sleepercdn.com/avatars/thumbs/${selectedUserB.avatar}` : 'https://placehold.co/40x40/383838/ffffff?text=?'} 
+                                        className="w-6 h-6 rounded-full border border-gray-600 shrink-0" 
+                                        alt="" 
+                                      />
+                                      <span className="text-sm font-bold truncate flex-1">
+                                        {selectedUserB.metadata?.team_name || selectedUserB.display_name}
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <span className="text-sm font-bold text-gray-400 flex-1">Select Opponent...</span>
+                                  )}
+                                  <ChevronsUpDown size={14} className="text-gray-500 shrink-0" />
+                                </button>
+
+                                {isOpponentDropdownOpen && (
+                                  <>
+                                    <div className="fixed inset-0 z-[90]" onClick={() => setIsOpponentDropdownOpen(false)}></div>
+                                    <div className="absolute top-full left-0 mt-2 w-full min-w-[240px] bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl z-[100] max-h-64 overflow-y-auto custom-scroll py-2">
+                                      {leagueUsers.filter(u => u.user_id !== sleeperUserId).map(u => {
+                                        const teamName = u.metadata?.team_name || u.display_name;
+                                        const avatar = u.avatar ? `https://sleepercdn.com/avatars/thumbs/${u.avatar}` : 'https://placehold.co/40x40/383838/ffffff?text=?';
+                                        return (
+                                          <button 
+                                            key={u.user_id}
+                                            onClick={() => { setTeamBManager(u.user_id); setTeamBPlayers([]); setTeamAPlayers([]); setIsOpponentDropdownOpen(false); }}
+                                            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#252525] transition-colors text-left"
+                                          >
+                                            <img src={avatar} className="w-8 h-8 rounded-full border border-gray-600 shrink-0" alt="" />
+                                            <div className="flex flex-col overflow-hidden">
+                                              <span className="text-sm font-bold text-white truncate">{teamName}</span>
+                                              {u.metadata?.team_name && <span className="text-[10px] text-gray-500 uppercase truncate">@{u.display_name}</span>}
+                                            </div>
+                                          </button>
+                                        )
+                                      })}
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-blue-500 font-bold tracking-widest uppercase pl-1">Receiving: {totalB}</span>
                           </div>
 
                           {formatMode === 'dynasty' && (
