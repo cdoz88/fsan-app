@@ -611,15 +611,14 @@ export default function TradeCalculatorClient() {
 
                               {formatMode === 'dynasty' && (
                                   <div className="flex flex-col gap-1 w-full mt-2">
-                                      <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Team Strategy</span>
                                       <select 
                                           value={teamAStrategy} 
                                           onChange={(e) => setTeamAStrategy(e.target.value)}
                                           className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-1.5 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
                                       >
-                                          <option value="win_now">🏆 My Goal: Win Now</option>
-                                          <option value="neutral">⚖️ My Goal: Balanced</option>
-                                          <option value="build">🌱 My Goal: Rebuild</option>
+                                          <option value="win_now">🏆 Win Now Strategy</option>
+                                          <option value="neutral">⚖️ Balanced Strategy</option>
+                                          <option value="build">🌱 Rebuild Strategy</option>
                                       </select>
                                   </div>
                               )}
@@ -756,16 +755,15 @@ export default function TradeCalculatorClient() {
                               </div>
 
                               {formatMode === 'dynasty' && (
-                                  <div className="flex flex-col gap-1 w-full mt-1">
-                                      <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Team Strategy</span>
+                                  <div className="flex flex-col gap-1 w-full mt-2">
                                       <select 
                                           value={teamBStrategy} 
                                           onChange={(e) => setTeamBStrategy(e.target.value)}
                                           className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-1.5 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
                                       >
-                                          <option value="win_now">🏆 His Goal: Win Now</option>
-                                          <option value="neutral">⚖️ His Goal: Balanced</option>
-                                          <option value="build">🌱 His Goal: Rebuild</option>
+                                          <option value="win_now">🏆 Win Now Strategy</option>
+                                          <option value="neutral">⚖️ Balanced Strategy</option>
+                                          <option value="build">🌱 Rebuild Strategy</option>
                                       </select>
                                   </div>
                               )}
@@ -865,15 +863,14 @@ export default function TradeCalculatorClient() {
 
                                   {formatMode === 'dynasty' && (
                                       <div className="flex flex-col gap-1 w-full mt-2">
-                                          <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Team Strategy</span>
                                           <select 
                                               value={teamAStrategy} 
                                               onChange={(e) => setTeamAStrategy(e.target.value)}
                                               className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-1.5 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
                                           >
-                                              <option value="win_now">🏆 Win Now</option>
-                                              <option value="neutral">⚖️ Balanced</option>
-                                              <option value="build">🌱 Rebuild</option>
+                                              <option value="win_now">🏆 Win Now Strategy</option>
+                                              <option value="neutral">⚖️ Balanced Strategy</option>
+                                              <option value="build">🌱 Rebuild Strategy</option>
                                           </select>
                                       </div>
                                   )}
@@ -967,15 +964,14 @@ export default function TradeCalculatorClient() {
 
                                   {formatMode === 'dynasty' && (
                                       <div className="flex flex-col gap-1 w-full mt-2">
-                                          <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Team Strategy</span>
                                           <select 
                                               value={teamBStrategy} 
                                               onChange={(e) => setTeamBStrategy(e.target.value)}
                                               className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-1.5 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
                                           >
-                                              <option value="win_now">🏆 Win Now</option>
-                                              <option value="neutral">⚖️ Balanced</option>
-                                              <option value="build">🌱 Rebuild</option>
+                                              <option value="win_now">🏆 Win Now Strategy</option>
+                                              <option value="neutral">⚖️ Balanced Strategy</option>
+                                              <option value="build">🌱 Rebuild Strategy</option>
                                           </select>
                                       </div>
                                   )}
