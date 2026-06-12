@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Settings, Search, X, RefreshCw } from 'lucide-react'; 
+import { Settings, Search, X, RefreshCw, Trophy } from 'lucide-react'; // Added Trophy
 import { HISTORICAL_DATA } from '../../../utils/historicalData'; 
+import { useLeague } from '../../../context/LeagueContext'; // 🚀 NEW: Import Context
 
 // --- Generate Draft Picks Data ---
 const generatePicks = () => {
@@ -31,6 +32,10 @@ const generatePicks = () => {
 const DRAFT_PICKS = generatePicks();
 
 export default function TradeCalculatorClient() {
+  // 🚀 NEW: Grab active league data from global state
+  const { getActiveLeagueData } = useLeague();
+  const activeLeague = getActiveLeagueData('football');
+
   const [playersData, setPlayersData] = useState([]);
   const [isSyncing, setIsSyncing] = useState(true);
 
@@ -45,12 +50,18 @@ export default function TradeCalculatorClient() {
   const [queryA, setQueryA] = useState('');
   const [queryB, setQueryB] = useState('');
 
-  // --- Scoring Format Settings ---
+  // --- Scoring Format Settings (Fallback for non-synced) ---
   const [showSettings, setShowSettings] = useState(false);
-  const [isSuperflex, setIsSuperflex] = useState(true); 
-  const [pprValue, setPprValue] = useState(1);       
-  const [passTdValue, setPassTdValue] = useState(4); 
-  const [tePremium, setTePremium] = useState(0);     
+  const [manualIsSuperflex, setManualIsSuperflex] = useState(true); 
+  const [manualPprValue, setManualPprValue] = useState(1);       
+  const [manualPassTdValue, setManualPassTdValue] = useState(4); 
+  const [manualTePremium, setManualTePremium] = useState(0);     
+
+  // 🚀 NEW: Determine exactly which settings the engine should use
+  const isSuperflex = activeLeague?.rosterPositions ? activeLeague.rosterPositions.includes('SUPER_FLEX') : manualIsSuperflex;
+  const pprValue = activeLeague?.scoringSettings?.rec ?? manualPprValue;
+  const passTdValue = activeLeague?.scoringSettings?.pass_td ?? manualPassTdValue;
+  const tePremium = activeLeague?.scoringSettings?.bonus_rec_te ?? manualTePremium;
 
   const bgImage = 'https://admin.fsan.com/wp-content/uploads/2026/04/NFL-Logo.webp';
   const primaryColor = '#e42d38';
@@ -96,7 +107,6 @@ export default function TradeCalculatorClient() {
   const positionalScarcity = useMemo(() => {
     if (!playersData || playersData.length === 0) return { QB: 1, RB: 1, WR: 1, TE: 1 };
 
-    // Find all players drafted in the Top 100
     const top100 = playersData.filter(p => (p.adp || p.AVG || 300) <= 100);
     const counts = { QB: 0, RB: 0, WR: 0, TE: 0 };
 
@@ -105,11 +115,9 @@ export default function TradeCalculatorClient() {
       if (counts[pos] !== undefined) counts[pos] += 1;
     });
 
-    // The Scarcity Formula: A perfectly equal market has 25 of each position in the Top 100.
-    // If fewer than 25 (Scarce), modifier > 1.0. If more than 25 (Abundant), modifier < 1.0.
     const calcMod = (count) => {
         let mod = 1.0 + ((25 - count) / 100);
-        return Math.min(1.35, Math.max(0.75, mod)); // Safe clamp to prevent extreme outliers
+        return Math.min(1.35, Math.max(0.75, mod)); 
     };
 
     return {
@@ -224,7 +232,6 @@ export default function TradeCalculatorClient() {
   };
 
   const getPlayerValue = (player, strategy) => {
-    // --- 1. PICK VALUATION ---
     if (player.position === 'PICK') {
         let val = player.baseValue;
         if (isSuperflex && val > 100) val = Math.round(val * 1.3); 
@@ -233,7 +240,6 @@ export default function TradeCalculatorClient() {
         return val;
     }
 
-    // --- 2. BASE PROJECTIONS ---
     let pts = 0;
     pts += ((player.pass_yds || 0) / 25);
     pts += ((player.pass_tds || 0) * passTdValue); 
@@ -249,7 +255,6 @@ export default function TradeCalculatorClient() {
     }
     pts += recPoints;
 
-    // --- 3. TRUE VORP BASELINE SUBTRACTION ---
     let vorp = 0;
     if (player.position === 'QB') vorp = pts - baselines.QB;
     else if (player.position === 'RB') vorp = pts - baselines.RB;
@@ -266,20 +271,16 @@ export default function TradeCalculatorClient() {
         }
     }
 
-    // --- 4. DYNAMIC POSITIONAL SCARCITY MULTIPLIERS ---
     let productionValue = vorp;
     let posKey = player.position === 'WR/TE' ? 'TE' : player.position;
     let scarcityMod = positionalScarcity[posKey] || 1.0;
 
     if (posKey === 'QB') {
-        // QBs still get a flat formatting bump depending on Superflex vs 1QB
         productionValue *= isSuperflex ? (1.60 * scarcityMod) : (1.0 * scarcityMod);
     } else {
-        // RBs, WRs, and TEs rely entirely on the dynamic top-100 scarcity scanner!
         productionValue *= scarcityMod;
     }
 
-    // --- 5. MARKET VALUE BLENDING ---
     let adp = player.adp || player.AVG || 300; 
 
     if (isSuperflex && player.position === 'QB' && adp < 300) {
@@ -294,7 +295,6 @@ export default function TradeCalculatorClient() {
         marketValue = marketScore * 3.5; 
     }
 
-    // --- 6. FINAL ENGINE SCALING ---
     if (formatMode === 'dynasty') {
       const baseAssetValue = (productionValue * 0.50) + (marketValue * 0.50);
       const ageMult = getAgeMultiplier(player.position, player.age, strategy);
@@ -336,7 +336,6 @@ export default function TradeCalculatorClient() {
     let finalA = getTieredSum(teamA_assets);
     let finalB = getTieredSum(teamB_assets);
 
-    // 🚀 THE 1-FOR-1 FIX: Only apply the Elite Premium to multi-asset deals
     let premium = 0;
     const isOneForOne = teamA_assets.length === 1 && teamB_assets.length === 1;
 
@@ -428,7 +427,7 @@ export default function TradeCalculatorClient() {
     <div className="w-full animate-in fade-in duration-500 pb-24 relative">
       
       {/* Hero Section */}
-      <div className="relative w-full h-[220px] md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-8 mt-6 shadow-2xl">
+      <div className="relative w-full h-[220px] md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-8 shadow-2xl">
         <div className="absolute inset-0 opacity-80 z-0" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }} />
         <img src={bgImage} alt="Football Background" className="absolute -right-[10%] md:-right-10 top-1/2 transform -translate-y-1/2 h-[200%] w-auto opacity-20 pointer-events-none z-0" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent z-0" />
@@ -453,27 +452,34 @@ export default function TradeCalculatorClient() {
             <button onClick={() => setFormatMode('dynasty')} className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${formatMode === 'dynasty' ? 'bg-zinc-700 text-white shadow-md' : 'text-gray-500 hover:text-white'}`}>Dynasty</button>
           </div>
           
-          <button onClick={() => setShowSettings(!showSettings)} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${showSettings ? 'bg-white text-black' : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-gray-800'}`}>
-            <Settings size={16} /> {showSettings ? 'Hide Settings' : 'Custom League Scoring'}
-          </button>
+          {/* 🚀 NEW: Context-Aware Scoring Button */}
+          {activeLeague ? (
+            <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest bg-green-500/10 text-green-400 border border-green-500/20 pointer-events-none">
+              <Trophy size={16} /> Synced to {activeLeague.name}
+            </div>
+          ) : (
+            <button onClick={() => setShowSettings(!showSettings)} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${showSettings ? 'bg-white text-black' : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-gray-800'}`}>
+              <Settings size={16} /> {showSettings ? 'Hide Settings' : 'Custom League Scoring'}
+            </button>
+          )}
         </div>
 
-        {/* Custom Scoring Panel */}
-        {showSettings && (
+        {/* Custom Scoring Panel (Only shows if no league is synced) */}
+        {showSettings && !activeLeague && (
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 mb-8 shadow-xl animate-in fade-in slide-in-from-top-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="flex flex-col gap-3">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">League Type</span>
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
-                  <button onClick={() => setIsSuperflex(false)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!isSuperflex ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>1QB</button>
-                  <button onClick={() => setIsSuperflex(true)} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${isSuperflex ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>SUPERFLEX</button>
+                  <button onClick={() => setManualIsSuperflex(false)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!manualIsSuperflex ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>1QB</button>
+                  <button onClick={() => setManualIsSuperflex(true)} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${manualIsSuperflex ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>SUPERFLEX</button>
                 </div>
               </div>
               <div className="flex flex-col gap-3">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Receptions (PPR)</span>
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
                   {[{ label: 'STD', val: 0 }, { label: 'HALF', val: 0.5 }, { label: 'FULL', val: 1 }].map(opt => (
-                    <button key={opt.label} onClick={() => setPprValue(opt.val)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${pprValue === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>{opt.label}</button>
+                    <button key={opt.label} onClick={() => setManualPprValue(opt.val)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${manualPprValue === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>{opt.label}</button>
                   ))}
                 </div>
               </div>
@@ -481,7 +487,7 @@ export default function TradeCalculatorClient() {
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Passing TDs</span>
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
                   {[{ label: '4 PTS', val: 4 }, { label: '6 PTS', val: 6 }].map(opt => (
-                    <button key={opt.label} onClick={() => setPassTdValue(opt.val)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${passTdValue === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>{opt.label}</button>
+                    <button key={opt.label} onClick={() => setManualPassTdValue(opt.val)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${manualPassTdValue === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>{opt.label}</button>
                   ))}
                 </div>
               </div>
@@ -489,7 +495,7 @@ export default function TradeCalculatorClient() {
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">TE Premium</span>
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
                   {[{ label: 'NONE', val: 0 }, { label: '+0.5', val: 0.5 }, { label: '+1.0', val: 1 }].map(opt => (
-                    <button key={opt.label} onClick={() => setTePremium(opt.val)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${tePremium === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>{opt.label}</button>
+                    <button key={opt.label} onClick={() => setManualTePremium(opt.val)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${manualTePremium === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>{opt.label}</button>
                   ))}
                 </div>
               </div>

@@ -298,7 +298,7 @@ export default function Header({ activeSport }) {
               >
                 {activeLeagueData ? (
                    activeLeagueData.avatar ? (
-                      <img src={`https://sleepercdn.com/avatars/past/${activeLeagueData.avatar}`} className="w-4 h-4 sm:w-5 sm:h-5 rounded-full" alt="League" onError={(e) => e.target.style.display = 'none'} />
+                      <img src={`https://sleepercdn.com/avatars/thumbs/${activeLeagueData.avatar}`} className="w-4 h-4 sm:w-5 sm:h-5 rounded-full" alt="League" onError={(e) => e.target.style.display = 'none'} />
                    ) : (
                       <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center shrink-0">
                           <span className="text-[8px] sm:text-[10px] font-bold text-white">{activeLeagueData.name.substring(0,2).toUpperCase()}</span>
@@ -340,7 +340,7 @@ export default function Header({ activeSport }) {
                         className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${activeLeagueData?.id === league.id ? 'bg-[#252525] text-white shadow-inner' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
                       >
                         {league.avatar ? (
-                          <img src={`https://sleepercdn.com/avatars/past/${league.avatar}`} className="w-6 h-6 rounded-full shrink-0 border border-gray-700" alt="League" />
+                          <img src={`https://sleepercdn.com/avatars/thumbs/${league.avatar}`} className="w-6 h-6 rounded-full shrink-0 border border-gray-700" alt="League" onError={(e) => e.target.style.display = 'none'} />
                         ) : (
                           <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center shrink-0 border border-gray-700">
                             <span className="text-[10px] font-bold text-white">{league.name.substring(0,2).toUpperCase()}</span>
