@@ -69,6 +69,32 @@ export function LeagueProvider({ children }) {
     }
   };
 
+  // --- 🚀 NEW: Remove a Single League ---
+  const removeLeague = (leagueId) => {
+    setAllLeagues(prev => {
+      const updated = prev.filter(l => l.id !== leagueId);
+      localStorage.setItem('fsan_all_leagues', JSON.stringify(updated));
+      return updated;
+    });
+
+    // If the removed league was currently active, clear it out of the active context
+    setActiveLeagues(prev => {
+      let updatedActive = { ...prev };
+      let changed = false;
+      Object.keys(updatedActive).forEach(sport => {
+        if (updatedActive[sport] === leagueId) {
+          updatedActive[sport] = null;
+          changed = true;
+        }
+      });
+      if (changed) {
+        localStorage.setItem('fsan_active_leagues', JSON.stringify(updatedActive));
+        return updatedActive;
+      }
+      return prev;
+    });
+  };
+
   // --- Change Active League (Triggered by the Header Dropdown) ---
   const setActiveLeague = (sport, leagueId) => {
     setActiveLeagues(prev => {
@@ -91,6 +117,7 @@ export function LeagueProvider({ children }) {
       activeLeagues,
       isSyncing,
       syncSleeperAccount,
+      removeLeague, // 🚀 NEW: Exported the remove function
       setActiveLeague,
       getActiveLeagueData
     }}>
@@ -99,7 +126,6 @@ export function LeagueProvider({ children }) {
   );
 }
 
-// Custom hook to use this anywhere in the app!
 export function useLeague() {
   return useContext(LeagueContext);
 }
