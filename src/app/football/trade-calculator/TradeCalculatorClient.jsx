@@ -44,6 +44,7 @@ export default function TradeCalculatorClient() {
   const [leagueRosters, setLeagueRosters] = useState([]);
   const [teamAManager, setTeamAManager] = useState(''); 
   const [teamBManager, setTeamBManager] = useState('');
+  const [isRefreshingLeague, setIsRefreshingLeague] = useState(false); // 🚀 NEW: Refresh state
   
   // Custom Dropdown State for Opponent
   const [isOpponentDropdownOpen, setIsOpponentDropdownOpen] = useState(false);
@@ -160,6 +161,26 @@ export default function TradeCalculatorClient() {
        setTeamBManager('');
     }
   }, [activeLeague, sleeperUserId]);
+
+  // 🚀 NEW: Manual Refresh Function
+  const refreshLeagueData = async () => {
+    if (!activeLeague || activeLeague.platform !== 'sleeper') return;
+    setIsRefreshingLeague(true);
+    try {
+      const [usersRes, rostersRes] = await Promise.all([
+        fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/users`),
+        fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/rosters`)
+      ]);
+      const users = await usersRes.json();
+      const rosters = await rostersRes.json();
+      setLeagueUsers(users);
+      setLeagueRosters(rosters);
+    } catch (e) {
+      console.error("Failed to refresh sleeper league data", e);
+    } finally {
+      setIsRefreshingLeague(false);
+    }
+  };
 
   const positionalScarcity = useMemo(() => {
     if (!playersData || playersData.length === 0) return { QB: 1, RB: 1, WR: 1, TE: 1 };
@@ -524,8 +545,20 @@ export default function TradeCalculatorClient() {
           </div>
           
           {activeLeague ? (
-            <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest bg-green-500/10 text-green-400 border border-green-500/20 pointer-events-none">
-              <Trophy size={16} /> Synced to {activeLeague.name}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest bg-green-500/10 text-green-400 border border-green-500/20 pointer-events-none">
+                <Trophy size={16} /> Synced to {activeLeague.name}
+              </div>
+              
+              {/* 🚀 NEW: RE-SYNC BUTTON */}
+              <button 
+                onClick={refreshLeagueData}
+                disabled={isRefreshingLeague}
+                title="Refresh Rosters"
+                className="flex items-center justify-center p-2.5 bg-[#1a1a1a] hover:bg-gray-800 border border-gray-800 hover:border-gray-600 rounded-xl text-gray-400 hover:text-white transition-all shadow-inner disabled:opacity-50"
+              >
+                <RefreshCw size={16} className={isRefreshingLeague ? "animate-spin text-green-400" : ""} />
+              </button>
             </div>
           ) : (
             <button onClick={() => setShowSettings(!showSettings)} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${showSettings ? 'bg-white text-black' : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-gray-800'}`}>
