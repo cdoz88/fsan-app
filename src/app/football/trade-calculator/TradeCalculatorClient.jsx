@@ -324,7 +324,6 @@ export default function TradeCalculatorClient() {
     }
   };
 
-  // 🚀 INTELLIGENT SYNCED ROSTER PARSING & POSITIONAL SORTING
   const buildRosterList = (managerId, strategy) => {
     if (!managerId || leagueRosters.length === 0) return [];
     const roster = leagueRosters.find(r => r.owner_id === managerId);
@@ -345,7 +344,6 @@ export default function TradeCalculatorClient() {
       return { ...p, uniqueId: p.name + Date.now(), calcValue: getPlayerValue(p, strategy) };
     }).filter(Boolean);
 
-    // Positional Sorting Array (QB -> RB -> WR -> TE -> K -> DST)
     const posOrder = { 'QB': 1, 'RB': 2, 'WR': 3, 'TE': 4, 'WR/TE': 4, 'K': 5, 'DST': 6 };
     
     return mappedPlayers.sort((a, b) => {
@@ -356,9 +354,6 @@ export default function TradeCalculatorClient() {
     });
   };
 
-  // The logic is strictly crossed: 
-  // If Team A (Me) gives a player, Team B receives them. So value my roster using HIS strategy (`teamBStrategy`).
-  // If Team B gives a player, Team A receives them. So value his roster using MY strategy (`teamAStrategy`).
   const activeRosterA = useMemo(() => buildRosterList(teamAManager, teamBStrategy), [teamAManager, leagueRosters, playersData, sleeperPlayersMap, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
   const activeRosterB = useMemo(() => buildRosterList(teamBManager, teamAStrategy), [teamBManager, leagueRosters, playersData, sleeperPlayersMap, teamAStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
 
@@ -375,11 +370,8 @@ export default function TradeCalculatorClient() {
   };
 
   const tradeEvaluation = useMemo(() => {
-    // teamAPlayers are the players Team A receives (selected from B's roster). Valued by A's strategy.
     const teamA_assets = teamAPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamAStrategy) }))
                                      .sort((a, b) => b.calcValue - a.calcValue);
-    
-    // teamBPlayers are the players Team B receives (selected from A's roster). Valued by B's strategy.
     const teamB_assets = teamBPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamBStrategy) }))
                                      .sort((a, b) => b.calcValue - a.calcValue);
 
@@ -610,30 +602,37 @@ export default function TradeCalculatorClient() {
                     <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col">
                       
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 shrink-0 min-h-[90px]">
-                          <div className="flex items-start gap-3 w-full sm:w-auto mt-1">
-                              <img src={myAvatar} className="w-10 h-10 rounded-full border border-gray-600 shrink-0" alt="" />
-                              <div className="flex flex-col">
-                                  <span className="text-lg font-black text-white truncate max-w-[200px] leading-none mb-1.5">{myTeamName}</span>
-                                  <span className="text-[10px] text-red-500 font-bold uppercase tracking-widest mt-0.5">Receiving: {totalA}</span>
-                                  {bestAssetSide === 'A' && !isOneForOne && <span className="text-[9px] text-amber-500 font-bold uppercase mt-0.5">Includes Premium (+{premium})</span>}
-                                  {hasPenaltyA && <span className="text-[9px] text-red-400 font-bold uppercase mt-0.5">Package Tax Applied</span>}
+                          {/* Left Side: Avatar, Name, Strategy */}
+                          <div className="flex flex-col gap-2 w-full sm:w-auto mt-1">
+                              <div className="flex items-center gap-3">
+                                  <img src={myAvatar} className="w-10 h-10 rounded-full border border-gray-600 shrink-0" alt="" />
+                                  <span className="text-lg font-black text-white truncate max-w-[200px] leading-none">{myTeamName}</span>
                               </div>
+
+                              {formatMode === 'dynasty' && (
+                                  <div className="flex flex-col gap-1 w-full mt-2">
+                                      <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Team Strategy</span>
+                                      <select 
+                                          value={teamAStrategy} 
+                                          onChange={(e) => setTeamAStrategy(e.target.value)}
+                                          className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-1.5 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
+                                      >
+                                          <option value="win_now">🏆 My Goal: Win Now</option>
+                                          <option value="neutral">⚖️ My Goal: Balanced</option>
+                                          <option value="build">🌱 My Goal: Rebuild</option>
+                                      </select>
+                                  </div>
+                              )}
                           </div>
 
-                          {formatMode === 'dynasty' && (
-                              <div className="flex flex-col gap-1 w-full sm:w-auto">
-                                  <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Team Strategy</span>
-                                  <select 
-                                      value={teamAStrategy} 
-                                      onChange={(e) => setTeamAStrategy(e.target.value)}
-                                      className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
-                                  >
-                                      <option value="win_now">🏆 Win Now</option>
-                                      <option value="neutral">⚖️ Balanced</option>
-                                      <option value="build">🌱 Rebuild</option>
-                                  </select>
+                          {/* Right Side: Large Total & Badges */}
+                          <div className="flex flex-col sm:items-end text-left sm:text-right w-full sm:w-auto mt-1">
+                              <span className="text-4xl sm:text-5xl font-black text-red-500 leading-none">{totalA}</span>
+                              <div className="flex flex-col items-start sm:items-end mt-2 gap-1">
+                                  {bestAssetSide === 'A' && !isOneForOne && <span className="text-[9px] text-amber-500 font-bold uppercase">Includes Premium (+{premium})</span>}
+                                  {hasPenaltyA && <span className="text-[9px] text-red-400 font-bold uppercase">Package Tax Applied</span>}
                               </div>
-                          )}
+                          </div>
                       </div>
 
                       {/* Expanding Roster List */}
@@ -706,7 +705,8 @@ export default function TradeCalculatorClient() {
                     <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col">
                       
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 shrink-0 min-h-[90px]">
-                          <div className="flex flex-col w-full sm:w-auto gap-1 mt-1">
+                          {/* Left Side: Opponent Select & Strategy */}
+                          <div className="flex flex-col w-full sm:w-auto gap-2 mt-1">
                               <div className="relative w-full sm:w-[220px]">
                                 <button 
                                   onClick={() => setIsOpponentDropdownOpen(!isOpponentDropdownOpen)}
@@ -754,25 +754,31 @@ export default function TradeCalculatorClient() {
                                   </>
                                 )}
                               </div>
-                              <span className="text-[10px] text-blue-500 font-bold tracking-widest uppercase pl-1 mt-0.5">Receiving: {totalB}</span>
-                              {bestAssetSide === 'B' && !isOneForOne && <span className="text-[9px] text-amber-500 font-bold uppercase pl-1 mt-0.5">Includes Premium (+{premium})</span>}
-                              {hasPenaltyB && <span className="text-[9px] text-red-400 font-bold uppercase pl-1 mt-0.5">Package Tax Applied</span>}
+
+                              {formatMode === 'dynasty' && (
+                                  <div className="flex flex-col gap-1 w-full mt-1">
+                                      <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Team Strategy</span>
+                                      <select 
+                                          value={teamBStrategy} 
+                                          onChange={(e) => setTeamBStrategy(e.target.value)}
+                                          className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-1.5 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
+                                      >
+                                          <option value="win_now">🏆 His Goal: Win Now</option>
+                                          <option value="neutral">⚖️ His Goal: Balanced</option>
+                                          <option value="build">🌱 His Goal: Rebuild</option>
+                                      </select>
+                                  </div>
+                              )}
                           </div>
 
-                          {formatMode === 'dynasty' && (
-                              <div className="flex flex-col gap-1 w-full sm:w-auto">
-                                  <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Team Strategy</span>
-                                  <select 
-                                      value={teamBStrategy} 
-                                      onChange={(e) => setTeamBStrategy(e.target.value)}
-                                      className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
-                                  >
-                                      <option value="win_now">🏆 Win Now</option>
-                                      <option value="neutral">⚖️ Balanced</option>
-                                      <option value="build">🌱 Rebuild</option>
-                                  </select>
+                          {/* Right Side: Large Total & Badges */}
+                          <div className="flex flex-col sm:items-end text-left sm:text-right w-full sm:w-auto mt-1">
+                              <span className="text-4xl sm:text-5xl font-black text-blue-500 leading-none">{totalB}</span>
+                              <div className="flex flex-col items-start sm:items-end mt-2 gap-1">
+                                  {bestAssetSide === 'B' && !isOneForOne && <span className="text-[9px] text-amber-500 font-bold uppercase">Includes Premium (+{premium})</span>}
+                                  {hasPenaltyB && <span className="text-[9px] text-red-400 font-bold uppercase">Package Tax Applied</span>}
                               </div>
-                          )}
+                          </div>
                       </div>
 
                       {/* Expanding Roster List */}
@@ -851,29 +857,36 @@ export default function TradeCalculatorClient() {
                   // 🚀 OLD FALLBACK UI (If no league is synced)
                   <div className="flex flex-col lg:flex-row gap-6">
                       {/* TEAM A PANE */}
-                      <div className="flex-1 bg-[#111] border-2 border-red-900/30 rounded-3xl p-6 shadow-2xl relative">
+                      <div className="flex-1 bg-[#111] border-2 border-red-900/30 rounded-3xl p-6 shadow-2xl relative flex flex-col">
                           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 min-h-[90px]">
-                              <div className="flex flex-col gap-1 mt-1">
-                                  <h3 className="text-lg font-black text-white uppercase tracking-wider mb-1.5">Team A Receives</h3>
-                                  <span className="text-[10px] text-red-500 font-bold uppercase tracking-widest">Receiving: {totalA}</span>
-                                  {bestAssetSide === 'A' && !isOneForOne && <span className="text-[9px] text-amber-500 font-bold uppercase mt-0.5">Includes Premium (+{premium})</span>}
-                                  {hasPenaltyA && <span className="text-[9px] text-red-400 font-bold uppercase mt-0.5">Package Tax Applied</span>}
-                              </div>
+                              {/* Left Side: Header & Strategy */}
+                              <div className="flex flex-col gap-2 mt-1 w-full sm:w-auto">
+                                  <h3 className="text-lg font-black text-white uppercase tracking-wider leading-none mt-2">Team A Receives</h3>
 
-                              {formatMode === 'dynasty' && (
-                                  <div className="flex flex-col gap-1 w-full sm:w-auto">
-                                      <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Team Strategy</span>
-                                      <select 
-                                          value={teamAStrategy} 
-                                          onChange={(e) => setTeamAStrategy(e.target.value)}
-                                          className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
-                                      >
-                                          <option value="win_now">🏆 Win Now</option>
-                                          <option value="neutral">⚖️ Balanced</option>
-                                          <option value="build">🌱 Rebuild</option>
-                                      </select>
+                                  {formatMode === 'dynasty' && (
+                                      <div className="flex flex-col gap-1 w-full mt-2">
+                                          <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Team Strategy</span>
+                                          <select 
+                                              value={teamAStrategy} 
+                                              onChange={(e) => setTeamAStrategy(e.target.value)}
+                                              className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-1.5 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
+                                          >
+                                              <option value="win_now">🏆 Win Now</option>
+                                              <option value="neutral">⚖️ Balanced</option>
+                                              <option value="build">🌱 Rebuild</option>
+                                          </select>
+                                      </div>
+                                  )}
+                              </div>
+                              
+                              {/* Right Side: Total & Premium */}
+                              <div className="flex flex-col sm:items-end text-left sm:text-right w-full sm:w-auto mt-1">
+                                  <span className="text-4xl sm:text-5xl font-black text-red-500 leading-none">{totalA}</span>
+                                  <div className="flex flex-col items-start sm:items-end mt-2 gap-1">
+                                      {bestAssetSide === 'A' && !isOneForOne && <span className="text-[9px] text-amber-500 font-bold uppercase">Includes Premium (+{premium})</span>}
+                                      {hasPenaltyA && <span className="text-[9px] text-red-400 font-bold uppercase">Package Tax Applied</span>}
                                   </div>
-                              )}
+                              </div>
                           </div>
                           
                           <div className="flex flex-col xl:flex-row gap-3 mb-6">
@@ -946,29 +959,36 @@ export default function TradeCalculatorClient() {
                       </div>
 
                       {/* TEAM B PANE */}
-                      <div className="flex-1 bg-[#111] border-2 border-blue-900/30 rounded-3xl p-6 shadow-2xl relative">
+                      <div className="flex-1 bg-[#111] border-2 border-blue-900/30 rounded-3xl p-6 shadow-2xl relative flex flex-col">
                           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 min-h-[90px]">
-                              <div className="flex flex-col gap-1 mt-1">
-                                  <h3 className="text-lg font-black text-white uppercase tracking-wider mb-1.5">Team B Receives</h3>
-                                  <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Receiving: {totalB}</span>
-                                  {bestAssetSide === 'B' && !isOneForOne && <span className="text-[9px] text-amber-500 font-bold uppercase mt-0.5">Includes Premium (+{premium})</span>}
-                                  {hasPenaltyB && <span className="text-[9px] text-red-400 font-bold uppercase mt-0.5">Package Tax Applied</span>}
-                              </div>
+                              {/* Left Side: Header & Strategy */}
+                              <div className="flex flex-col gap-2 mt-1 w-full sm:w-auto">
+                                  <h3 className="text-lg font-black text-white uppercase tracking-wider leading-none mt-2">Team B Receives</h3>
 
-                              {formatMode === 'dynasty' && (
-                                  <div className="flex flex-col gap-1 w-full sm:w-auto">
-                                      <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Team Strategy</span>
-                                      <select 
-                                          value={teamBStrategy} 
-                                          onChange={(e) => setTeamBStrategy(e.target.value)}
-                                          className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
-                                      >
-                                          <option value="win_now">🏆 Win Now</option>
-                                          <option value="neutral">⚖️ Balanced</option>
-                                          <option value="build">🌱 Rebuild</option>
-                                      </select>
+                                  {formatMode === 'dynasty' && (
+                                      <div className="flex flex-col gap-1 w-full mt-2">
+                                          <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Team Strategy</span>
+                                          <select 
+                                              value={teamBStrategy} 
+                                              onChange={(e) => setTeamBStrategy(e.target.value)}
+                                              className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-1.5 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
+                                          >
+                                              <option value="win_now">🏆 Win Now</option>
+                                              <option value="neutral">⚖️ Balanced</option>
+                                              <option value="build">🌱 Rebuild</option>
+                                          </select>
+                                      </div>
+                                  )}
+                              </div>
+                              
+                              {/* Right Side: Total & Premium */}
+                              <div className="flex flex-col sm:items-end text-left sm:text-right w-full sm:w-auto mt-1">
+                                  <span className="text-4xl sm:text-5xl font-black text-blue-500 leading-none">{totalB}</span>
+                                  <div className="flex flex-col items-start sm:items-end mt-2 gap-1">
+                                      {bestAssetSide === 'B' && !isOneForOne && <span className="text-[9px] text-amber-500 font-bold uppercase">Includes Premium (+{premium})</span>}
+                                      {hasPenaltyB && <span className="text-[9px] text-red-400 font-bold uppercase">Package Tax Applied</span>}
                                   </div>
-                              )}
+                              </div>
                           </div>
                           
                           <div className="flex flex-col xl:flex-row gap-3 mb-6">
@@ -1012,7 +1032,6 @@ export default function TradeCalculatorClient() {
                                   </select>
                               )}
                           </div>
-
                           <div className="space-y-3 min-h-[150px]">
                               {teamBPlayers.length === 0 ? (
                                   <div className="text-center py-10 text-gray-600 font-bold text-xs uppercase tracking-widest">No assets added</div>
