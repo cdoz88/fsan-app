@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Search, Menu, X, ChevronsUpDown, User, LogOut, Users, Flame, Loader2, FileText, ChevronRight, Activity, Gift, Globe } from 'lucide-react';
-import { useSession, signOut } from 'next-auth/react';
+import { Search, Menu, X, ChevronsUpDown, User, Users, Flame, Loader2, FileText, ChevronRight, Activity, Gift, Trophy } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { themes } from '../utils/theme';
 import { SelloutCrowds } from './Icons';
 import AuthModal from './AuthModal';
@@ -40,11 +40,9 @@ export default function Header({ activeSport }) {
   
   const currentView = pathParts.includes('home') ? 'home' : pathParts.includes('articles') ? 'articles' : pathParts.includes('videos') ? 'videos' : pathParts.includes('podcasts') ? 'podcasts' : 'home';
 
-  // Context-Aware League Sync State
   const { allLeagues, setActiveLeague, getActiveLeagueData } = useLeague();
   const [isLeagueDropdownOpen, setIsLeagueDropdownOpen] = useState(false);
 
-  // We only want the league selector to show up for major fantasy sports
   const validSportsForLeagues = ['football', 'basketball', 'baseball'];
   const currentSportFormatted = activeSport?.toLowerCase() || 'all';
   const showLeagueSelector = validSportsForLeagues.includes(currentSportFormatted);
@@ -291,7 +289,7 @@ export default function Header({ activeSport }) {
             )}
           </div>
 
-          {/* Context-Aware League Selector (Replacing Log Out on far right) */}
+          {/* Context-Aware League Selector */}
           {showLeagueSelector && (
             <div className="relative ml-2 sm:ml-4 pl-2 sm:pl-4 border-l border-gray-800 flex items-center z-[100]">
               <button
@@ -307,10 +305,10 @@ export default function Header({ activeSport }) {
                       </div>
                    )
                 ) : (
-                   <Globe size={14} className="text-gray-400 sm:w-5 sm:h-5" />
+                   <Trophy size={14} className="text-gray-400 sm:w-5 sm:h-5" />
                 )}
                 <span className="text-[10px] sm:text-xs font-bold text-gray-300 truncate">
-                  {activeLeagueData ? activeLeagueData.name : 'Global Format'}
+                  {activeLeagueData ? activeLeagueData.name : 'Select League'}
                 </span>
                 <ChevronsUpDown size={12} className="text-gray-500 shrink-0" />
               </button>
@@ -318,7 +316,6 @@ export default function Header({ activeSport }) {
               {isLeagueDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-[90]" onClick={() => setIsLeagueDropdownOpen(false)}></div>
-                  {/* Positioned right-0 so it doesn't bleed off screen */}
                   <div className="absolute top-full right-0 mt-3 w-64 bg-[#1a1a1a] border border-gray-800 rounded-xl shadow-2xl z-[100] overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
                     <div className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 border-b border-gray-800/50">
                       {activeSport} Context
@@ -328,10 +325,10 @@ export default function Header({ activeSport }) {
                       className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${!activeLeagueData ? 'bg-[#252525] text-white shadow-inner' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
                     >
                       <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center shrink-0 border border-gray-700">
-                        <Globe size={14} className={!activeLeagueData ? "text-blue-400" : "text-gray-400"} />
+                        <Trophy size={14} className={!activeLeagueData ? "text-blue-400" : "text-gray-400"} />
                       </div>
                       <div className="flex flex-col">
-                          <span className="font-bold text-sm">Global Format</span>
+                          <span className="font-bold text-sm">Select League</span>
                           <span className="text-[10px] text-gray-500 uppercase tracking-widest">Default Rankings & Math</span>
                       </div>
                     </button>
@@ -360,7 +357,7 @@ export default function Header({ activeSport }) {
                     {currentSportLeagues.length === 0 && (
                       <div className="px-4 py-4 border-t border-gray-800 mt-2 text-center">
                           <p className="text-xs text-gray-400 mb-3">No {activeSport} leagues synced.</p>
-                          <Link href="/account" onClick={() => setIsLeagueDropdownOpen(false)} className="inline-block w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-[10px] uppercase tracking-widest py-2 rounded-lg transition-colors">
+                          <Link href="/account#integrations" onClick={() => setIsLeagueDropdownOpen(false)} className="inline-block w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-[10px] uppercase tracking-widest py-2 rounded-lg transition-colors">
                               Sync Leagues
                           </Link>
                       </div>
