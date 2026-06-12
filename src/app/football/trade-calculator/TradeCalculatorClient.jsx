@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Settings, Search, X, RefreshCw, Trophy, User } from 'lucide-react'; 
+import React, { useState, useMemo, useEffect } from 'react';
+import { Settings, Search, X, RefreshCw, Trophy, User, Check } from 'lucide-react'; 
 import { HISTORICAL_DATA } from '../../../utils/historicalData'; 
 import { useLeague } from '../../../context/LeagueContext'; 
 
@@ -32,7 +32,7 @@ const generatePicks = () => {
 const DRAFT_PICKS = generatePicks();
 
 export default function TradeCalculatorClient() {
-  const { getActiveLeagueData } = useLeague();
+  const { getActiveLeagueData, sleeperUserId } = useLeague();
   const activeLeague = getActiveLeagueData('football');
 
   const [playersData, setPlayersData] = useState([]);
@@ -51,11 +51,9 @@ export default function TradeCalculatorClient() {
   const [teamAPlayers, setTeamAPlayers] = useState([]);
   const [teamBPlayers, setTeamBPlayers] = useState([]);
   
-  // --- Search Input States ---
+  // --- Search Input States (For manual fallback) ---
   const [queryA, setQueryA] = useState('');
   const [queryB, setQueryB] = useState('');
-  const [isSearchFocusedA, setIsSearchFocusedA] = useState(false);
-  const [isSearchFocusedB, setIsSearchFocusedB] = useState(false);
 
   // --- Scoring Format Settings (Fallback for non-synced) ---
   const [showSettings, setShowSettings] = useState(false);
@@ -92,7 +90,6 @@ export default function TradeCalculatorClient() {
     }
   }, [formatMode]);
 
-  // 🚀 Fetch Global Player DB
   useEffect(() => {
     async function loadLiveDatabase() {
       try {
@@ -110,7 +107,7 @@ export default function TradeCalculatorClient() {
     loadLiveDatabase();
   }, []);
 
-  // 🚀 NEW: Fetch Sleeper League Rosters & Users
+  // 🚀 Fetch Sleeper League Rosters & Users
   useEffect(() => {
     if (activeLeague && activeLeague.platform === 'sleeper') {
       const fetchSleeperData = async () => {
@@ -123,6 +120,11 @@ export default function TradeCalculatorClient() {
           const rosters = await rostersRes.json();
           setLeagueUsers(users);
           setLeagueRosters(rosters);
+
+          // 🚀 AUTO-ASSIGN TEAM A: If we know the user's sleeper ID, lock Team A to them!
+          if (sleeperUserId) {
+            setTeamAManager(sleeperUserId);
+          }
         } catch (e) {
           console.error("Failed to fetch sleeper league data", e);
         }
@@ -134,32 +136,9 @@ export default function TradeCalculatorClient() {
        setTeamAManager('');
        setTeamBManager('');
     }
-  }, [activeLeague]);
+  }, [activeLeague, sleeperUserId]);
 
-  // 🚀 NEW: Derived Rosters based on Manager Selection
-  const availablePlayersForA = useMemo(() => {
-      // Team A receives players from Team B's roster
-      if (teamBManager && leagueRosters.length > 0) {
-          const roster = leagueRosters.find(r => r.owner_id === teamBManager);
-          if (roster && roster.players) {
-              return playersData.filter(p => roster.players.includes(p.sleeper_id || p.id?.toString()));
-          }
-      }
-      return playersData;
-  }, [playersData, teamBManager, leagueRosters]);
-
-  const availablePlayersForB = useMemo(() => {
-      // Team B receives players from Team A's roster
-      if (teamAManager && leagueRosters.length > 0) {
-          const roster = leagueRosters.find(r => r.owner_id === teamAManager);
-          if (roster && roster.players) {
-              return playersData.filter(p => roster.players.includes(p.sleeper_id || p.id?.toString()));
-          }
-      }
-      return playersData;
-  }, [playersData, teamAManager, leagueRosters]);
-
-  // 🚀 ENGINE SCORING LOGIC
+  // 🚀 CORE VALUATION ENGINE
   const positionalScarcity = useMemo(() => {
     if (!playersData || playersData.length === 0) return { QB: 1, RB: 1, WR: 1, TE: 1 };
     const top100 = playersData.filter(p => (p.adp || p.AVG || 300) <= 100);
@@ -323,6 +302,42 @@ export default function TradeCalculatorClient() {
     }
   };
 
+  // 🚀 SYNCED ROSTER PARSING WITH LIVE VALUES
+  const buildRosterList = (managerId, strategy) => {
+    if (!managerId || leagueRosters.length === 0) return [];
+    const roster = leagueRosters.find(r => r.owner_id === managerId);
+    if (!roster || !roster.players) return [];
+
+    // Map sleeper IDs perfectly to our internal DB
+    const mappedPlayers = roster.players.map(sleeperId => {
+      const p = playersData.find(dbPlayer => String(dbPlayer.sleeper_id) === String(sleeperId) || String(dbPlayer.id) === String(sleeperId));
+      if (!p) return null;
+      return { ...p, uniqueId: p.name + Date.now(), calcValue: getPlayerValue(p, strategy) };
+    }).filter(Boolean);
+
+    // Sort descending by calculated value!
+    return mappedPlayers.sort((a, b) => b.calcValue - a.calcValue);
+  };
+
+  const activeRosterA = useMemo(() => buildRosterList(teamAManager, teamAStrategy), [teamAManager, leagueRosters, playersData, teamAStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
+  const activeRosterB = useMemo(() => buildRosterList(teamBManager, teamBStrategy), [teamBManager, leagueRosters, playersData, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
+
+  // Handle toggling players from the side-by-side roster
+  const togglePlayerInTrade = (playerObj, team) => {
+    if (team === 'A') {
+      // If Team A gives this player, it means Team B receives them. So they go into teamBPlayers.
+      const isSelected = teamBPlayers.some(p => p.name === playerObj.name);
+      if (isSelected) setTeamBPlayers(teamBPlayers.filter(p => p.name !== playerObj.name));
+      else setTeamBPlayers([...teamBPlayers, playerObj]);
+    } else {
+      // If Team B gives this player, Team A receives them.
+      const isSelected = teamAPlayers.some(p => p.name === playerObj.name);
+      if (isSelected) setTeamAPlayers(teamAPlayers.filter(p => p.name !== playerObj.name));
+      else setTeamAPlayers([...teamAPlayers, playerObj]);
+    }
+  };
+
+  // Trade Engine Evaluation
   const tradeEvaluation = useMemo(() => {
     const teamA_assets = teamAPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamAStrategy) }))
                                      .sort((a, b) => b.calcValue - a.calcValue);
@@ -379,8 +394,8 @@ export default function TradeCalculatorClient() {
   const diff = Math.abs(totalA - totalB);
   const diffPct = totalBoth > 0 ? (diff / totalBoth) * 100 : 0;
 
-  let verdictTitle = "Add assets to evaluate trade";
-  let verdictSubtitle = "Select players or picks to see the package analysis.";
+  let verdictTitle = "Select assets to evaluate trade";
+  let verdictSubtitle = "Toggle players to see the package analysis.";
   let verdictColor = "text-gray-500";
   let barAWidth = 50;
   let barBWidth = 50;
@@ -417,6 +432,7 @@ export default function TradeCalculatorClient() {
       }
   }
 
+  // Fallback Manual Add Player
   const addPlayer = (item, team) => {
       const newItem = { ...item, uniqueId: item.name + Date.now() }; 
       if (item.position !== 'PICK' || item.id.includes('.')) {
@@ -539,291 +555,391 @@ export default function TradeCalculatorClient() {
                     </div>
                 </div>
 
-                {/* TWO COLUMN LAYOUT */}
-                <div className="flex flex-col lg:flex-row gap-6">
-                    
-                    {/* TEAM A PANE */}
-                    <div className="flex-1 bg-[#111] border-2 border-red-900/30 rounded-3xl p-6 shadow-2xl relative">
-                        <div className="flex justify-between items-start mb-6 border-b border-gray-800 pb-4">
-                            <div className="flex flex-col gap-2 w-full max-w-[60%]">
-                                <h3 className="text-lg font-black text-white uppercase tracking-wider">Team A Receives</h3>
-                                
-                                {/* 🚀 NEW: Manager Roster Selector */}
-                                {activeLeague && leagueUsers.length > 0 && (
-                                    <div className="flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-3 py-1.5 border border-gray-800 w-fit">
-                                        <User size={14} className="text-gray-500" />
-                                        <select 
-                                            value={teamAManager}
-                                            onChange={(e) => { setTeamAManager(e.target.value); setTeamAPlayers([]); }}
-                                            className="bg-transparent text-gray-300 text-xs font-bold outline-none cursor-pointer"
-                                        >
-                                            <option value="">Assign Manager A</option>
-                                            {leagueUsers.map(u => (
-                                                <option key={u.user_id} value={u.user_id}>{u.display_name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
-                            </div>
+                {/* 🚀 NEW: SIDE-BY-SIDE ROSTER UI (If League Synced) */}
+                {activeLeague ? (
+                  <div className="flex flex-col lg:flex-row gap-6">
+                    {/* MY ROSTER (Team A) */}
+                    <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col h-[700px]">
+                      
+                      {/* Header & Strategy */}
+                      <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-4 shrink-0">
+                          <div className="flex flex-col">
+                              <h3 className="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
+                                <User size={18} className="text-red-500" /> My Team
+                              </h3>
+                              <span className="text-xs text-red-500 font-bold tracking-widest uppercase mt-1">Sending: {totalA}</span>
+                          </div>
 
-                            {formatMode === 'dynasty' && (
-                                <select 
-                                    value={teamAStrategy} 
-                                    onChange={(e) => setTeamAStrategy(e.target.value)}
-                                    className="bg-[#1a1a1a] border border-red-900/50 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none font-bold text-xs tracking-wide"
+                          {formatMode === 'dynasty' && (
+                              <select 
+                                  value={teamAStrategy} 
+                                  onChange={(e) => setTeamAStrategy(e.target.value)}
+                                  className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none font-bold text-xs tracking-wide"
+                              >
+                                  <option value="win_now">🏆 Win Now</option>
+                                  <option value="neutral">⚖️ Balanced</option>
+                                  <option value="build">🌱 Rebuild</option>
+                              </select>
+                          )}
+                      </div>
+
+                      {/* Picks Dropdown */}
+                      <div className="mb-4 shrink-0">
+                          <select 
+                              onChange={(e) => handlePickSelect(e, 'A')}
+                              className="w-full bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors cursor-pointer"
+                          >
+                              <option value="">+ Add Draft Pick to Trade</option>
+                              <optgroup label="2026 Picks">
+                                  {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                              </optgroup>
+                              <optgroup label="2027 Picks">
+                                  {DRAFT_PICKS.filter(p => p.year === 2027).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                              </optgroup>
+                          </select>
+                      </div>
+
+                      {/* Scrollable Roster List */}
+                      <div className="flex-1 overflow-y-auto custom-scroll pr-2 space-y-2">
+                          {/* Render Manual Picks first */}
+                          {teamAPlayers.filter(p => p.position === 'PICK').map(p => (
+                             <div 
+                                key={p.uniqueId} 
+                                onClick={() => togglePlayerInTrade(p, 'A')}
+                                className="flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border-2 border-red-500 bg-red-900/20"
+                              >
+                                 <div className="flex items-center gap-3">
+                                     <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center text-white"><Check size={14} /></div>
+                                     <span className="text-sm font-black text-white">{p.name}</span>
+                                 </div>
+                                 <span className="text-sm font-black text-white">{getPlayerValue(p, teamAStrategy)}</span>
+                             </div>
+                          ))}
+
+                          {/* Render Actual Roster */}
+                          {activeRosterA.map(p => {
+                             const isSelected = teamBPlayers.some(traded => traded.name === p.name);
+                             return (
+                               <div 
+                                  key={p.id} 
+                                  onClick={() => togglePlayerInTrade(p, 'A')}
+                                  className={`flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected ? 'border-red-500 bg-red-900/20' : 'border-transparent bg-[#1a1a1a] hover:border-gray-600'}`}
                                 >
-                                    <option value="win_now">🏆 Win Now</option>
-                                    <option value="neutral">⚖️ Balanced</option>
-                                    <option value="build">🌱 Rebuild</option>
-                                </select>
-                            )}
-                        </div>
-
-                        {/* Search & Pick Header */}
-                        <div className="flex flex-col xl:flex-row gap-3 mb-6">
-                            <div className="relative flex-1">
-                                <div className="flex items-center bg-[#1a1a1a] border border-gray-800 rounded-xl px-4 py-3">
-                                    <Search size={18} className="text-gray-500 mr-3 shrink-0" />
-                                    <input 
-                                        type="text" 
-                                        placeholder={teamBManager ? "Search Team B's roster..." : "Search players..."}
-                                        className="bg-transparent text-white outline-none w-full text-sm font-bold placeholder-gray-600"
-                                        value={queryA}
-                                        onChange={e => setQueryA(e.target.value)}
-                                        onFocus={() => setIsSearchFocusedA(true)}
-                                        onBlur={() => setTimeout(() => setIsSearchFocusedA(false), 200)}
-                                    />
-                                </div>
-                                
-                                {/* 🚀 NEW: Intelligent Roster Search Dropdown */}
-                                {(queryA.length > 1 || (teamBManager && isSearchFocusedA)) && (
-                                    <div className="absolute z-50 top-full mt-2 w-full bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto custom-scroll">
-                                        {availablePlayersForA
-                                            .filter(p => p.name.toLowerCase().includes(queryA.toLowerCase()))
-                                            .slice(0, teamBManager && queryA === '' ? 50 : 8)
-                                            .map(p => (
-                                                <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { addPlayer(p, 'A'); setQueryA(''); setIsSearchFocusedA(false); }}>
-                                                    <div className="flex items-center gap-3">
-                                                        {p.team && p.team !== 'fa' && (
-                                                            <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
-                                                        )}
-                                                        <span className="text-sm font-bold text-white">{p.name}</span>
-                                                        <span className="text-[10px] font-black bg-gray-800 text-gray-400 px-2 py-0.5 rounded uppercase">{p.position}</span>
-                                                    </div>
-                                                    <span className="text-xs font-black text-gray-400">{getPlayerValue(p, teamAStrategy)} pts</span>
-                                                </div>
-                                            ))}
-                                        {teamBManager && availablePlayersForA.length === 0 && (
-                                            <div className="px-4 py-6 text-xs text-gray-500 font-bold tracking-widest uppercase text-center">Roster Empty</div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-
-                            {formatMode === 'dynasty' && (
-                                <select 
-                                    onChange={(e) => handlePickSelect(e, 'A')}
-                                    className="bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors xl:w-40 cursor-pointer"
-                                >
-                                    <option value="">+ Add Pick</option>
-                                    <optgroup label="2026 Picks">
-                                        {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                    </optgroup>
-                                    <optgroup label="2027 Picks">
-                                        {DRAFT_PICKS.filter(p => p.year === 2027).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                    </optgroup>
-                                    <optgroup label="2028 Picks">
-                                        {DRAFT_PICKS.filter(p => p.year === 2028).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                    </optgroup>
-                                </select>
-                            )}
-                        </div>
-
-                        {/* Team A Asset List */}
-                        <div className="space-y-3 min-h-[150px]">
-                            {teamAPlayers.length === 0 ? (
-                                <div className="text-center py-10 text-gray-600 font-bold text-xs uppercase tracking-widest">No assets added</div>
-                            ) : teamAPlayers.map(p => (
-                                <div key={p.uniqueId} className="flex justify-between items-center bg-[#1a1a1a] border border-red-900/20 p-4 rounded-2xl group transition-all hover:border-red-500/50">
-                                    <div className="flex items-center gap-4">
-                                        <button onClick={() => removePlayer(p.uniqueId, 'A')} className="text-gray-600 hover:text-red-500 transition-colors">
-                                            <X size={18} />
-                                        </button>
-                                        <div className="flex items-center gap-3">
-                                            {p.position === 'PICK' ? (
-                                                <div className="w-8 h-8 rounded-full bg-yellow-600 flex items-center justify-center text-xs font-black text-white shadow-md">
-                                                    {p.year.toString().slice(-2)}
-                                                </div>
-                                            ) : (
-                                                p.team && p.team !== 'fa' && (
-                                                    <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-8 h-8 object-contain drop-shadow-md" onError={(e) => e.target.style.display = 'none'} />
-                                                )
-                                            )}
-                                            <div>
-                                                <div className="text-sm font-black text-white">{p.name}</div>
-                                                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} {formatMode === 'dynasty' && p.age ? `• ${p.age} y/o` : ''}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="text-lg font-black text-white">{getPlayerValue(p, teamAStrategy)}</div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Team A Totals */}
-                        <div className="mt-8 pt-4 border-t border-red-900/30 flex justify-between items-end">
-                            <div className="flex flex-col">
-                                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Final Package Value</span>
-                                {bestAssetSide === 'A' && !isOneForOne && <span className="text-[10px] text-amber-500 font-bold uppercase mt-1">Includes Elite Premium (+{premium})</span>}
-                                {hasPenaltyA && <span className="text-[10px] text-red-400 font-bold uppercase mt-1">Tiered Package Tax Applied</span>}
-                            </div>
-                            <span className="text-4xl font-black text-red-500">{totalA}</span>
-                        </div>
+                                   <div className="flex items-center gap-3">
+                                       {isSelected ? (
+                                          <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center text-white shrink-0"><Check size={16} /></div>
+                                       ) : (
+                                          p.team && p.team !== 'fa' ? (
+                                              <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-8 h-8 object-contain opacity-70 shrink-0" onError={(e) => e.target.style.display = 'none'} />
+                                          ) : (
+                                              <div className="w-8 h-8 rounded-full bg-gray-800 shrink-0"></div>
+                                          )
+                                       )}
+                                       <div className="flex flex-col">
+                                          <span className={`text-sm font-black ${isSelected ? 'text-white' : 'text-gray-300'}`}>{p.name}</span>
+                                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} {formatMode === 'dynasty' && p.age ? `• ${p.age} y/o` : ''}</span>
+                                       </div>
+                                   </div>
+                                   <span className={`text-sm font-black ${isSelected ? 'text-white' : 'text-gray-400'}`}>{p.calcValue}</span>
+                               </div>
+                             );
+                          })}
+                          {activeRosterA.length === 0 && <div className="text-center py-10 text-gray-600 text-xs font-bold uppercase tracking-widest">Roster not found</div>}
+                      </div>
                     </div>
 
-                    {/* TEAM B PANE */}
-                    <div className="flex-1 bg-[#111] border-2 border-blue-900/30 rounded-3xl p-6 shadow-2xl relative">
-                        <div className="flex justify-between items-start mb-6 border-b border-gray-800 pb-4">
-                            <div className="flex flex-col gap-2 w-full max-w-[60%]">
-                                <h3 className="text-lg font-black text-white uppercase tracking-wider">Team B Receives</h3>
-                                
-                                {/* 🚀 NEW: Manager Roster Selector */}
-                                {activeLeague && leagueUsers.length > 0 && (
-                                    <div className="flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-3 py-1.5 border border-gray-800 w-fit">
-                                        <User size={14} className="text-gray-500" />
-                                        <select 
-                                            value={teamBManager}
-                                            onChange={(e) => { setTeamBManager(e.target.value); setTeamBPlayers([]); }}
-                                            className="bg-transparent text-gray-300 text-xs font-bold outline-none cursor-pointer"
-                                        >
-                                            <option value="">Assign Manager B</option>
-                                            {leagueUsers.map(u => (
-                                                <option key={u.user_id} value={u.user_id}>{u.display_name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
-                            </div>
+                    {/* OPPONENT ROSTER (Team B) */}
+                    <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col h-[700px]">
+                      
+                      {/* Header & Strategy */}
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 border-b border-gray-800 pb-4 shrink-0">
+                          <div className="flex flex-col w-full sm:w-auto">
+                              <select 
+                                  value={teamBManager}
+                                  onChange={(e) => { setTeamBManager(e.target.value); setTeamBPlayers([]); setTeamAPlayers([]); }}
+                                  className="bg-transparent text-lg font-black text-white uppercase tracking-wider outline-none cursor-pointer mb-1 border-b border-dashed border-gray-600 pb-1 hover:border-blue-500 transition-colors"
+                              >
+                                  <option value="">Select Opponent</option>
+                                  {leagueUsers.filter(u => u.user_id !== sleeperUserId).map(u => (
+                                      <option key={u.user_id} value={u.user_id}>{u.display_name}</option>
+                                  ))}
+                              </select>
+                              <span className="text-xs text-blue-500 font-bold tracking-widest uppercase">Receiving: {totalB}</span>
+                          </div>
 
-                            {formatMode === 'dynasty' && (
-                                <select 
-                                    value={teamBStrategy} 
-                                    onChange={(e) => setTeamBStrategy(e.target.value)}
-                                    className="bg-[#1a1a1a] border border-blue-900/50 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none font-bold text-xs tracking-wide"
-                                >
-                                    <option value="win_now">🏆 Win Now</option>
-                                    <option value="neutral">⚖️ Balanced</option>
-                                    <option value="build">🌱 Rebuild</option>
-                                </select>
-                            )}
-                        </div>
+                          {formatMode === 'dynasty' && (
+                              <select 
+                                  value={teamBStrategy} 
+                                  onChange={(e) => setTeamBStrategy(e.target.value)}
+                                  className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full sm:w-auto"
+                              >
+                                  <option value="win_now">🏆 Win Now</option>
+                                  <option value="neutral">⚖️ Balanced</option>
+                                  <option value="build">🌱 Rebuild</option>
+                              </select>
+                          )}
+                      </div>
 
-                        {/* Search & Pick Header */}
-                        <div className="flex flex-col xl:flex-row gap-3 mb-6">
-                            <div className="relative flex-1">
-                                <div className="flex items-center bg-[#1a1a1a] border border-gray-800 rounded-xl px-4 py-3">
-                                    <Search size={18} className="text-gray-500 mr-3 shrink-0" />
-                                    <input 
-                                        type="text" 
-                                        placeholder={teamAManager ? "Search Team A's roster..." : "Search players..."}
-                                        className="bg-transparent text-white outline-none w-full text-sm font-bold placeholder-gray-600"
-                                        value={queryB}
-                                        onChange={e => setQueryB(e.target.value)}
-                                        onFocus={() => setIsSearchFocusedB(true)}
-                                        onBlur={() => setTimeout(() => setIsSearchFocusedB(false), 200)}
-                                    />
-                                </div>
+                      {/* Picks Dropdown */}
+                      <div className="mb-4 shrink-0">
+                          <select 
+                              onChange={(e) => handlePickSelect(e, 'B')}
+                              disabled={!teamBManager}
+                              className="w-full bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                          >
+                              <option value="">+ Add Draft Pick to Trade</option>
+                              <optgroup label="2026 Picks">
+                                  {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                              </optgroup>
+                              <optgroup label="2027 Picks">
+                                  {DRAFT_PICKS.filter(p => p.year === 2027).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                              </optgroup>
+                          </select>
+                      </div>
 
-                                {/* 🚀 NEW: Intelligent Roster Search Dropdown */}
-                                {(queryB.length > 1 || (teamAManager && isSearchFocusedB)) && (
-                                    <div className="absolute z-50 top-full mt-2 w-full bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto custom-scroll">
-                                        {availablePlayersForB
-                                            .filter(p => p.name.toLowerCase().includes(queryB.toLowerCase()))
-                                            .slice(0, teamAManager && queryB === '' ? 50 : 8)
-                                            .map(p => (
-                                                <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { addPlayer(p, 'B'); setQueryB(''); setIsSearchFocusedB(false); }}>
-                                                    <div className="flex items-center gap-3">
-                                                        {p.team && p.team !== 'fa' && (
-                                                            <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
-                                                        )}
-                                                        <span className="text-sm font-bold text-white">{p.name}</span>
-                                                        <span className="text-[10px] font-black bg-gray-800 text-gray-400 px-2 py-0.5 rounded uppercase">{p.position}</span>
-                                                    </div>
-                                                    <span className="text-xs font-black text-gray-400">{getPlayerValue(p, teamBStrategy)} pts</span>
-                                                </div>
-                                            ))}
-                                        {teamAManager && availablePlayersForB.length === 0 && (
-                                            <div className="px-4 py-6 text-xs text-gray-500 font-bold tracking-widest uppercase text-center">Roster Empty</div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
+                      {/* Scrollable Roster List */}
+                      <div className="flex-1 overflow-y-auto custom-scroll pr-2 space-y-2">
+                          {!teamBManager ? (
+                              <div className="text-center py-20 text-gray-600 text-xs font-bold uppercase tracking-widest">Select an opponent to view roster</div>
+                          ) : (
+                              <>
+                                {/* Render Manual Picks first */}
+                                {teamBPlayers.filter(p => p.position === 'PICK').map(p => (
+                                   <div 
+                                      key={p.uniqueId} 
+                                      onClick={() => togglePlayerInTrade(p, 'B')}
+                                      className="flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border-2 border-blue-500 bg-blue-900/20"
+                                    >
+                                       <div className="flex items-center gap-3">
+                                           <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white"><Check size={14} /></div>
+                                           <span className="text-sm font-black text-white">{p.name}</span>
+                                       </div>
+                                       <span className="text-sm font-black text-white">{getPlayerValue(p, teamBStrategy)}</span>
+                                   </div>
+                                ))}
 
-                            {formatMode === 'dynasty' && (
-                                <select 
-                                    onChange={(e) => handlePickSelect(e, 'B')}
-                                    className="bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors xl:w-40 cursor-pointer"
-                                >
-                                    <option value="">+ Add Pick</option>
-                                    <optgroup label="2026 Picks">
-                                        {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                    </optgroup>
-                                    <optgroup label="2027 Picks">
-                                        {DRAFT_PICKS.filter(p => p.year === 2027).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                    </optgroup>
-                                    <optgroup label="2028 Picks">
-                                        {DRAFT_PICKS.filter(p => p.year === 2028).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                    </optgroup>
-                                </select>
-                            )}
-                        </div>
-
-                        {/* Team B Asset List */}
-                        <div className="space-y-3 min-h-[150px]">
-                            {teamBPlayers.length === 0 ? (
-                                <div className="text-center py-10 text-gray-600 font-bold text-xs uppercase tracking-widest">No assets added</div>
-                            ) : teamBPlayers.map(p => (
-                                <div key={p.uniqueId} className="flex justify-between items-center bg-[#1a1a1a] border border-blue-900/20 p-4 rounded-2xl group transition-all hover:border-blue-500/50">
-                                    <div className="flex items-center gap-4">
-                                        <button onClick={() => removePlayer(p.uniqueId, 'B')} className="text-gray-600 hover:text-blue-500 transition-colors">
-                                            <X size={18} />
-                                        </button>
-                                        <div className="flex items-center gap-3">
-                                            {p.position === 'PICK' ? (
-                                                <div className="w-8 h-8 rounded-full bg-yellow-600 flex items-center justify-center text-xs font-black text-white shadow-md">
-                                                    {p.year.toString().slice(-2)}
-                                                </div>
-                                            ) : (
-                                                p.team && p.team !== 'fa' && (
-                                                    <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-8 h-8 object-contain drop-shadow-md" onError={(e) => e.target.style.display = 'none'} />
+                                {/* Render Actual Roster */}
+                                {activeRosterB.map(p => {
+                                   const isSelected = teamAPlayers.some(traded => traded.name === p.name);
+                                   return (
+                                     <div 
+                                        key={p.id} 
+                                        onClick={() => togglePlayerInTrade(p, 'B')}
+                                        className={`flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected ? 'border-blue-500 bg-blue-900/20' : 'border-transparent bg-[#1a1a1a] hover:border-gray-600'}`}
+                                      >
+                                         <div className="flex items-center gap-3">
+                                             {isSelected ? (
+                                                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white shrink-0"><Check size={16} /></div>
+                                             ) : (
+                                                p.team && p.team !== 'fa' ? (
+                                                    <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-8 h-8 object-contain opacity-70 shrink-0" onError={(e) => e.target.style.display = 'none'} />
+                                                ) : (
+                                                    <div className="w-8 h-8 rounded-full bg-gray-800 shrink-0"></div>
                                                 )
-                                            )}
-                                            <div>
-                                                <div className="text-sm font-black text-white">{p.name}</div>
-                                                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} {formatMode === 'dynasty' && p.age ? `• ${p.age} y/o` : ''}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="text-lg font-black text-white">{getPlayerValue(p, teamBStrategy)}</div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Team B Totals */}
-                        <div className="mt-8 pt-4 border-t border-blue-900/30 flex justify-between items-end">
-                            <div className="flex flex-col">
-                                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Final Package Value</span>
-                                {bestAssetSide === 'B' && !isOneForOne && <span className="text-[10px] text-amber-500 font-bold uppercase mt-1">Includes Elite Premium (+{premium})</span>}
-                                {hasPenaltyB && <span className="text-[10px] text-red-400 font-bold uppercase mt-1">Tiered Package Tax Applied</span>}
-                            </div>
-                            <span className="text-4xl font-black text-blue-500">{totalB}</span>
-                        </div>
+                                             )}
+                                             <div className="flex flex-col">
+                                                <span className={`text-sm font-black ${isSelected ? 'text-white' : 'text-gray-300'}`}>{p.name}</span>
+                                                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} {formatMode === 'dynasty' && p.age ? `• ${p.age} y/o` : ''}</span>
+                                             </div>
+                                         </div>
+                                         <span className={`text-sm font-black ${isSelected ? 'text-white' : 'text-gray-400'}`}>{p.calcValue}</span>
+                                     </div>
+                                   );
+                                })}
+                              </>
+                          )}
+                      </div>
                     </div>
+                  </div>
+                ) : (
+                  
+                  // 🚀 OLD FALLBACK UI (If no league is synced)
+                  <div className="flex flex-col lg:flex-row gap-6">
+                      {/* TEAM A PANE */}
+                      <div className="flex-1 bg-[#111] border-2 border-red-900/30 rounded-3xl p-6 shadow-2xl relative">
+                          <div className="flex justify-between items-start mb-6 border-b border-gray-800 pb-4">
+                              <h3 className="text-lg font-black text-white uppercase tracking-wider">Team A Receives</h3>
+                              {formatMode === 'dynasty' && (
+                                  <select 
+                                      value={teamAStrategy} 
+                                      onChange={(e) => setTeamAStrategy(e.target.value)}
+                                      className="bg-[#1a1a1a] border border-red-900/50 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none font-bold text-xs tracking-wide"
+                                  >
+                                      <option value="win_now">🏆 Win Now</option>
+                                      <option value="neutral">⚖️ Balanced</option>
+                                      <option value="build">🌱 Rebuild</option>
+                                  </select>
+                              )}
+                          </div>
+                          <div className="flex flex-col xl:flex-row gap-3 mb-6">
+                              <div className="relative flex-1">
+                                  <div className="flex items-center bg-[#1a1a1a] border border-gray-800 rounded-xl px-4 py-3">
+                                      <Search size={18} className="text-gray-500 mr-3 shrink-0" />
+                                      <input 
+                                          type="text" 
+                                          placeholder="Search players..."
+                                          className="bg-transparent text-white outline-none w-full text-sm font-bold placeholder-gray-600"
+                                          value={queryA}
+                                          onChange={e => setQueryA(e.target.value)}
+                                      />
+                                  </div>
+                                  {queryA.length > 1 && (
+                                      <div className="absolute z-50 top-full mt-2 w-full bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto custom-scroll">
+                                          {playersData.filter(p => p.name.toLowerCase().includes(queryA.toLowerCase())).slice(0, 8).map(p => (
+                                              <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { addPlayer(p, 'A'); setQueryA(''); }}>
+                                                  <div className="flex items-center gap-3">
+                                                      {p.team && p.team !== 'fa' && (
+                                                          <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                                                      )}
+                                                      <span className="text-sm font-bold text-white">{p.name}</span>
+                                                      <span className="text-[10px] font-black bg-gray-800 text-gray-400 px-2 py-0.5 rounded uppercase">{p.position}</span>
+                                                  </div>
+                                                  <span className="text-xs font-black text-gray-400">{getPlayerValue(p, teamAStrategy)} pts</span>
+                                              </div>
+                                          ))}
+                                      </div>
+                                  )}
+                              </div>
+                              {formatMode === 'dynasty' && (
+                                  <select 
+                                      onChange={(e) => handlePickSelect(e, 'A')}
+                                      className="bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors xl:w-40 cursor-pointer"
+                                  >
+                                      <option value="">+ Add Pick</option>
+                                      <optgroup label="2026 Picks">
+                                          {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                      </optgroup>
+                                  </select>
+                              )}
+                          </div>
+                          <div className="space-y-3 min-h-[150px]">
+                              {teamAPlayers.length === 0 ? (
+                                  <div className="text-center py-10 text-gray-600 font-bold text-xs uppercase tracking-widest">No assets added</div>
+                              ) : teamAPlayers.map(p => (
+                                  <div key={p.uniqueId} className="flex justify-between items-center bg-[#1a1a1a] border border-red-900/20 p-4 rounded-2xl group transition-all hover:border-red-500/50">
+                                      <div className="flex items-center gap-4">
+                                          <button onClick={() => removePlayer(p.uniqueId, 'A')} className="text-gray-600 hover:text-red-500 transition-colors">
+                                              <X size={18} />
+                                          </button>
+                                          <div className="flex items-center gap-3">
+                                              {p.position === 'PICK' ? (
+                                                  <div className="w-8 h-8 rounded-full bg-yellow-600 flex items-center justify-center text-xs font-black text-white shadow-md">{p.year.toString().slice(-2)}</div>
+                                              ) : (
+                                                  p.team && p.team !== 'fa' && <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-8 h-8 object-contain drop-shadow-md" onError={(e) => e.target.style.display = 'none'} />
+                                              )}
+                                              <div>
+                                                  <div className="text-sm font-black text-white">{p.name}</div>
+                                                  <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} {formatMode === 'dynasty' && p.age ? `• ${p.age} y/o` : ''}</div>
+                                              </div>
+                                          </div>
+                                      </div>
+                                      <div className="text-lg font-black text-white">{getPlayerValue(p, teamAStrategy)}</div>
+                                  </div>
+                              ))}
+                          </div>
+                          <div className="mt-8 pt-4 border-t border-red-900/30 flex justify-between items-end">
+                              <div className="flex flex-col">
+                                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Final Package Value</span>
+                                  {bestAssetSide === 'A' && !isOneForOne && <span className="text-[10px] text-amber-500 font-bold uppercase mt-1">Includes Elite Premium (+{premium})</span>}
+                              </div>
+                              <span className="text-4xl font-black text-red-500">{totalA}</span>
+                          </div>
+                      </div>
 
-                </div>
+                      {/* TEAM B PANE */}
+                      <div className="flex-1 bg-[#111] border-2 border-blue-900/30 rounded-3xl p-6 shadow-2xl relative">
+                          <div className="flex justify-between items-start mb-6 border-b border-gray-800 pb-4">
+                              <h3 className="text-lg font-black text-white uppercase tracking-wider">Team B Receives</h3>
+                              {formatMode === 'dynasty' && (
+                                  <select 
+                                      value={teamBStrategy} 
+                                      onChange={(e) => setTeamBStrategy(e.target.value)}
+                                      className="bg-[#1a1a1a] border border-blue-900/50 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none font-bold text-xs tracking-wide"
+                                  >
+                                      <option value="win_now">🏆 Win Now</option>
+                                      <option value="neutral">⚖️ Balanced</option>
+                                      <option value="build">🌱 Rebuild</option>
+                                  </select>
+                              )}
+                          </div>
+                          <div className="flex flex-col xl:flex-row gap-3 mb-6">
+                              <div className="relative flex-1">
+                                  <div className="flex items-center bg-[#1a1a1a] border border-gray-800 rounded-xl px-4 py-3">
+                                      <Search size={18} className="text-gray-500 mr-3 shrink-0" />
+                                      <input 
+                                          type="text" 
+                                          placeholder="Search players..."
+                                          className="bg-transparent text-white outline-none w-full text-sm font-bold placeholder-gray-600"
+                                          value={queryB}
+                                          onChange={e => setQueryB(e.target.value)}
+                                      />
+                                  </div>
+                                  {queryB.length > 1 && (
+                                      <div className="absolute z-50 top-full mt-2 w-full bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto custom-scroll">
+                                          {playersData.filter(p => p.name.toLowerCase().includes(queryB.toLowerCase())).slice(0, 8).map(p => (
+                                              <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { addPlayer(p, 'B'); setQueryB(''); }}>
+                                                  <div className="flex items-center gap-3">
+                                                      {p.team && p.team !== 'fa' && (
+                                                          <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                                                      )}
+                                                      <span className="text-sm font-bold text-white">{p.name}</span>
+                                                      <span className="text-[10px] font-black bg-gray-800 text-gray-400 px-2 py-0.5 rounded uppercase">{p.position}</span>
+                                                  </div>
+                                                  <span className="text-xs font-black text-gray-400">{getPlayerValue(p, teamBStrategy)} pts</span>
+                                              </div>
+                                          ))}
+                                      </div>
+                                  )}
+                              </div>
+                              {formatMode === 'dynasty' && (
+                                  <select 
+                                      onChange={(e) => handlePickSelect(e, 'B')}
+                                      className="bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors xl:w-40 cursor-pointer"
+                                  >
+                                      <option value="">+ Add Pick</option>
+                                      <optgroup label="2026 Picks">
+                                          {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                      </optgroup>
+                                  </select>
+                              )}
+                          </div>
+                          <div className="space-y-3 min-h-[150px]">
+                              {teamBPlayers.length === 0 ? (
+                                  <div className="text-center py-10 text-gray-600 font-bold text-xs uppercase tracking-widest">No assets added</div>
+                              ) : teamBPlayers.map(p => (
+                                  <div key={p.uniqueId} className="flex justify-between items-center bg-[#1a1a1a] border border-blue-900/20 p-4 rounded-2xl group transition-all hover:border-blue-500/50">
+                                      <div className="flex items-center gap-4">
+                                          <button onClick={() => removePlayer(p.uniqueId, 'B')} className="text-gray-600 hover:text-blue-500 transition-colors">
+                                              <X size={18} />
+                                          </button>
+                                          <div className="flex items-center gap-3">
+                                              {p.position === 'PICK' ? (
+                                                  <div className="w-8 h-8 rounded-full bg-yellow-600 flex items-center justify-center text-xs font-black text-white shadow-md">{p.year.toString().slice(-2)}</div>
+                                              ) : (
+                                                  p.team && p.team !== 'fa' && <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-8 h-8 object-contain drop-shadow-md" onError={(e) => e.target.style.display = 'none'} />
+                                              )}
+                                              <div>
+                                                  <div className="text-sm font-black text-white">{p.name}</div>
+                                                  <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} {formatMode === 'dynasty' && p.age ? `• ${p.age} y/o` : ''}</div>
+                                              </div>
+                                          </div>
+                                      </div>
+                                      <div className="text-lg font-black text-white">{getPlayerValue(p, teamBStrategy)}</div>
+                                  </div>
+                              ))}
+                          </div>
+                          <div className="mt-8 pt-4 border-t border-blue-900/30 flex justify-between items-end">
+                              <div className="flex flex-col">
+                                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Final Package Value</span>
+                                  {bestAssetSide === 'B' && !isOneForOne && <span className="text-[10px] text-amber-500 font-bold uppercase mt-1">Includes Elite Premium (+{premium})</span>}
+                              </div>
+                              <span className="text-4xl font-black text-blue-500">{totalB}</span>
+                          </div>
+                      </div>
+                  </div>
+                )}
             </div>
         )}
-
       </div>
     </div>
   );

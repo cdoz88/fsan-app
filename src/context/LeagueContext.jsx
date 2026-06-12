@@ -16,15 +16,19 @@ export function LeagueProvider({ children }) {
     baseball: null,
   });
   
+  // 🚀 NEW: Store the user's actual Sleeper ID so we can auto-assign Team A
+  const [sleeperUserId, setSleeperUserId] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
   // --- Boot Up: Load preferences from Local Storage ---
   useEffect(() => {
     const savedLeagues = localStorage.getItem('fsan_all_leagues');
     const savedActive = localStorage.getItem('fsan_active_leagues');
+    const savedSleeperId = localStorage.getItem('fsan_sleeper_user_id'); // 🚀 NEW
     
     if (savedLeagues) setAllLeagues(JSON.parse(savedLeagues));
     if (savedActive) setActiveLeagues(JSON.parse(savedActive));
+    if (savedSleeperId) setSleeperUserId(savedSleeperId); // 🚀 NEW
   }, []);
 
   // --- The Sleeper Sync Engine ---
@@ -35,6 +39,10 @@ export function LeagueProvider({ children }) {
       const userRes = await fetch(`https://api.sleeper.app/v1/user/${username}`);
       const userData = await userRes.json();
       if (!userData?.user_id) throw new Error("Sleeper user not found.");
+
+      // 🚀 NEW: Save the User ID locally so the Trade Calculator knows who Team A is
+      setSleeperUserId(userData.user_id);
+      localStorage.setItem('fsan_sleeper_user_id', userData.user_id);
 
       // 2. Fetch all NFL leagues for the 2026 season
       const leaguesRes = await fetch(`https://api.sleeper.app/v1/user/${userData.user_id}/leagues/nfl/2026`);
@@ -116,6 +124,7 @@ export function LeagueProvider({ children }) {
       allLeagues,
       activeLeagues,
       isSyncing,
+      sleeperUserId, // 🚀 NEW: Exported the User ID
       syncSleeperAccount,
       removeLeague, // 🚀 NEW: Exported the remove function
       setActiveLeague,
