@@ -353,15 +353,22 @@ export default function Header({ activeSport }) {
                       </button>
                     ))}
 
-                    {/* FREEMIUM / SYNC UPSELL */}
-                    {currentSportLeagues.length === 0 && (
-                      <div className="px-4 py-4 border-t border-gray-800 mt-2 text-center">
+                    {/* FREEMIUM & MANAGEMENT BUTTON */}
+                    <div className="px-4 py-4 border-t border-gray-800 mt-2 text-center">
+                      {currentSportLeagues.length === 0 ? (
+                        <>
                           <p className="text-xs text-gray-400 mb-3">No {activeSport} leagues synced.</p>
-                          <Link href="/account#integrations" onClick={() => setIsLeagueDropdownOpen(false)} className="inline-block w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-[10px] uppercase tracking-widest py-2 rounded-lg transition-colors">
+                          <Link href="/account#synced-leagues" onClick={() => setIsLeagueDropdownOpen(false)} className="inline-block w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-[10px] uppercase tracking-widest py-2 rounded-lg transition-colors">
                               Sync Leagues
                           </Link>
-                      </div>
-                    )}
+                        </>
+                      ) : (
+                        <Link href="/account#synced-leagues" onClick={() => setIsLeagueDropdownOpen(false)} className="inline-block w-full bg-[#252525] hover:bg-gray-700 border border-gray-700 text-white font-bold text-[10px] uppercase tracking-widest py-2 rounded-lg transition-colors shadow-inner">
+                            Manage Leagues
+                        </Link>
+                      )}
+                    </div>
+
                   </div>
                 </>
               )}
