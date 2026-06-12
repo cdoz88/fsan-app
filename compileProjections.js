@@ -7,6 +7,17 @@ const cleanNum = (val) => {
   return parseFloat(val.toString().replace(/,/g, '').trim()) || 0;
 };
 
+// 🚀 NEW: The Name Normalizer (Strips suffixes, punctuation, and hyphens for perfect matching)
+const normalizeName = (name) => {
+  if (!name) return '';
+  return name
+    .toLowerCase()
+    .replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '') // Remove suffixes
+    .replace(/['.\-]/g, '') // Remove punctuation and hyphens
+    .replace(/\s+/g, ' ') // Remove double spaces
+    .trim();
+};
+
 const cleanNameAndTeam = (rawString, isDST = false) => {
   if (!rawString) return { name: '', team: 'fa' };
   let sanitized = rawString.replace(/\u00a0/g, ' ').trim();
@@ -165,8 +176,8 @@ function compile() {
       const adpVal = row.AVG || row.ADP;
 
       if (playerName && adpVal) {
-        // Clean name to ensure perfect matching
-        const cleanName = playerName.replace(/\u00a0/g, ' ').trim().toLowerCase();
+        // Run the ADP name through the Normalizer
+        const cleanName = normalizeName(playerName);
         marketData[cleanName] = parseFloat(adpVal) || 300;
       }
     });
@@ -177,7 +188,8 @@ function compile() {
 
   // Inject ADP into the final array
   const finalPlayers = compiledPlayers.map(p => {
-    const cleanPName = p.name ? p.name.trim().toLowerCase() : '';
+    // Run the Projection Database name through the Normalizer before checking the dictionary
+    const cleanPName = normalizeName(p.name);
     return {
       ...p,
       adp: marketData[cleanPName] || 300 // Defaults to undrafted value if no ADP found
