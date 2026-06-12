@@ -345,20 +345,22 @@ export default function TradeCalculatorClient() {
       return { ...p, uniqueId: p.name + Date.now(), calcValue: getPlayerValue(p, strategy) };
     }).filter(Boolean);
 
-    // 🚀 NEW: Positional Sorting Array (QB -> RB -> WR -> TE -> K -> DST)
+    // Positional Sorting Array (QB -> RB -> WR -> TE -> K -> DST)
     const posOrder = { 'QB': 1, 'RB': 2, 'WR': 3, 'TE': 4, 'WR/TE': 4, 'K': 5, 'DST': 6 };
     
     return mappedPlayers.sort((a, b) => {
         const posA = posOrder[a.position] || 99;
         const posB = posOrder[b.position] || 99;
         if (posA !== posB) return posA - posB;
-        // Fallback to value sorting if positions match
         return b.calcValue - a.calcValue;
     });
   };
 
-  const activeRosterA = useMemo(() => buildRosterList(teamAManager, teamAStrategy), [teamAManager, leagueRosters, playersData, sleeperPlayersMap, teamAStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
-  const activeRosterB = useMemo(() => buildRosterList(teamBManager, teamBStrategy), [teamBManager, leagueRosters, playersData, sleeperPlayersMap, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
+  // The logic is strictly crossed: 
+  // If Team A (Me) gives a player, Team B receives them. So value my roster using HIS strategy (`teamBStrategy`).
+  // If Team B gives a player, Team A receives them. So value his roster using MY strategy (`teamAStrategy`).
+  const activeRosterA = useMemo(() => buildRosterList(teamAManager, teamBStrategy), [teamAManager, leagueRosters, playersData, sleeperPlayersMap, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
+  const activeRosterB = useMemo(() => buildRosterList(teamBManager, teamAStrategy), [teamBManager, leagueRosters, playersData, sleeperPlayersMap, teamAStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
 
   const togglePlayerInTrade = (playerObj, team) => {
     if (team === 'A') {
@@ -373,8 +375,11 @@ export default function TradeCalculatorClient() {
   };
 
   const tradeEvaluation = useMemo(() => {
+    // teamAPlayers are the players Team A receives (selected from B's roster). Valued by A's strategy.
     const teamA_assets = teamAPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamAStrategy) }))
                                      .sort((a, b) => b.calcValue - a.calcValue);
+    
+    // teamBPlayers are the players Team B receives (selected from A's roster). Valued by B's strategy.
     const teamB_assets = teamBPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamBStrategy) }))
                                      .sort((a, b) => b.calcValue - a.calcValue);
 
@@ -483,7 +488,11 @@ export default function TradeCalculatorClient() {
   const handlePickSelect = (e, team) => {
       if (!e.target.value) return;
       const pick = DRAFT_PICKS.find(p => p.id === e.target.value);
-      if (pick) addPlayer(pick, team);
+      if (activeLeague) {
+        if (pick) addPlayer(pick, team === 'A' ? 'B' : 'A');
+      } else {
+        if (pick) addPlayer(pick, team);
+      }
       e.target.value = ""; 
   };
 
@@ -597,33 +606,37 @@ export default function TradeCalculatorClient() {
                 {/* 🚀 SIDE-BY-SIDE ROSTER UI (If League Synced) */}
                 {activeLeague ? (
                   <div className="flex flex-col lg:flex-row gap-6">
-                    {/* MY ROSTER (Team A) */}
+                    {/* MY ROSTER (Team A Pane) */}
                     <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col">
                       
-                      {/* 🚀 FIXED HEADER HEIGHT: min-h-[90px] for perfect alignment */}
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 shrink-0 min-h-[90px]">
-                          <div className="flex items-center gap-3 w-full sm:w-auto mt-1">
-                              <img src={myAvatar} className="w-10 h-10 rounded-full border border-gray-600" alt="" />
+                          <div className="flex items-start gap-3 w-full sm:w-auto mt-1">
+                              <img src={myAvatar} className="w-10 h-10 rounded-full border border-gray-600 shrink-0" alt="" />
                               <div className="flex flex-col">
-                                  <span className="text-lg font-black text-white truncate max-w-[200px]">{myTeamName}</span>
-                                  <span className="text-[10px] text-red-500 font-bold uppercase tracking-widest">Sending: {totalA}</span>
+                                  <span className="text-lg font-black text-white truncate max-w-[200px] leading-none mb-1.5">{myTeamName}</span>
+                                  <span className="text-[10px] text-red-500 font-bold uppercase tracking-widest mt-0.5">Receiving: {totalA}</span>
+                                  {bestAssetSide === 'A' && !isOneForOne && <span className="text-[9px] text-amber-500 font-bold uppercase mt-0.5">Includes Premium (+{premium})</span>}
+                                  {hasPenaltyA && <span className="text-[9px] text-red-400 font-bold uppercase mt-0.5">Package Tax Applied</span>}
                               </div>
                           </div>
 
                           {formatMode === 'dynasty' && (
-                              <select 
-                                  value={teamAStrategy} 
-                                  onChange={(e) => setTeamAStrategy(e.target.value)}
-                                  className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full sm:w-auto"
-                              >
-                                  <option value="win_now">🏆 Win Now</option>
-                                  <option value="neutral">⚖️ Balanced</option>
-                                  <option value="build">🌱 Rebuild</option>
-                              </select>
+                              <div className="flex flex-col gap-1 w-full sm:w-auto">
+                                  <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Team Strategy</span>
+                                  <select 
+                                      value={teamAStrategy} 
+                                      onChange={(e) => setTeamAStrategy(e.target.value)}
+                                      className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
+                                  >
+                                      <option value="win_now">🏆 Win Now</option>
+                                      <option value="neutral">⚖️ Balanced</option>
+                                      <option value="build">🌱 Rebuild</option>
+                                  </select>
+                              </div>
                           )}
                       </div>
 
-                      {/* 🚀 EXPANDING ROSTER LIST */}
+                      {/* Expanding Roster List */}
                       <div className="space-y-2">
                           {/* Render Actual Roster First */}
                           {activeRosterA.map(p => {
@@ -654,25 +667,24 @@ export default function TradeCalculatorClient() {
                              );
                           })}
 
-                          {/* Render Manual Picks Below Roster */}
-                          {teamAPlayers.filter(p => p.position === 'PICK').map(p => (
+                          {/* Render Manual Picks I am sending (from teamBPlayers) */}
+                          {teamBPlayers.filter(p => p.position === 'PICK').map(p => (
                              <div 
                                 key={p.uniqueId} 
-                                onClick={() => togglePlayerInTrade(p, 'A')}
-                                className="flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border-2 border-red-500 bg-red-900/20"
+                                onClick={() => removePlayer(p.uniqueId, 'B')}
+                                className="flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border-2 border-red-500 bg-red-500/20"
                               >
                                  <div className="flex items-center gap-3">
                                      <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center text-white"><Check size={14} /></div>
                                      <span className="text-sm font-black text-white">{p.name}</span>
                                  </div>
-                                 <span className="text-sm font-black text-white">{getPlayerValue(p, teamAStrategy)}</span>
+                                 <span className="text-sm font-black text-white">{getPlayerValue(p, teamBStrategy)}</span>
                              </div>
                           ))}
                           
                           {activeRosterA.length === 0 && <div className="text-center py-10 text-gray-600 text-xs font-bold uppercase tracking-widest">Roster not found</div>}
                       </div>
 
-                      {/* 🚀 NEW: Picks Dropdown Moved to Bottom */}
                       <div className="mt-6 pt-4 border-t border-gray-800 shrink-0">
                           <select 
                               onChange={(e) => handlePickSelect(e, 'A')}
@@ -690,12 +702,11 @@ export default function TradeCalculatorClient() {
 
                     </div>
 
-                    {/* OPPONENT ROSTER (Team B) */}
+                    {/* OPPONENT ROSTER (Team B Pane) */}
                     <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col">
                       
-                      {/* 🚀 FIXED HEADER HEIGHT: min-h-[90px] for perfect alignment */}
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 shrink-0 min-h-[90px]">
-                          <div className="flex flex-col w-full sm:w-auto gap-1">
+                          <div className="flex flex-col w-full sm:w-auto gap-1 mt-1">
                               <div className="relative w-full sm:w-[220px]">
                                 <button 
                                   onClick={() => setIsOpponentDropdownOpen(!isOpponentDropdownOpen)}
@@ -743,23 +754,28 @@ export default function TradeCalculatorClient() {
                                   </>
                                 )}
                               </div>
-                              <span className="text-[10px] text-blue-500 font-bold tracking-widest uppercase pl-1">Receiving: {totalB}</span>
+                              <span className="text-[10px] text-blue-500 font-bold tracking-widest uppercase pl-1 mt-0.5">Receiving: {totalB}</span>
+                              {bestAssetSide === 'B' && !isOneForOne && <span className="text-[9px] text-amber-500 font-bold uppercase pl-1 mt-0.5">Includes Premium (+{premium})</span>}
+                              {hasPenaltyB && <span className="text-[9px] text-red-400 font-bold uppercase pl-1 mt-0.5">Package Tax Applied</span>}
                           </div>
 
                           {formatMode === 'dynasty' && (
-                              <select 
-                                  value={teamBStrategy} 
-                                  onChange={(e) => setTeamBStrategy(e.target.value)}
-                                  className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full sm:w-auto"
-                              >
-                                  <option value="win_now">🏆 Win Now</option>
-                                  <option value="neutral">⚖️ Balanced</option>
-                                  <option value="build">🌱 Rebuild</option>
-                              </select>
+                              <div className="flex flex-col gap-1 w-full sm:w-auto">
+                                  <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Team Strategy</span>
+                                  <select 
+                                      value={teamBStrategy} 
+                                      onChange={(e) => setTeamBStrategy(e.target.value)}
+                                      className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
+                                  >
+                                      <option value="win_now">🏆 Win Now</option>
+                                      <option value="neutral">⚖️ Balanced</option>
+                                      <option value="build">🌱 Rebuild</option>
+                                  </select>
+                              </div>
                           )}
                       </div>
 
-                      {/* 🚀 EXPANDING ROSTER LIST */}
+                      {/* Expanding Roster List */}
                       <div className="flex-1 space-y-2">
                           {!teamBManager ? (
                               <div className="text-center py-20 text-gray-600 text-xs font-bold uppercase tracking-widest">Select an opponent to view roster</div>
@@ -794,25 +810,24 @@ export default function TradeCalculatorClient() {
                                    );
                                 })}
 
-                                {/* Render Manual Picks Below Roster */}
-                                {teamBPlayers.filter(p => p.position === 'PICK').map(p => (
+                                {/* Render Manual Picks I am receiving (from teamAPlayers) */}
+                                {teamAPlayers.filter(p => p.position === 'PICK').map(p => (
                                    <div 
                                       key={p.uniqueId} 
-                                      onClick={() => togglePlayerInTrade(p, 'B')}
-                                      className="flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border-2 border-blue-500 bg-blue-900/20"
+                                      onClick={() => removePlayer(p.uniqueId, 'A')}
+                                      className="flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border-2 border-blue-500 bg-blue-500/20"
                                     >
                                        <div className="flex items-center gap-3">
                                            <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white"><Check size={14} /></div>
                                            <span className="text-sm font-black text-white">{p.name}</span>
                                        </div>
-                                       <span className="text-sm font-black text-white">{getPlayerValue(p, teamBStrategy)}</span>
+                                       <span className="text-sm font-black text-white">{getPlayerValue(p, teamAStrategy)}</span>
                                    </div>
                                 ))}
                               </>
                           )}
                       </div>
 
-                      {/* 🚀 NEW: Picks Dropdown Moved to Bottom */}
                       <div className="mt-6 pt-4 border-t border-gray-800 shrink-0">
                           <select 
                               onChange={(e) => handlePickSelect(e, 'B')}
@@ -837,20 +852,30 @@ export default function TradeCalculatorClient() {
                   <div className="flex flex-col lg:flex-row gap-6">
                       {/* TEAM A PANE */}
                       <div className="flex-1 bg-[#111] border-2 border-red-900/30 rounded-3xl p-6 shadow-2xl relative">
-                          <div className="flex justify-between items-start mb-6 border-b border-gray-800 pb-4">
-                              <h3 className="text-lg font-black text-white uppercase tracking-wider">Team A Receives</h3>
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 min-h-[90px]">
+                              <div className="flex flex-col gap-1 mt-1">
+                                  <h3 className="text-lg font-black text-white uppercase tracking-wider mb-1.5">Team A Receives</h3>
+                                  <span className="text-[10px] text-red-500 font-bold uppercase tracking-widest">Receiving: {totalA}</span>
+                                  {bestAssetSide === 'A' && !isOneForOne && <span className="text-[9px] text-amber-500 font-bold uppercase mt-0.5">Includes Premium (+{premium})</span>}
+                                  {hasPenaltyA && <span className="text-[9px] text-red-400 font-bold uppercase mt-0.5">Package Tax Applied</span>}
+                              </div>
+
                               {formatMode === 'dynasty' && (
-                                  <select 
-                                      value={teamAStrategy} 
-                                      onChange={(e) => setTeamAStrategy(e.target.value)}
-                                      className="bg-[#1a1a1a] border border-red-900/50 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none font-bold text-xs tracking-wide"
-                                  >
-                                      <option value="win_now">🏆 Win Now</option>
-                                      <option value="neutral">⚖️ Balanced</option>
-                                      <option value="build">🌱 Rebuild</option>
-                                  </select>
+                                  <div className="flex flex-col gap-1 w-full sm:w-auto">
+                                      <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Team Strategy</span>
+                                      <select 
+                                          value={teamAStrategy} 
+                                          onChange={(e) => setTeamAStrategy(e.target.value)}
+                                          className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
+                                      >
+                                          <option value="win_now">🏆 Win Now</option>
+                                          <option value="neutral">⚖️ Balanced</option>
+                                          <option value="build">🌱 Rebuild</option>
+                                      </select>
+                                  </div>
                               )}
                           </div>
+                          
                           <div className="flex flex-col xl:flex-row gap-3 mb-6">
                               <div className="relative flex-1">
                                   <div className="flex items-center bg-[#1a1a1a] border border-gray-800 rounded-xl px-4 py-3">
@@ -892,6 +917,7 @@ export default function TradeCalculatorClient() {
                                   </select>
                               )}
                           </div>
+
                           <div className="space-y-3 min-h-[150px]">
                               {teamAPlayers.length === 0 ? (
                                   <div className="text-center py-10 text-gray-600 font-bold text-xs uppercase tracking-widest">No assets added</div>
@@ -917,31 +943,34 @@ export default function TradeCalculatorClient() {
                                   </div>
                               ))}
                           </div>
-                          <div className="mt-8 pt-4 border-t border-red-900/30 flex justify-between items-end">
-                              <div className="flex flex-col">
-                                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Final Package Value</span>
-                                  {bestAssetSide === 'A' && !isOneForOne && <span className="text-[10px] text-amber-500 font-bold uppercase mt-1">Includes Elite Premium (+{premium})</span>}
-                              </div>
-                              <span className="text-4xl font-black text-red-500">{totalA}</span>
-                          </div>
                       </div>
 
                       {/* TEAM B PANE */}
                       <div className="flex-1 bg-[#111] border-2 border-blue-900/30 rounded-3xl p-6 shadow-2xl relative">
-                          <div className="flex justify-between items-start mb-6 border-b border-gray-800 pb-4">
-                              <h3 className="text-lg font-black text-white uppercase tracking-wider">Team B Receives</h3>
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 min-h-[90px]">
+                              <div className="flex flex-col gap-1 mt-1">
+                                  <h3 className="text-lg font-black text-white uppercase tracking-wider mb-1.5">Team B Receives</h3>
+                                  <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Receiving: {totalB}</span>
+                                  {bestAssetSide === 'B' && !isOneForOne && <span className="text-[9px] text-amber-500 font-bold uppercase mt-0.5">Includes Premium (+{premium})</span>}
+                                  {hasPenaltyB && <span className="text-[9px] text-red-400 font-bold uppercase mt-0.5">Package Tax Applied</span>}
+                              </div>
+
                               {formatMode === 'dynasty' && (
-                                  <select 
-                                      value={teamBStrategy} 
-                                      onChange={(e) => setTeamBStrategy(e.target.value)}
-                                      className="bg-[#1a1a1a] border border-blue-900/50 text-white rounded-xl py-2 px-4 shadow-sm focus:outline-none font-bold text-xs tracking-wide"
-                                  >
-                                      <option value="win_now">🏆 Win Now</option>
-                                      <option value="neutral">⚖️ Balanced</option>
-                                      <option value="build">🌱 Rebuild</option>
-                                  </select>
+                                  <div className="flex flex-col gap-1 w-full sm:w-auto">
+                                      <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Team Strategy</span>
+                                      <select 
+                                          value={teamBStrategy} 
+                                          onChange={(e) => setTeamBStrategy(e.target.value)}
+                                          className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
+                                      >
+                                          <option value="win_now">🏆 Win Now</option>
+                                          <option value="neutral">⚖️ Balanced</option>
+                                          <option value="build">🌱 Rebuild</option>
+                                      </select>
+                                  </div>
                               )}
                           </div>
+                          
                           <div className="flex flex-col xl:flex-row gap-3 mb-6">
                               <div className="relative flex-1">
                                   <div className="flex items-center bg-[#1a1a1a] border border-gray-800 rounded-xl px-4 py-3">
@@ -983,6 +1012,7 @@ export default function TradeCalculatorClient() {
                                   </select>
                               )}
                           </div>
+
                           <div className="space-y-3 min-h-[150px]">
                               {teamBPlayers.length === 0 ? (
                                   <div className="text-center py-10 text-gray-600 font-bold text-xs uppercase tracking-widest">No assets added</div>
@@ -1007,13 +1037,6 @@ export default function TradeCalculatorClient() {
                                       <div className="text-lg font-black text-white">{getPlayerValue(p, teamBStrategy)}</div>
                                   </div>
                               ))}
-                          </div>
-                          <div className="mt-8 pt-4 border-t border-blue-900/30 flex justify-between items-end">
-                              <div className="flex flex-col">
-                                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Final Package Value</span>
-                                  {bestAssetSide === 'B' && !isOneForOne && <span className="text-[10px] text-amber-500 font-bold uppercase mt-1">Includes Elite Premium (+{premium})</span>}
-                              </div>
-                              <span className="text-4xl font-black text-blue-500">{totalB}</span>
                           </div>
                       </div>
                   </div>
