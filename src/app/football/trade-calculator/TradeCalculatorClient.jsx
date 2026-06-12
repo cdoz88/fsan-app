@@ -44,7 +44,7 @@ export default function TradeCalculatorClient() {
   const [leagueRosters, setLeagueRosters] = useState([]);
   const [teamAManager, setTeamAManager] = useState(''); 
   const [teamBManager, setTeamBManager] = useState('');
-  const [isRefreshingLeague, setIsRefreshingLeague] = useState(false); // 🚀 NEW: Refresh state
+  const [isRefreshingLeague, setIsRefreshingLeague] = useState(false); 
   
   // Custom Dropdown State for Opponent
   const [isOpponentDropdownOpen, setIsOpponentDropdownOpen] = useState(false);
@@ -162,7 +162,7 @@ export default function TradeCalculatorClient() {
     }
   }, [activeLeague, sleeperUserId]);
 
-  // 🚀 NEW: Manual Refresh Function
+  // 🚀 RE-SYNC ROSTERS LIVE FROM SLEEPER
   const refreshLeagueData = async () => {
     if (!activeLeague || activeLeague.platform !== 'sleeper') return;
     setIsRefreshingLeague(true);
@@ -545,19 +545,19 @@ export default function TradeCalculatorClient() {
           </div>
           
           {activeLeague ? (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest bg-green-500/10 text-green-400 border border-green-500/20 pointer-events-none">
+            <div className="flex items-center bg-[#1a1a1a] border border-green-500/20 rounded-xl overflow-hidden shadow-inner">
+              <div className="flex items-center gap-2 px-4 sm:px-5 py-2.5 font-bold text-xs uppercase tracking-widest bg-green-500/10 text-green-400 pointer-events-none">
                 <Trophy size={16} /> Synced to {activeLeague.name}
               </div>
               
-              {/* 🚀 NEW: RE-SYNC BUTTON */}
+              {/* 🚀 NEW: RE-SYNC BUTTON (Merged into the pill) */}
               <button 
                 onClick={refreshLeagueData}
                 disabled={isRefreshingLeague}
                 title="Refresh Rosters"
-                className="flex items-center justify-center p-2.5 bg-[#1a1a1a] hover:bg-gray-800 border border-gray-800 hover:border-gray-600 rounded-xl text-gray-400 hover:text-white transition-all shadow-inner disabled:opacity-50"
+                className="flex items-center justify-center px-4 py-2.5 bg-green-500/5 hover:bg-green-500/20 text-green-500 transition-all border-l border-green-500/20 disabled:opacity-50"
               >
-                <RefreshCw size={16} className={isRefreshingLeague ? "animate-spin text-green-400" : ""} />
+                <RefreshCw size={16} className={isRefreshingLeague ? "animate-spin" : ""} />
               </button>
             </div>
           ) : (
@@ -634,7 +634,7 @@ export default function TradeCalculatorClient() {
                     {/* MY ROSTER (Team A Pane) */}
                     <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col">
                       
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 shrink-0 min-h-[90px]">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 shrink-0 min-h-[96px]">
                           {/* Left Side: Avatar, Name, Strategy */}
                           <div className="flex flex-col gap-2 w-full sm:w-auto mt-1">
                               <div className="flex items-center gap-3">
@@ -712,8 +712,6 @@ export default function TradeCalculatorClient() {
                                  <span className="text-sm font-black text-white">{getPlayerValue(p, teamBStrategy)}</span>
                              </div>
                           ))}
-                          
-                          {activeRosterA.length === 0 && <div className="text-center py-10 text-gray-600 text-xs font-bold uppercase tracking-widest">Roster not found</div>}
                       </div>
 
                       <div className="mt-6 pt-4 border-t border-gray-800 shrink-0">
@@ -736,7 +734,7 @@ export default function TradeCalculatorClient() {
                     {/* OPPONENT ROSTER (Team B Pane) */}
                     <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col">
                       
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 shrink-0 min-h-[90px]">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 shrink-0 min-h-[96px]">
                           {/* Left Side: Opponent Select & Strategy */}
                           <div className="flex flex-col w-full sm:w-auto gap-2 mt-1">
                               <div className="relative w-full sm:w-[220px]">
@@ -802,7 +800,7 @@ export default function TradeCalculatorClient() {
                               )}
                           </div>
 
-                          {/* Right Side: Large Total & Badges */}
+                          {/* Right Side: Total & Premium */}
                           <div className="flex flex-col sm:items-end text-left sm:text-right w-full sm:w-auto mt-1">
                               <span className="text-4xl sm:text-5xl font-black text-blue-500 leading-none">{totalB}</span>
                               <div className="flex flex-col items-start sm:items-end mt-2 gap-1">
@@ -889,10 +887,10 @@ export default function TradeCalculatorClient() {
                   <div className="flex flex-col lg:flex-row gap-6">
                       {/* TEAM A PANE */}
                       <div className="flex-1 bg-[#111] border-2 border-red-900/30 rounded-3xl p-6 shadow-2xl relative flex flex-col">
-                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 min-h-[90px]">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 min-h-[96px]">
                               {/* Left Side: Header & Strategy */}
                               <div className="flex flex-col gap-2 mt-1 w-full sm:w-auto">
-                                  <h3 className="text-lg font-black text-white uppercase tracking-wider leading-none mt-2">Team A Receives</h3>
+                                  <h3 className="text-lg font-black text-white uppercase tracking-wider leading-none mt-2">Team A</h3>
 
                                   {formatMode === 'dynasty' && (
                                       <div className="flex flex-col gap-1 w-full mt-2">
@@ -948,20 +946,9 @@ export default function TradeCalculatorClient() {
                                       </div>
                                   )}
                               </div>
-                              {formatMode === 'dynasty' && (
-                                  <select 
-                                      onChange={(e) => handlePickSelect(e, 'A')}
-                                      className="bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors xl:w-40 cursor-pointer"
-                                  >
-                                      <option value="">+ Add Pick</option>
-                                      <optgroup label="2026 Picks">
-                                          {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                      </optgroup>
-                                  </select>
-                              )}
                           </div>
 
-                          <div className="space-y-3 min-h-[150px]">
+                          <div className="space-y-3 min-h-[150px] flex-1">
                               {teamAPlayers.length === 0 ? (
                                   <div className="text-center py-10 text-gray-600 font-bold text-xs uppercase tracking-widest">No assets added</div>
                               ) : teamAPlayers.map(p => (
@@ -986,14 +973,29 @@ export default function TradeCalculatorClient() {
                                   </div>
                               ))}
                           </div>
+
+                          <div className="mt-6 pt-4 border-t border-gray-800 shrink-0">
+                              <select 
+                                  onChange={(e) => handlePickSelect(e, 'A')}
+                                  className="w-full bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors cursor-pointer"
+                              >
+                                  <option value="">+ Add Draft Pick to Trade</option>
+                                  <optgroup label="2026 Picks">
+                                      {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                  </optgroup>
+                                  <optgroup label="2027 Picks">
+                                      {DRAFT_PICKS.filter(p => p.year === 2027).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                  </optgroup>
+                              </select>
+                          </div>
                       </div>
 
                       {/* TEAM B PANE */}
                       <div className="flex-1 bg-[#111] border-2 border-blue-900/30 rounded-3xl p-6 shadow-2xl relative flex flex-col">
-                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 min-h-[90px]">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 border-b border-gray-800 pb-4 min-h-[96px]">
                               {/* Left Side: Header & Strategy */}
                               <div className="flex flex-col gap-2 mt-1 w-full sm:w-auto">
-                                  <h3 className="text-lg font-black text-white uppercase tracking-wider leading-none mt-2">Team B Receives</h3>
+                                  <h3 className="text-lg font-black text-white uppercase tracking-wider leading-none mt-2">Team B</h3>
 
                                   {formatMode === 'dynasty' && (
                                       <div className="flex flex-col gap-1 w-full mt-2">
@@ -1049,19 +1051,9 @@ export default function TradeCalculatorClient() {
                                       </div>
                                   )}
                               </div>
-                              {formatMode === 'dynasty' && (
-                                  <select 
-                                      onChange={(e) => handlePickSelect(e, 'B')}
-                                      className="bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors xl:w-40 cursor-pointer"
-                                  >
-                                      <option value="">+ Add Pick</option>
-                                      <optgroup label="2026 Picks">
-                                          {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                      </optgroup>
-                                  </select>
-                              )}
                           </div>
-                          <div className="space-y-3 min-h-[150px]">
+
+                          <div className="space-y-3 min-h-[150px] flex-1">
                               {teamBPlayers.length === 0 ? (
                                   <div className="text-center py-10 text-gray-600 font-bold text-xs uppercase tracking-widest">No assets added</div>
                               ) : teamBPlayers.map(p => (
@@ -1085,6 +1077,21 @@ export default function TradeCalculatorClient() {
                                       <div className="text-lg font-black text-white">{getPlayerValue(p, teamBStrategy)}</div>
                                   </div>
                               ))}
+                          </div>
+
+                          <div className="mt-6 pt-4 border-t border-gray-800 shrink-0">
+                              <select 
+                                  onChange={(e) => handlePickSelect(e, 'B')}
+                                  className="w-full bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors cursor-pointer"
+                              >
+                                  <option value="">+ Add Draft Pick to Trade</option>
+                                  <optgroup label="2026 Picks">
+                                      {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                  </optgroup>
+                                  <optgroup label="2027 Picks">
+                                      {DRAFT_PICKS.filter(p => p.year === 2027).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                  </optgroup>
+                              </select>
                           </div>
                       </div>
                   </div>
