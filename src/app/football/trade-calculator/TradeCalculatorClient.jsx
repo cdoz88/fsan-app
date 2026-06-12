@@ -137,9 +137,11 @@ export default function TradeCalculatorClient() {
     if (activeLeague && activeLeague.platform === 'sleeper') {
       const fetchSleeperData = async () => {
         try {
+          // 🚀 ADDED CACHE BUSTING HERE TOO!
+          const timestamp = Date.now();
           const [usersRes, rostersRes] = await Promise.all([
-            fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/users`),
-            fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/rosters`)
+            fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/users?_t=${timestamp}`),
+            fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/rosters?_t=${timestamp}`)
           ]);
           const users = await usersRes.json();
           const rosters = await rostersRes.json();
@@ -162,14 +164,16 @@ export default function TradeCalculatorClient() {
     }
   }, [activeLeague, sleeperUserId]);
 
-  // 🚀 RE-SYNC ROSTERS LIVE FROM SLEEPER
+  // 🚀 RE-SYNC ROSTERS LIVE FROM SLEEPER (WITH CACHE BUSTING & FORCED DELAY)
   const refreshLeagueData = async () => {
     if (!activeLeague || activeLeague.platform !== 'sleeper') return;
     setIsRefreshingLeague(true);
     try {
-      const [usersRes, rostersRes] = await Promise.all([
-        fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/users`),
-        fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/rosters`)
+      const timestamp = Date.now();
+      const [usersRes, rostersRes, _] = await Promise.all([
+        fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/users?_t=${timestamp}`),
+        fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/rosters?_t=${timestamp}`),
+        new Promise(resolve => setTimeout(resolve, 750)) // Forces the spin to be visible!
       ]);
       const users = await usersRes.json();
       const rosters = await rostersRes.json();
@@ -550,9 +554,8 @@ export default function TradeCalculatorClient() {
                 <Trophy size={16} /> Synced to {activeLeague.name}
               </div>
               
-              {/* 🚀 NEW: RE-SYNC BUTTON (Merged into the pill) */}
               <button 
-                onClick={refreshLeagueData}
+                onClick={(e) => { e.preventDefault(); refreshLeagueData(); }}
                 disabled={isRefreshingLeague}
                 title="Refresh Rosters"
                 className="flex items-center justify-center px-4 py-2.5 bg-green-500/5 hover:bg-green-500/20 text-green-500 transition-all border-l border-green-500/20 disabled:opacity-50"
@@ -712,6 +715,8 @@ export default function TradeCalculatorClient() {
                                  <span className="text-sm font-black text-white">{getPlayerValue(p, teamBStrategy)}</span>
                              </div>
                           ))}
+                          
+                          {activeRosterA.length === 0 && <div className="text-center py-10 text-gray-600 text-xs font-bold uppercase tracking-widest">Roster not found</div>}
                       </div>
 
                       <div className="mt-6 pt-4 border-t border-gray-800 shrink-0">
@@ -1052,7 +1057,6 @@ export default function TradeCalculatorClient() {
                                   )}
                               </div>
                           </div>
-
                           <div className="space-y-3 min-h-[150px] flex-1">
                               {teamBPlayers.length === 0 ? (
                                   <div className="text-center py-10 text-gray-600 font-bold text-xs uppercase tracking-widest">No assets added</div>
@@ -1077,21 +1081,6 @@ export default function TradeCalculatorClient() {
                                       <div className="text-lg font-black text-white">{getPlayerValue(p, teamBStrategy)}</div>
                                   </div>
                               ))}
-                          </div>
-
-                          <div className="mt-6 pt-4 border-t border-gray-800 shrink-0">
-                              <select 
-                                  onChange={(e) => handlePickSelect(e, 'B')}
-                                  className="w-full bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors cursor-pointer"
-                              >
-                                  <option value="">+ Add Draft Pick to Trade</option>
-                                  <optgroup label="2026 Picks">
-                                      {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                  </optgroup>
-                                  <optgroup label="2027 Picks">
-                                      {DRAFT_PICKS.filter(p => p.year === 2027).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                  </optgroup>
-                              </select>
                           </div>
                       </div>
                   </div>
