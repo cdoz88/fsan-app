@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Settings, Search, X, RefreshCw } from 'lucide-react'; 
-import { HISTORICAL_DATA } from '../../../utils/historicalData'; // 🚀 HISTORICAL DATA IMPORT
+import { HISTORICAL_DATA } from '../../../utils/historicalData'; 
 
 // --- Generate Draft Picks Data ---
 const generatePicks = () => {
@@ -92,6 +92,34 @@ export default function TradeCalculatorClient() {
     loadLiveDatabase();
   }, []);
 
+  // 🚀 DYNAMIC POSITIONAL SCARCITY SCANNER
+  const positionalScarcity = useMemo(() => {
+    if (!playersData || playersData.length === 0) return { QB: 1, RB: 1, WR: 1, TE: 1 };
+
+    // Find all players drafted in the Top 100
+    const top100 = playersData.filter(p => (p.adp || p.AVG || 300) <= 100);
+    const counts = { QB: 0, RB: 0, WR: 0, TE: 0 };
+
+    top100.forEach(p => {
+      let pos = p.position === 'WR/TE' ? 'TE' : p.position;
+      if (counts[pos] !== undefined) counts[pos] += 1;
+    });
+
+    // The Scarcity Formula: A perfectly equal market has 25 of each position in the Top 100.
+    // If fewer than 25 (Scarce), modifier > 1.0. If more than 25 (Abundant), modifier < 1.0.
+    const calcMod = (count) => {
+        let mod = 1.0 + ((25 - count) / 100);
+        return Math.min(1.35, Math.max(0.75, mod)); // Safe clamp to prevent extreme outliers
+    };
+
+    return {
+      QB: calcMod(counts.QB),
+      RB: calcMod(counts.RB),
+      WR: calcMod(counts.WR),
+      TE: calcMod(counts.TE)
+    };
+  }, [playersData]);
+
   const baselines = useMemo(() => {
     if (!playersData || playersData.length === 0) return { QB: 0, RB: 0, WR: 0, TE: 0 };
 
@@ -120,12 +148,10 @@ export default function TradeCalculatorClient() {
           dynamicBase = posPlayers[Math.min(rankLimit - 1, posPlayers.length - 1)].rawPts;
       }
 
-      // 🧠 HISTORICAL VORP BLENDING
       let posKey = pos === 'WR/TE' ? 'TE' : pos;
       let histBase = HISTORICAL_DATA?.BASELINES?.[posKey]?.[`Rank_${rankLimit}`];
       
       if (histBase && histBase > 0) {
-          // Blends this year's exact projections with the historical long-term average!
           return (dynamicBase * 0.5) + (histBase * 0.5);
       }
 
@@ -146,27 +172,22 @@ export default function TradeCalculatorClient() {
     let posKey = position === 'WR/TE' ? 'TE' : position;
     const curves = HISTORICAL_DATA?.AGE_CURVES?.[posKey];
 
-    // 🧠 HISTORICAL AUC (Area Under the Curve) MATH
-    // Only activates if the curve has enough data points to be smooth (prevents the 1-year data spike bug)
     if (curves && Object.keys(curves).length > 8) {
         const maxAge = posKey === 'QB' ? 38 : (posKey === 'TE' ? 33 : 30);
         
         let expectedRemainingPts = 0;
         let maxCareerPts = 0;
 
-        // Calculate actual remaining fuel
         for (let a = age; a <= maxAge; a++) expectedRemainingPts += (curves[a] || 0);
-        // Calculate theoretical max fuel (for a 21-year-old rookie)
         for (let a = 21; a <= maxAge; a++) maxCareerPts += (curves[a] || 0);
 
         if (maxCareerPts > 0) {
             let baseFuel = expectedRemainingPts / maxCareerPts; 
-            let histMult = (baseFuel * 1.2) + 0.2; // Translates 0-1 fuel scale to our standard 0.2-1.4 multiplier
+            let histMult = (baseFuel * 1.2) + 0.2; 
 
             if (strategy === 'build') {
-                histMult = (baseFuel * 1.4) + 0.1; // Rebuild heavily weights remaining career fuel
+                histMult = (baseFuel * 1.4) + 0.1; 
             } else if (strategy === 'win_now') {
-                // Win-now looks exclusively at the next 3 years of fuel
                 let shortTermPts = (curves[age]||0) + (curves[age+1]||0) + (curves[age+2]||0);
                 let peakShortTerm = 0;
                 for (let a = 21; a <= maxAge; a++) {
@@ -176,13 +197,10 @@ export default function TradeCalculatorClient() {
                 let shortTermFuel = shortTermPts / (peakShortTerm || 1);
                 histMult = (shortTermFuel * 0.8) + 0.4;
             }
-
-            // Provide a smooth safety boundary
             return Math.max(0.1, Math.min(histMult, 1.5)); 
         }
     }
 
-    // --- STANDARD PHASE 3 FALLBACK (Used until all 42 files are uploaded and curve smooths out) ---
     if (strategy === 'build') {
       if (position === 'WR') return age <= 24 ? 1.40 : age <= 27 ? 1.20 : age <= 30 ? 0.90 : 0.40;
       if (position === 'RB') return age <= 23 ? 1.20 : age <= 25 ? 0.90 : age <= 27 ? 0.60 : 0.20;
@@ -197,7 +215,6 @@ export default function TradeCalculatorClient() {
       if (position === 'TE' || position === 'WR/TE') return age <= 28 ? 1.05 : age <= 31 ? 1.00 : age <= 33 ? 0.80 : 0.60;
     }
 
-    // Balanced
     if (position === 'WR') return age <= 25 ? 1.25 : age <= 28 ? 1.10 : age <= 30 ? 0.95 : age <= 32 ? 0.75 : 0.45;
     if (position === 'RB') return age <= 24 ? 1.05 : age <= 26 ? 0.90 : age <= 28 ? 0.65 : age <= 30 ? 0.40 : 0.20;
     if (position === 'QB') return age <= 27 ? 1.15 : age <= 33 ? 1.05 : age <= 36 ? 0.85 : 0.50;
@@ -249,12 +266,18 @@ export default function TradeCalculatorClient() {
         }
     }
 
-    // --- 4. POSITIONAL MULTIPLIERS ---
+    // --- 4. DYNAMIC POSITIONAL SCARCITY MULTIPLIERS ---
     let productionValue = vorp;
-    if (player.position === 'QB') productionValue *= isSuperflex ? 1.80 : 1.15;
-    else if (player.position === 'WR') productionValue *= 1.30; 
-    else if (player.position === 'RB') productionValue *= 0.90; 
-    else if (player.position === 'TE' || player.position === 'WR/TE') productionValue *= 1.20;
+    let posKey = player.position === 'WR/TE' ? 'TE' : player.position;
+    let scarcityMod = positionalScarcity[posKey] || 1.0;
+
+    if (posKey === 'QB') {
+        // QBs still get a flat formatting bump depending on Superflex vs 1QB
+        productionValue *= isSuperflex ? (1.60 * scarcityMod) : (1.0 * scarcityMod);
+    } else {
+        // RBs, WRs, and TEs rely entirely on the dynamic top-100 scarcity scanner!
+        productionValue *= scarcityMod;
+    }
 
     // --- 5. MARKET VALUE BLENDING ---
     let adp = player.adp || player.AVG || 300; 
@@ -313,9 +336,15 @@ export default function TradeCalculatorClient() {
     let finalA = getTieredSum(teamA_assets);
     let finalB = getTieredSum(teamB_assets);
 
-    const premium = Math.round(maxVal * 0.10);
-    if (bestAssetSide === 'A') finalA += premium;
-    if (bestAssetSide === 'B') finalB += premium;
+    // 🚀 THE 1-FOR-1 FIX: Only apply the Elite Premium to multi-asset deals
+    let premium = 0;
+    const isOneForOne = teamA_assets.length === 1 && teamB_assets.length === 1;
+
+    if (!isOneForOne) {
+        premium = Math.round(maxVal * 0.10);
+        if (bestAssetSide === 'A') finalA += premium;
+        if (bestAssetSide === 'B') finalB += premium;
+    }
 
     return { 
         totalA: finalA, 
@@ -324,11 +353,12 @@ export default function TradeCalculatorClient() {
         bestAssetSide, 
         premium, 
         hasPenaltyA: teamA_assets.length > 1, 
-        hasPenaltyB: teamB_assets.length > 1 
+        hasPenaltyB: teamB_assets.length > 1,
+        isOneForOne
     };
-  }, [teamAPlayers, teamBPlayers, teamAStrategy, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode, baselines]);
+  }, [teamAPlayers, teamBPlayers, teamAStrategy, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode, baselines, positionalScarcity]);
 
-  const { totalA, totalB, bestAsset, bestAssetSide, premium, hasPenaltyA, hasPenaltyB } = tradeEvaluation;
+  const { totalA, totalB, bestAsset, bestAssetSide, premium, hasPenaltyA, hasPenaltyB, isOneForOne } = tradeEvaluation;
   const totalBoth = totalA + totalB;
   const diff = Math.abs(totalA - totalB);
   const diffPct = totalBoth > 0 ? (diff / totalBoth) * 100 : 0;
@@ -367,7 +397,9 @@ export default function TradeCalculatorClient() {
 
       if (bestAsset && diffPct > 5) {
           const receivesBest = bestAssetSide === (totalA > totalB ? 'A' : 'B');
-          verdictSubtitle += ` ${receivesBest ? winner : loser} receives a structural premium for acquiring ${bestAsset.name}, the best standalone asset in the deal.`;
+          if (!isOneForOne) {
+              verdictSubtitle += ` ${receivesBest ? winner : loser} receives a structural premium for acquiring ${bestAsset.name}, consolidating elite value in this multi-player deal.`;
+          }
       }
   }
 
@@ -592,7 +624,7 @@ export default function TradeCalculatorClient() {
                         <div className="mt-8 pt-4 border-t border-red-900/30 flex justify-between items-end">
                             <div className="flex flex-col">
                                 <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Final Package Value</span>
-                                {bestAssetSide === 'A' && <span className="text-[10px] text-amber-500 font-bold uppercase mt-1">Includes Elite Premium (+{premium})</span>}
+                                {bestAssetSide === 'A' && !isOneForOne && <span className="text-[10px] text-amber-500 font-bold uppercase mt-1">Includes Elite Premium (+{premium})</span>}
                                 {hasPenaltyA && <span className="text-[10px] text-red-400 font-bold uppercase mt-1">Tiered Package Tax Applied</span>}
                             </div>
                             <span className="text-4xl font-black text-red-500">{totalA}</span>
@@ -701,7 +733,7 @@ export default function TradeCalculatorClient() {
                         <div className="mt-8 pt-4 border-t border-blue-900/30 flex justify-between items-end">
                             <div className="flex flex-col">
                                 <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Final Package Value</span>
-                                {bestAssetSide === 'B' && <span className="text-[10px] text-amber-500 font-bold uppercase mt-1">Includes Elite Premium (+{premium})</span>}
+                                {bestAssetSide === 'B' && !isOneForOne && <span className="text-[10px] text-amber-500 font-bold uppercase mt-1">Includes Elite Premium (+{premium})</span>}
                                 {hasPenaltyB && <span className="text-[10px] text-red-400 font-bold uppercase mt-1">Tiered Package Tax Applied</span>}
                             </div>
                             <span className="text-4xl font-black text-blue-500">{totalB}</span>
