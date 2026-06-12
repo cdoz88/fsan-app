@@ -1,0 +1,135 @@
+const fs = require('fs');
+const path = require('path');
+const { parse } = require('csv-parse/sync');
+
+// Same Name Normalizer we used in the projection compiler to ensure perfect matching
+const normalizeName = (name) => {
+  if (!name) return '';
+  return name
+    .toLowerCase()
+    .replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '') 
+    .replace(/['.\-]/g, '') 
+    .replace(/\s+/g, ' ') 
+    .trim();
+};
+
+function compileHistorical() {
+  console.log("⏳ Starting Historical Dynasty Engine Compiler...");
+
+  // 1. Get current ages from our existing offseasonData.js
+  const dbPath = path.join(__dirname, 'src', 'utils', 'offseasonData.js');
+  if (!fs.existsSync(dbPath)) {
+      console.log("❌ Error: offseasonData.js not found. Run compileProjections.js first.");
+      return;
+  }
+  
+  // Clean the file to parse the JSON array out of it
+  let rawDb = fs.readFileSync(dbPath, 'utf-8');
+  rawDb = rawDb.replace(/\/\/.*\n/g, '') // Remove comments
+               .replace('export const OFFSEASON_FUTURES_DATABASE = ', '') // Remove export declaration
+               .replace(/;\s*$/, ''); // Remove trailing semicolon
+               
+  const currentDatabase = JSON.parse(rawDb);
+  const ageDictionary = {};
+  currentDatabase.forEach(p => {
+      ageDictionary[normalizeName(p.name)] = p.age || 26; // Default to 26 if age is missing
+  });
+
+  const historicalDir = path.join(__dirname, 'Data', 'Historical');
+  if (!fs.existsSync(historicalDir)) {
+      fs.mkdirSync(historicalDir);
+      console.log("📁 Created /Data/Historical/ folder. Please place your 42 CSV files in there!");
+      return;
+  }
+
+  const files = fs.readdirSync(historicalDir).filter(f => f.endsWith('.csv'));
+  if (files.length === 0) {
+      console.log("⚠️ No historical CSV files found in /Data/Historical/.");
+      return;
+  }
+
+  // Data structures to hold our historical aggregations
+  const positionalBaselines = { QB: [], RB: [], WR: [], TE: [] };
+  const ageCurves = { QB: {}, RB: {}, WR: {}, TE: {} };
+
+  files.forEach(filename => {
+      // Extract Year and Position from filename (e.g., "2021 NFL WR Statistics.csv")
+      const match = filename.match(/(\d{4})\s+NFL\s+(QB|RB|WR|TE)/i);
+      if (!match) return;
+
+      const year = parseInt(match[1]);
+      const pos = match[2].toUpperCase();
+      const yearsAgo = 2026 - year; // Calculate age offset
+
+      const fileContent = fs.readFileSync(path.join(historicalDir, filename), 'utf-8');
+      
+      const records = parse(fileContent, {
+        columns: headers => headers.map(h => h ? h.trim() : ''), 
+        skip_empty_lines: true,
+        relax_column_count: true 
+      });
+
+      // Sort records by FPTS descending to guarantee rank accuracy
+      records.sort((a, b) => (parseFloat(b.FPTS) || 0) - (parseFloat(a.FPTS) || 0));
+
+      records.forEach((row, index) => {
+          const playerName = row.Player;
+          const fpts = parseFloat(row.FPTS) || 0;
+          if (!playerName || fpts <= 0) return;
+
+          const cleanName = normalizeName(playerName);
+          
+          // --- Baseline Aggregation ---
+          // Save the points scored at this specific rank (e.g., the #12 WR in 2021)
+          if (!positionalBaselines[pos][index]) positionalBaselines[pos][index] = [];
+          positionalBaselines[pos][index].push(fpts);
+
+          // --- Age Curve Aggregation ---
+          // If we know their current age, calculate their age during this historical season
+          if (ageDictionary[cleanName]) {
+              const historicalAge = ageDictionary[cleanName] - yearsAgo;
+              
+              // Only track ages between 20 and 40
+              if (historicalAge >= 20 && historicalAge <= 40) {
+                  if (!ageCurves[pos][historicalAge]) ageCurves[pos][historicalAge] = [];
+                  ageCurves[pos][historicalAge].push(fpts);
+              }
+          }
+      });
+      console.log(`✅ Processed ${filename}`);
+  });
+
+  // --- Finalizing the Math ---
+  const finalBaselines = { QB: {}, RB: {}, WR: {}, TE: {} };
+  const finalAgeCurves = { QB: {}, RB: {}, WR: {}, TE: {} };
+
+  const calculateAverage = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+
+  // Average out the ranks
+  ['QB', 'RB', 'WR', 'TE'].forEach(pos => {
+      // Calculate Baselines (Top 72)
+      for(let rank = 0; rank < 72; rank++) {
+          if (positionalBaselines[pos][rank]) {
+              finalBaselines[pos][`Rank_${rank + 1}`] = Math.round(calculateAverage(positionalBaselines[pos][rank]));
+          }
+      }
+
+      // Calculate Age Curve Averages
+      Object.keys(ageCurves[pos]).forEach(age => {
+          finalAgeCurves[pos][age] = Math.round(calculateAverage(ageCurves[pos][age]));
+      });
+  });
+
+  const outputData = {
+      BASELINES: finalBaselines,
+      AGE_CURVES: finalAgeCurves
+  };
+
+  const outputPath = path.join(__dirname, 'src', 'utils', 'historicalData.js');
+  const fileTemplate = `// Auto-generated by compileHistoricalData.js\nexport const HISTORICAL_DATA = ${JSON.stringify(outputData, null, 2)};\n`;
+
+  fs.writeFileSync(outputPath, fileTemplate, 'utf-8');
+  console.log(`\n✨ Success! Compiled historical intelligence to ${outputPath}.`);
+}
+
+compileHistorical();
