@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Search, Menu, X, ChevronsUpDown, User, LogOut, Users, Flame, Loader2, FileText, ChevronRight, Activity, Gift, Globe } from 'lucide-react'; // 🚀 Added Globe
+import { Search, Menu, X, ChevronsUpDown, User, LogOut, Users, Flame, Loader2, FileText, ChevronRight, Activity, Gift, Globe } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { themes } from '../utils/theme';
 import { SelloutCrowds } from './Icons';
 import AuthModal from './AuthModal';
-import { useLeague } from '../context/LeagueContext'; // 🚀 NEW: Import the global league hook
+import { useLeague } from '../context/LeagueContext';
 
 const sportsList = [
   { name: 'All', icon: 'https://admin.fsan.com/wp-content/uploads/2023/11/FSAN-Icon.webp' },
@@ -40,7 +40,7 @@ export default function Header({ activeSport }) {
   
   const currentView = pathParts.includes('home') ? 'home' : pathParts.includes('articles') ? 'articles' : pathParts.includes('videos') ? 'videos' : pathParts.includes('podcasts') ? 'podcasts' : 'home';
 
-  // 🚀 NEW: Context-Aware League Sync State
+  // Context-Aware League Sync State
   const { allLeagues, setActiveLeague, getActiveLeagueData } = useLeague();
   const [isLeagueDropdownOpen, setIsLeagueDropdownOpen] = useState(false);
 
@@ -203,6 +203,7 @@ export default function Header({ activeSport }) {
     <>
       <div className="bg-[#1a1a1a] border-b border-gray-800 px-4 py-3 flex justify-between items-center z-[100] sticky top-0 shadow-md">
         
+        {/* Left Side: Logo & Network Selector */}
         <div className="relative flex items-center">
           <Link href={`${basePath}/home`} className="flex items-center hover:opacity-80 transition-opacity">
             <img src={currentLogo} alt={`${activeSport} Logo`} className="h-8 md:h-10 object-contain transition-all duration-300" />
@@ -230,10 +231,69 @@ export default function Header({ activeSport }) {
               </div>
             </>
           )}
+        </div>
 
-          {/* 🚀 NEW: CONTEXT-AWARE LEAGUE SELECTOR */}
+        {/* Right Side: Search, Profile, and League Selector */}
+        <div className="flex items-center">
+          
+          {/* Desktop Auth & Search */}
+          <div className="hidden lg:flex items-center text-xs font-bold uppercase tracking-widest text-gray-400">
+            <button onClick={() => setIsSearchModalOpen(true)} className="hover:text-white transition-colors flex items-center gap-2 group">
+              <Search size={18} className="group-hover:text-white transition-colors" />
+              <span>Search</span>
+            </button>
+            
+            <div className="h-5 w-px bg-gray-700 mx-6"></div>
+            
+            {status === "loading" ? (
+              <div className="flex items-center"><Loader2 size={16} className="animate-spin text-gray-500" /></div>
+            ) : session ? (
+              <Link href="/account" className="text-white hover:text-gray-300 transition-colors flex items-center gap-2 no-underline">
+                {session.user?.image && !session.user.image.includes('wp_user_avatar') ? (
+                  <img src={session.user.image} alt="Avatar" className="w-6 h-6 rounded-full border border-gray-600 object-cover" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center shrink-0">
+                    <User size={14} className="text-gray-400" />
+                  </div>
+                )}
+                Hi, {session.user?.name?.split(' ')[0] || 'User'}
+              </Link>
+            ) : (
+              <div className="flex items-center gap-3">
+                <Link 
+                  href="/subscribe" 
+                  className="bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border border-gray-600 text-white text-[10px] font-black uppercase tracking-widest py-2.5 px-6 rounded-xl transition-all shadow-lg no-underline"
+                >
+                  Subscribe
+                </Link>
+                <button 
+                  onClick={openLogin} 
+                  className="bg-[#111] hover:bg-gray-800 border border-gray-700 text-gray-300 hover:text-white text-[10px] font-black uppercase tracking-widest py-2.5 px-6 rounded-xl transition-all shadow-inner"
+                >
+                  Log In
+                </button>
+              </div>
+            )}
+          </div>
+          
+          {/* Mobile Auth */}
+          <div className="lg:hidden flex items-center text-gray-400">
+            {status === "loading" ? null : session ? (
+              <Link href="/account" className="hover:text-white p-2 transition-colors">
+                {session.user?.image && !session.user.image.includes('wp_user_avatar') ? (
+                  <img src={session.user.image} alt="Avatar" className="w-6 h-6 rounded-full border border-gray-600 object-cover" /> 
+                ) : (
+                  <User size={22} />
+                )}
+              </Link>
+            ) : (
+              <button onClick={openLogin} className="hover:text-white p-2 transition-colors"><User size={22} /></button>
+            )}
+          </div>
+
+          {/* Context-Aware League Selector (Replacing Log Out on far right) */}
           {showLeagueSelector && (
-            <div className="relative ml-2 sm:ml-4 flex items-center z-[100]">
+            <div className="relative ml-2 sm:ml-4 pl-2 sm:pl-4 border-l border-gray-800 flex items-center z-[100]">
               <button
                 onClick={() => setIsLeagueDropdownOpen(!isLeagueDropdownOpen)}
                 className="flex items-center gap-1.5 sm:gap-2 bg-[#111] hover:bg-gray-800 border border-gray-800 hover:border-gray-600 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-4 sm:py-2 transition-all shadow-inner max-w-[140px] sm:max-w-[200px]"
@@ -258,7 +318,8 @@ export default function Header({ activeSport }) {
               {isLeagueDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-[90]" onClick={() => setIsLeagueDropdownOpen(false)}></div>
-                  <div className="absolute top-full left-0 mt-3 w-64 bg-[#1a1a1a] border border-gray-800 rounded-xl shadow-2xl z-[100] overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
+                  {/* Positioned right-0 so it doesn't bleed off screen */}
+                  <div className="absolute top-full right-0 mt-3 w-64 bg-[#1a1a1a] border border-gray-800 rounded-xl shadow-2xl z-[100] overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
                     <div className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 border-b border-gray-800/50">
                       {activeSport} Context
                     </div>
@@ -310,65 +371,6 @@ export default function Header({ activeSport }) {
             </div>
           )}
 
-        </div>
-
-        <div className="hidden lg:flex items-center text-xs font-bold uppercase tracking-widest text-gray-400">
-          <button onClick={() => setIsSearchModalOpen(true)} className="hover:text-white transition-colors flex items-center gap-2 pr-6 group">
-            <Search size={18} className="group-hover:text-white transition-colors" />
-            <span>Search</span>
-          </button>
-          
-          <div className="h-5 w-px bg-gray-700 mr-6"></div>
-          
-          {status === "loading" ? (
-            <div className="px-6 flex items-center"><Loader2 size={16} className="animate-spin text-gray-500" /></div>
-          ) : session ? (
-            <>
-              <Link href="/account" className="px-6 text-white hover:text-gray-300 transition-colors flex items-center gap-2 no-underline">
-                {session.user?.image && !session.user.image.includes('wp_user_avatar') ? (
-                  <img src={session.user.image} alt="Avatar" className="w-6 h-6 rounded-full border border-gray-600 object-cover" />
-                ) : (
-                  <div className="w-6 h-6 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center shrink-0">
-                    <User size={14} className="text-gray-400" />
-                  </div>
-                )}
-                Hi, {session.user?.name?.split(' ')[0] || 'User'}
-              </Link>
-              <button onClick={() => signOut({ callbackUrl: '/home' })} className="hover:text-red-400 transition-colors no-underline">Log Out</button>
-            </>
-          ) : (
-            <div className="flex items-center gap-3">
-              <Link 
-                href="/subscribe" 
-                className="bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-500 hover:to-gray-700 border border-gray-600 text-white text-[10px] font-black uppercase tracking-widest py-2.5 px-6 rounded-xl transition-all shadow-lg no-underline"
-              >
-                Subscribe
-              </Link>
-              <button 
-                onClick={openLogin} 
-                className="bg-[#111] hover:bg-gray-800 border border-gray-700 text-gray-300 hover:text-white text-[10px] font-black uppercase tracking-widest py-2.5 px-6 rounded-xl transition-all shadow-inner"
-              >
-                Log In
-              </button>
-            </div>
-          )}
-        </div>
-        
-        <div className="lg:hidden flex items-center gap-1 text-gray-400">
-          {session ? (
-            <>
-              <Link href="/account" className="hover:text-white p-2 transition-colors">
-                {session.user?.image && !session.user.image.includes('wp_user_avatar') ? (
-                  <img src={session.user.image} alt="Avatar" className="w-6 h-6 rounded-full border border-gray-600 object-cover" /> 
-                ) : (
-                  <User size={22} />
-                )}
-              </Link>
-              <button onClick={() => signOut({ callbackUrl: '/home' })} className="hover:text-red-400 p-2 transition-colors"><LogOut size={22} /></button>
-            </>
-          ) : (
-            <button onClick={openLogin} className="hover:text-white p-2 transition-colors"><User size={22} /></button>
-          )}
         </div>
 
       </div>
