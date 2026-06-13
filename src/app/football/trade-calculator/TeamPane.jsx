@@ -19,6 +19,7 @@ export default function TeamPane({
   activeRoster,
   teamsCount,
   onPlayerClick,
+  onManualAdd,
   onPickSelect,
   removeAsset,
   DRAFT_PICKS
@@ -104,9 +105,9 @@ export default function TeamPane({
                           onChange={(e) => setStrategy(e.target.value)}
                           className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-1.5 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
                       >
-                          <option value="win_now">🏆 Win Now Strategy</option>
-                          <option value="neutral">⚖️ Balanced Strategy</option>
-                          <option value="build">🌱 Rebuild Strategy</option>
+                          <option value="win_now">🏆 {isMyTeam ? 'My' : 'His'} Goal: Win Now</option>
+                          <option value="neutral">⚖️ {isMyTeam ? 'My' : 'His'} Goal: Balanced</option>
+                          <option value="build">🌱 {isMyTeam ? 'My' : 'His'} Goal: Rebuild</option>
                       </select>
                   </div>
               )}
@@ -136,7 +137,7 @@ export default function TeamPane({
                   <Search size={18} className="text-gray-500 mr-3 shrink-0" />
                   <input 
                       type="text" 
-                      placeholder="Search players to trade away..."
+                      placeholder={`Search players for Team ${teamId} to receive...`}
                       className="bg-transparent text-white outline-none w-full text-sm font-bold placeholder-gray-600"
                       value={query}
                       onChange={e => setQuery(e.target.value)}
@@ -145,7 +146,7 @@ export default function TeamPane({
               {query.length > 1 && (
                   <div className="absolute z-50 top-full mt-2 w-full bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto custom-scroll">
                       {playersData.filter(p => p.name.toLowerCase().includes(query.toLowerCase())).slice(0, 8).map(p => (
-                          <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { onPlayerClick(p, teamId); setQuery(''); }}>
+                          <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { onManualAdd(p, teamId); setQuery(''); }}>
                               <div className="flex items-center gap-3">
                                   {p.team && p.team !== 'fa' && (
                                       <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
@@ -167,8 +168,9 @@ export default function TeamPane({
           ) : (
               <>
                 {/* 1. Render Actual Synced Roster */}
-                {activeRoster.map(p => {
-                   const sentAsset = sentAssets.find(traded => traded.id === p.id);
+                {isSynced && activeRoster.map(p => {
+                   // 🚀 FIX: Match by Name to prevent ID bugs locking the roster!
+                   const sentAsset = sentAssets.find(traded => traded.name === p.name);
                    const isSelected = !!sentAsset;
                    
                    return (
@@ -205,7 +207,7 @@ export default function TeamPane({
                    );
                 })}
 
-                {/* 2. Render Players/Picks that this team is RECEIVING */}
+                {/* 2. Render Players/Picks that this team is RECEIVING (for Manual Mode) */}
                 {!isSynced && receivedAssets?.map(p => (
                    <div 
                       key={p.uniqueId} 
@@ -242,7 +244,7 @@ export default function TeamPane({
                 ))}
 
                 {/* Fallback for completely empty pane */}
-                {activeRoster.length === 0 && sentAssets.length === 0 && receivedAssets?.length === 0 && (
+                {((isSynced && activeRoster.length === 0 && sentAssets.length === 0) || (!isSynced && receivedAssets?.length === 0)) && (
                   <div className="text-center py-10 text-gray-600 text-xs font-bold uppercase tracking-widest">No assets added</div>
                 )}
               </>
@@ -252,7 +254,7 @@ export default function TeamPane({
       {/* Manual Picks Dropdown at Bottom */}
       <div className="mt-6 pt-4 border-t border-gray-800 shrink-0">
           <select 
-              onChange={(e) => onPickSelect(e.target.value, teamId)}
+              onChange={(e) => onPickSelect(e.target.value, teamId, isSynced)}
               disabled={isSynced && !isMyTeam && !managerId}
               value=""
               className="w-full bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors cursor-pointer disabled:opacity-50"

@@ -141,7 +141,7 @@ export default function TradeCalculatorClient() {
     }
   };
 
-  const { activeRosters, evaluations, getPlayerValue } = useTradeEngine({
+  const { activeRosters, evaluations } = useTradeEngine({
     playersData, sleeperPlayersMap, leagueRosters, teamsCount, tradeAssets,
     teamManagers, teamStrategies, formatMode, isSuperflex, pprValue, passTdValue, tePremium
   });
@@ -161,6 +161,7 @@ export default function TradeCalculatorClient() {
     setPendingAsset(null);
   };
 
+  // 🚀 Synced Roster Selection
   const handlePlayerClick = (player, fromTeam) => {
     if (teamsCount === 2) {
         const toTeam = fromTeam === 'A' ? 'B' : 'A';
@@ -170,18 +171,87 @@ export default function TradeCalculatorClient() {
     }
   };
 
-  const handlePickSelect = (pickId, fromTeam) => {
+  // 🚀 Manual Search Selection
+  const handleManualAdd = (player, toTeam) => {
+      if (teamsCount === 2) {
+          const fromTeam = toTeam === 'A' ? 'B' : 'A';
+          addAssetToTrade(player, fromTeam, toTeam);
+      } else {
+          setPendingAsset({ player, toTeam });
+      }
+  };
+
+  // 🚀 Pick Selection
+  const handlePickSelect = (pickId, paneTeamId, isSyncedPane) => {
     if (!pickId) return;
     const pick = DRAFT_PICKS.find(p => p.id === pickId);
     if (!pick) return;
 
-    if (teamsCount === 2) {
-        const toTeam = fromTeam === 'A' ? 'B' : 'A';
-        addAssetToTrade(pick, fromTeam, toTeam);
+    if (isSyncedPane) {
+        if (teamsCount === 2) {
+            const toTeam = paneTeamId === 'A' ? 'B' : 'A';
+            addAssetToTrade(pick, paneTeamId, toTeam);
+        } else {
+            setPendingAsset({ player: pick, fromTeam: paneTeamId });
+        }
     } else {
-        setPendingAsset({ player: pick, fromTeam });
+        if (teamsCount === 2) {
+            const fromTeam = paneTeamId === 'A' ? 'B' : 'A';
+            addAssetToTrade(pick, fromTeam, paneTeamId);
+        } else {
+            setPendingAsset({ player: pick, toTeam: paneTeamId });
+        }
     }
   };
+
+  // 🚀 Restore the Missing Verdict Text Logic
+  let verdictTitle = "Select assets to evaluate trade";
+  let verdictSubtitle = "Toggle players to see the package analysis.";
+  let verdictColor = "text-gray-500";
+
+  if (teamsCount === 2) {
+      const totalA = evaluations.A.receivedTotal;
+      const totalB = evaluations.B.receivedTotal;
+      const totalBoth = totalA + totalB;
+
+      if (totalBoth > 0) {
+          const diff = Math.abs(totalA - totalB);
+          const diffPct = (diff / totalBoth) * 100;
+          const winner = totalA > totalB ? 'Team A' : 'Team B';
+          const loser = totalA > totalB ? 'Team B' : 'Team A';
+          const bestAssetTeam = totalA > totalB ? 'A' : 'B';
+          
+          if (diffPct <= 5) {
+              verdictTitle = "🤝 Fair Trade";
+              verdictColor = "text-zinc-300";
+              verdictSubtitle = "Highly balanced deal. Both managers extract equitable value based on their current roster strategies.";
+          } else if (diffPct <= 12) {
+              verdictTitle = `⚖️ Slight Edge: ${winner}`;
+              verdictColor = totalA > totalB ? "text-red-400" : "text-blue-400";
+              verdictSubtitle = `A viable trade, but ${winner} extracts roughly ${Math.round(diffPct)}% more value overall.`;
+          } else if (diffPct <= 22) {
+              verdictTitle = `🏆 Clear Win: ${winner}`;
+              verdictColor = totalA > totalB ? "text-red-500" : "text-blue-500";
+              verdictSubtitle = `${loser} is sacrificing too much value. Consider adding a draft pick or prospect to balance the scales.`;
+          } else {
+              verdictTitle = `🚨 Major Overpay by ${loser}`;
+              verdictColor = totalA > totalB ? "text-red-600" : "text-blue-600";
+              verdictSubtitle = `This trade is heavily lopsided. ${winner} completely dominates the value exchange.`;
+          }
+
+          if (diffPct > 5 && evaluations[bestAssetTeam].premium > 0 && evaluations[bestAssetTeam].receivedAssets.length > 0) {
+              const bestAssetName = evaluations[bestAssetTeam].receivedAssets[0].name;
+              verdictSubtitle += ` ${winner} receives a structural premium for acquiring ${bestAssetName}, consolidating elite value in this multi-player deal.`;
+          }
+      }
+  } else {
+      const totalAll = evaluations.A.receivedTotal + evaluations.B.receivedTotal + evaluations.C.receivedTotal;
+      if (totalAll > 0) {
+          verdictTitle = "⚖️ 3-Team Trade Analysis";
+          verdictColor = "text-zinc-300";
+          verdictSubtitle = "Evaluate the net gains and losses for each manager to ensure structural balance.";
+      }
+  }
 
   return (
     <div className="w-full animate-in fade-in duration-500 pb-24 relative pt-6 lg:pt-8">
@@ -190,16 +260,23 @@ export default function TradeCalculatorClient() {
       {pendingAsset && (
         <div className="fixed inset-0 z-[150] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
            <div className="bg-[#1a1a1a] border border-gray-700 rounded-3xl p-8 w-full max-w-sm text-center shadow-2xl">
-              <h3 className="text-xl font-black text-white uppercase mb-2">Send Asset To:</h3>
+              <h3 className="text-xl font-black text-white uppercase mb-2">
+                  {pendingAsset.fromTeam ? 'Send Asset To:' : 'Receive Asset From:'}
+              </h3>
               <p className="text-sm font-bold text-gray-400 mb-6">{pendingAsset.player.name}</p>
               <div className="flex flex-col gap-3">
-                 {['A', 'B', 'C'].filter(t => t !== pendingAsset.fromTeam && (teamsCount === 3 || t !== 'C')).map(t => {
+                 {['A', 'B', 'C']
+                    .filter(t => (pendingAsset.fromTeam ? t !== pendingAsset.fromTeam : t !== pendingAsset.toTeam) && (teamsCount === 3 || t !== 'C'))
+                    .map(t => {
                     const manager = leagueUsers.find(u => u.user_id === teamManagers[t]);
                     const nameLabel = manager ? (manager.metadata?.team_name || manager.display_name) : `Team ${t}`;
                     return (
                         <button 
                             key={t}
-                            onClick={() => addAssetToTrade(pendingAsset.player, pendingAsset.fromTeam, t)} 
+                            onClick={() => {
+                                if (pendingAsset.fromTeam) addAssetToTrade(pendingAsset.player, pendingAsset.fromTeam, t);
+                                else addAssetToTrade(pendingAsset.player, t, pendingAsset.toTeam);
+                            }} 
                             className="w-full py-3.5 bg-gray-800 hover:bg-gray-700 text-white font-black uppercase tracking-widest rounded-xl border border-gray-600 transition-colors"
                         >
                            {nameLabel}
@@ -257,23 +334,6 @@ export default function TradeCalculatorClient() {
                     <RefreshCw size={16} className={isRefreshingLeague ? "animate-spin" : ""} />
                   </button>
                 </div>
-                
-                {/* 🚀 NEW: Add 3rd Team Toggle */}
-                {teamsCount === 2 ? (
-                    <button 
-                        onClick={() => setTeamsCount(3)}
-                        className="flex items-center gap-2 bg-[#1a1a1a] hover:bg-gray-800 border border-gray-800 hover:border-gray-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-sm"
-                    >
-                        <Plus size={16} /> Add 3rd Team
-                    </button>
-                ) : (
-                    <button 
-                        onClick={() => { setTeamsCount(2); setTeamManagers(prev => ({ ...prev, C: '' })); setTradeAssets(prev => prev.filter(a => a.fromTeam !== 'C' && a.toTeam !== 'C')); }}
-                        className="flex items-center gap-2 bg-red-900/20 hover:bg-red-900/40 border border-red-500/30 hover:border-red-500 text-red-500 px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-sm"
-                    >
-                        <X size={16} /> Remove 3rd Team
-                    </button>
-                )}
             </div>
           ) : (
             <button onClick={() => setShowSettings(!showSettings)} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${showSettings ? 'bg-white text-black' : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-gray-800'}`}>
@@ -285,7 +345,39 @@ export default function TradeCalculatorClient() {
         {/* Custom Scoring Panel */}
         {showSettings && !activeLeague && (
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 mb-8 shadow-xl animate-in fade-in slide-in-from-top-4">
-             {/* ... UI untouched ... */}
+             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="flex flex-col gap-3">
+                <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">League Type</span>
+                <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
+                  <button onClick={() => setManualIsSuperflex(false)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!manualIsSuperflex ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>1QB</button>
+                  <button onClick={() => setManualIsSuperflex(true)} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${manualIsSuperflex ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>SUPERFLEX</button>
+                </div>
+              </div>
+              <div className="flex flex-col gap-3">
+                <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Receptions (PPR)</span>
+                <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
+                  {[{ label: 'STD', val: 0 }, { label: 'HALF', val: 0.5 }, { label: 'FULL', val: 1 }].map(opt => (
+                    <button key={opt.label} onClick={() => setManualPprValue(opt.val)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${manualPprValue === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>{opt.label}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex flex-col gap-3">
+                <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Passing TDs</span>
+                <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
+                  {[{ label: '4 PTS', val: 4 }, { label: '6 PTS', val: 6 }].map(opt => (
+                    <button key={opt.label} onClick={() => setManualPassTdValue(opt.val)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${manualPassTdValue === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>{opt.label}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex flex-col gap-3">
+                <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">TE Premium</span>
+                <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
+                  {[{ label: 'NONE', val: 0 }, { label: '+0.5', val: 0.5 }, { label: '+1.0', val: 1 }].map(opt => (
+                    <button key={opt.label} onClick={() => setManualTePremium(opt.val)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${manualTePremium === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>{opt.label}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -297,23 +389,48 @@ export default function TradeCalculatorClient() {
         ) : (
             <div className="flex flex-col gap-8">
                 
-                {/* 🚀 UPDATED VERDICT BARS */}
-                {teamsCount === 2 ? (
-                    <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-center items-center h-28">
-                        <div className="w-full h-4 rounded-full bg-[#111] flex overflow-hidden border border-gray-800 shadow-inner">
-                            <div className="h-full bg-red-600 transition-all duration-500" style={{ width: `${(evaluations.A.receivedTotal / ((evaluations.A.receivedTotal + evaluations.B.receivedTotal) || 1)) * 100}%` }} />
-                            <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${(evaluations.B.receivedTotal / ((evaluations.A.receivedTotal + evaluations.B.receivedTotal) || 1)) * 100}%` }} />
-                        </div>
+                {/* 🚀 RESTORED VERDICT BARS & MOVED BUTTON */}
+                <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-center items-center min-h-[140px]">
+                    <h2 className={`text-center text-2xl font-black uppercase tracking-widest mb-2 ${verdictColor}`}>
+                        {verdictTitle}
+                    </h2>
+                    <p className="text-center text-xs font-bold text-gray-400 max-w-2xl mx-auto mb-6 leading-relaxed">
+                        {verdictSubtitle}
+                    </p>
+                    <div className="w-full h-4 rounded-full bg-[#111] flex overflow-hidden border border-gray-800 shadow-inner">
+                        {teamsCount === 2 ? (
+                            <>
+                                <div className="h-full bg-red-600 transition-all duration-500" style={{ width: `${(evaluations.A.receivedTotal / ((evaluations.A.receivedTotal + evaluations.B.receivedTotal) || 1)) * 100}%` }} />
+                                <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${(evaluations.B.receivedTotal / ((evaluations.A.receivedTotal + evaluations.B.receivedTotal) || 1)) * 100}%` }} />
+                            </>
+                        ) : (
+                            <>
+                                <div className="h-full bg-red-600 transition-all duration-500" style={{ width: `${(evaluations.A.receivedTotal / ((evaluations.A.receivedTotal + evaluations.B.receivedTotal + evaluations.C.receivedTotal) || 1)) * 100}%` }} />
+                                <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${(evaluations.B.receivedTotal / ((evaluations.A.receivedTotal + evaluations.B.receivedTotal + evaluations.C.receivedTotal) || 1)) * 100}%` }} />
+                                <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${(evaluations.C.receivedTotal / ((evaluations.A.receivedTotal + evaluations.B.receivedTotal + evaluations.C.receivedTotal) || 1)) * 100}%` }} />
+                            </>
+                        )}
                     </div>
-                ) : (
-                    <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-center items-center h-28">
-                        <div className="w-full h-4 rounded-full bg-[#111] flex overflow-hidden border border-gray-800 shadow-inner">
-                            <div className="h-full bg-red-600 transition-all duration-500" style={{ width: `${(evaluations.A.receivedTotal / ((evaluations.A.receivedTotal + evaluations.B.receivedTotal + evaluations.C.receivedTotal) || 1)) * 100}%` }} />
-                            <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${(evaluations.B.receivedTotal / ((evaluations.A.receivedTotal + evaluations.B.receivedTotal + evaluations.C.receivedTotal) || 1)) * 100}%` }} />
-                            <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${(evaluations.C.receivedTotal / ((evaluations.A.receivedTotal + evaluations.B.receivedTotal + evaluations.C.receivedTotal) || 1)) * 100}%` }} />
-                        </div>
+
+                    {/* 🚀 ADD 3RD TEAM BUTTON (Moved into the corner of the verdict box) */}
+                    <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6">
+                        {teamsCount === 2 ? (
+                            <button 
+                                onClick={() => setTeamsCount(3)}
+                                className="flex items-center gap-2 bg-[#111] hover:bg-gray-800 border border-gray-700 text-white px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all shadow-sm"
+                            >
+                                <Plus size={14} /> Add 3rd Team
+                            </button>
+                        ) : (
+                            <button 
+                                onClick={() => { setTeamsCount(2); setTeamManagers(prev => ({ ...prev, C: '' })); setTradeAssets(prev => prev.filter(a => a.fromTeam !== 'C' && a.toTeam !== 'C')); }}
+                                className="flex items-center gap-2 bg-red-900/20 hover:bg-red-900/40 border border-red-500/30 hover:border-red-500 text-red-500 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all shadow-sm"
+                            >
+                                <X size={14} /> Remove 3rd Team
+                            </button>
+                        )}
                     </div>
-                )}
+                </div>
 
                 {/* 🚀 DYNAMIC TEAM GRID */}
                 <div className="flex flex-col lg:flex-row gap-6">
@@ -340,6 +457,7 @@ export default function TradeCalculatorClient() {
                                 activeRoster={activeRosters[teamId]}
                                 teamsCount={teamsCount}
                                 onPlayerClick={handlePlayerClick}
+                                onManualAdd={handleManualAdd}
                                 onPickSelect={handlePickSelect}
                                 removeAsset={removeAsset}
                                 DRAFT_PICKS={DRAFT_PICKS}
