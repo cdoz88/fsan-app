@@ -35,12 +35,10 @@ export function useTradeEngine({
   playersData,
   sleeperPlayersMap,
   leagueRosters,
-  teamAManager,
-  teamBManager,
-  teamAPlayers,
-  teamBPlayers,
-  teamAStrategy,
-  teamBStrategy,
+  teamsCount,
+  tradeAssets,
+  teamManagers,
+  teamStrategies,
   formatMode,
   isSuperflex,
   pprValue,
@@ -60,12 +58,7 @@ export function useTradeEngine({
         let mod = 1.0 + ((25 - count) / 100);
         return Math.min(1.35, Math.max(0.75, mod)); 
     };
-    return {
-      QB: calcMod(counts.QB),
-      RB: calcMod(counts.RB),
-      WR: calcMod(counts.WR),
-      TE: calcMod(counts.TE)
-    };
+    return { QB: calcMod(counts.QB), RB: calcMod(counts.RB), WR: calcMod(counts.WR), TE: calcMod(counts.TE) };
   }, [playersData]);
 
   const baselines = useMemo(() => {
@@ -88,21 +81,14 @@ export function useTradeEngine({
     });
 
     const getBaseScore = (pos, rankLimit) => {
-      const posPlayers = rawScored.filter(p => p.position === pos || (pos === 'TE' && p.position === 'WR/TE'))
-                                  .sort((a, b) => b.rawPts - a.rawPts);
-      let dynamicBase = 0;
-      if (posPlayers.length > 0) dynamicBase = posPlayers[Math.min(rankLimit - 1, posPlayers.length - 1)].rawPts;
+      const posPlayers = rawScored.filter(p => p.position === pos || (pos === 'TE' && p.position === 'WR/TE')).sort((a, b) => b.rawPts - a.rawPts);
+      let dynamicBase = posPlayers.length > 0 ? posPlayers[Math.min(rankLimit - 1, posPlayers.length - 1)].rawPts : 0;
       let posKey = pos === 'WR/TE' ? 'TE' : pos;
       let histBase = HISTORICAL_DATA?.BASELINES?.[posKey]?.[`Rank_${rankLimit}`];
       if (histBase && histBase > 0) return (dynamicBase * 0.5) + (histBase * 0.5);
       return dynamicBase;
     };
-    return {
-      QB: getBaseScore('QB', isSuperflex ? 32 : 16),
-      RB: getBaseScore('RB', 48), 
-      WR: getBaseScore('WR', 60), 
-      TE: getBaseScore('TE', 24)
-    };
+    return { QB: getBaseScore('QB', isSuperflex ? 32 : 16), RB: getBaseScore('RB', 48), WR: getBaseScore('WR', 60), TE: getBaseScore('TE', 24) };
   }, [playersData, isSuperflex, pprValue, passTdValue, tePremium]);
 
   const getAgeMultiplier = (position, age, strategy) => {
@@ -219,22 +205,11 @@ export function useTradeEngine({
     const mappedPlayers = roster.players.map(sleeperId => {
       let p = playersData.find(dbPlayer => String(dbPlayer.sleeper_id) === String(sleeperId));
       if (!p) p = playersData.find(dbPlayer => String(dbPlayer.id) === String(sleeperId));
-      
       if (!p && sleeperPlayersMap[sleeperId]) {
           const sPlayer = sleeperPlayersMap[sleeperId];
-          const sName = normalizeName(sPlayer.search_full_name || sPlayer.full_name);
-          if (sName) {
-              p = playersData.find(dbPlayer => {
-                  if (normalizeName(dbPlayer.name) !== sName) return false;
-                  if (sPlayer.position && dbPlayer.position) {
-                      const sPos = sPlayer.position;
-                      const dbPos = dbPlayer.position;
-                      if (sPos !== dbPos && sPos !== 'WR/TE' && dbPos !== 'WR/TE') {
-                         if (['QB', 'RB', 'WR', 'TE'].includes(sPos) !== ['QB', 'RB', 'WR', 'TE'].includes(dbPos)) return false;
-                      }
-                  }
-                  return true;
-              });
+          const searchName = sPlayer.search_full_name || sPlayer.full_name?.toLowerCase().replace(/[^a-z]/g, '');
+          if (searchName) {
+              p = playersData.find(dbPlayer => dbPlayer.name.toLowerCase().replace(/[^a-z]/g, '') === searchName);
           }
       }
 
@@ -252,62 +227,94 @@ export function useTradeEngine({
     });
   };
 
-  const activeRosterA = useMemo(() => buildRosterList(teamAManager, teamBStrategy), [teamAManager, leagueRosters, playersData, sleeperPlayersMap, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
-  const activeRosterB = useMemo(() => buildRosterList(teamBManager, teamAStrategy), [teamBManager, leagueRosters, playersData, sleeperPlayersMap, teamAStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode]);
+  // Build the active rosters (valued at their OWN strategy for baseline display)
+  const activeRosters = useMemo(() => {
+    const rosters = {};
+    ['A', 'B', 'C'].forEach(teamId => {
+        if (teamsCount === 2 && teamId === 'C') return;
+        rosters[teamId] = buildRosterList(teamManagers[teamId], teamStrategies[teamId]);
+    });
+    return rosters;
+  }, [teamManagers, leagueRosters, playersData, sleeperPlayersMap, teamStrategies, isSuperflex, pprValue, passTdValue, tePremium, formatMode, teamsCount]);
 
-  const tradeEvaluation = useMemo(() => {
-    const teamA_assets = teamAPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamAStrategy) })).sort((a, b) => b.calcValue - a.calcValue);
-    const teamB_assets = teamBPlayers.map(p => ({ ...p, calcValue: getPlayerValue(p, teamBStrategy) })).sort((a, b) => b.calcValue - a.calcValue);
+  // Evaluate the entire 2 or 3 team trade structure
+  const evaluations = useMemo(() => {
+    const evals = {};
+    let bestAssetVal = -1;
+    let bestAssetTeam = null;
 
-    if (teamA_assets.length === 0 && teamB_assets.length === 0) return { totalA: 0, totalB: 0, bestAsset: null, hasPenaltyA: false, hasPenaltyB: false };
+    ['A', 'B', 'C'].forEach(teamId => {
+        if (teamsCount === 2 && teamId === 'C') return;
 
-    let bestAsset = null;
-    let maxVal = -1;
-    let bestAssetSide = null;
+        // What did this team RECEIVE? Evaluate using THEIR strategy (because they own them now)
+        const received = tradeAssets.filter(a => a.toTeam === teamId).map(a => ({
+            ...a,
+            calcValue: getPlayerValue(a, teamStrategies[teamId])
+        })).sort((a, b) => b.calcValue - a.calcValue);
 
-    teamA_assets.forEach(p => { if(p.calcValue > maxVal) { maxVal = p.calcValue; bestAsset = p; bestAssetSide = 'A'; }});
-    teamB_assets.forEach(p => { if(p.calcValue > maxVal) { maxVal = p.calcValue; bestAsset = p; bestAssetSide = 'B'; }});
+        // What did this team SEND? Evaluate using THEIR strategy (because they lost them)
+        const sent = tradeAssets.filter(a => a.fromTeam === teamId).map(a => ({
+            ...a,
+            calcValue: getPlayerValue(a, teamStrategies[teamId])
+        }));
 
-    const getTieredSum = (assets) => {
-        let sum = 0;
-        assets.forEach((asset, idx) => {
-            let multiplier = 1.0;
-            if (idx === 1) multiplier = 0.90; 
-            else if (idx === 2) multiplier = 0.80; 
-            else if (idx === 3) multiplier = 0.70; 
-            else if (idx >= 4) multiplier = 0.60;  
-            sum += (asset.calcValue * multiplier);
-        });
-        return Math.round(sum);
-    };
+        const getTieredSum = (assets) => {
+            let sum = 0;
+            assets.forEach((asset, idx) => {
+                let multiplier = 1.0;
+                if (idx === 1) multiplier = 0.90; 
+                else if (idx === 2) multiplier = 0.80; 
+                else if (idx === 3) multiplier = 0.70; 
+                else if (idx >= 4) multiplier = 0.60;  
+                sum += (asset.calcValue * multiplier);
+            });
+            return Math.round(sum);
+        };
 
-    let finalA = getTieredSum(teamA_assets);
-    let finalB = getTieredSum(teamB_assets);
-    let premium = 0;
-    const isOneForOne = teamA_assets.length === 1 && teamB_assets.length === 1;
+        const receivedTotalBase = getTieredSum(received);
+        const sentTotal = Math.round(sent.reduce((acc, a) => acc + a.calcValue, 0));
 
-    if (!isOneForOne) {
-        premium = Math.round(maxVal * 0.10);
-        if (bestAssetSide === 'A') finalA += premium;
-        if (bestAssetSide === 'B') finalB += premium;
+        if (received.length > 0 && received[0].calcValue > bestAssetVal) {
+            bestAssetVal = received[0].calcValue;
+            bestAssetTeam = teamId;
+        }
+
+        evals[teamId] = {
+            receivedAssets: received,
+            sentAssets: sent,
+            receivedTotalBase,
+            sentTotal,
+            hasPenalty: received.length > 1,
+            isOneForOne: received.length === 1 && sent.length === 1,
+            premium: 0 
+        };
+    });
+
+    // Apply the 10% premium to the team receiving the single best asset in the entire trade
+    if (bestAssetTeam) {
+        const isOneForOneGlobal = tradeAssets.length === 2 && new Set(tradeAssets.map(a=>a.fromTeam)).size === 2;
+        if (!isOneForOneGlobal) {
+            const premium = Math.round(bestAssetVal * 0.10);
+            if (evals[bestAssetTeam] && !evals[bestAssetTeam].isOneForOne) {
+                evals[bestAssetTeam].premium = premium;
+            }
+        }
     }
 
-    return { 
-        totalA: finalA, 
-        totalB: finalB, 
-        bestAsset, 
-        bestAssetSide, 
-        premium, 
-        hasPenaltyA: teamA_assets.length > 1, 
-        hasPenaltyB: teamB_assets.length > 1,
-        isOneForOne
-    };
-  }, [teamAPlayers, teamBPlayers, teamAStrategy, teamBStrategy, isSuperflex, pprValue, passTdValue, tePremium, formatMode, baselines, positionalScarcity]);
+    // Finalize Net Totals
+    ['A', 'B', 'C'].forEach(teamId => {
+        if (teamsCount === 2 && teamId === 'C') return;
+        const e = evals[teamId];
+        e.receivedTotal = e.receivedTotalBase + e.premium;
+        e.net = e.receivedTotal - e.sentTotal;
+    });
+
+    return evals;
+  }, [tradeAssets, teamStrategies, teamsCount, isSuperflex, pprValue, passTdValue, tePremium, formatMode, baselines, positionalScarcity]);
 
   return {
-    activeRosterA,
-    activeRosterB,
-    tradeEvaluation,
+    activeRosters,
+    evaluations,
     getPlayerValue
   };
 }
