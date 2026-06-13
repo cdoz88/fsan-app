@@ -5,6 +5,14 @@ import { Settings, Search, X, RefreshCw, Trophy, User, Check, ChevronsUpDown } f
 import { HISTORICAL_DATA } from '../../../utils/historicalData'; 
 import { useLeague } from '../../../context/LeagueContext'; 
 
+// 🚀 NEW: Intelligent Name Normalizer to fix the "James Cook III" / "Jr" / "Sr" suffix bugs
+const normalizeName = (name) => {
+  if (!name) return '';
+  return name.toLowerCase()
+      .replace(/[^a-z]/g, '')
+      .replace(/(jr|sr|ii|iii|iv)$/, '');
+};
+
 // --- Generate Draft Picks Data ---
 const generatePicks = () => {
   const picks = [];
@@ -137,7 +145,6 @@ export default function TradeCalculatorClient() {
     if (activeLeague && activeLeague.platform === 'sleeper') {
       const fetchSleeperData = async () => {
         try {
-          // 🚀 ADDED CACHE BUSTING HERE TOO!
           const timestamp = Date.now();
           const [usersRes, rostersRes] = await Promise.all([
             fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/users?_t=${timestamp}`),
@@ -164,7 +171,6 @@ export default function TradeCalculatorClient() {
     }
   }, [activeLeague, sleeperUserId]);
 
-  // 🚀 RE-SYNC ROSTERS LIVE FROM SLEEPER (WITH CACHE BUSTING & FORCED DELAY)
   const refreshLeagueData = async () => {
     if (!activeLeague || activeLeague.platform !== 'sleeper') return;
     setIsRefreshingLeague(true);
@@ -173,7 +179,7 @@ export default function TradeCalculatorClient() {
       const [usersRes, rostersRes, _] = await Promise.all([
         fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/users?_t=${timestamp}`),
         fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/rosters?_t=${timestamp}`),
-        new Promise(resolve => setTimeout(resolve, 750)) // Forces the spin to be visible!
+        new Promise(resolve => setTimeout(resolve, 750)) 
       ]);
       const users = await usersRes.json();
       const rosters = await rostersRes.json();
@@ -357,11 +363,28 @@ export default function TradeCalculatorClient() {
     const mappedPlayers = roster.players.map(sleeperId => {
       let p = playersData.find(dbPlayer => String(dbPlayer.sleeper_id) === String(sleeperId));
       if (!p) p = playersData.find(dbPlayer => String(dbPlayer.id) === String(sleeperId));
+      
+      // 🚀 The Intelligent Name Matcher Fallback
       if (!p && sleeperPlayersMap[sleeperId]) {
           const sPlayer = sleeperPlayersMap[sleeperId];
-          const searchName = sPlayer.search_full_name || sPlayer.full_name?.toLowerCase().replace(/[^a-z]/g, '');
-          if (searchName) {
-              p = playersData.find(dbPlayer => dbPlayer.name.toLowerCase().replace(/[^a-z]/g, '') === searchName);
+          const sleeperNameRaw = sPlayer.search_full_name || sPlayer.full_name;
+          const sName = normalizeName(sleeperNameRaw);
+          
+          if (sName) {
+              p = playersData.find(dbPlayer => {
+                  if (normalizeName(dbPlayer.name) !== sName) return false;
+                  
+                  if (sPlayer.position && dbPlayer.position) {
+                      const sPos = sPlayer.position;
+                      const dbPos = dbPlayer.position;
+                      if (sPos !== dbPos && sPos !== 'WR/TE' && dbPos !== 'WR/TE') {
+                         const isOff1 = ['QB', 'RB', 'WR', 'TE'].includes(sPos);
+                         const isOff2 = ['QB', 'RB', 'WR', 'TE'].includes(dbPos);
+                         if (isOff1 !== isOff2) return false;
+                      }
+                  }
+                  return true;
+              });
           }
       }
 
@@ -1081,6 +1104,21 @@ export default function TradeCalculatorClient() {
                                       <div className="text-lg font-black text-white">{getPlayerValue(p, teamBStrategy)}</div>
                                   </div>
                               ))}
+                          </div>
+
+                          <div className="mt-6 pt-4 border-t border-gray-800 shrink-0">
+                              <select 
+                                  onChange={(e) => handlePickSelect(e, 'B')}
+                                  className="w-full bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors cursor-pointer"
+                              >
+                                  <option value="">+ Add Draft Pick to Trade</option>
+                                  <optgroup label="2026 Picks">
+                                      {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                  </optgroup>
+                                  <optgroup label="2027 Picks">
+                                      {DRAFT_PICKS.filter(p => p.year === 2027).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                  </optgroup>
+                              </select>
                           </div>
                       </div>
                   </div>
