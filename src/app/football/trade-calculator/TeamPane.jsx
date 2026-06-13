@@ -109,9 +109,9 @@ export default function TeamPane({
                             onChange={(e) => setStrategy(e.target.value)}
                             className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-1.5 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
                         >
-                            <option value="win_now">🏆 {isMyTeam ? 'My' : 'His'} Goal: Win Now</option>
-                            <option value="neutral">⚖️ {isMyTeam ? 'My' : 'His'} Goal: Balanced</option>
-                            <option value="build">🌱 {isMyTeam ? 'My' : 'His'} Goal: Rebuild</option>
+                            <option value="win_now">🏆 Win Now Strategy</option>
+                            <option value="neutral">⚖️ Balanced Strategy</option>
+                            <option value="build">🌱 Rebuild Strategy</option>
                         </select>
                     </div>
                 )}
