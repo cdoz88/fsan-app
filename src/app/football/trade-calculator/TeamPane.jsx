@@ -126,15 +126,20 @@ export default function TeamPane({
 
       {/* "RECEIVING BUCKET" */}
       <div className="bg-[#161616] border border-gray-700/60 rounded-xl sm:rounded-2xl p-2 sm:p-4 mb-3 sm:mb-6 shadow-inner min-h-[90px] sm:min-h-[110px] flex flex-col transition-all">
-          <div className="flex justify-between items-end mb-1 min-w-0">
-              <div className="flex flex-col items-start gap-0.5 sm:gap-1 pb-0.5 sm:pb-1 truncate">
-                  {premium > 0 && <span className="text-[7px] sm:text-[9px] text-amber-500 font-bold uppercase tracking-widest leading-tight">Incl. Prem (+{premium})</span>}
-                  {hasPenalty && <span className="text-[7px] sm:text-[9px] text-red-400 font-bold uppercase tracking-widest leading-tight">Tax Applied</span>}
+          
+          {/* 🚀 FIXED: Stacked the large score on top of the Premium/Tax text so they each get 100% width! */}
+          <div className="flex flex-col w-full mb-1">
+              <div className="w-full text-right mb-1 sm:mb-2">
+                  <span className={`text-3xl sm:text-4xl lg:text-5xl font-black ${theme.text} leading-none`}>{receivedTotal || 0}</span>
               </div>
-              <span className={`text-2xl sm:text-4xl lg:text-5xl font-black ${theme.text} leading-none truncate pl-1 sm:pl-2`}>{receivedTotal || 0}</span>
+              {(premium > 0 || hasPenalty) && (
+                  <div className="flex flex-col items-start gap-0.5 sm:gap-1 w-full pb-0.5 sm:pb-1">
+                      {premium > 0 && <span className="text-[7px] sm:text-[9px] text-amber-500 font-bold uppercase tracking-widest leading-tight whitespace-normal">Incl. Prem (+{premium})</span>}
+                      {hasPenalty && <span className="text-[7px] sm:text-[9px] text-red-400 font-bold uppercase tracking-widest leading-tight whitespace-normal">Tax Applied</span>}
+                  </div>
+              )}
           </div>
 
-          {/* 🚀 FIXED: Stacked the Sent and Net side right-aligned, removed the "|" */}
           <div className="flex justify-between items-end mt-1 mb-2 sm:mb-3 border-b border-gray-800/60 pb-1.5 sm:pb-2 gap-1 sm:gap-0 min-w-0">
               <h4 className="text-[8px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest truncate mb-0.5 sm:mb-0">
                   Receiving
