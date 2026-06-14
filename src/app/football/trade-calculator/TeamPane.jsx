@@ -46,18 +46,17 @@ export default function TeamPane({
   return (
     <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col">
       
-      {/* 🚀 HEADER SECTION */}
-      <div className="flex flex-col xl:flex-row xl:justify-between xl:items-start gap-4 mb-4 shrink-0">
+      {/* 🚀 RESTRUCTURED HEADER: Avatar/Name (Left) & Strategy (Right) */}
+      <div className="flex flex-row justify-between items-center gap-4 mb-4 border-b border-gray-800 pb-4 shrink-0 min-h-[64px]">
           
-          {/* Left Side: Avatar, Name, Strategy */}
-          <div className="flex flex-col gap-2 mt-1 w-full xl:w-auto">
+          <div className="flex-1">
               {isMyTeam || !isSynced ? (
                   <div className="flex items-center gap-3">
                       {isSynced && <img src={avatar} className="w-10 h-10 rounded-full border border-gray-600 shrink-0" alt="" />}
-                      <span className="text-lg font-black text-white truncate max-w-[200px] leading-none">{teamName}</span>
+                      <span className="text-lg font-black text-white truncate max-w-[180px] sm:max-w-[220px] leading-none">{teamName}</span>
                   </div>
               ) : (
-                  <div className="relative w-full xl:w-[220px]">
+                  <div className="relative w-full max-w-[220px]">
                     <button 
                       onClick={() => setIsOpponentDropdownOpen(!isOpponentDropdownOpen)}
                       className={`flex items-center gap-3 bg-[#1a1a1a] border border-gray-700 hover:${theme.border} text-white rounded-xl py-2 px-3 shadow-sm focus:outline-none transition-all w-full text-left`}
@@ -99,45 +98,49 @@ export default function TeamPane({
                     )}
                   </div>
               )}
-
-              {/* Exact Verbiage Requested! */}
-              {formatMode === 'dynasty' && (
-                  <div className="flex flex-col gap-1 w-full mt-2">
-                      <select 
-                          value={strategy} 
-                          onChange={(e) => setStrategy(e.target.value)}
-                          className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-1.5 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
-                      >
-                          <option value="win_now">Win Now Strategy</option>
-                          <option value="neutral">Balanced Strategy</option>
-                          <option value="build">Rebuild Strategy</option>
-                      </select>
-                  </div>
-              )}
           </div>
 
-          {/* Right Side: Total & Badges */}
-          <div className="flex flex-col xl:items-end text-left xl:text-right w-full xl:w-auto mt-1">
+          {formatMode === 'dynasty' && (
+              <div className="flex-shrink-0">
+                  <select 
+                      value={strategy} 
+                      onChange={(e) => setStrategy(e.target.value)}
+                      className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-2 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full cursor-pointer hover:border-gray-500 transition-colors"
+                  >
+                      <option value="win_now">Win Now Strategy</option>
+                      <option value="neutral">Balanced Strategy</option>
+                      <option value="build">Rebuild Strategy</option>
+                  </select>
+              </div>
+          )}
+      </div>
+
+      {/* 🚀 RESTRUCTURED "RECEIVING BUCKET" */}
+      <div className="bg-[#161616] border border-gray-700/60 rounded-2xl p-4 mb-6 shadow-inner min-h-[110px] flex flex-col transition-all">
+          
+          {/* Top Row: Premium/Tax (Left) & Large Points (Right) */}
+          <div className="flex justify-between items-end mb-1">
+              <div className="flex flex-col items-start gap-1 pb-1">
+                  {premium > 0 && <span className="text-[9px] text-amber-500 font-bold uppercase tracking-widest">Includes Premium (+{premium})</span>}
+                  {hasPenalty && <span className="text-[9px] text-red-400 font-bold uppercase tracking-widest">Package Tax Applied</span>}
+              </div>
               <span className={`text-4xl sm:text-5xl font-black ${theme.text} leading-none`}>{receivedTotal || 0}</span>
-              <div className="flex items-center gap-2 mt-2">
+          </div>
+
+          {/* Divider Row: Assets Received (Left) & Sent|Net (Right) */}
+          <div className="flex justify-between items-center mt-1 mb-3 border-b border-gray-800/60 pb-2">
+              <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                  Assets Received
+              </h4>
+              <div className="flex items-center gap-2">
                   <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Sent: {sentTotal || 0}</span>
                   <span className="text-gray-700">|</span>
                   <span className={`text-[10px] font-bold uppercase tracking-widest ${net > 0 ? 'text-green-500' : net < 0 ? 'text-red-500' : 'text-gray-500'}`}>
                       Net: {net > 0 ? '+' : ''}{net || 0}
                   </span>
               </div>
-              <div className="flex flex-col items-start xl:items-end mt-1 gap-1">
-                  {premium > 0 && <span className="text-[9px] text-amber-500 font-bold uppercase">Includes Premium (+{premium})</span>}
-                  {hasPenalty && <span className="text-[9px] text-red-400 font-bold uppercase">Package Tax Applied</span>}
-              </div>
           </div>
-      </div>
 
-      {/* 🚀 THE NEW "RECEIVING BUCKET" */}
-      <div className="bg-[#161616] border border-gray-700/60 rounded-2xl p-4 mb-6 shadow-inner min-h-[110px] flex flex-col transition-all">
-          <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-            <span>Assets Received</span>
-          </h4>
           <div className="space-y-2 flex-1">
               {receivedAssets?.length === 0 ? (
                   <div className="flex-1 flex items-center justify-center text-gray-600 text-[10px] font-bold uppercase tracking-widest py-3 border border-dashed border-gray-700/50 rounded-xl">
@@ -209,7 +212,7 @@ export default function TeamPane({
           {/* Roster List (For Synced Teams) */}
           <div className="flex-1 space-y-2">
               {isSynced && !isMyTeam && !managerId ? (
-                  <div className="text-center py-10 text-gray-600 text-xs font-bold uppercase tracking-widest">Select an opponent to view roster</div>
+                  <div className="text-center py-20 text-gray-600 text-xs font-bold uppercase tracking-widest">Select an opponent to view roster</div>
               ) : (
                   <>
                     {/* Render Actual Synced Roster */}
