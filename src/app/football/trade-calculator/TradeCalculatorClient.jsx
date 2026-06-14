@@ -18,7 +18,7 @@ export default function TradeCalculatorClient() {
   const [leagueUsers, setLeagueUsers] = useState([]);
   const [leagueRosters, setLeagueRosters] = useState([]);
   const [leagueTradedPicks, setLeagueTradedPicks] = useState([]); 
-  const [isDraftComplete, setIsDraftComplete] = useState(false); // 🚀 NEW: Detects if the synced league has finished their draft
+  const [isDraftComplete, setIsDraftComplete] = useState(false); 
   const [isRefreshingLeague, setIsRefreshingLeague] = useState(false); 
   
   // --- Master Trade State ---
@@ -37,7 +37,6 @@ export default function TradeCalculatorClient() {
   const [manualPprValue, setManualPprValue] = useState(1);       
   const [manualPassTdValue, setManualPassTdValue] = useState(4); 
   const [manualTePremium, setManualTePremium] = useState(0);   
-  const [manualDraftComplete, setManualDraftComplete] = useState(false); // 🚀 NEW: Allows non-synced users to toggle draft status
 
   const isSuperflex = activeLeague?.rosterPositions ? activeLeague.rosterPositions.includes('SUPER_FLEX') : manualIsSuperflex;
   const pprValue = activeLeague?.scoringSettings?.rec ?? manualPprValue;
@@ -105,7 +104,7 @@ export default function TradeCalculatorClient() {
             fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/users?_t=${timestamp}`),
             fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/rosters?_t=${timestamp}`),
             fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/traded_picks?_t=${timestamp}`),
-            fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/drafts?_t=${timestamp}`) // 🚀 Fetch explicit draft status
+            fetch(`https://api.sleeper.app/v1/league/${activeLeague.id}/drafts?_t=${timestamp}`)
           ]);
           const users = await usersRes.json();
           const rosters = await rostersRes.json();
@@ -172,7 +171,7 @@ export default function TradeCalculatorClient() {
   const { activeRosters, evaluations, getPlayerValue, DRAFT_PICKS } = useTradeEngine({
     playersData, sleeperPlayersMap, leagueRosters, leagueTradedPicks, leagueUsers, activeLeague,
     teamsCount, tradeAssets, teamManagers, teamStrategies, formatMode, isSuperflex, pprValue, passTdValue, tePremium,
-    isDraftComplete: activeLeague ? isDraftComplete : manualDraftComplete // 🚀 Pass draft status to engine
+    isDraftComplete // 🚀 Only tracking dynamic sync draft completeness
   });
 
   const handleManagerChange = (managerId, teamId) => {
@@ -206,28 +205,6 @@ export default function TradeCalculatorClient() {
       } else {
           setPendingAsset({ player, toTeam });
       }
-  };
-
-  const handlePickSelect = (pickId, paneTeamId, isSyncedPane) => {
-    if (!pickId) return;
-    const pick = DRAFT_PICKS.find(p => p.id === pickId);
-    if (!pick) return;
-
-    if (isSyncedPane) {
-        if (teamsCount === 2) {
-            const toTeam = paneTeamId === 'A' ? 'B' : 'A';
-            addAssetToTrade(pick, paneTeamId, toTeam);
-        } else {
-            setPendingAsset({ player: pick, fromTeam: paneTeamId });
-        }
-    } else {
-        if (teamsCount === 2) {
-            const fromTeam = paneTeamId === 'A' ? 'B' : 'A';
-            addAssetToTrade(pick, fromTeam, paneTeamId);
-        } else {
-            setPendingAsset({ player: pick, toTeam: paneTeamId });
-        }
-    }
   };
 
   let verdictTitle = "Select assets to evaluate trade";
@@ -403,7 +380,7 @@ export default function TradeCalculatorClient() {
         {/* Custom Scoring Panel */}
         {showSettings && !activeLeague && (
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 mb-8 shadow-xl animate-in fade-in slide-in-from-top-4">
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               <div className="flex flex-col gap-3">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">League Type</span>
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
@@ -433,14 +410,6 @@ export default function TradeCalculatorClient() {
                   {[{ label: 'NONE', val: 0 }, { label: '+0.5', val: 0.5 }, { label: '+1.0', val: 1 }].map(opt => (
                     <button key={opt.label} onClick={() => setManualTePremium(opt.val)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${manualTePremium === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>{opt.label}</button>
                   ))}
-                </div>
-              </div>
-              {/* 🚀 NEW: Manual Draft Completed Toggle */}
-              <div className="flex flex-col gap-3">
-                <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Draft Status</span>
-                <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
-                  <button onClick={() => setManualDraftComplete(false)} className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all ${!manualDraftComplete ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>PRE-DRAFT</button>
-                  <button onClick={() => setManualDraftComplete(true)} className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all ${manualDraftComplete ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>POST-DRAFT</button>
                 </div>
               </div>
             </div>
@@ -505,7 +474,6 @@ export default function TradeCalculatorClient() {
                                 teamsCount={teamsCount}
                                 onPlayerClick={handlePlayerClick}
                                 onManualAdd={handleManualAdd}
-                                onPickSelect={handlePickSelect}
                                 removeAssetByName={removeAssetByName}
                                 DRAFT_PICKS={DRAFT_PICKS}
                                 getPlayerValue={getPlayerValue} 

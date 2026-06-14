@@ -20,7 +20,6 @@ export default function TeamPane({
   teamsCount,
   onPlayerClick,
   onManualAdd,
-  onPickSelect,
   removeAssetByName,
   DRAFT_PICKS,
   getPlayerValue
@@ -53,7 +52,6 @@ export default function TeamPane({
   const rosterPlayers = activeRoster?.filter(p => p.position !== 'PICK') || [];
   const rosterPicks = activeRoster?.filter(p => p.position === 'PICK') || [];
 
-  // Extract unique years dynamically from DRAFT_PICKS for the generic dropdown
   const genericPickYears = [...new Set(DRAFT_PICKS.map(p => p.year))].sort((a,b) => a - b);
 
   return (
@@ -334,7 +332,7 @@ export default function TeamPane({
                              <div key={year} className="flex flex-col gap-2">
                                  <h5 className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">{year} Picks</h5>
                                  {DRAFT_PICKS.filter(p => p.year === year).map(pick => {
-                                     const sentAsset = receivedAssets.find(a => a.id === pick.id); 
+                                     const sentAsset = receivedAssets.find(a => a.id === pick.id); // For manual, "Add" puts it in our received bucket
                                      const isSelected = !!sentAsset;
                                      return (
                                          <div 
@@ -363,26 +361,6 @@ export default function TeamPane({
               </div>
           )}
       </div>
-
-      {/* Manual Picks Dropdown at Bottom */}
-      <div className="mt-4 pt-4 border-t border-gray-800 shrink-0">
-          <select 
-              onChange={(e) => onPickSelect(e.target.value, teamId, isSynced)}
-              disabled={isSynced && !isMyTeam && !managerId}
-              value=""
-              className="w-full bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors cursor-pointer disabled:opacity-50"
-          >
-              <option value="">+ Add Draft Pick to Trade</option>
-              {genericPickYears.map(year => (
-                  <optgroup key={year} label={`${year} Picks`}>
-                      {DRAFT_PICKS.filter(p => p.year === year).map(p => (
-                          <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                  </optgroup>
-              ))}
-          </select>
-      </div>
-
     </div>
   );
 }
