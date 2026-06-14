@@ -22,9 +22,13 @@ export default function TeamPane({
   onManualAdd,
   onPickSelect,
   removeAssetByName,
-  DRAFT_PICKS
+  DRAFT_PICKS,
+  getPlayerValue
 }) {
   const [isOpponentDropdownOpen, setIsOpponentDropdownOpen] = useState(false);
+  
+  // 🚀 NEW: State to toggle between Players and Picks
+  const [viewMode, setViewMode] = useState('players'); 
 
   const theme = {
     A: { text: 'text-red-500', border: 'border-red-500', bg: 'bg-red-500', lightBg: 'bg-red-900/20', badge: 'bg-red-600' },
@@ -44,11 +48,10 @@ export default function TeamPane({
     : 'https://placehold.co/40x40/383838/ffffff?text=?';
 
   return (
-    <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col">
+    <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col min-h-[600px]">
       
-      {/* 🚀 RESTRUCTURED HEADER: Avatar/Name (Left) & Strategy (Right) */}
+      {/* HEADER SECTION */}
       <div className="flex flex-row justify-between items-center gap-4 mb-4 border-b border-gray-800 pb-4 shrink-0 min-h-[64px]">
-          
           <div className="flex-1">
               {isMyTeam || !isSynced ? (
                   <div className="flex items-center gap-3">
@@ -115,10 +118,8 @@ export default function TeamPane({
           )}
       </div>
 
-      {/* 🚀 RESTRUCTURED "RECEIVING BUCKET" */}
+      {/* "RECEIVING BUCKET" */}
       <div className="bg-[#161616] border border-gray-700/60 rounded-2xl p-4 mb-6 shadow-inner min-h-[110px] flex flex-col transition-all">
-          
-          {/* Top Row: Premium/Tax (Left) & Large Points (Right) */}
           <div className="flex justify-between items-end mb-1">
               <div className="flex flex-col items-start gap-1 pb-1">
                   {premium > 0 && <span className="text-[9px] text-amber-500 font-bold uppercase tracking-widest">Includes Premium (+{premium})</span>}
@@ -127,7 +128,6 @@ export default function TeamPane({
               <span className={`text-4xl sm:text-5xl font-black ${theme.text} leading-none`}>{receivedTotal || 0}</span>
           </div>
 
-          {/* Divider Row: Assets Received (Left) & Sent|Net (Right) */}
           <div className="flex justify-between items-center mt-1 mb-3 border-b border-gray-800/60 pb-2">
               <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
                   Assets Received
@@ -172,131 +172,143 @@ export default function TeamPane({
           </div>
       </div>
 
-      {/* 🚀 ROSTER / SEARCH SECTION */}
-      <div className="flex-1 flex flex-col">
-          <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">
-              {isSynced ? 'Roster (Click to Trade Away)' : 'Search Assets to Receive'}
+      {/* 🚀 TOGGLE HEADER FOR ROSTER / PICKS */}
+      <div className="flex justify-between items-center mb-3">
+          <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+              {viewMode === 'players' 
+                  ? (isSynced ? 'Roster (Click to Trade Away)' : 'Search Assets to Receive') 
+                  : 'Draft Picks'}
           </h4>
+          
+          {formatMode === 'dynasty' && (
+              <div className="flex bg-[#161616] border border-gray-800 rounded-lg p-0.5 shadow-inner">
+                  <button 
+                      onClick={() => setViewMode('players')}
+                      className={`px-3 py-1 text-[9px] font-bold uppercase tracking-widest rounded-md transition-all ${viewMode === 'players' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
+                  >
+                      Players
+                  </button>
+                  <button 
+                      onClick={() => setViewMode('picks')}
+                      className={`px-3 py-1 text-[9px] font-bold uppercase tracking-widest rounded-md transition-all ${viewMode === 'picks' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
+                  >
+                      Picks
+                  </button>
+              </div>
+          )}
+      </div>
 
-          {/* Manual Search Bar (If No League Synced) */}
-          {!isSynced && (
-              <div className="relative mb-4">
-                  <div className="flex items-center bg-[#1a1a1a] border border-gray-800 rounded-xl px-4 py-3">
-                      <Search size={18} className="text-gray-500 mr-3 shrink-0" />
-                      <input 
-                          type="text" 
-                          placeholder={`Search players for Team ${teamId} to receive...`}
-                          className="bg-transparent text-white outline-none w-full text-sm font-bold placeholder-gray-600"
-                          value={query}
-                          onChange={e => setQuery(e.target.value)}
-                      />
-                  </div>
-                  {query.length > 1 && (
-                      <div className="absolute z-50 top-full mt-2 w-full bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto custom-scroll">
-                          {playersData.filter(p => p.name.toLowerCase().includes(query.toLowerCase())).slice(0, 8).map(p => (
-                              <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { onManualAdd(p, teamId); setQuery(''); }}>
-                                  <div className="flex items-center gap-3">
-                                      {p.team && p.team !== 'fa' && (
-                                          <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
-                                      )}
-                                      <span className="text-sm font-bold text-white">{p.name}</span>
-                                      <span className="text-[10px] font-black bg-gray-800 text-gray-400 px-2 py-0.5 rounded uppercase">{p.position}</span>
-                                  </div>
+      <div className="flex-1 flex flex-col overflow-hidden">
+          
+          {/* 🚀 TAB 1: PLAYERS VIEW */}
+          {viewMode === 'players' && (
+              <div className="flex-1 flex flex-col">
+                  {/* Manual Search Bar */}
+                  {!isSynced && (
+                      <div className="relative mb-4">
+                          <div className="flex items-center bg-[#1a1a1a] border border-gray-800 rounded-xl px-4 py-3">
+                              <Search size={18} className="text-gray-500 mr-3 shrink-0" />
+                              <input 
+                                  type="text" 
+                                  placeholder={`Search players for Team ${teamId} to receive...`}
+                                  className="bg-transparent text-white outline-none w-full text-sm font-bold placeholder-gray-600"
+                                  value={query}
+                                  onChange={e => setQuery(e.target.value)}
+                              />
+                          </div>
+                          {query.length > 1 && (
+                              <div className="absolute z-50 top-full mt-2 w-full bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto custom-scroll">
+                                  {playersData.filter(p => p.name.toLowerCase().includes(query.toLowerCase())).slice(0, 8).map(p => (
+                                      <div key={p.name} className="px-4 py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { onManualAdd(p, teamId); setQuery(''); }}>
+                                          <div className="flex items-center gap-3">
+                                              {p.team && p.team !== 'fa' && (
+                                                  <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-5 h-5 object-contain" onError={(e) => e.target.style.display = 'none'} />
+                                              )}
+                                              <span className="text-sm font-bold text-white">{p.name}</span>
+                                              <span className="text-[10px] font-black bg-gray-800 text-gray-400 px-2 py-0.5 rounded uppercase">{p.position}</span>
+                                          </div>
+                                      </div>
+                                  ))}
                               </div>
-                          ))}
+                          )}
                       </div>
                   )}
+
+                  {/* Synced Roster List */}
+                  <div className="flex-1 space-y-2 overflow-y-auto custom-scroll pr-1">
+                      {isSynced && !isMyTeam && !managerId ? (
+                          <div className="text-center py-20 text-gray-600 text-xs font-bold uppercase tracking-widest">Select an opponent to view roster</div>
+                      ) : (
+                          isSynced && activeRoster.map(p => {
+                             const sentAsset = sentAssets.find(traded => traded.name === p.name);
+                             const isSelected = !!sentAsset;
+                             
+                             return (
+                               <div 
+                                  key={p.uniqueId || p.id} 
+                                  onClick={() => {
+                                    if (isSelected) removeAssetByName(p.name);
+                                    else onPlayerClick(p, teamId);
+                                  }}
+                                  className={`flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border ${isSelected ? `border-gray-700 bg-[#151515] opacity-60` : 'border-transparent bg-[#1a1a1a] hover:border-gray-600'}`}
+                                >
+                                   <div className="flex items-center gap-3">
+                                       {p.team && p.team !== 'fa' ? (
+                                           <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-8 h-8 object-contain opacity-80 shrink-0" onError={(e) => e.target.style.display = 'none'} />
+                                       ) : (
+                                           <div className="w-8 h-8 rounded-full bg-gray-800 shrink-0"></div>
+                                       )}
+                                       <div className="flex flex-col">
+                                          <div className="flex items-center gap-2">
+                                            <span className={`text-sm font-black ${isSelected ? 'text-gray-400 line-through' : 'text-gray-200'}`}>{p.name}</span>
+                                            {isSelected && (
+                                                <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${theme.badge} text-white`}>
+                                                    Sending to {sentAsset.toTeam}
+                                                </span>
+                                            )}
+                                          </div>
+                                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} {formatMode === 'dynasty' && p.age ? `• ${p.age} y/o` : ''}</span>
+                                       </div>
+                                   </div>
+                                   <span className="text-sm font-black text-gray-500">{p.calcValue}</span>
+                               </div>
+                             );
+                          })
+                      )}
+
+                      {isSynced && activeRoster.length === 0 && managerId && (
+                        <div className="text-center py-10 text-gray-600 text-xs font-bold uppercase tracking-widest">Roster is empty</div>
+                      )}
+                  </div>
               </div>
           )}
 
-          {/* Roster List (For Synced Teams) */}
-          <div className="flex-1 space-y-2">
-              {isSynced && !isMyTeam && !managerId ? (
-                  <div className="text-center py-20 text-gray-600 text-xs font-bold uppercase tracking-widest">Select an opponent to view roster</div>
-              ) : (
-                  <>
-                    {/* Render Actual Synced Roster */}
-                    {isSynced && activeRoster.map(p => {
-                       const sentAsset = sentAssets.find(traded => traded.name === p.name);
-                       const isSelected = !!sentAsset;
-                       
-                       return (
-                         <div 
-                            key={p.uniqueId || p.id} 
-                            onClick={() => {
-                              if (isSelected) removeAssetByName(p.name);
-                              else onPlayerClick(p, teamId);
-                            }}
-                            className={`flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border ${isSelected ? `border-gray-700 bg-[#151515] opacity-60` : 'border-transparent bg-[#1a1a1a] hover:border-gray-600'}`}
-                          >
-                             <div className="flex items-center gap-3">
-                                 {p.team && p.team !== 'fa' ? (
-                                     <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-8 h-8 object-contain opacity-80 shrink-0" onError={(e) => e.target.style.display = 'none'} />
-                                 ) : (
-                                     <div className="w-8 h-8 rounded-full bg-gray-800 shrink-0"></div>
-                                 )}
-                                 <div className="flex flex-col">
-                                    <div className="flex items-center gap-2">
-                                      <span className={`text-sm font-black ${isSelected ? 'text-gray-400 line-through' : 'text-gray-200'}`}>{p.name}</span>
-                                      {isSelected && (
-                                          <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${theme.badge} text-white`}>
-                                              Sending to {sentAsset.toTeam}
-                                          </span>
-                                      )}
-                                    </div>
-                                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} {formatMode === 'dynasty' && p.age ? `• ${p.age} y/o` : ''}</span>
-                                 </div>
-                             </div>
-                             <span className="text-sm font-black text-gray-500">{p.calcValue}</span>
-                         </div>
-                       );
-                    })}
-
-                    {/* Render Picks this team is sending (for Synced Mode) */}
-                    {isSynced && sentAssets.filter(p => p.position === 'PICK').map(p => (
-                       <div 
-                          key={p.uniqueId} 
-                          onClick={() => removeAssetByName(p.name)}
-                          className={`flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border border-gray-700 bg-[#151515] opacity-60`}
-                        >
-                           <div className="flex items-center gap-3">
-                               <div className="w-8 h-8 rounded-full bg-yellow-600 flex items-center justify-center text-xs font-black text-white shadow-md">{p.year.toString().slice(-2)}</div>
-                               <div className="flex flex-col">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-black text-gray-400 line-through">{p.name}</span>
-                                    <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${theme.badge} text-white`}>
-                                        Sending to {p.toTeam}
-                                    </span>
-                                  </div>
-                                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">PICK</span>
-                               </div>
-                           </div>
-                           <span className="text-sm font-black text-gray-500">{p.calcValue}</span>
+          {/* 🚀 TAB 2: PICKS VIEW */}
+          {viewMode === 'picks' && (
+              <div className="flex-1 space-y-2 overflow-y-auto custom-scroll pr-1 pb-4">
+                 {DRAFT_PICKS.map(pick => (
+                    <div 
+                        key={pick.id} 
+                        onClick={() => {
+                            if (isSynced && (!isMyTeam && !managerId)) return; // Disable clicking if opponent not selected
+                            onPickSelect(pick.id, teamId, isSynced);
+                        }} 
+                        className={`flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border border-transparent bg-[#1a1a1a] hover:border-gray-600 ${isSynced && !isMyTeam && !managerId ? 'opacity-50 cursor-not-allowed hover:border-transparent' : ''}`}
+                    >
+                       <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-yellow-600 flex items-center justify-center text-xs font-black text-white shadow-md">{pick.year.toString().slice(-2)}</div>
+                          <div className="flex flex-col">
+                             <span className="text-sm font-black text-gray-200">{pick.name}</span>
+                             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">PICK</span>
+                          </div>
                        </div>
-                    ))}
-                  </>
-              )}
-          </div>
-      </div>
+                       <span className="text-sm font-black text-gray-500">{getPlayerValue(pick, strategy)}</span>
+                    </div>
+                 ))}
+              </div>
+          )}
 
-      {/* Manual Picks Dropdown at Bottom */}
-      <div className="mt-4 pt-4 border-t border-gray-800 shrink-0">
-          <select 
-              onChange={(e) => onPickSelect(e.target.value, teamId, isSynced)}
-              disabled={isSynced && !isMyTeam && !managerId}
-              value=""
-              className="w-full bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors cursor-pointer disabled:opacity-50"
-          >
-              <option value="">+ Add Draft Pick to Trade</option>
-              <optgroup label="2026 Picks">
-                  {DRAFT_PICKS.filter(p => p.year === 2026).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </optgroup>
-              <optgroup label="2027 Picks">
-                  {DRAFT_PICKS.filter(p => p.year === 2027).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </optgroup>
-          </select>
       </div>
-
     </div>
   );
 }
