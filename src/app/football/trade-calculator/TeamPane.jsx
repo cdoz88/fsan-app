@@ -26,14 +26,16 @@ export default function TeamPane({
   getPlayerValue
 }) {
   const [isOpponentDropdownOpen, setIsOpponentDropdownOpen] = useState(false);
+  
+  // 🚀 RESTORED: The viewMode state for the Player/Picks toggle
+  const [viewMode, setViewMode] = useState('players'); 
 
   const theme = {
-    A: { text: 'text-red-500', border: 'border-red-500', bg: 'bg-red-500', lightBg: 'bg-red-900/20' },
-    B: { text: 'text-blue-500', border: 'border-blue-500', bg: 'bg-blue-500', lightBg: 'bg-blue-900/20' },
-    C: { text: 'text-green-500', border: 'border-green-500', bg: 'bg-green-500', lightBg: 'bg-green-900/20' }
+    A: { text: 'text-red-500', border: 'border-red-500', bg: 'bg-red-500', lightBg: 'bg-red-900/20', badge: 'bg-red-600' },
+    B: { text: 'text-blue-500', border: 'border-blue-500', bg: 'bg-blue-500', lightBg: 'bg-blue-900/20', badge: 'bg-blue-600' },
+    C: { text: 'text-green-500', border: 'border-green-500', bg: 'bg-green-500', lightBg: 'bg-green-900/20', badge: 'bg-green-600' }
   }[teamId];
 
-  // 🚀 NEW: Helper mapping for the 3-team indicator dots
   const dotColors = {
     A: 'bg-red-500',
     B: 'bg-blue-500',
@@ -160,7 +162,6 @@ export default function TeamPane({
                               <div className="flex flex-col">
                                   <div className="flex items-center gap-2">
                                       <span className="text-sm font-black text-white">{p.name}</span>
-                                      {/* 🚀 FIXED: Replace Badge with Colored Dot */}
                                       {teamsCount === 3 && (
                                           <div 
                                               className={`w-2.5 h-2.5 rounded-full ${dotColors[p.fromTeam]} shadow-sm shrink-0`} 
@@ -267,7 +268,6 @@ export default function TeamPane({
                                        <div className="flex flex-col">
                                           <div className="flex items-center gap-2">
                                             <span className={`text-sm font-black ${isSelected ? 'text-gray-400 line-through' : 'text-gray-200'}`}>{p.name}</span>
-                                            {/* 🚀 FIXED: Replace Badge with Colored Dot */}
                                             {isSelected && teamsCount === 3 && (
                                                 <div 
                                                     className={`w-2.5 h-2.5 rounded-full ${dotColors[sentAsset.toTeam]} shadow-sm shrink-0`} 
@@ -296,7 +296,6 @@ export default function TeamPane({
                                  <div className="flex flex-col">
                                     <div className="flex items-center gap-2">
                                       <span className="text-sm font-black text-gray-400 line-through">{p.name}</span>
-                                      {/* 🚀 FIXED: Replace Badge with Colored Dot */}
                                       {teamsCount === 3 && (
                                           <div 
                                               className={`w-2.5 h-2.5 rounded-full ${dotColors[p.toTeam]} shadow-sm shrink-0`} 
