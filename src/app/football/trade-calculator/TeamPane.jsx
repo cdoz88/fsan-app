@@ -109,7 +109,6 @@ export default function TeamPane({
               )}
           </div>
 
-          {/* 🚀 FIXED: Added truncate and reduced px to prevent column stretch */}
           {formatMode === 'dynasty' && (
               <div className="flex-shrink-0 w-full xl:w-auto mt-1.5 sm:mt-0 min-w-0">
                   <select 
@@ -130,7 +129,6 @@ export default function TeamPane({
           
           <div className="flex flex-col w-full mb-1 min-w-0">
               <div className="w-full text-right mb-1 sm:mb-2 min-w-0">
-                  {/* 🚀 FIXED: Removed 'truncate' from the giant score, added 'tracking-tighter' so it fits */}
                   <span className={`text-2xl sm:text-4xl lg:text-5xl font-black ${theme.text} leading-none tracking-tighter`}>{receivedTotal || 0}</span>
               </div>
               {(premium > 0 || hasPenalty) && (
@@ -141,17 +139,33 @@ export default function TeamPane({
               )}
           </div>
 
-          <div className="flex justify-between items-end mt-1 mb-2 sm:mb-3 border-b border-gray-800/60 pb-1.5 sm:pb-2 gap-1 sm:gap-0 min-w-0">
-              <h4 className="text-[8px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest truncate block mb-0.5 sm:mb-0 pr-1">
-                  Receiving
-              </h4>
-              <div className="flex flex-col items-end shrink-0 leading-tight">
-                  <span className="text-[7px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-widest">Sent: {sentTotal || 0}</span>
-                  <span className={`text-[7px] sm:text-[10px] font-bold uppercase tracking-widest ${net > 0 ? 'text-green-500' : net < 0 ? 'text-red-500' : 'text-gray-500'}`}>
-                      Net: {net > 0 ? '+' : ''}{net || 0}
-                  </span>
+          {/* 🚀 CONDITIONAL LAYOUT: 3 Teams (Stacked above Receiving) vs 2 Teams (Side-by-side) */}
+          {teamsCount === 3 ? (
+              <div className="flex flex-col mt-1 mb-2 sm:mb-3 border-b border-gray-800/60 pb-1.5 sm:pb-2 gap-1 sm:gap-1.5 min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                      <span className="text-[8px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-widest">Sent: {sentTotal || 0}</span>
+                      <span className="text-gray-700 text-[8px] sm:text-xs">|</span>
+                      <span className={`text-[8px] sm:text-[10px] font-bold uppercase tracking-widest ${net > 0 ? 'text-green-500' : net < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                          Net: {net > 0 ? '+' : ''}{net || 0}
+                      </span>
+                  </div>
+                  <h4 className="text-[8px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest truncate block">
+                      Receiving
+                  </h4>
               </div>
-          </div>
+          ) : (
+              <div className="flex justify-between items-end mt-1 mb-2 sm:mb-3 border-b border-gray-800/60 pb-1.5 sm:pb-2 gap-1 sm:gap-0 min-w-0">
+                  <h4 className="text-[8px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest truncate block mb-0.5 sm:mb-0 pr-1">
+                      Receiving
+                  </h4>
+                  <div className="flex flex-col items-end shrink-0 leading-tight">
+                      <span className="text-[7px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-widest">Sent: {sentTotal || 0}</span>
+                      <span className={`text-[7px] sm:text-[10px] font-bold uppercase tracking-widest ${net > 0 ? 'text-green-500' : net < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                          Net: {net > 0 ? '+' : ''}{net || 0}
+                      </span>
+                  </div>
+              </div>
+          )}
 
           <div className="space-y-1.5 sm:space-y-2 flex-1 min-w-0">
               {receivedAssets?.length === 0 ? (
@@ -166,7 +180,6 @@ export default function TeamPane({
                                   <X size={14} className="sm:w-4 sm:h-4" />
                               </button>
                               <div className="flex flex-col min-w-0 flex-1">
-                                  {/* 🚀 FIXED: Moved truncate logic explicitly to the inner span to stop aggressive flexbox hiding */}
                                   <div className="flex items-center gap-1 sm:gap-2 w-full min-w-0">
                                       <span className="text-[11px] sm:text-sm font-black text-white truncate block">{p.name}</span>
                                       {teamsCount === 3 && (
@@ -190,23 +203,23 @@ export default function TeamPane({
           </div>
       </div>
 
-      {/* TOGGLE HEADER FOR ROSTER / PICKS */}
-      <div className="flex justify-between items-center mb-2 sm:mb-3 gap-1 min-w-0">
-          <h4 className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest truncate block">
-              {viewMode === 'players' ? 'Roster' : 'Draft Picks'}
+      {/* 🚀 FIXED: Roster / Picks Label won't truncate to "R..." anymore, flex-wrap ensures safety */}
+      <div className="flex flex-wrap justify-between items-center mb-2 sm:mb-3 gap-1.5 min-w-0">
+          <h4 className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest shrink-0">
+              {viewMode === 'players' ? 'Roster' : 'Picks'}
           </h4>
           
           {formatMode === 'dynasty' && (
               <div className="flex bg-[#161616] border border-gray-800 rounded-md sm:rounded-lg p-0.5 shadow-inner shrink-0">
                   <button 
                       onClick={() => setViewMode('players')}
-                      className={`px-1.5 sm:px-3 py-1 text-[7px] sm:text-[9px] font-bold uppercase tracking-widest rounded sm:rounded-md transition-all ${viewMode === 'players' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
+                      className={`px-2 sm:px-3 py-1 text-[8px] sm:text-[9px] font-bold uppercase tracking-widest rounded sm:rounded-md transition-all ${viewMode === 'players' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
                   >
                       Players
                   </button>
                   <button 
                       onClick={() => setViewMode('picks')}
-                      className={`px-1.5 sm:px-3 py-1 text-[7px] sm:text-[9px] font-bold uppercase tracking-widest rounded sm:rounded-md transition-all ${viewMode === 'picks' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
+                      className={`px-2 sm:px-3 py-1 text-[8px] sm:text-[9px] font-bold uppercase tracking-widest rounded sm:rounded-md transition-all ${viewMode === 'picks' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
                   >
                       Picks
                   </button>
@@ -273,7 +286,6 @@ export default function TeamPane({
                                            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-800 shrink-0"></div>
                                        )}
                                        <div className="flex flex-col min-w-0 flex-1">
-                                          {/* 🚀 FIXED: Inner span truncation directly bounds the player names */}
                                           <div className="flex items-center gap-1 sm:gap-2 w-full min-w-0">
                                             <span className={`text-[10px] sm:text-sm font-black truncate block ${isSelected ? 'text-gray-400 line-through' : 'text-gray-200'}`}>{p.name}</span>
                                             {isSelected && teamsCount === 3 && (
