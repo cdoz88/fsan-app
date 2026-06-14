@@ -312,26 +312,49 @@ export default function TradeCalculatorClient() {
       )}
 
       {/* Hero Section */}
-      <div className="relative w-full h-[220px] md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-8 shadow-2xl">
+      <div className="relative w-full h-[240px] md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-6 sm:mb-8 shadow-2xl">
         <div className="absolute inset-0 opacity-80 z-0" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }} />
         <img src={bgImage} alt="Football Background" className="absolute -right-[10%] md:-right-10 top-1/2 transform -translate-y-1/2 h-[200%] w-auto opacity-20 pointer-events-none z-0" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent z-0" />
         
-        <div className="relative z-10 w-full flex flex-col md:flex-row items-start md:items-end justify-center md:justify-between h-full px-6 md:px-10 pb-6 md:pb-8 pt-8 md:pt-0 gap-4">
-          <div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-2">
+        <div className="relative z-10 w-full flex flex-col md:flex-row items-start md:items-end justify-center md:justify-between h-full px-6 md:px-10 pb-6 md:pb-8 pt-8 md:pt-0 gap-3 md:gap-4">
+          <div className="flex flex-col">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-1 sm:mb-2">
               Trade Calculator
             </h1>
-            <p className="text-gray-300 font-medium md:text-lg">
+            <p className="text-gray-300 font-medium text-xs sm:text-sm md:text-lg mb-3 md:mb-0">
               Analyze multi-player deals using live VORP projections and asymmetric league scoring.
             </p>
+          </div>
+          
+          {/* 🚀 MOVED: Synced Pill / Settings Button inside Hero */}
+          <div className="shrink-0 w-full md:w-auto flex justify-start md:justify-end">
+             {activeLeague ? (
+                <div className="flex items-center bg-[#1a1a1a]/90 backdrop-blur-sm border border-green-500/30 rounded-xl overflow-hidden shadow-lg">
+                  <div className="flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-2.5 font-bold text-[10px] sm:text-xs uppercase tracking-widest bg-green-500/10 text-green-400 pointer-events-none">
+                    <Trophy size={14} className="sm:w-4 sm:h-4" /> Synced to {activeLeague.name}
+                  </div>
+                  <button 
+                    onClick={(e) => { e.preventDefault(); refreshLeagueData(); }}
+                    disabled={isRefreshingLeague}
+                    title="Refresh Rosters"
+                    className="flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 bg-green-500/5 hover:bg-green-500/20 text-green-500 transition-all border-l border-green-500/20 disabled:opacity-50"
+                  >
+                    <RefreshCw size={14} className={`sm:w-4 sm:h-4 ${isRefreshingLeague ? "animate-spin" : ""}`} />
+                  </button>
+                </div>
+            ) : (
+                <button onClick={() => setShowSettings(!showSettings)} className={`flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all ${showSettings ? 'bg-white text-black' : 'bg-[#1a1a1a]/90 backdrop-blur-sm text-gray-300 hover:text-white border border-gray-700 shadow-lg'}`}>
+                  <Settings size={14} className="sm:w-4 sm:h-4" /> {showSettings ? 'Hide Settings' : 'Custom League Scoring'}
+                </button>
+            )}
           </div>
         </div>
       </div>
 
       <div className="w-full">
         {/* Controls Row */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex flex-wrap items-center justify-between sm:justify-start gap-4 mb-6">
           <div className="flex bg-[#111] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
             <button onClick={() => setFormatMode('redraft')} className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${formatMode === 'redraft' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-white'}`}>Redraft</button>
             <button onClick={() => setFormatMode('dynasty')} className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${formatMode === 'dynasty' ? 'bg-zinc-700 text-white shadow-md' : 'text-gray-500 hover:text-white'}`}>Dynasty</button>
@@ -351,28 +374,6 @@ export default function TradeCalculatorClient() {
                 3 Teams
             </button>
           </div>
-
-          {activeLeague ? (
-            <div className="flex items-center gap-3">
-                <div className="flex items-center bg-[#1a1a1a] border border-green-500/20 rounded-xl overflow-hidden shadow-inner hidden sm:flex">
-                  <div className="flex items-center gap-2 px-4 sm:px-5 py-2.5 font-bold text-xs uppercase tracking-widest bg-green-500/10 text-green-400 pointer-events-none">
-                    <Trophy size={16} /> Synced to {activeLeague.name}
-                  </div>
-                  <button 
-                    onClick={(e) => { e.preventDefault(); refreshLeagueData(); }}
-                    disabled={isRefreshingLeague}
-                    title="Refresh Rosters"
-                    className="flex items-center justify-center px-4 py-2.5 bg-green-500/5 hover:bg-green-500/20 text-green-500 transition-all border-l border-green-500/20 disabled:opacity-50"
-                  >
-                    <RefreshCw size={16} className={isRefreshingLeague ? "animate-spin" : ""} />
-                  </button>
-                </div>
-            </div>
-          ) : (
-            <button onClick={() => setShowSettings(!showSettings)} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${showSettings ? 'bg-white text-black' : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-gray-800'}`}>
-              <Settings size={16} /> {showSettings ? 'Hide Settings' : 'Custom League Scoring'}
-            </button>
-          )}
         </div>
 
         {/* Custom Scoring Panel */}
@@ -446,7 +447,7 @@ export default function TradeCalculatorClient() {
                     </div>
                 </div>
 
-                {/* 🚀 FIXED: DYNAMIC TEAM GRID (Now splits 50/50 and stacks perfectly!) */}
+                {/* DYNAMIC TEAM GRID */}
                 <div className={`flex flex-row gap-2 sm:gap-6 w-full ${teamsCount === 3 ? 'overflow-x-auto hide-scrollbar snap-x snap-mandatory pb-4' : ''}`}>
                     {['A', 'B', 'C'].map(teamId => {
                         if (teamsCount === 2 && teamId === 'C') return null;

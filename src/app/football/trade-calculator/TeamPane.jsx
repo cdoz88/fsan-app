@@ -135,8 +135,9 @@ export default function TeamPane({
           </div>
 
           <div className="flex justify-between items-center mt-1 mb-2 sm:mb-3 border-b border-gray-800/60 pb-1.5 sm:pb-2 gap-1 sm:gap-0 min-w-0">
+              {/* 🚀 FIXED: "Receiving" instead of "Assets Received" to prevent truncation */}
               <h4 className="text-[8px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest truncate">
-                  Assets Received
+                  Receiving
               </h4>
               <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                   <span className="text-[8px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-widest">Sent: {sentTotal || 0}</span>
@@ -183,7 +184,7 @@ export default function TeamPane({
           </div>
       </div>
 
-      {/* 🚀 TOGGLE HEADER FOR ROSTER / PICKS (Single Line & Shortened) */}
+      {/* TOGGLE HEADER FOR ROSTER / PICKS */}
       <div className="flex justify-between items-center mb-3 gap-1">
           <h4 className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest truncate">
               {viewMode === 'players' 
@@ -249,7 +250,6 @@ export default function TeamPane({
                           <div className="text-center py-10 text-gray-600 text-[10px] sm:text-xs font-bold uppercase tracking-widest px-2">Select a team</div>
                       ) : (
                           isSynced && rosterPlayers.map(p => {
-                             // 🚀 FIXED: Maps directly by Name to fix the locked-roster selection bug!
                              const sentAsset = sentAssets.find(traded => traded.name === p.name);
                              const isSelected = !!sentAsset;
                              
@@ -275,14 +275,12 @@ export default function TeamPane({
                                                 <div className={`w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 rounded-full ${dotColors[sentAsset.toTeam]} shadow-sm shrink-0`} title={`Sending to Team ${sentAsset.toTeam}`} />
                                             )}
                                           </div>
-                                          {/* 🚀 FIXED: Mobile Score Stacked Layout! */}
                                           <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2">
                                               <span className="text-[8px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-wider truncate">{p.position} {formatMode === 'dynasty' && p.age ? `• ${p.age} y/o` : ''}</span>
                                               <span className="text-[10px] font-black text-gray-400 block sm:hidden">{p.calcValue} PTS</span>
                                           </div>
                                        </div>
                                    </div>
-                                   {/* Hidden on mobile, shown on desktop right-side */}
                                    <span className="text-sm font-black text-gray-500 hidden sm:block shrink-0 pl-2">{p.calcValue}</span>
                                </div>
                              );
