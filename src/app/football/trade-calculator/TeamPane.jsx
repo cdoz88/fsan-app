@@ -26,15 +26,19 @@ export default function TeamPane({
   getPlayerValue
 }) {
   const [isOpponentDropdownOpen, setIsOpponentDropdownOpen] = useState(false);
-  
-  // 🚀 NEW: State to toggle between Players and Picks
-  const [viewMode, setViewMode] = useState('players'); 
 
   const theme = {
-    A: { text: 'text-red-500', border: 'border-red-500', bg: 'bg-red-500', lightBg: 'bg-red-900/20', badge: 'bg-red-600' },
-    B: { text: 'text-blue-500', border: 'border-blue-500', bg: 'bg-blue-500', lightBg: 'bg-blue-900/20', badge: 'bg-blue-600' },
-    C: { text: 'text-green-500', border: 'border-green-500', bg: 'bg-green-500', lightBg: 'bg-green-900/20', badge: 'bg-green-600' }
+    A: { text: 'text-red-500', border: 'border-red-500', bg: 'bg-red-500', lightBg: 'bg-red-900/20' },
+    B: { text: 'text-blue-500', border: 'border-blue-500', bg: 'bg-blue-500', lightBg: 'bg-blue-900/20' },
+    C: { text: 'text-green-500', border: 'border-green-500', bg: 'bg-green-500', lightBg: 'bg-green-900/20' }
   }[teamId];
+
+  // 🚀 NEW: Helper mapping for the 3-team indicator dots
+  const dotColors = {
+    A: 'bg-red-500',
+    B: 'bg-blue-500',
+    C: 'bg-green-500'
+  };
 
   const { receivedTotal, sentTotal, net, premium, hasPenalty, sentAssets, receivedAssets } = evaluation;
 
@@ -70,7 +74,7 @@ export default function TeamPane({
                           <span className="text-sm font-bold truncate flex-1">{teamName}</span>
                         </>
                       ) : (
-                        <span className="text-sm font-bold text-gray-400 flex-1">Select Opponent...</span>
+                        <span className="text-sm font-bold text-gray-400 flex-1">Select Team...</span>
                       )}
                       <ChevronsUpDown size={14} className="text-gray-500 shrink-0" />
                     </button>
@@ -156,10 +160,12 @@ export default function TeamPane({
                               <div className="flex flex-col">
                                   <div className="flex items-center gap-2">
                                       <span className="text-sm font-black text-white">{p.name}</span>
+                                      {/* 🚀 FIXED: Replace Badge with Colored Dot */}
                                       {teamsCount === 3 && (
-                                          <span className="text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-black text-gray-400 border border-gray-800">
-                                              From {p.fromTeam}
-                                          </span>
+                                          <div 
+                                              className={`w-2.5 h-2.5 rounded-full ${dotColors[p.fromTeam]} shadow-sm shrink-0`} 
+                                              title={`From Team ${p.fromTeam}`}
+                                          />
                                       )}
                                   </div>
                                   <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} {formatMode === 'dynasty' && p.age && p.position !== 'PICK' ? `• ${p.age} y/o` : ''}</span>
@@ -172,7 +178,7 @@ export default function TeamPane({
           </div>
       </div>
 
-      {/* 🚀 TOGGLE HEADER FOR ROSTER / PICKS */}
+      {/* TOGGLE HEADER FOR ROSTER / PICKS */}
       <div className="flex justify-between items-center mb-3">
           <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
               {viewMode === 'players' 
@@ -200,7 +206,7 @@ export default function TeamPane({
 
       <div className="flex-1 flex flex-col overflow-hidden">
           
-          {/* 🚀 TAB 1: PLAYERS VIEW */}
+          {/* TAB 1: PLAYERS VIEW */}
           {viewMode === 'players' && (
               <div className="flex-1 flex flex-col">
                   {/* Manual Search Bar */}
@@ -237,7 +243,7 @@ export default function TeamPane({
                   {/* Synced Roster List */}
                   <div className="flex-1 space-y-2 overflow-y-auto custom-scroll pr-1">
                       {isSynced && !isMyTeam && !managerId ? (
-                          <div className="text-center py-20 text-gray-600 text-xs font-bold uppercase tracking-widest">Select an opponent to view roster</div>
+                          <div className="text-center py-20 text-gray-600 text-xs font-bold uppercase tracking-widest">Select a team to view roster</div>
                       ) : (
                           isSynced && activeRoster.map(p => {
                              const sentAsset = sentAssets.find(traded => traded.name === p.name);
@@ -261,10 +267,12 @@ export default function TeamPane({
                                        <div className="flex flex-col">
                                           <div className="flex items-center gap-2">
                                             <span className={`text-sm font-black ${isSelected ? 'text-gray-400 line-through' : 'text-gray-200'}`}>{p.name}</span>
-                                            {isSelected && (
-                                                <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${theme.badge} text-white`}>
-                                                    Sending to {sentAsset.toTeam}
-                                                </span>
+                                            {/* 🚀 FIXED: Replace Badge with Colored Dot */}
+                                            {isSelected && teamsCount === 3 && (
+                                                <div 
+                                                    className={`w-2.5 h-2.5 rounded-full ${dotColors[sentAsset.toTeam]} shadow-sm shrink-0`} 
+                                                    title={`Sending to Team ${sentAsset.toTeam}`}
+                                                />
                                             )}
                                           </div>
                                           <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{p.position} {formatMode === 'dynasty' && p.age ? `• ${p.age} y/o` : ''}</span>
@@ -276,6 +284,33 @@ export default function TeamPane({
                           })
                       )}
 
+                      {/* Render Picks this team is sending (for Synced Mode) */}
+                      {isSynced && sentAssets.filter(p => p.position === 'PICK').map(p => (
+                         <div 
+                            key={p.uniqueId} 
+                            onClick={() => removeAssetByName(p.name)}
+                            className={`flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border border-gray-700 bg-[#151515] opacity-60`}
+                          >
+                             <div className="flex items-center gap-3">
+                                 <div className="w-8 h-8 rounded-full bg-yellow-600 flex items-center justify-center text-xs font-black text-white shadow-md">{p.year.toString().slice(-2)}</div>
+                                 <div className="flex flex-col">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm font-black text-gray-400 line-through">{p.name}</span>
+                                      {/* 🚀 FIXED: Replace Badge with Colored Dot */}
+                                      {teamsCount === 3 && (
+                                          <div 
+                                              className={`w-2.5 h-2.5 rounded-full ${dotColors[p.toTeam]} shadow-sm shrink-0`} 
+                                              title={`Sending to Team ${p.toTeam}`}
+                                          />
+                                      )}
+                                    </div>
+                                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">PICK</span>
+                                 </div>
+                             </div>
+                             <span className="text-sm font-black text-gray-500">{p.calcValue}</span>
+                         </div>
+                      ))}
+
                       {isSynced && activeRoster.length === 0 && managerId && (
                         <div className="text-center py-10 text-gray-600 text-xs font-bold uppercase tracking-widest">Roster is empty</div>
                       )}
@@ -283,14 +318,14 @@ export default function TeamPane({
               </div>
           )}
 
-          {/* 🚀 TAB 2: PICKS VIEW */}
+          {/* TAB 2: PICKS VIEW */}
           {viewMode === 'picks' && (
               <div className="flex-1 space-y-2 overflow-y-auto custom-scroll pr-1 pb-4">
                  {DRAFT_PICKS.map(pick => (
                     <div 
                         key={pick.id} 
                         onClick={() => {
-                            if (isSynced && (!isMyTeam && !managerId)) return; // Disable clicking if opponent not selected
+                            if (isSynced && (!isMyTeam && !managerId)) return; 
                             onPickSelect(pick.id, teamId, isSynced);
                         }} 
                         className={`flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border border-transparent bg-[#1a1a1a] hover:border-gray-600 ${isSynced && !isMyTeam && !managerId ? 'opacity-50 cursor-not-allowed hover:border-transparent' : ''}`}
