@@ -184,7 +184,7 @@ export default function TeamPane({
           <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
               {viewMode === 'players' 
                   ? (isSynced ? 'Roster (Click to Trade Away)' : 'Search Assets to Receive') 
-                  : 'Draft Picks'}
+                  : (isSynced ? 'Draft Picks (Click to Trade Away)' : 'Draft Picks')}
           </h4>
           
           {formatMode === 'dynasty' && (
@@ -332,7 +332,7 @@ export default function TeamPane({
                              <div key={year} className="flex flex-col gap-2">
                                  <h5 className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">{year} Picks</h5>
                                  {DRAFT_PICKS.filter(p => p.year === year).map(pick => {
-                                     const sentAsset = receivedAssets.find(a => a.id === pick.id); // For manual, "Add" puts it in our received bucket
+                                     const sentAsset = receivedAssets.find(a => a.id === pick.id); 
                                      const isSelected = !!sentAsset;
                                      return (
                                          <div 

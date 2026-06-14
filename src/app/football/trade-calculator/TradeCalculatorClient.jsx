@@ -171,7 +171,7 @@ export default function TradeCalculatorClient() {
   const { activeRosters, evaluations, getPlayerValue, DRAFT_PICKS } = useTradeEngine({
     playersData, sleeperPlayersMap, leagueRosters, leagueTradedPicks, leagueUsers, activeLeague,
     teamsCount, tradeAssets, teamManagers, teamStrategies, formatMode, isSuperflex, pprValue, passTdValue, tePremium,
-    isDraftComplete // 🚀 Only tracking dynamic sync draft completeness
+    isDraftComplete 
   });
 
   const handleManagerChange = (managerId, teamId) => {
@@ -274,7 +274,7 @@ export default function TradeCalculatorClient() {
   }
 
   return (
-    <div className="w-full animate-in fade-in duration-500 pb-24 relative pt-6 lg:pt-8">
+    <div className="w-full animate-in fade-in duration-500 pb-24 relative">
       
       {/* Modal Pop-Up for 3-Team Trade Assignments */}
       {pendingAsset && (
@@ -380,7 +380,7 @@ export default function TradeCalculatorClient() {
         {/* Custom Scoring Panel */}
         {showSettings && !activeLeague && (
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 mb-8 shadow-xl animate-in fade-in slide-in-from-top-4">
-             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="flex flex-col gap-3">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">League Type</span>
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
