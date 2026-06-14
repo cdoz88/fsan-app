@@ -151,12 +151,13 @@ export default function TradeCalculatorClient() {
     setTradeAssets(prev => prev.filter(a => a.fromTeam !== teamId && a.toTeam !== teamId));
   };
 
-  const removeAsset = (uniqueId) => {
-    setTradeAssets(prev => prev.filter(a => a.uniqueId !== uniqueId));
+  // 🚀 FIX: Secure Removal by Name (prevents React mapping issues)
+  const removeAssetByName = (name) => {
+    setTradeAssets(prev => prev.filter(a => a.name !== name));
   };
 
   const addAssetToTrade = (player, fromTeam, toTeam) => {
-    const uniqueId = player.id + Date.now();
+    const uniqueId = player.name + Date.now();
     setTradeAssets(prev => [...prev, { ...player, fromTeam, toTeam, uniqueId }]);
     setPendingAsset(null);
   };
@@ -204,7 +205,6 @@ export default function TradeCalculatorClient() {
     }
   };
 
-  // 🚀 Restore the Missing Verdict Text Logic
   let verdictTitle = "Select assets to evaluate trade";
   let verdictSubtitle = "Toggle players to see the package analysis.";
   let verdictColor = "text-gray-500";
@@ -387,10 +387,10 @@ export default function TradeCalculatorClient() {
                 <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">Syncing Live Player Data</h3>
             </div>
         ) : (
-            <div className="flex flex-col gap-8">
+            <div className="flex flex-col">
                 
-                {/* 🚀 RESTORED VERDICT BARS & MOVED BUTTON */}
-                <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-center items-center min-h-[140px]">
+                {/* 🚀 VERDICT BARS */}
+                <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-center items-center min-h-[120px] mb-4">
                     <h2 className={`text-center text-2xl font-black uppercase tracking-widest mb-2 ${verdictColor}`}>
                         {verdictTitle}
                     </h2>
@@ -411,25 +411,25 @@ export default function TradeCalculatorClient() {
                             </>
                         )}
                     </div>
+                </div>
 
-                    {/* 🚀 ADD 3RD TEAM BUTTON (Moved into the corner of the verdict box) */}
-                    <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6">
-                        {teamsCount === 2 ? (
-                            <button 
-                                onClick={() => setTeamsCount(3)}
-                                className="flex items-center gap-2 bg-[#111] hover:bg-gray-800 border border-gray-700 text-white px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all shadow-sm"
-                            >
-                                <Plus size={14} /> Add 3rd Team
-                            </button>
-                        ) : (
-                            <button 
-                                onClick={() => { setTeamsCount(2); setTeamManagers(prev => ({ ...prev, C: '' })); setTradeAssets(prev => prev.filter(a => a.fromTeam !== 'C' && a.toTeam !== 'C')); }}
-                                className="flex items-center gap-2 bg-red-900/20 hover:bg-red-900/40 border border-red-500/30 hover:border-red-500 text-red-500 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all shadow-sm"
-                            >
-                                <X size={14} /> Remove 3rd Team
-                            </button>
-                        )}
-                    </div>
+                {/* 🚀 NEW: Add 3rd Team Button (On its own row) */}
+                <div className="flex justify-center mb-8">
+                    {teamsCount === 2 ? (
+                        <button 
+                            onClick={() => setTeamsCount(3)}
+                            className="flex items-center gap-2 bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-sm"
+                        >
+                            <Plus size={16} /> Add 3rd Team
+                        </button>
+                    ) : (
+                        <button 
+                            onClick={() => { setTeamsCount(2); setTeamManagers(prev => ({ ...prev, C: '' })); setTradeAssets(prev => prev.filter(a => a.fromTeam !== 'C' && a.toTeam !== 'C')); }}
+                            className="flex items-center gap-2 bg-red-900/20 hover:bg-red-900/40 border border-red-500/30 hover:border-red-500 text-red-500 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-sm"
+                        >
+                            <X size={16} /> Remove 3rd Team
+                        </button>
+                    )}
                 </div>
 
                 {/* 🚀 DYNAMIC TEAM GRID */}
@@ -459,7 +459,7 @@ export default function TradeCalculatorClient() {
                                 onPlayerClick={handlePlayerClick}
                                 onManualAdd={handleManualAdd}
                                 onPickSelect={handlePickSelect}
-                                removeAsset={removeAsset}
+                                removeAssetByName={removeAssetByName}
                                 DRAFT_PICKS={DRAFT_PICKS}
                             />
                         );

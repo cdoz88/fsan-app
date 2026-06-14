@@ -205,16 +205,28 @@ export function useTradeEngine({
     const mappedPlayers = roster.players.map(sleeperId => {
       let p = playersData.find(dbPlayer => String(dbPlayer.sleeper_id) === String(sleeperId));
       if (!p) p = playersData.find(dbPlayer => String(dbPlayer.id) === String(sleeperId));
+      
       if (!p && sleeperPlayersMap[sleeperId]) {
           const sPlayer = sleeperPlayersMap[sleeperId];
-          const searchName = sPlayer.search_full_name || sPlayer.full_name?.toLowerCase().replace(/[^a-z]/g, '');
-          if (searchName) {
-              p = playersData.find(dbPlayer => dbPlayer.name.toLowerCase().replace(/[^a-z]/g, '') === searchName);
+          const sName = normalizeName(sPlayer.search_full_name || sPlayer.full_name);
+          if (sName) {
+              p = playersData.find(dbPlayer => {
+                  if (normalizeName(dbPlayer.name) !== sName) return false;
+                  if (sPlayer.position && dbPlayer.position) {
+                      const sPos = sPlayer.position;
+                      const dbPos = dbPlayer.position;
+                      if (sPos !== dbPos && sPos !== 'WR/TE' && dbPos !== 'WR/TE') {
+                         if (['QB', 'RB', 'WR', 'TE'].includes(sPos) !== ['QB', 'RB', 'WR', 'TE'].includes(dbPos)) return false;
+                      }
+                  }
+                  return true;
+              });
           }
       }
 
       if (!p) return null;
-      return { ...p, uniqueId: p.name + Date.now(), calcValue: getPlayerValue(p, strategy) };
+      // 🚀 FIX: Removed Date.now() to prevent React from losing track of the element and locking selections!
+      return { ...p, uniqueId: p.id || p.name, calcValue: getPlayerValue(p, strategy) };
     }).filter(Boolean);
 
     const posOrder = { 'QB': 1, 'RB': 2, 'WR': 3, 'TE': 4, 'WR/TE': 4, 'K': 5, 'DST': 6 };

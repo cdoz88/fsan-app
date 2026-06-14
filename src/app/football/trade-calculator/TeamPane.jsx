@@ -21,7 +21,7 @@ export default function TeamPane({
   onPlayerClick,
   onManualAdd,
   onPickSelect,
-  removeAsset,
+  removeAssetByName,
   DRAFT_PICKS
 }) {
   const [isOpponentDropdownOpen, setIsOpponentDropdownOpen] = useState(false);
@@ -98,6 +98,7 @@ export default function TeamPane({
                   </div>
               )}
 
+              {/* 🚀 EXACT Verbiage Fix */}
               {formatMode === 'dynasty' && (
                   <div className="flex flex-col gap-1 w-full mt-2">
                       <select 
@@ -105,9 +106,9 @@ export default function TeamPane({
                           onChange={(e) => setStrategy(e.target.value)}
                           className="bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-1.5 px-3 shadow-sm focus:outline-none font-bold text-xs tracking-wide w-full"
                       >
-                          <option value="win_now">🏆 {isMyTeam ? 'My' : 'His'} Goal: Win Now</option>
-                          <option value="neutral">⚖️ {isMyTeam ? 'My' : 'His'} Goal: Balanced</option>
-                          <option value="build">🌱 {isMyTeam ? 'My' : 'His'} Goal: Rebuild</option>
+                          <option value="win_now">Win Now Strategy</option>
+                          <option value="neutral">Balanced Strategy</option>
+                          <option value="build">Rebuild Strategy</option>
                       </select>
                   </div>
               )}
@@ -169,15 +170,15 @@ export default function TeamPane({
               <>
                 {/* 1. Render Actual Synced Roster */}
                 {isSynced && activeRoster.map(p => {
-                   // 🚀 FIX: Match by Name to prevent ID bugs locking the roster!
+                   // 🚀 FIX: Match securely by name to prevent lockups!
+                   const isSelected = sentAssets.some(traded => traded.name === p.name);
                    const sentAsset = sentAssets.find(traded => traded.name === p.name);
-                   const isSelected = !!sentAsset;
                    
                    return (
                      <div 
-                        key={p.id} 
+                        key={p.uniqueId} 
                         onClick={() => {
-                          if (isSelected) removeAsset(sentAsset.uniqueId);
+                          if (isSelected) removeAssetByName(p.name);
                           else onPlayerClick(p, teamId);
                         }}
                         className={`flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected ? `${theme.border} ${theme.lightBg}` : 'border-transparent bg-[#1a1a1a] hover:border-gray-600'}`}
@@ -211,7 +212,7 @@ export default function TeamPane({
                 {!isSynced && receivedAssets?.map(p => (
                    <div 
                       key={p.uniqueId} 
-                      onClick={() => removeAsset(p.uniqueId)}
+                      onClick={() => removeAssetByName(p.name)}
                       className={`flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border-2 ${theme.border} ${theme.lightBg}`}
                     >
                        <div className="flex items-center gap-3">
@@ -229,7 +230,7 @@ export default function TeamPane({
                 {isSynced && sentAssets.filter(p => p.position === 'PICK').map(p => (
                    <div 
                       key={p.uniqueId} 
-                      onClick={() => removeAsset(p.uniqueId)}
+                      onClick={() => removeAssetByName(p.name)}
                       className={`flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border-2 ${theme.border} ${theme.lightBg}`}
                     >
                        <div className="flex items-center gap-3">
