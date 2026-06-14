@@ -14,14 +14,12 @@ export default function TradeCalculatorClient() {
   const [sleeperPlayersMap, setSleeperPlayersMap] = useState({}); 
   const [isSyncing, setIsSyncing] = useState(true);
 
-  // --- League Sync States ---
   const [leagueUsers, setLeagueUsers] = useState([]);
   const [leagueRosters, setLeagueRosters] = useState([]);
   const [leagueTradedPicks, setLeagueTradedPicks] = useState([]); 
   const [isDraftComplete, setIsDraftComplete] = useState(false); 
   const [isRefreshingLeague, setIsRefreshingLeague] = useState(false); 
   
-  // --- Master Trade State ---
   const [formatMode, setFormatMode] = useState('dynasty'); 
   const [teamsCount, setTeamsCount] = useState(2); 
   const [tradeAssets, setTradeAssets] = useState([]); 
@@ -31,7 +29,6 @@ export default function TradeCalculatorClient() {
   const [teamStrategies, setTeamStrategies] = useState({ A: 'neutral', B: 'neutral', C: 'neutral' });
   const [searchQueries, setSearchQueries] = useState({ A: '', B: '', C: '' });
 
-  // --- Scoring Format Settings (Fallback for non-synced) ---
   const [showSettings, setShowSettings] = useState(false);
   const [manualIsSuperflex, setManualIsSuperflex] = useState(true); 
   const [manualPprValue, setManualPprValue] = useState(1);       
@@ -314,12 +311,13 @@ export default function TradeCalculatorClient() {
         </div>
       )}
 
-      {/* Hero Section */}
+      {/* 🚀 FIXED: Added pt-8 md:pt-0 to the inner container so the text has padding above it! */}
       <div className="relative w-full h-[220px] md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-8 shadow-2xl">
         <div className="absolute inset-0 opacity-80 z-0" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }} />
         <img src={bgImage} alt="Football Background" className="absolute -right-[10%] md:-right-10 top-1/2 transform -translate-y-1/2 h-[200%] w-auto opacity-20 pointer-events-none z-0" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent z-0" />
-        <div className="relative z-10 w-full flex flex-col md:flex-row items-start md:items-end justify-between h-full px-6 md:px-10 pb-8 gap-4">
+        
+        <div className="relative z-10 w-full flex flex-col md:flex-row items-start md:items-end justify-center md:justify-between h-full px-6 md:px-10 pb-6 md:pb-8 pt-8 md:pt-0 gap-4">
           <div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-2">
               Trade Calculator
@@ -448,36 +446,37 @@ export default function TradeCalculatorClient() {
                     </div>
                 </div>
 
-                {/* DYNAMIC TEAM GRID */}
-                <div className="flex flex-col lg:flex-row gap-6">
+                {/* 🚀 DYNAMIC TEAM GRID (Now Horizontal/Scrolling on Mobile!) */}
+                <div className="flex flex-row overflow-x-auto gap-2 sm:gap-6 hide-scrollbar snap-x snap-mandatory">
                     {['A', 'B', 'C'].map(teamId => {
                         if (teamsCount === 2 && teamId === 'C') return null;
 
                         return (
-                            <TeamPane 
-                                key={teamId}
-                                isSynced={!!activeLeague}
-                                teamId={teamId}
-                                isMyTeam={teamId === 'A'}
-                                formatMode={formatMode}
-                                leagueUsers={leagueUsers}
-                                sleeperUserId={sleeperUserId}
-                                managerId={teamManagers[teamId]}
-                                onManagerChange={handleManagerChange}
-                                strategy={teamStrategies[teamId]}
-                                setStrategy={(val) => setTeamStrategies(prev => ({ ...prev, [teamId]: val }))}
-                                evaluation={evaluations[teamId]}
-                                query={searchQueries[teamId]}
-                                setQuery={(val) => setSearchQueries(prev => ({ ...prev, [teamId]: val }))}
-                                playersData={playersData}
-                                activeRoster={activeRosters[teamId]}
-                                teamsCount={teamsCount}
-                                onPlayerClick={handlePlayerClick}
-                                onManualAdd={handleManualAdd}
-                                removeAssetByName={removeAssetByName}
-                                DRAFT_PICKS={DRAFT_PICKS}
-                                getPlayerValue={getPlayerValue} 
-                            />
+                            <div key={teamId} className="snap-center w-full min-w-[300px] flex-1">
+                                <TeamPane 
+                                    isSynced={!!activeLeague}
+                                    teamId={teamId}
+                                    isMyTeam={teamId === 'A'}
+                                    formatMode={formatMode}
+                                    leagueUsers={leagueUsers}
+                                    sleeperUserId={sleeperUserId}
+                                    managerId={teamManagers[teamId]}
+                                    onManagerChange={handleManagerChange}
+                                    strategy={teamStrategies[teamId]}
+                                    setStrategy={(val) => setTeamStrategies(prev => ({ ...prev, [teamId]: val }))}
+                                    evaluation={evaluations[teamId]}
+                                    query={searchQueries[teamId]}
+                                    setQuery={(val) => setSearchQueries(prev => ({ ...prev, [teamId]: val }))}
+                                    playersData={playersData}
+                                    activeRoster={activeRosters[teamId]}
+                                    teamsCount={teamsCount}
+                                    onPlayerClick={handlePlayerClick}
+                                    onManualAdd={handleManualAdd}
+                                    removeAssetByName={removeAssetByName}
+                                    DRAFT_PICKS={DRAFT_PICKS}
+                                    getPlayerValue={getPlayerValue} 
+                                />
+                            </div>
                         );
                     })}
                 </div>
