@@ -311,7 +311,7 @@ export default function TradeCalculatorClient() {
         </div>
       )}
 
-      {/* 🚀 FIXED: Added pt-8 md:pt-0 to the inner container so the text has padding above it! */}
+      {/* Hero Section */}
       <div className="relative w-full h-[220px] md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-8 shadow-2xl">
         <div className="absolute inset-0 opacity-80 z-0" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }} />
         <img src={bgImage} alt="Football Background" className="absolute -right-[10%] md:-right-10 top-1/2 transform -translate-y-1/2 h-[200%] w-auto opacity-20 pointer-events-none z-0" />
@@ -446,13 +446,16 @@ export default function TradeCalculatorClient() {
                     </div>
                 </div>
 
-                {/* 🚀 DYNAMIC TEAM GRID (Now Horizontal/Scrolling on Mobile!) */}
-                <div className="flex flex-row overflow-x-auto gap-2 sm:gap-6 hide-scrollbar snap-x snap-mandatory">
+                {/* 🚀 FIXED: DYNAMIC TEAM GRID (Now splits 50/50 and stacks perfectly!) */}
+                <div className={`flex flex-row gap-2 sm:gap-6 w-full ${teamsCount === 3 ? 'overflow-x-auto hide-scrollbar snap-x snap-mandatory pb-4' : ''}`}>
                     {['A', 'B', 'C'].map(teamId => {
                         if (teamsCount === 2 && teamId === 'C') return null;
 
                         return (
-                            <div key={teamId} className="snap-center w-full min-w-[300px] flex-1">
+                            <div 
+                                key={teamId} 
+                                className={`flex-1 min-w-0 ${teamsCount === 3 ? 'min-w-[85vw] sm:min-w-0 snap-center' : ''}`}
+                            >
                                 <TeamPane 
                                     isSynced={!!activeLeague}
                                     teamId={teamId}
