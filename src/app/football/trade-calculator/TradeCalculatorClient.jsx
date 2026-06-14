@@ -352,7 +352,7 @@ export default function TradeCalculatorClient() {
       </div>
 
       <div className="w-full">
-        {/* 🚀 FIXED: Control Row uses flex-row and fits nicely on mobile */}
+        {/* Controls Row */}
         <div className="flex flex-row items-center justify-center sm:justify-start gap-2 sm:gap-4 mb-6 w-full">
           <div className="flex bg-[#111] p-1 sm:p-1.5 rounded-xl sm:rounded-2xl shadow-inner border border-gray-800">
             <button onClick={() => setFormatMode('redraft')} className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all ${formatMode === 'redraft' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-white'}`}>Redraft</button>
@@ -446,15 +446,15 @@ export default function TradeCalculatorClient() {
                     </div>
                 </div>
 
-                {/* DYNAMIC TEAM GRID */}
-                <div className={`flex flex-row gap-2 sm:gap-6 w-full ${teamsCount === 3 ? 'overflow-x-auto hide-scrollbar snap-x snap-mandatory pb-4' : ''}`}>
+                {/* 🚀 FIXED: DYNAMIC TEAM GRID (Completely stripped horizontal scroll classes, forces pure flex division) */}
+                <div className="flex flex-row gap-1 sm:gap-6 w-full min-w-0">
                     {['A', 'B', 'C'].map(teamId => {
                         if (teamsCount === 2 && teamId === 'C') return null;
 
                         return (
                             <div 
                                 key={teamId} 
-                                className={`flex-1 min-w-0 ${teamsCount === 3 ? 'min-w-[85vw] sm:min-w-0 snap-center' : ''}`}
+                                className="flex-1 min-w-0"
                             >
                                 <TeamPane 
                                     isSynced={!!activeLeague}
