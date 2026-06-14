@@ -311,7 +311,7 @@ export default function TradeCalculatorClient() {
         </div>
       )}
 
-      {/* 🚀 FIXED: Reduced mb-8 to mb-4 so the elements sit closer together vertically! */}
+      {/* Hero Section */}
       <div className="relative w-full h-[240px] md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-4 sm:mb-6 shadow-2xl">
         <div className="absolute inset-0 opacity-80 z-0" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }} />
         <img src={bgImage} alt="Football Background" className="absolute -right-[10%] md:-right-10 top-1/2 transform -translate-y-1/2 h-[200%] w-auto opacity-20 pointer-events-none z-0" />
@@ -352,23 +352,23 @@ export default function TradeCalculatorClient() {
       </div>
 
       <div className="w-full">
-        {/* Controls Row */}
-        <div className="flex flex-wrap items-center justify-between sm:justify-start gap-3 sm:gap-4 mb-6">
-          <div className="flex bg-[#111] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
-            <button onClick={() => setFormatMode('redraft')} className={`px-5 py-2 rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all ${formatMode === 'redraft' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-white'}`}>Redraft</button>
-            <button onClick={() => setFormatMode('dynasty')} className={`px-5 py-2 rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all ${formatMode === 'dynasty' ? 'bg-zinc-700 text-white shadow-md' : 'text-gray-500 hover:text-white'}`}>Dynasty</button>
+        {/* 🚀 FIXED: Control Row uses flex-row and fits nicely on mobile */}
+        <div className="flex flex-row items-center justify-center sm:justify-start gap-2 sm:gap-4 mb-6 w-full">
+          <div className="flex bg-[#111] p-1 sm:p-1.5 rounded-xl sm:rounded-2xl shadow-inner border border-gray-800">
+            <button onClick={() => setFormatMode('redraft')} className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all ${formatMode === 'redraft' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-white'}`}>Redraft</button>
+            <button onClick={() => setFormatMode('dynasty')} className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all ${formatMode === 'dynasty' ? 'bg-zinc-700 text-white shadow-md' : 'text-gray-500 hover:text-white'}`}>Dynasty</button>
           </div>
           
-          <div className="flex bg-[#111] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
+          <div className="flex bg-[#111] p-1 sm:p-1.5 rounded-xl sm:rounded-2xl shadow-inner border border-gray-800">
             <button 
                 onClick={() => { setTeamsCount(2); setTeamManagers(prev => ({ ...prev, C: '' })); setTradeAssets(prev => prev.filter(a => a.fromTeam !== 'C' && a.toTeam !== 'C')); }}
-                className={`px-5 py-2 rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all ${teamsCount === 2 ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-white'}`}
+                className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all ${teamsCount === 2 ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-white'}`}
             >
                 2 Teams
             </button>
             <button 
                 onClick={() => setTeamsCount(3)}
-                className={`px-5 py-2 rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all ${teamsCount === 3 ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-white'}`}
+                className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all ${teamsCount === 3 ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-white'}`}
             >
                 3 Teams
             </button>
@@ -446,15 +446,15 @@ export default function TradeCalculatorClient() {
                     </div>
                 </div>
 
-                {/* 🚀 FIXED: Fully flexed 3-team view with no horizontal scrolling force! */}
-                <div className="flex flex-row gap-1.5 sm:gap-6 w-full min-w-0">
+                {/* DYNAMIC TEAM GRID */}
+                <div className={`flex flex-row gap-2 sm:gap-6 w-full ${teamsCount === 3 ? 'overflow-x-auto hide-scrollbar snap-x snap-mandatory pb-4' : ''}`}>
                     {['A', 'B', 'C'].map(teamId => {
                         if (teamsCount === 2 && teamId === 'C') return null;
 
                         return (
                             <div 
                                 key={teamId} 
-                                className="flex-1 min-w-0"
+                                className={`flex-1 min-w-0 ${teamsCount === 3 ? 'min-w-[85vw] sm:min-w-0 snap-center' : ''}`}
                             >
                                 <TeamPane 
                                     isSynced={!!activeLeague}

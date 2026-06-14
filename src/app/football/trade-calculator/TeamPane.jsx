@@ -57,7 +57,7 @@ export default function TeamPane({
   return (
     <div className="flex-1 w-full bg-[#111] border sm:border-2 border-gray-800 rounded-xl sm:rounded-3xl p-1.5 sm:p-6 shadow-2xl relative flex flex-col min-h-[500px] sm:min-h-[600px] overflow-hidden min-w-0">
       
-      {/* 🚀 FIXED HEADER SECTION: Perfectly Aligned Heights */}
+      {/* HEADER SECTION */}
       <div className="flex flex-col xl:flex-row xl:justify-between xl:items-start gap-1.5 sm:gap-4 mb-2 sm:mb-4 border-b border-gray-800 pb-2 sm:pb-4 shrink-0 min-h-[48px] sm:min-h-[64px]">
           <div className="flex-1 w-full min-w-0">
               {isMyTeam || !isSynced ? (
@@ -134,13 +134,13 @@ export default function TeamPane({
               <span className={`text-2xl sm:text-4xl lg:text-5xl font-black ${theme.text} leading-none truncate pl-1 sm:pl-2`}>{receivedTotal || 0}</span>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-1 mb-2 sm:mb-3 border-b border-gray-800/60 pb-1.5 sm:pb-2 gap-1 sm:gap-0 min-w-0">
-              <h4 className="text-[8px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest truncate">
+          {/* 🚀 FIXED: Stacked the Sent and Net side right-aligned, removed the "|" */}
+          <div className="flex justify-between items-end mt-1 mb-2 sm:mb-3 border-b border-gray-800/60 pb-1.5 sm:pb-2 gap-1 sm:gap-0 min-w-0">
+              <h4 className="text-[8px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest truncate mb-0.5 sm:mb-0">
                   Receiving
               </h4>
-              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+              <div className="flex flex-col items-end shrink-0 leading-tight">
                   <span className="text-[8px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-widest">Sent: {sentTotal || 0}</span>
-                  <span className="text-gray-700 text-[8px] sm:text-xs">|</span>
                   <span className={`text-[8px] sm:text-[10px] font-bold uppercase tracking-widest ${net > 0 ? 'text-green-500' : net < 0 ? 'text-red-500' : 'text-gray-500'}`}>
                       Net: {net > 0 ? '+' : ''}{net || 0}
                   </span>
