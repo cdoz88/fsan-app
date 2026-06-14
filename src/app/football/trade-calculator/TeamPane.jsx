@@ -20,7 +20,8 @@ export default function TeamPane({
   teamsCount,
   onPlayerClick,
   onManualAdd,
-  removeAsset,
+  onPickSelect,
+  removeAssetByName,
   DRAFT_PICKS,
   getPlayerValue
 }) {
@@ -49,9 +50,11 @@ export default function TeamPane({
     ? `https://sleepercdn.com/avatars/thumbs/${userObj.avatar}` 
     : 'https://placehold.co/40x40/383838/ffffff?text=?';
 
-  // Separate real players from injected real picks
   const rosterPlayers = activeRoster?.filter(p => p.position !== 'PICK') || [];
   const rosterPicks = activeRoster?.filter(p => p.position === 'PICK') || [];
+
+  // Extract unique years dynamically from DRAFT_PICKS for the generic dropdown
+  const genericPickYears = [...new Set(DRAFT_PICKS.map(p => p.year))].sort((a,b) => a - b);
 
   return (
     <div className="flex-1 bg-[#111] border-2 border-gray-800 rounded-3xl p-6 shadow-2xl relative flex flex-col min-h-[600px]">
@@ -156,7 +159,7 @@ export default function TeamPane({
                   receivedAssets.map(p => (
                       <div key={p.uniqueId} className="flex justify-between items-center p-3 rounded-xl bg-[#222] border border-gray-700 shadow-sm group">
                           <div className="flex items-center gap-3">
-                              <button onClick={() => removeAsset(p.uniqueId)} className="text-gray-600 hover:text-white transition-colors">
+                              <button onClick={() => removeAssetByName(p.name)} className="text-gray-600 hover:text-white transition-colors">
                                   <X size={16} />
                               </button>
                               <div className="flex flex-col">
@@ -249,9 +252,9 @@ export default function TeamPane({
                              
                              return (
                                <div 
-                                  key={p.uniqueId} 
+                                  key={p.uniqueId || p.id} 
                                   onClick={() => {
-                                    if (isSelected) removeAsset(sentAsset.uniqueId);
+                                    if (isSelected) removeAssetByName(p.name);
                                     else onPlayerClick(p, teamId);
                                   }}
                                   className={`flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border ${isSelected ? 'border-gray-700 bg-[#151515] opacity-60' : 'border-transparent bg-[#1a1a1a] hover:border-gray-600'}`}
@@ -302,7 +305,7 @@ export default function TeamPane({
                                 <div 
                                     key={p.uniqueId} 
                                     onClick={() => {
-                                        if (isSelected) removeAsset(sentAsset.uniqueId);
+                                        if (isSelected) removeAssetByName(p.name);
                                         else onPlayerClick(p, teamId);
                                     }}
                                     className={`flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border ${isSelected ? 'border-gray-700 bg-[#151515] opacity-60' : 'border-transparent bg-[#1a1a1a] hover:border-gray-600'}`}
@@ -327,17 +330,17 @@ export default function TeamPane({
                  ) : (
                      /* Manual Version: Renders the Generic DRAFT_PICKS list grouped by Year */
                      <div className="flex flex-col gap-4">
-                         {[...new Set(DRAFT_PICKS.map(p => p.year))].map(year => (
+                         {genericPickYears.map(year => (
                              <div key={year} className="flex flex-col gap-2">
                                  <h5 className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">{year} Picks</h5>
                                  {DRAFT_PICKS.filter(p => p.year === year).map(pick => {
-                                     const sentAsset = receivedAssets.find(a => a.id === pick.id); // For manual, "Add" puts it in our received bucket
+                                     const sentAsset = receivedAssets.find(a => a.id === pick.id); 
                                      const isSelected = !!sentAsset;
                                      return (
                                          <div 
                                              key={pick.id} 
                                              onClick={() => {
-                                                 if (isSelected) removeAsset(sentAsset.uniqueId);
+                                                 if (isSelected) removeAssetByName(pick.name);
                                                  else onManualAdd(pick, teamId);
                                              }} 
                                              className={`flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all border ${isSelected ? 'border-gray-700 bg-[#151515] opacity-60' : 'border-transparent bg-[#1a1a1a] hover:border-gray-600'}`}
@@ -360,6 +363,26 @@ export default function TeamPane({
               </div>
           )}
       </div>
+
+      {/* Manual Picks Dropdown at Bottom */}
+      <div className="mt-4 pt-4 border-t border-gray-800 shrink-0">
+          <select 
+              onChange={(e) => onPickSelect(e.target.value, teamId, isSynced)}
+              disabled={isSynced && !isMyTeam && !managerId}
+              value=""
+              className="w-full bg-[#1a1a1a] border border-gray-800 text-gray-400 rounded-xl px-4 py-3 text-sm font-bold outline-none hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+          >
+              <option value="">+ Add Draft Pick to Trade</option>
+              {genericPickYears.map(year => (
+                  <optgroup key={year} label={`${year} Picks`}>
+                      {DRAFT_PICKS.filter(p => p.year === year).map(p => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                  </optgroup>
+              ))}
+          </select>
+      </div>
+
     </div>
   );
 }
