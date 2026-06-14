@@ -21,14 +21,15 @@ export function useTradeEngine({
   isSuperflex,
   pprValue,
   passTdValue,
-  tePremium
+  tePremium,
+  isDraftComplete // 🚀 NEW: Tells the engine if the draft is over!
 }) {
 
   // 🚀 AUTOMATIC DRAFT DETECTOR & 3-YEAR ROLLING WINDOW
   let startYear = activeLeague?.season ? parseInt(activeLeague.season) : new Date().getFullYear();
   
-  // If the league has progressed past the drafting phase, burn the current year and roll forward!
-  if (activeLeague && ['in_season', 'post_season', 'complete'].includes(activeLeague.status)) {
+  // If the draft is complete OR the season has officially started, burn the current year and roll forward!
+  if (isDraftComplete || (activeLeague && ['in_season', 'post_season', 'complete'].includes(activeLeague.status))) {
       startYear += 1;
   }
 
@@ -245,7 +246,6 @@ export function useTradeEngine({
     }
   };
 
-  // 🚀 NEW: Unified Sorting Function (Groups Picks by Year, then Round)
   const sortAssets = (a, b) => {
       const posOrder = { 'QB': 1, 'RB': 2, 'WR': 3, 'TE': 4, 'WR/TE': 4, 'K': 5, 'DST': 6, 'PICK': 99 };
       const posA = posOrder[a.position] || 99;
