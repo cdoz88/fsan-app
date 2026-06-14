@@ -6,35 +6,13 @@ export const normalizeName = (name) => {
   return name.toLowerCase().replace(/[^a-z]/g, '').replace(/(jr|sr|ii|iii|iv)$/, '');
 };
 
-const generatePicks = () => {
-  const picks = [];
-  const pickValues26 = [650, 550, 480, 420, 360, 310, 270, 230, 190, 160, 140, 120, 100, 90, 80, 70, 60, 55, 50, 45, 40, 35, 30, 25]; 
-  
-  for(let i=1; i<=12; i++) picks.push({ id: `26-1.${i < 10 ? '0'+i : i}`, name: `2026 Pick 1.${i < 10 ? '0'+i : i}`, position: 'PICK', baseValue: pickValues26[i-1], year: 2026 });
-  for(let i=1; i<=12; i++) picks.push({ id: `26-2.${i < 10 ? '0'+i : i}`, name: `2026 Pick 2.${i < 10 ? '0'+i : i}`, position: 'PICK', baseValue: pickValues26[i+11] || 40, year: 2026 });
-  picks.push({ id: '26-3', name: '2026 3rd Round', position: 'PICK', baseValue: 20, year: 2026 });
-  picks.push({ id: '26-4', name: '2026 4th Round', position: 'PICK', baseValue: 5, year: 2026 });
-
-  [2027, 2028].forEach(year => {
-     const discount = year === 2027 ? 0.85 : 0.70; 
-     picks.push({ id: `${year}-e1`, name: `${year} Early 1st`, position: 'PICK', baseValue: Math.round(500 * discount), year });
-     picks.push({ id: `${year}-m1`, name: `${year} Mid 1st`, position: 'PICK', baseValue: Math.round(270 * discount), year });
-     picks.push({ id: `${year}-l1`, name: `${year} Late 1st`, position: 'PICK', baseValue: Math.round(140 * discount), year });
-     picks.push({ id: `${year}-e2`, name: `${year} Early 2nd`, position: 'PICK', baseValue: Math.round(90 * discount), year });
-     picks.push({ id: `${year}-m2`, name: `${year} Mid 2nd`, position: 'PICK', baseValue: Math.round(60 * discount), year });
-     picks.push({ id: `${year}-l2`, name: `${year} Late 2nd`, position: 'PICK', baseValue: Math.round(45 * discount), year });
-     picks.push({ id: `${year}-3`, name: `${year} 3rd Round`, position: 'PICK', baseValue: Math.round(20 * discount), year });
-     picks.push({ id: `${year}-4`, name: `${year} 4th Round`, position: 'PICK', baseValue: Math.round(5 * discount), year });
-  });
-  return picks;
-};
-
-export const DRAFT_PICKS = generatePicks();
-
 export function useTradeEngine({
   playersData,
   sleeperPlayersMap,
   leagueRosters,
+  leagueTradedPicks, 
+  leagueUsers,       
+  activeLeague,      
   teamsCount,
   tradeAssets,
   teamManagers,
@@ -45,6 +23,71 @@ export function useTradeEngine({
   passTdValue,
   tePremium
 }) {
+
+  // 🚀 Dynamically define the "Rolling 3-Year Window" based on the Sleeper Season
+  const startYear = activeLeague?.season ? parseInt(activeLeague.season) : new Date().getFullYear();
+
+  // 🚀 Generate the Generic Picks for the Manual Dropdowns
+  const DRAFT_PICKS = useMemo(() => {
+      const picks = [];
+      const pickValues = [650, 550, 480, 420, 360, 310, 270, 230, 190, 160, 140, 120, 100, 90, 80, 70, 60, 55, 50, 45, 40, 35, 30, 25];
+      
+      for(let i=1; i<=12; i++) picks.push({ id: `${startYear}-1.${i < 10 ? '0'+i : i}`, name: `${startYear} Pick 1.${i < 10 ? '0'+i : i}`, position: 'PICK', baseValue: pickValues[i-1], year: startYear });
+      for(let i=1; i<=12; i++) picks.push({ id: `${startYear}-2.${i < 10 ? '0'+i : i}`, name: `${startYear} Pick 2.${i < 10 ? '0'+i : i}`, position: 'PICK', baseValue: pickValues[i+11] || 40, year: startYear });
+      picks.push({ id: `${startYear}-3`, name: `${startYear} 3rd Round`, position: 'PICK', baseValue: 20, year: startYear });
+      picks.push({ id: `${startYear}-4`, name: `${startYear} 4th Round`, position: 'PICK', baseValue: 5, year: startYear });
+
+      [startYear + 1, startYear + 2].forEach((year, idx) => {
+          const discount = idx === 0 ? 0.85 : 0.70;
+          picks.push({ id: `${year}-e1`, name: `${year} Early 1st`, position: 'PICK', baseValue: Math.round(500 * discount), year });
+          picks.push({ id: `${year}-m1`, name: `${year} Mid 1st`, position: 'PICK', baseValue: Math.round(270 * discount), year });
+          picks.push({ id: `${year}-l1`, name: `${year} Late 1st`, position: 'PICK', baseValue: Math.round(140 * discount), year });
+          picks.push({ id: `${year}-e2`, name: `${year} Early 2nd`, position: 'PICK', baseValue: Math.round(90 * discount), year });
+          picks.push({ id: `${year}-m2`, name: `${year} Mid 2nd`, position: 'PICK', baseValue: Math.round(60 * discount), year });
+          picks.push({ id: `${year}-l2`, name: `${year} Late 2nd`, position: 'PICK', baseValue: Math.round(45 * discount), year });
+          picks.push({ id: `${year}-3`, name: `${year} 3rd Round`, position: 'PICK', baseValue: Math.round(20 * discount), year });
+          picks.push({ id: `${year}-4`, name: `${year} 4th Round`, position: 'PICK', baseValue: Math.round(5 * discount), year });
+      });
+      return picks;
+  }, [startYear]);
+
+  // 🚀 Generate the "Phantom Inventory" & Apply the Sleeper Ledger
+  const realLeaguePicks = useMemo(() => {
+      if (!leagueRosters || leagueRosters.length === 0) return [];
+      
+      const picks = [];
+      leagueRosters.forEach(roster => {
+          [startYear, startYear + 1, startYear + 2].forEach((year, idx) => {
+              const d = idx === 0 ? 1 : (idx === 1 ? 0.85 : 0.70);
+              [1, 2, 3, 4].forEach(round => {
+                  let base = 5;
+                  if (round === 1) base = Math.round(270 * d);
+                  if (round === 2) base = Math.round(60 * d);
+                  if (round === 3) base = Math.round(20 * d);
+                  if (round === 4) base = Math.round(5 * d);
+
+                  picks.push({
+                      id: `pick-${year}-${round}-${roster.roster_id}`,
+                      season: String(year),
+                      round,
+                      originalRosterId: roster.roster_id,
+                      currentOwnerId: roster.roster_id, 
+                      baseValue: base,
+                      position: 'PICK',
+                      year
+                  });
+              });
+          });
+      });
+
+      if (leagueTradedPicks && leagueTradedPicks.length > 0) {
+          leagueTradedPicks.forEach(trade => {
+              const pick = picks.find(p => p.season === trade.season && p.round === trade.round && p.originalRosterId === trade.roster_id);
+              if (pick) pick.currentOwnerId = trade.owner_id;
+          });
+      }
+      return picks;
+  }, [leagueRosters, leagueTradedPicks, startYear]);
 
   const positionalScarcity = useMemo(() => {
     if (!playersData || playersData.length === 0) return { QB: 1, RB: 1, WR: 1, TE: 1 };
@@ -200,12 +243,11 @@ export function useTradeEngine({
   const buildRosterList = (managerId, strategy) => {
     if (!managerId || leagueRosters.length === 0) return [];
     const roster = leagueRosters.find(r => r.owner_id === managerId);
-    if (!roster || !roster.players) return [];
+    if (!roster) return [];
 
     const mappedPlayers = roster.players.map(sleeperId => {
       let p = playersData.find(dbPlayer => String(dbPlayer.sleeper_id) === String(sleeperId));
       if (!p) p = playersData.find(dbPlayer => String(dbPlayer.id) === String(sleeperId));
-      
       if (!p && sleeperPlayersMap[sleeperId]) {
           const sPlayer = sleeperPlayersMap[sleeperId];
           const sName = normalizeName(sPlayer.search_full_name || sPlayer.full_name);
@@ -225,13 +267,30 @@ export function useTradeEngine({
       }
 
       if (!p) return null;
-      // 🚀 FIX: Removed Date.now() to prevent React from losing track of the element and locking selections!
-      return { ...p, uniqueId: p.id || p.name, calcValue: getPlayerValue(p, strategy) };
-    }).filter(Boolean);
+      return { ...p, uniqueId: p.id, calcValue: getPlayerValue(p, strategy) };
+    });
 
+    // 🚀 INJECT REAL PICKS INTO ROSTER
+    const myPicks = realLeaguePicks.filter(p => p.currentOwnerId === roster.roster_id).map(p => {
+        let name = `${p.year} Round ${p.round}`;
+        if (p.originalRosterId !== roster.roster_id) {
+            const originalRoster = leagueRosters.find(r => r.roster_id === p.originalRosterId);
+            const originalUser = leagueUsers?.find(u => u.user_id === originalRoster?.owner_id);
+            const origName = originalUser?.metadata?.team_name || originalUser?.display_name || `Team ${p.originalRosterId}`;
+            name += ` (via ${origName})`;
+        }
+        return {
+            ...p,
+            name,
+            uniqueId: p.id,
+            calcValue: getPlayerValue(p, strategy)
+        };
+    });
+
+    const fullRoster = [...mappedPlayers.filter(Boolean), ...myPicks];
     const posOrder = { 'QB': 1, 'RB': 2, 'WR': 3, 'TE': 4, 'WR/TE': 4, 'K': 5, 'DST': 6 };
     
-    return mappedPlayers.sort((a, b) => {
+    return fullRoster.sort((a, b) => {
         const posA = posOrder[a.position] || 99;
         const posB = posOrder[b.position] || 99;
         if (posA !== posB) return posA - posB;
@@ -239,7 +298,6 @@ export function useTradeEngine({
     });
   };
 
-  // Build the active rosters (valued at their OWN strategy for baseline display)
   const activeRosters = useMemo(() => {
     const rosters = {};
     ['A', 'B', 'C'].forEach(teamId => {
@@ -249,7 +307,6 @@ export function useTradeEngine({
     return rosters;
   }, [teamManagers, leagueRosters, playersData, sleeperPlayersMap, teamStrategies, isSuperflex, pprValue, passTdValue, tePremium, formatMode, teamsCount]);
 
-  // Evaluate the entire 2 or 3 team trade structure
   const evaluations = useMemo(() => {
     const evals = {};
     let bestAssetVal = -1;
@@ -258,13 +315,11 @@ export function useTradeEngine({
     ['A', 'B', 'C'].forEach(teamId => {
         if (teamsCount === 2 && teamId === 'C') return;
 
-        // What did this team RECEIVE? Evaluate using THEIR strategy (because they own them now)
         const received = tradeAssets.filter(a => a.toTeam === teamId).map(a => ({
             ...a,
             calcValue: getPlayerValue(a, teamStrategies[teamId])
         })).sort((a, b) => b.calcValue - a.calcValue);
 
-        // What did this team SEND? Evaluate using THEIR strategy (because they lost them)
         const sent = tradeAssets.filter(a => a.fromTeam === teamId).map(a => ({
             ...a,
             calcValue: getPlayerValue(a, teamStrategies[teamId])
@@ -302,7 +357,6 @@ export function useTradeEngine({
         };
     });
 
-    // Apply the 10% premium to the team receiving the single best asset in the entire trade
     if (bestAssetTeam) {
         const isOneForOneGlobal = tradeAssets.length === 2 && new Set(tradeAssets.map(a=>a.fromTeam)).size === 2;
         if (!isOneForOneGlobal) {
@@ -313,7 +367,6 @@ export function useTradeEngine({
         }
     }
 
-    // Finalize Net Totals
     ['A', 'B', 'C'].forEach(teamId => {
         if (teamsCount === 2 && teamId === 'C') return;
         const e = evals[teamId];
@@ -324,9 +377,5 @@ export function useTradeEngine({
     return evals;
   }, [tradeAssets, teamStrategies, teamsCount, isSuperflex, pprValue, passTdValue, tePremium, formatMode, baselines, positionalScarcity]);
 
-  return {
-    activeRosters,
-    evaluations,
-    getPlayerValue
-  };
+  return { activeRosters, evaluations, getPlayerValue, DRAFT_PICKS };
 }
