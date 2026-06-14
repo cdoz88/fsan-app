@@ -141,7 +141,7 @@ export default function TradeCalculatorClient() {
     }
   };
 
-  const { activeRosters, evaluations } = useTradeEngine({
+  const { activeRosters, evaluations, getPlayerValue } = useTradeEngine({
     playersData, sleeperPlayersMap, leagueRosters, teamsCount, tradeAssets,
     teamManagers, teamStrategies, formatMode, isSuperflex, pprValue, passTdValue, tePremium
   });
@@ -151,7 +151,6 @@ export default function TradeCalculatorClient() {
     setTradeAssets(prev => prev.filter(a => a.fromTeam !== teamId && a.toTeam !== teamId));
   };
 
-  // 🚀 FIX: Secure Removal by Name (prevents React mapping issues)
   const removeAssetByName = (name) => {
     setTradeAssets(prev => prev.filter(a => a.name !== name));
   };
@@ -162,7 +161,6 @@ export default function TradeCalculatorClient() {
     setPendingAsset(null);
   };
 
-  // 🚀 Synced Roster Selection
   const handlePlayerClick = (player, fromTeam) => {
     if (teamsCount === 2) {
         const toTeam = fromTeam === 'A' ? 'B' : 'A';
@@ -172,7 +170,6 @@ export default function TradeCalculatorClient() {
     }
   };
 
-  // 🚀 Manual Search Selection
   const handleManualAdd = (player, toTeam) => {
       if (teamsCount === 2) {
           const fromTeam = toTeam === 'A' ? 'B' : 'A';
@@ -182,7 +179,6 @@ export default function TradeCalculatorClient() {
       }
   };
 
-  // 🚀 Pick Selection
   const handlePickSelect = (pickId, paneTeamId, isSyncedPane) => {
     if (!pickId) return;
     const pick = DRAFT_PICKS.find(p => p.id === pickId);
@@ -387,10 +383,10 @@ export default function TradeCalculatorClient() {
                 <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">Syncing Live Player Data</h3>
             </div>
         ) : (
-            <div className="flex flex-col">
+            <div className="flex flex-col gap-8">
                 
-                {/* 🚀 VERDICT BARS */}
-                <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-center items-center min-h-[120px] mb-4">
+                {/* VERDICT BARS */}
+                <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-center items-center min-h-[120px]">
                     <h2 className={`text-center text-2xl font-black uppercase tracking-widest mb-2 ${verdictColor}`}>
                         {verdictTitle}
                     </h2>
@@ -413,8 +409,8 @@ export default function TradeCalculatorClient() {
                     </div>
                 </div>
 
-                {/* 🚀 NEW: Add 3rd Team Button (On its own row) */}
-                <div className="flex justify-center mb-8">
+                {/* Add/Remove 3rd Team Button */}
+                <div className="flex justify-center -mt-2 mb-2">
                     {teamsCount === 2 ? (
                         <button 
                             onClick={() => setTeamsCount(3)}
@@ -432,7 +428,7 @@ export default function TradeCalculatorClient() {
                     )}
                 </div>
 
-                {/* 🚀 DYNAMIC TEAM GRID */}
+                {/* DYNAMIC TEAM GRID */}
                 <div className="flex flex-col lg:flex-row gap-6">
                     {['A', 'B', 'C'].map(teamId => {
                         if (teamsCount === 2 && teamId === 'C') return null;
@@ -461,6 +457,7 @@ export default function TradeCalculatorClient() {
                                 onPickSelect={handlePickSelect}
                                 removeAssetByName={removeAssetByName}
                                 DRAFT_PICKS={DRAFT_PICKS}
+                                getPlayerValue={getPlayerValue} // 🚀 Added this prop back!
                             />
                         );
                     })}
