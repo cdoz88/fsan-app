@@ -63,7 +63,7 @@ export default function TeamPane({
               {isMyTeam || !isSynced ? (
                   <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 h-8 sm:h-10">
                       {isSynced && <img src={avatar} className="w-5 h-5 sm:w-8 sm:h-8 rounded-full border border-gray-600 shrink-0" alt="" />}
-                      <span className="text-sm sm:text-lg font-black text-white truncate leading-none">{teamName}</span>
+                      <span className="text-sm sm:text-lg font-black text-white truncate block leading-none">{teamName}</span>
                   </div>
               ) : (
                   <div className="relative w-full">
@@ -74,10 +74,10 @@ export default function TeamPane({
                       {userObj ? (
                         <>
                           <img src={avatar} className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-gray-600 shrink-0" alt="" />
-                          <span className="text-[11px] sm:text-sm font-bold truncate flex-1 min-w-0">{teamName}</span>
+                          <span className="text-[11px] sm:text-sm font-bold truncate block flex-1 min-w-0">{teamName}</span>
                         </>
                       ) : (
-                        <span className="text-[11px] sm:text-sm font-bold text-gray-400 flex-1 truncate">Select Team...</span>
+                        <span className="text-[11px] sm:text-sm font-bold text-gray-400 flex-1 truncate block">Select Team...</span>
                       )}
                       <ChevronsUpDown size={12} className="text-gray-500 shrink-0" />
                     </button>
@@ -97,7 +97,7 @@ export default function TeamPane({
                               >
                                 <img src={img} className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-gray-600 shrink-0" alt="" />
                                 <div className="flex flex-col overflow-hidden">
-                                  <span className="text-[10px] sm:text-sm font-bold text-white truncate">{name}</span>
+                                  <span className="text-[10px] sm:text-sm font-bold text-white truncate block">{name}</span>
                                 </div>
                               </button>
                             )
@@ -109,12 +109,13 @@ export default function TeamPane({
               )}
           </div>
 
+          {/* 🚀 FIXED: Added truncate and reduced px to prevent column stretch */}
           {formatMode === 'dynasty' && (
-              <div className="flex-shrink-0 w-full xl:w-auto mt-1.5 sm:mt-0">
+              <div className="flex-shrink-0 w-full xl:w-auto mt-1.5 sm:mt-0 min-w-0">
                   <select 
                       value={strategy} 
                       onChange={(e) => setStrategy(e.target.value)}
-                      className="bg-[#1a1a1a] border border-gray-700 text-white rounded-lg sm:rounded-xl px-2 sm:px-3 shadow-sm focus:outline-none font-bold text-[10px] sm:text-xs tracking-wide w-full cursor-pointer hover:border-gray-500 transition-colors h-8 sm:h-10"
+                      className="bg-[#1a1a1a] border border-gray-700 text-white rounded-lg sm:rounded-xl px-1.5 sm:px-3 shadow-sm focus:outline-none font-bold text-[9px] sm:text-xs tracking-wide w-full cursor-pointer hover:border-gray-500 transition-colors h-8 sm:h-10 truncate"
                   >
                       <option value="win_now">Win Now Strategy</option>
                       <option value="neutral">Balanced Strategy</option>
@@ -125,15 +126,15 @@ export default function TeamPane({
       </div>
 
       {/* "RECEIVING BUCKET" */}
-      <div className="bg-[#161616] border border-gray-700/60 rounded-xl sm:rounded-2xl p-2 sm:p-4 mb-3 sm:mb-6 shadow-inner min-h-[90px] sm:min-h-[110px] flex flex-col transition-all">
+      <div className="bg-[#161616] border border-gray-700/60 rounded-xl sm:rounded-2xl p-2 sm:p-4 mb-3 sm:mb-6 shadow-inner min-h-[90px] sm:min-h-[110px] flex flex-col transition-all min-w-0">
           
-          {/* 🚀 FIXED: Stacked the large score on top of the Premium/Tax text so they each get 100% width! */}
-          <div className="flex flex-col w-full mb-1">
-              <div className="w-full text-right mb-1 sm:mb-2">
-                  <span className={`text-3xl sm:text-4xl lg:text-5xl font-black ${theme.text} leading-none`}>{receivedTotal || 0}</span>
+          <div className="flex flex-col w-full mb-1 min-w-0">
+              <div className="w-full text-right mb-1 sm:mb-2 min-w-0">
+                  {/* 🚀 FIXED: Removed 'truncate' from the giant score, added 'tracking-tighter' so it fits */}
+                  <span className={`text-2xl sm:text-4xl lg:text-5xl font-black ${theme.text} leading-none tracking-tighter`}>{receivedTotal || 0}</span>
               </div>
               {(premium > 0 || hasPenalty) && (
-                  <div className="flex flex-col items-start gap-0.5 sm:gap-1 w-full pb-0.5 sm:pb-1">
+                  <div className="flex flex-col items-start gap-0.5 sm:gap-1 w-full pb-0.5 sm:pb-1 min-w-0">
                       {premium > 0 && <span className="text-[7px] sm:text-[9px] text-amber-500 font-bold uppercase tracking-widest leading-tight whitespace-normal">Incl. Prem (+{premium})</span>}
                       {hasPenalty && <span className="text-[7px] sm:text-[9px] text-red-400 font-bold uppercase tracking-widest leading-tight whitespace-normal">Tax Applied</span>}
                   </div>
@@ -141,38 +142,39 @@ export default function TeamPane({
           </div>
 
           <div className="flex justify-between items-end mt-1 mb-2 sm:mb-3 border-b border-gray-800/60 pb-1.5 sm:pb-2 gap-1 sm:gap-0 min-w-0">
-              <h4 className="text-[8px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest truncate mb-0.5 sm:mb-0">
+              <h4 className="text-[8px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest truncate block mb-0.5 sm:mb-0 pr-1">
                   Receiving
               </h4>
               <div className="flex flex-col items-end shrink-0 leading-tight">
-                  <span className="text-[8px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-widest">Sent: {sentTotal || 0}</span>
-                  <span className={`text-[8px] sm:text-[10px] font-bold uppercase tracking-widest ${net > 0 ? 'text-green-500' : net < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                  <span className="text-[7px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-widest">Sent: {sentTotal || 0}</span>
+                  <span className={`text-[7px] sm:text-[10px] font-bold uppercase tracking-widest ${net > 0 ? 'text-green-500' : net < 0 ? 'text-red-500' : 'text-gray-500'}`}>
                       Net: {net > 0 ? '+' : ''}{net || 0}
                   </span>
               </div>
           </div>
 
-          <div className="space-y-1.5 sm:space-y-2 flex-1">
+          <div className="space-y-1.5 sm:space-y-2 flex-1 min-w-0">
               {receivedAssets?.length === 0 ? (
                   <div className="flex-1 flex items-center justify-center text-gray-600 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest py-2 sm:py-3 border border-dashed border-gray-700/50 rounded-lg sm:rounded-xl">
                       Empty
                   </div>
               ) : (
                   receivedAssets.map(p => (
-                      <div key={p.uniqueId} className="flex justify-between items-center p-1.5 sm:p-3 rounded-lg sm:rounded-xl bg-[#222] border border-gray-700 shadow-sm group">
+                      <div key={p.uniqueId} className="flex justify-between items-center p-1.5 sm:p-3 rounded-lg sm:rounded-xl bg-[#222] border border-gray-700 shadow-sm group min-w-0">
                           <div className="flex items-center gap-1.5 sm:gap-3 w-full min-w-0">
                               <button onClick={() => removeAssetByName(p.name)} className="text-gray-600 hover:text-white transition-colors shrink-0">
                                   <X size={14} className="sm:w-4 sm:h-4" />
                               </button>
                               <div className="flex flex-col min-w-0 flex-1">
-                                  <div className="flex items-center gap-1.5 sm:gap-2 truncate">
-                                      <span className="text-[11px] sm:text-sm font-black text-white truncate">{p.name}</span>
+                                  {/* 🚀 FIXED: Moved truncate logic explicitly to the inner span to stop aggressive flexbox hiding */}
+                                  <div className="flex items-center gap-1 sm:gap-2 w-full min-w-0">
+                                      <span className="text-[11px] sm:text-sm font-black text-white truncate block">{p.name}</span>
                                       {teamsCount === 3 && (
                                           <div className={`w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 rounded-full ${dotColors[p.fromTeam]} shadow-sm shrink-0`} title={`From Team ${p.fromTeam}`} />
                                       )}
                                   </div>
-                                  <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2">
-                                      <span className="text-[8px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-wider truncate">
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2 w-full min-w-0">
+                                      <span className="text-[8px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-wider truncate block">
                                         {p.position} {formatMode === 'dynasty' && p.age && p.position !== 'PICK' ? `• ${p.age} y/o` : ''}
                                       </span>
                                       <span className={`text-[10px] font-black ${theme.text} block sm:hidden`}>
@@ -189,8 +191,8 @@ export default function TeamPane({
       </div>
 
       {/* TOGGLE HEADER FOR ROSTER / PICKS */}
-      <div className="flex justify-between items-center mb-2 sm:mb-3 gap-1">
-          <h4 className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest truncate">
+      <div className="flex justify-between items-center mb-2 sm:mb-3 gap-1 min-w-0">
+          <h4 className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest truncate block">
               {viewMode === 'players' ? 'Roster' : 'Draft Picks'}
           </h4>
           
@@ -198,13 +200,13 @@ export default function TeamPane({
               <div className="flex bg-[#161616] border border-gray-800 rounded-md sm:rounded-lg p-0.5 shadow-inner shrink-0">
                   <button 
                       onClick={() => setViewMode('players')}
-                      className={`px-2 sm:px-3 py-1 text-[8px] sm:text-[9px] font-bold uppercase tracking-widest rounded sm:rounded-md transition-all ${viewMode === 'players' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
+                      className={`px-1.5 sm:px-3 py-1 text-[7px] sm:text-[9px] font-bold uppercase tracking-widest rounded sm:rounded-md transition-all ${viewMode === 'players' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
                   >
                       Players
                   </button>
                   <button 
                       onClick={() => setViewMode('picks')}
-                      className={`px-2 sm:px-3 py-1 text-[8px] sm:text-[9px] font-bold uppercase tracking-widest rounded sm:rounded-md transition-all ${viewMode === 'picks' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
+                      className={`px-1.5 sm:px-3 py-1 text-[7px] sm:text-[9px] font-bold uppercase tracking-widest rounded sm:rounded-md transition-all ${viewMode === 'picks' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
                   >
                       Picks
                   </button>
@@ -212,11 +214,11 @@ export default function TeamPane({
           )}
       </div>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           
           {/* TAB 1: PLAYERS VIEW */}
           {viewMode === 'players' && (
-              <div className="flex-1 flex flex-col">
+              <div className="flex-1 flex flex-col min-w-0">
                   {!isSynced && (
                       <div className="relative mb-2 sm:mb-4">
                           <div className="flex items-center bg-[#1a1a1a] border border-gray-800 rounded-lg sm:rounded-xl px-2.5 sm:px-4 py-1.5 sm:py-3">
@@ -237,7 +239,7 @@ export default function TeamPane({
                                               {p.team && p.team !== 'fa' && (
                                                   <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-4 h-4 sm:w-5 sm:h-5 object-contain shrink-0" onError={(e) => e.target.style.display = 'none'} />
                                               )}
-                                              <span className="text-[11px] sm:text-sm font-bold text-white truncate">{p.name}</span>
+                                              <span className="text-[11px] sm:text-sm font-bold text-white truncate block">{p.name}</span>
                                               <span className="text-[8px] sm:text-[10px] font-black bg-gray-800 text-gray-400 px-1 sm:px-2 py-0.5 rounded uppercase shrink-0">{p.position}</span>
                                           </div>
                                       </div>
@@ -247,7 +249,7 @@ export default function TeamPane({
                       </div>
                   )}
 
-                  <div className="flex-1 space-y-1 sm:space-y-2 overflow-y-auto custom-scroll pr-1 pb-2 sm:pb-4">
+                  <div className="flex-1 space-y-1 sm:space-y-2 overflow-y-auto custom-scroll pr-1 pb-2 sm:pb-4 min-w-0">
                       {isSynced && !isMyTeam && !managerId ? (
                           <div className="text-center py-10 text-gray-600 text-[10px] sm:text-xs font-bold uppercase tracking-widest px-2">Select a team</div>
                       ) : (
@@ -271,14 +273,15 @@ export default function TeamPane({
                                            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-800 shrink-0"></div>
                                        )}
                                        <div className="flex flex-col min-w-0 flex-1">
-                                          <div className="flex items-center gap-1.5 sm:gap-2 truncate">
-                                            <span className={`text-[10px] sm:text-sm font-black truncate ${isSelected ? 'text-gray-400 line-through' : 'text-gray-200'}`}>{p.name}</span>
+                                          {/* 🚀 FIXED: Inner span truncation directly bounds the player names */}
+                                          <div className="flex items-center gap-1 sm:gap-2 w-full min-w-0">
+                                            <span className={`text-[10px] sm:text-sm font-black truncate block ${isSelected ? 'text-gray-400 line-through' : 'text-gray-200'}`}>{p.name}</span>
                                             {isSelected && teamsCount === 3 && (
                                                 <div className={`w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 rounded-full ${dotColors[sentAsset.toTeam]} shadow-sm shrink-0`} title={`Sending to Team ${sentAsset.toTeam}`} />
                                             )}
                                           </div>
-                                          <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2">
-                                              <span className="text-[8px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-wider truncate">{p.position} {formatMode === 'dynasty' && p.age ? `• ${p.age} y/o` : ''}</span>
+                                          <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2 w-full min-w-0">
+                                              <span className="text-[8px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-wider truncate block">{p.position} {formatMode === 'dynasty' && p.age ? `• ${p.age} y/o` : ''}</span>
                                               <span className="text-[9px] font-black text-gray-400 block sm:hidden">{p.calcValue} PTS</span>
                                           </div>
                                        </div>
@@ -298,7 +301,7 @@ export default function TeamPane({
 
           {/* TAB 2: PICKS VIEW */}
           {viewMode === 'picks' && (
-              <div className="flex-1 space-y-1 sm:space-y-2 overflow-y-auto custom-scroll pr-1 pb-2 sm:pb-4">
+              <div className="flex-1 space-y-1 sm:space-y-2 overflow-y-auto custom-scroll pr-1 pb-2 sm:pb-4 min-w-0">
                  
                  {isSynced ? (
                      rosterPicks.length === 0 && managerId ? (
@@ -320,14 +323,14 @@ export default function TeamPane({
                                     <div className="flex items-center gap-1.5 sm:gap-3 w-full min-w-0">
                                         <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-yellow-600 flex items-center justify-center text-[8px] sm:text-xs font-black text-white shadow-md shrink-0">{p.year.toString().slice(-2)}</div>
                                         <div className="flex flex-col min-w-0 flex-1">
-                                            <div className="flex items-center gap-1.5 sm:gap-2 truncate">
-                                                <span className={`text-[10px] sm:text-sm font-black truncate ${isSelected ? 'text-gray-400 line-through' : 'text-gray-200'}`}>{p.name}</span>
+                                            <div className="flex items-center gap-1 sm:gap-2 w-full min-w-0">
+                                                <span className={`text-[10px] sm:text-sm font-black truncate block ${isSelected ? 'text-gray-400 line-through' : 'text-gray-200'}`}>{p.name}</span>
                                                 {isSelected && teamsCount === 3 && (
                                                     <div className={`w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 rounded-full ${dotColors[sentAsset.toTeam]} shadow-sm shrink-0`} title={`Sending to Team ${sentAsset.toTeam}`} />
                                                 )}
                                             </div>
-                                            <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2">
-                                                <span className="text-[8px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-wider">PICK</span>
+                                            <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2 w-full min-w-0">
+                                                <span className="text-[8px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-wider block">PICK</span>
                                                 <span className="text-[9px] font-black text-gray-400 block sm:hidden">{p.calcValue} PTS</span>
                                             </div>
                                         </div>
@@ -338,10 +341,10 @@ export default function TeamPane({
                          })
                      )
                  ) : (
-                     <div className="flex flex-col gap-3 sm:gap-4">
+                     <div className="flex flex-col gap-3 sm:gap-4 min-w-0">
                          {genericPickYears.map(year => (
-                             <div key={year} className="flex flex-col gap-1 sm:gap-2">
-                                 <h5 className="text-[8px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest px-1 sm:px-2">{year} Picks</h5>
+                             <div key={year} className="flex flex-col gap-1 sm:gap-2 min-w-0">
+                                 <h5 className="text-[8px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest px-1 sm:px-2 truncate block">{year} Picks</h5>
                                  {DRAFT_PICKS.filter(p => p.year === year).map(pick => {
                                      const sentAsset = receivedAssets.find(a => a.name === pick.name); 
                                      const isSelected = !!sentAsset;
@@ -357,9 +360,9 @@ export default function TeamPane({
                                              <div className="flex items-center gap-1.5 sm:gap-3 w-full min-w-0">
                                                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-yellow-600 flex items-center justify-center text-[8px] sm:text-xs font-black text-white shadow-md shrink-0">{pick.year.toString().slice(-2)}</div>
                                                  <div className="flex flex-col min-w-0 flex-1">
-                                                     <span className={`text-[10px] sm:text-sm font-black truncate ${isSelected ? 'text-gray-400 line-through' : 'text-gray-200'}`}>{pick.name}</span>
-                                                     <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2">
-                                                         <span className="text-[8px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-wider">PICK</span>
+                                                     <span className={`text-[10px] sm:text-sm font-black truncate block ${isSelected ? 'text-gray-400 line-through' : 'text-gray-200'}`}>{pick.name}</span>
+                                                     <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2 w-full min-w-0">
+                                                         <span className="text-[8px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-wider block">PICK</span>
                                                          <span className="text-[9px] font-black text-gray-400 block sm:hidden">{getPlayerValue(pick, strategy)} PTS</span>
                                                      </div>
                                                  </div>
