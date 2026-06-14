@@ -201,16 +201,29 @@ export default function TradeCalculatorClient() {
     }
   };
 
+  // 🚀 AWAITING OTHER SIDE LOGIC
   let verdictTitle = "Select assets to evaluate trade";
   let verdictSubtitle = "Toggle players to see the package analysis.";
   let verdictColor = "text-gray-500";
+
+  const hasAssetsFromA = tradeAssets.some(a => a.fromTeam === 'A');
+  const hasAssetsFromB = tradeAssets.some(a => a.fromTeam === 'B');
+  const hasAssetsFromC = tradeAssets.some(a => a.fromTeam === 'C');
+
+  let canEvaluate = false;
+  if (teamsCount === 2) {
+      canEvaluate = hasAssetsFromA && hasAssetsFromB;
+  } else {
+      const sendingCount = (hasAssetsFromA ? 1 : 0) + (hasAssetsFromB ? 1 : 0) + (hasAssetsFromC ? 1 : 0);
+      canEvaluate = sendingCount >= 2;
+  }
 
   if (teamsCount === 2) {
       const totalA = evaluations.A.receivedTotal;
       const totalB = evaluations.B.receivedTotal;
       const totalBoth = totalA + totalB;
 
-      if (totalBoth > 0) {
+      if (canEvaluate && totalBoth > 0) {
           const diff = Math.abs(totalA - totalB);
           const diffPct = (diff / totalBoth) * 100;
           const winner = totalA > totalB ? 'Team A' : 'Team B';
@@ -239,20 +252,26 @@ export default function TradeCalculatorClient() {
               const bestAssetName = evaluations[bestAssetTeam].receivedAssets[0].name;
               verdictSubtitle += ` ${winner} receives a structural premium for acquiring ${bestAssetName}, consolidating elite value in this multi-player deal.`;
           }
+      } else if (!canEvaluate && totalBoth > 0) {
+          verdictTitle = "Awaiting other side...";
+          verdictSubtitle = "Add assets to the other side of the trade to evaluate.";
       }
   } else {
       const totalAll = evaluations.A.receivedTotal + evaluations.B.receivedTotal + evaluations.C.receivedTotal;
-      if (totalAll > 0) {
+      if (canEvaluate && totalAll > 0) {
           verdictTitle = "⚖️ 3-Team Trade Analysis";
           verdictColor = "text-zinc-300";
           verdictSubtitle = "Evaluate the net gains and losses for each manager to ensure structural balance.";
+      } else if (!canEvaluate && totalAll > 0) {
+          verdictTitle = "Awaiting other sides...";
+          verdictSubtitle = "Add assets to multiple teams to evaluate.";
       }
   }
 
   return (
     <div className="w-full animate-in fade-in duration-500 pb-24 relative pt-6 lg:pt-8">
       
-      {/* 🚀 Modal Pop-Up for 3-Team Trade Assignments */}
+      {/* Modal Pop-Up for 3-Team Trade Assignments */}
       {pendingAsset && (
         <div className="fixed inset-0 z-[150] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
            <div className="bg-[#1a1a1a] border border-gray-700 rounded-3xl p-8 w-full max-w-sm text-center shadow-2xl">
@@ -315,6 +334,22 @@ export default function TradeCalculatorClient() {
             <button onClick={() => setFormatMode('dynasty')} className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${formatMode === 'dynasty' ? 'bg-zinc-700 text-white shadow-md' : 'text-gray-500 hover:text-white'}`}>Dynasty</button>
           </div>
           
+          {/* 🚀 NEW: Central Team Switcher */}
+          <div className="flex bg-[#111] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
+            <button 
+                onClick={() => { setTeamsCount(2); setTeamManagers(prev => ({ ...prev, C: '' })); setTradeAssets(prev => prev.filter(a => a.fromTeam !== 'C' && a.toTeam !== 'C')); }}
+                className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${teamsCount === 2 ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-white'}`}
+            >
+                2 Teams
+            </button>
+            <button 
+                onClick={() => setTeamsCount(3)}
+                className={`px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${teamsCount === 3 ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-white'}`}
+            >
+                3 Teams
+            </button>
+          </div>
+
           {activeLeague ? (
             <div className="flex items-center gap-3">
                 <div className="flex items-center bg-[#1a1a1a] border border-green-500/20 rounded-xl overflow-hidden shadow-inner hidden sm:flex">
@@ -409,25 +444,6 @@ export default function TradeCalculatorClient() {
                     </div>
                 </div>
 
-                {/* Add/Remove 3rd Team Button */}
-                <div className="flex justify-center -mt-2 mb-2">
-                    {teamsCount === 2 ? (
-                        <button 
-                            onClick={() => setTeamsCount(3)}
-                            className="flex items-center gap-2 bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-sm"
-                        >
-                            <Plus size={16} /> Add 3rd Team
-                        </button>
-                    ) : (
-                        <button 
-                            onClick={() => { setTeamsCount(2); setTeamManagers(prev => ({ ...prev, C: '' })); setTradeAssets(prev => prev.filter(a => a.fromTeam !== 'C' && a.toTeam !== 'C')); }}
-                            className="flex items-center gap-2 bg-red-900/20 hover:bg-red-900/40 border border-red-500/30 hover:border-red-500 text-red-500 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-sm"
-                        >
-                            <X size={16} /> Remove 3rd Team
-                        </button>
-                    )}
-                </div>
-
                 {/* DYNAMIC TEAM GRID */}
                 <div className="flex flex-col lg:flex-row gap-6">
                     {['A', 'B', 'C'].map(teamId => {
@@ -457,7 +473,7 @@ export default function TradeCalculatorClient() {
                                 onPickSelect={handlePickSelect}
                                 removeAssetByName={removeAssetByName}
                                 DRAFT_PICKS={DRAFT_PICKS}
-                                getPlayerValue={getPlayerValue} // 🚀 Added this prop back!
+                                getPlayerValue={getPlayerValue} 
                             />
                         );
                     })}
