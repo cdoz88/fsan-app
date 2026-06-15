@@ -48,11 +48,20 @@ export default function AccountClient() {
   useEffect(() => {
     if (status === 'authenticated' && session?.user) {
       const roles = session.user.roles || [];
+      
+      // Grant Ads Manager access to Admins & Editors
       if (roles.includes('administrator') || roles.includes('editor')) {
         setIsAdmin(true);
       }
-      if (session.user.tier) {
-        setUserTier(session.user.tier);
+
+      // 🚀 CLIENT-SIDE FAILSAFE: Explicitly grant Pro+ tools to staff regardless of cached session token!
+      const isStaff = roles.some(r => r.includes('administrator') || r.includes('editor') || r.includes('author'));
+      
+      if (isStaff) {
+        setUserTier('pro-plus');
+      } else if (session.user.tier) {
+        // Fix any lingering underscores from the old backend token
+        setUserTier(session.user.tier.replace('_', '-'));
       } else {
         setUserTier('free');
       }

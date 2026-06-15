@@ -56,9 +56,9 @@ const authOptions = {
           
           let tier = 'free';
           
-          // 🚀 ADDED 'editor' to the highest tier check so they get full Pro+ access!
+          // 🚀 FIXED: Hyphen instead of underscore for pro-plus
           if (roles.some(r => r.includes('pro+') || r.includes('pro plus') || r.includes('pro_plus') || r.includes('pro-plus') || r.includes('author') || r.includes('administrator') || r.includes('editor'))) {
-            tier = 'pro_plus';
+            tier = 'pro-plus';
           } else if (roles.some(r => r.includes('pro') || r.includes('pro member') || r.includes('fsan_pro'))) {
             tier = 'pro';
           }
