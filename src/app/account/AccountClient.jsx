@@ -54,7 +54,7 @@ export default function AccountClient() {
         setIsAdmin(true);
       }
 
-      // 🚀 CLIENT-SIDE FAILSAFE: Explicitly grant Pro+ tools to staff regardless of cached session token!
+      // CLIENT-SIDE FAILSAFE: Explicitly grant Pro+ tools to staff regardless of cached session token!
       const isStaff = roles.some(r => r.includes('administrator') || r.includes('editor') || r.includes('author'));
       
       if (isStaff) {
