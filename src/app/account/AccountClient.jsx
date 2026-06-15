@@ -86,7 +86,6 @@ export default function AccountClient() {
   
   const [syncSportTab, setSyncSportTab] = useState('football');
 
-  // 🚀 NEW: Real-Time Sleeper Verification State
   const [sleeperUsername, setSleeperUsername] = useState('');
   const [isVerifyingSleeper, setIsVerifyingSleeper] = useState(false);
   const [verifiedSleeperUser, setVerifiedSleeperUser] = useState(null);
@@ -139,7 +138,6 @@ export default function AccountClient() {
     }
   }, [status, session]);
 
-  // 🚀 NEW: Real-time Debounced Verification Effect
   useEffect(() => {
     const timer = setTimeout(async () => {
       if (sleeperUsername.trim().length >= 3) {
@@ -231,11 +229,11 @@ export default function AccountClient() {
             return roleName;
         }) || [];
         
-        if (roles.includes('administrator')) {
+        if (roles.includes('administrator') || roles.includes('editor')) {
           setIsAdmin(true);
         }
 
-        if (roles.some(r => r.includes('pro+') || r.includes('pro plus') || r.includes('pro_plus') || r.includes('pro-plus') || r.includes('author') || r.includes('administrator'))) {
+        if (roles.some(r => r.includes('pro+') || r.includes('pro plus') || r.includes('pro_plus') || r.includes('pro-plus') || r.includes('author') || r.includes('administrator') || r.includes('editor'))) {
           setUserTier('pro-plus');
         } else if (roles.some(r => r.includes('pro') || r.includes('pro member') || r.includes('fsan_pro'))) {
           setUserTier('pro');
@@ -606,7 +604,7 @@ export default function AccountClient() {
           </div>
         )}
 
-        {/* 🚀 NEW: Synced Leagues Tab (With Submenu & Real-Time Verification) */}
+        {/* Synced Leagues Tab (With Submenu & Real-Time Verification) */}
         {activeTab === 'Synced Leagues' && (
           <div className="space-y-8 animate-in fade-in duration-500 relative z-10">
             <h2 className="text-2xl font-black text-white uppercase tracking-wide mb-2 flex items-center gap-3">
@@ -759,7 +757,7 @@ export default function AccountClient() {
                     )}
                   </div>
 
-                  {/* 🚀 NEW: Yahoo Integration */}
+                  {/* Yahoo Integration */}
                   <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-5 md:p-6 mt-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                       <div className="flex items-center gap-4">
@@ -1096,39 +1094,39 @@ export default function AccountClient() {
   };
 
   return (
-          <div className="flex flex-col md:flex-row gap-8">
-             
-             {/* LEFT NAV BAR */}
-             <div className="w-full md:w-64 shrink-0 flex flex-col gap-2">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => handleTabClick(tab.id)}
-                    className={`flex items-center justify-between px-5 py-4 rounded-xl font-bold uppercase tracking-widest text-xs transition-all ${
-                      activeTab === tab.id 
-                        ? 'bg-gradient-to-r from-gray-600 to-gray-800 text-white shadow-lg' 
-                        : 'bg-[#111] border border-gray-800 text-gray-500 hover:text-white hover:border-gray-600'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                       {tab.icon} {tab.id}
-                    </div>
-                    {activeTab === tab.id && <ChevronRight size={16} />}
-                  </button>
-                ))}
+    <div className="flex flex-col md:flex-row gap-8">
+       
+       {/* LEFT NAV BAR */}
+       <div className="w-full md:w-64 shrink-0 flex flex-col gap-2">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleTabClick(tab.id)}
+              className={`flex items-center justify-between px-5 py-4 rounded-xl font-bold uppercase tracking-widest text-xs transition-all ${
+                activeTab === tab.id 
+                  ? 'bg-gradient-to-r from-gray-600 to-gray-800 text-white shadow-lg' 
+                  : 'bg-[#111] border border-gray-800 text-gray-500 hover:text-white hover:border-gray-600'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                 {tab.icon} {tab.id}
+              </div>
+              {activeTab === tab.id && <ChevronRight size={16} />}
+            </button>
+          ))}
 
-                <button 
-                  onClick={() => signOut({ callbackUrl: '/home' })}
-                  className="flex items-center gap-3 px-5 py-4 rounded-xl font-bold uppercase tracking-widest text-xs text-gray-500 hover:text-red-500 bg-[#111] border border-gray-800 hover:border-red-900/50 hover:bg-red-900/10 transition-all mt-4"
-                >
-                  <LogOut size={18} /> Sign Out
-                </button>
-             </div>
+          <button 
+            onClick={() => signOut({ callbackUrl: '/home' })}
+            className="flex items-center gap-3 px-5 py-4 rounded-xl font-bold uppercase tracking-widest text-xs text-gray-500 hover:text-red-500 bg-[#111] border border-gray-800 hover:border-red-900/50 hover:bg-red-900/10 transition-all mt-4"
+          >
+            <LogOut size={18} /> Sign Out
+          </button>
+       </div>
 
-             {/* MAIN CONTENT AREA */}
-             <div className="flex-1 w-full">
-                {renderTabContent()}
-             </div>
-          </div>
+       {/* MAIN CONTENT AREA */}
+       <div className="flex-1 w-full">
+          {renderTabContent()}
+       </div>
+    </div>
   );
 }

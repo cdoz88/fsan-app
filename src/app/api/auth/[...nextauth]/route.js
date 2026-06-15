@@ -55,7 +55,9 @@ const authOptions = {
           const roles = user.roles?.nodes?.map(r => r.name.toLowerCase().replace(/&#043;/g, '+')) || [];
           
           let tier = 'free';
-          if (roles.some(r => r.includes('pro+') || r.includes('pro plus') || r.includes('pro_plus') || r.includes('pro-plus') || r.includes('author') || r.includes('administrator'))) {
+          
+          // 🚀 ADDED 'editor' to the highest tier check so they get full Pro+ access!
+          if (roles.some(r => r.includes('pro+') || r.includes('pro plus') || r.includes('pro_plus') || r.includes('pro-plus') || r.includes('author') || r.includes('administrator') || r.includes('editor'))) {
             tier = 'pro_plus';
           } else if (roles.some(r => r.includes('pro') || r.includes('pro member') || r.includes('fsan_pro'))) {
             tier = 'pro';
@@ -63,14 +65,14 @@ const authOptions = {
 
           return {
             id: user.databaseId,
-            globalId: user.id, // 🚀 NEW: Needed to save data back to WP
+            globalId: user.id, 
             name: user.name,
             email: user.email,
             image: user.avatar?.url,
             token: authToken,
             tier: tier,
             roles: roles,
-            sleeperId: user.description // 🚀 NEW: We extract the stored Sleeper ID!
+            sleeperId: user.description 
           };
         }
         
@@ -96,7 +98,7 @@ const authOptions = {
       session.user.globalId = token.wpGlobalId;
       session.user.tier = token.tier;   
       session.user.roles = token.roles;
-      session.user.sleeperId = token.sleeperId; // 🚀 Passes to the frontend!
+      session.user.sleeperId = token.sleeperId; 
       return session;
     }
   },

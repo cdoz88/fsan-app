@@ -407,8 +407,9 @@ export default function Header({ activeSport }) {
 
             if (isCenterBtn) {
               return (
-                <Link key={item.id} href={item.url} target={item.url.startsWith('http') ? '_blank' : '_self'} className="flex flex-col items-center group no-underline">
-                  <div className={`relative -top-5 mb-[-36px] w-14 h-14 rounded-full flex items-center justify-center border-[4px] border-[#0a0a0a] shadow-xl ${currentGradient} text-white transition-transform group-hover:scale-105 group-active:scale-95 no-underline`}>
+                // 🚀 FIXED: Removed mb-[-36px] from the container to stop pulling the text up
+                <Link key={item.id} href={item.url} target={item.url.startsWith('http') ? '_blank' : '_self'} className="flex flex-col items-center group no-underline relative -top-3">
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center border-[4px] border-[#0a0a0a] shadow-xl ${currentGradient} text-white transition-transform group-hover:scale-105 group-active:scale-95 no-underline`}>
                     <Icon size={24} className={pathname.includes(item.url) ? 'animate-pulse' : ''} />
                   </div>
                   <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 group-hover:text-white transition-colors mt-1 whitespace-nowrap">{item.label}</span>
@@ -433,12 +434,15 @@ export default function Header({ activeSport }) {
               <Activity size={20} />
               <span className="text-[9px] font-bold uppercase tracking-widest">Scores</span>
             </Link>
-            <Link href={`${basePath}/home`} className="flex flex-col items-center group no-underline">
-              <div className={`relative -top-5 mb-[-36px] w-14 h-14 rounded-full flex items-center justify-center border-[4px] border-[#0a0a0a] shadow-xl ${currentGradient} text-white transition-transform group-hover:scale-105 group-active:scale-95 no-underline`}>
+            
+            {/* 🚀 FIXED: Removed mb-[-36px] from the fallback layout as well */}
+            <Link href={`${basePath}/home`} className="flex flex-col items-center group no-underline relative -top-3">
+              <div className={`w-14 h-14 rounded-full flex items-center justify-center border-[4px] border-[#0a0a0a] shadow-xl ${currentGradient} text-white transition-transform group-hover:scale-105 group-active:scale-95 no-underline`}>
                 <Flame size={24} className={currentView === 'home' ? 'animate-pulse' : ''} />
               </div>
               <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 group-hover:text-white transition-colors mt-1 whitespace-nowrap">The Wire</span>
             </Link>
+            
             <Link href="/account#my-perks" className="flex flex-col items-center gap-1 text-gray-500 hover:text-white transition-colors no-underline">
               <Gift size={20} />
               <span className="text-[9px] font-bold uppercase tracking-widest">Perks</span>
