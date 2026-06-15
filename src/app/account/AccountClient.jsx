@@ -131,9 +131,22 @@ export default function AccountClient() {
     }
   }, [searchParams]);
 
+  // 🚀 FIXED: Set Admin & Tier immediately from the local Session without waiting for the WordPress API!
   useEffect(() => {
-    if (status === 'authenticated' && session?.user?.token) {
-      fetchUserData();
+    if (status === 'authenticated' && session?.user) {
+      
+      const roles = session.user.roles || [];
+      if (roles.includes('administrator') || roles.includes('editor')) {
+        setIsAdmin(true);
+      }
+
+      if (session.user.tier) {
+        setUserTier(session.user.tier);
+      } else {
+        setUserTier('free');
+      }
+
+      fetchUserData(); // Still fetch for the Profile Form details (First/Last name)
       fetchDynamicPerks();
     }
   }, [status, session]);
@@ -191,11 +204,6 @@ export default function AccountClient() {
           firstName
           lastName
           email
-          roles {
-            nodes {
-              name
-            }
-          }
         }
       }
     `;
@@ -222,30 +230,10 @@ export default function AccountClient() {
           email: user.email || '',
           password: '', 
         });
-
-        const roles = user.roles?.nodes?.map(r => {
-            let roleName = r.name.toLowerCase();
-            roleName = roleName.replace(/&#043;/g, '+');
-            return roleName;
-        }) || [];
-        
-        if (roles.includes('administrator') || roles.includes('editor')) {
-          setIsAdmin(true);
-        }
-
-        if (roles.some(r => r.includes('pro+') || r.includes('pro plus') || r.includes('pro_plus') || r.includes('pro-plus') || r.includes('author') || r.includes('administrator') || r.includes('editor'))) {
-          setUserTier('pro-plus');
-        } else if (roles.some(r => r.includes('pro') || r.includes('pro member') || r.includes('fsan_pro'))) {
-          setUserTier('pro');
-        } else {
-          setUserTier('free');
-        }
-      } else {
-        setUserTier('free');
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to load account data.' });
-      setUserTier('free');
+      // Intentionally ignoring 403s here so it doesn't break the UI, it just leaves the form blank
+      console.warn("Could not fetch user profile details.");
     } finally {
       setIsLoading(false);
     }
@@ -604,7 +592,7 @@ export default function AccountClient() {
           </div>
         )}
 
-        {/* Synced Leagues Tab (With Submenu & Real-Time Verification) */}
+        {/* 🚀 NEW: Synced Leagues Tab (With Submenu & Real-Time Verification) */}
         {activeTab === 'Synced Leagues' && (
           <div className="space-y-8 animate-in fade-in duration-500 relative z-10">
             <h2 className="text-2xl font-black text-white uppercase tracking-wide mb-2 flex items-center gap-3">
@@ -1094,39 +1082,39 @@ export default function AccountClient() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-8">
-       
-       {/* LEFT NAV BAR */}
-       <div className="w-full md:w-64 shrink-0 flex flex-col gap-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabClick(tab.id)}
-              className={`flex items-center justify-between px-5 py-4 rounded-xl font-bold uppercase tracking-widest text-xs transition-all ${
-                activeTab === tab.id 
-                  ? 'bg-gradient-to-r from-gray-600 to-gray-800 text-white shadow-lg' 
-                  : 'bg-[#111] border border-gray-800 text-gray-500 hover:text-white hover:border-gray-600'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                 {tab.icon} {tab.id}
-              </div>
-              {activeTab === tab.id && <ChevronRight size={16} />}
-            </button>
-          ))}
+          <div className="flex flex-col md:flex-row gap-8">
+             
+             {/* LEFT NAV BAR */}
+             <div className="w-full md:w-64 shrink-0 flex flex-col gap-2">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabClick(tab.id)}
+                    className={`flex items-center justify-between px-5 py-4 rounded-xl font-bold uppercase tracking-widest text-xs transition-all ${
+                      activeTab === tab.id 
+                        ? 'bg-gradient-to-r from-gray-600 to-gray-800 text-white shadow-lg' 
+                        : 'bg-[#111] border border-gray-800 text-gray-500 hover:text-white hover:border-gray-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                       {tab.icon} {tab.id}
+                    </div>
+                    {activeTab === tab.id && <ChevronRight size={16} />}
+                  </button>
+                ))}
 
-          <button 
-            onClick={() => signOut({ callbackUrl: '/home' })}
-            className="flex items-center gap-3 px-5 py-4 rounded-xl font-bold uppercase tracking-widest text-xs text-gray-500 hover:text-red-500 bg-[#111] border border-gray-800 hover:border-red-900/50 hover:bg-red-900/10 transition-all mt-4"
-          >
-            <LogOut size={18} /> Sign Out
-          </button>
-       </div>
+                <button 
+                  onClick={() => signOut({ callbackUrl: '/home' })}
+                  className="flex items-center gap-3 px-5 py-4 rounded-xl font-bold uppercase tracking-widest text-xs text-gray-500 hover:text-red-500 bg-[#111] border border-gray-800 hover:border-red-900/50 hover:bg-red-900/10 transition-all mt-4"
+                >
+                  <LogOut size={18} /> Sign Out
+                </button>
+             </div>
 
-       {/* MAIN CONTENT AREA */}
-       <div className="flex-1 w-full">
-          {renderTabContent()}
-       </div>
-    </div>
+             {/* MAIN CONTENT AREA */}
+             <div className="flex-1 w-full">
+                {renderTabContent()}
+             </div>
+          </div>
   );
 }
