@@ -1,54 +1,71 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react'; // 🚀 Import Session
 
-// Create the Context
 const LeagueContext = createContext();
 
 export function LeagueProvider({ children }) {
-  // 1. Holds every league synced across all platforms (Sleeper, Yahoo, etc.)
+  const { data: session, status } = useSession(); // 🚀 Hook into Auth
+
   const [allLeagues, setAllLeagues] = useState([]);
-  
-  // 2. Remembers the exact active league for EACH sport
   const [activeLeagues, setActiveLeagues] = useState({
     football: null,
     basketball: null,
     baseball: null,
   });
   
-  // 🚀 NEW: Store the user's actual Sleeper ID so we can auto-assign Team A
   const [sleeperUserId, setSleeperUserId] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [hasAttemptedCloudSync, setHasAttemptedCloudSync] = useState(false);
 
   // --- Boot Up: Load preferences from Local Storage ---
   useEffect(() => {
     const savedLeagues = localStorage.getItem('fsan_all_leagues');
     const savedActive = localStorage.getItem('fsan_active_leagues');
-    const savedSleeperId = localStorage.getItem('fsan_sleeper_user_id'); // 🚀 NEW
+    const savedSleeperId = localStorage.getItem('fsan_sleeper_user_id'); 
     
     if (savedLeagues) setAllLeagues(JSON.parse(savedLeagues));
     if (savedActive) setActiveLeagues(JSON.parse(savedActive));
-    if (savedSleeperId) setSleeperUserId(savedSleeperId); // 🚀 NEW
+    if (savedSleeperId) setSleeperUserId(savedSleeperId); 
   }, []);
 
+  // --- 🚀 NEW: CLOUD SYNC WATCHER ---
+  // If the user logs in on a new device, pull their cloud Sleeper ID and auto-sync!
+  useEffect(() => {
+      if (status === 'authenticated' && session?.user?.sleeperId && !hasAttemptedCloudSync) {
+          setHasAttemptedCloudSync(true);
+
+          // If they don't have the ID locally, or their leagues are empty, run the sync!
+          if (!sleeperUserId || allLeagues.length === 0) {
+              syncSleeperAccount(session.user.sleeperId, true); // true = skip saving to cloud again
+          }
+      }
+  }, [status, session, sleeperUserId, allLeagues.length, hasAttemptedCloudSync]);
+
   // --- The Sleeper Sync Engine ---
-  const syncSleeperAccount = async (username) => {
+  const syncSleeperAccount = async (identifier, isBackgroundSync = false) => {
     setIsSyncing(true);
     try {
-      // 1. Convert username to Sleeper User ID
-      const userRes = await fetch(`https://api.sleeper.app/v1/user/${username}`);
+      const userRes = await fetch(`https://api.sleeper.app/v1/user/${identifier}`);
       const userData = await userRes.json();
       if (!userData?.user_id) throw new Error("Sleeper user not found.");
 
-      // 🚀 NEW: Save the User ID locally so the Trade Calculator knows who Team A is
       setSleeperUserId(userData.user_id);
       localStorage.setItem('fsan_sleeper_user_id', userData.user_id);
 
-      // 2. Fetch all NFL leagues for the 2026 season
+      // 🚀 FIXED: Pointing to the new save-sleeper-id route!
+      if (!isBackgroundSync && status === 'authenticated') {
+          fetch('/api/user/save-sleeper-id', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sleeperId: userData.user_id })
+          }).catch(err => console.error("Cloud save failed", err));
+      }
+
       const leaguesRes = await fetch(`https://api.sleeper.app/v1/user/${userData.user_id}/leagues/nfl/2026`);
       const leaguesData = await leaguesRes.json();
 
-      // 3. Format the data perfectly for our app's central brain
       const formattedLeagues = leaguesData.map(league => ({
         id: league.league_id,
         name: league.name,
@@ -60,7 +77,6 @@ export function LeagueProvider({ children }) {
         scoringSettings: league.scoring_settings
       }));
 
-      // 4. Merge into our state (replacing any old Sleeper leagues, but keeping Yahoo/ESPN intact)
       setAllLeagues(prev => {
          const nonSleeper = prev.filter(p => p.platform !== 'sleeper');
          const updated = [...nonSleeper, ...formattedLeagues];
@@ -77,7 +93,6 @@ export function LeagueProvider({ children }) {
     }
   };
 
-  // --- 🚀 NEW: Remove a Single League ---
   const removeLeague = (leagueId) => {
     setAllLeagues(prev => {
       const updated = prev.filter(l => l.id !== leagueId);
@@ -85,7 +100,6 @@ export function LeagueProvider({ children }) {
       return updated;
     });
 
-    // If the removed league was currently active, clear it out of the active context
     setActiveLeagues(prev => {
       let updatedActive = { ...prev };
       let changed = false;
@@ -103,7 +117,6 @@ export function LeagueProvider({ children }) {
     });
   };
 
-  // --- Change Active League (Triggered by the Header Dropdown) ---
   const setActiveLeague = (sport, leagueId) => {
     setActiveLeagues(prev => {
       const updated = { ...prev, [sport]: leagueId };
@@ -112,7 +125,6 @@ export function LeagueProvider({ children }) {
     });
   };
 
-  // --- Helper to get the full data object of the current active league ---
   const getActiveLeagueData = (sport) => {
     const activeId = activeLeagues[sport];
     if (!activeId) return null;
@@ -124,9 +136,9 @@ export function LeagueProvider({ children }) {
       allLeagues,
       activeLeagues,
       isSyncing,
-      sleeperUserId, // 🚀 NEW: Exported the User ID
+      sleeperUserId, 
       syncSleeperAccount,
-      removeLeague, // 🚀 NEW: Exported the remove function
+      removeLeague, 
       setActiveLeague,
       getActiveLeagueData
     }}>

@@ -10,7 +10,6 @@ const authOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        // 🚀 NEW: Added the "roles" block to the GraphQL query
         const query = `
           mutation LoginUser($username: String!, $password: String!) {
             login(
@@ -21,9 +20,11 @@ const authOptions = {
             ) {
               authToken
               user {
+                id
                 databaseId
                 name
                 email
+                description 
                 avatar { url }
                 roles {
                   nodes {
@@ -51,13 +52,9 @@ const authOptions = {
         
         if (json?.data?.login?.authToken) {
           const { user, authToken } = json.data.login;
-          
-          // 🚀 NEW: Parse roles safely (handling WordPress's weird &#043; encoding for plus signs)
           const roles = user.roles?.nodes?.map(r => r.name.toLowerCase().replace(/&#043;/g, '+')) || [];
           
           let tier = 'free';
-          
-          // 🚀 NEW: If the user is an Author, Administrator, or Pro+, assign them the highest tier!
           if (roles.some(r => r.includes('pro+') || r.includes('pro plus') || r.includes('pro_plus') || r.includes('pro-plus') || r.includes('author') || r.includes('administrator'))) {
             tier = 'pro_plus';
           } else if (roles.some(r => r.includes('pro') || r.includes('pro member') || r.includes('fsan_pro'))) {
@@ -66,12 +63,14 @@ const authOptions = {
 
           return {
             id: user.databaseId,
+            globalId: user.id, // 🚀 NEW: Needed to save data back to WP
             name: user.name,
             email: user.email,
             image: user.avatar?.url,
             token: authToken,
-            tier: tier,     // Pass the calculated tier
-            roles: roles    // Pass the raw roles array just in case you need it later
+            tier: tier,
+            roles: roles,
+            sleeperId: user.description // 🚀 NEW: We extract the stored Sleeper ID!
           };
         }
         
@@ -84,16 +83,20 @@ const authOptions = {
       if (user) {
         token.wpToken = user.token;
         token.wpUserId = user.id; 
-        token.tier = user.tier;   // Save the tier to the JWT token
-        token.roles = user.roles; // Save roles to the JWT token
+        token.wpGlobalId = user.globalId;
+        token.tier = user.tier;   
+        token.roles = user.roles;
+        token.sleeperId = user.sleeperId;
       }
       return token;
     },
     async session({ session, token }) {
       session.user.token = token.wpToken;
       session.user.id = token.wpUserId; 
-      session.user.tier = token.tier;   // Inject tier into the global session!
+      session.user.globalId = token.wpGlobalId;
+      session.user.tier = token.tier;   
       session.user.roles = token.roles;
+      session.user.sleeperId = token.sleeperId; // 🚀 Passes to the frontend!
       return session;
     }
   },
