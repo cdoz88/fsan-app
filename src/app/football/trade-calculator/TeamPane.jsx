@@ -54,6 +54,28 @@ export default function TeamPane({
 
   const genericPickYears = [...new Set(DRAFT_PICKS.map(p => p.year))].sort((a,b) => a - b);
 
+  // 🚀 NEW: Dynamic Name Renderer! Stacks first and last names in 3-team view.
+  const renderName = (name, isSelected = false, isWhite = false) => {
+    const defaultColor = isWhite ? 'text-white' : 'text-gray-200';
+    
+    if (teamsCount !== 3) {
+      return <span className={`text-[11px] sm:text-sm font-black truncate block ${isSelected ? 'text-gray-400 line-through' : defaultColor}`}>{name}</span>;
+    }
+    
+    const parts = name.split(' ');
+    if (parts.length > 1) {
+      const first = parts[0];
+      const last = parts.slice(1).join(' ');
+      return (
+        <div className="flex flex-col min-w-0">
+          <span className={`text-[9px] sm:text-[10px] font-bold truncate block leading-tight ${isSelected ? 'text-gray-500 line-through' : 'text-gray-400'}`}>{first}</span>
+          <span className={`text-[11px] sm:text-sm font-black truncate block leading-tight ${isSelected ? 'text-gray-400 line-through' : defaultColor}`}>{last}</span>
+        </div>
+      );
+    }
+    return <span className={`text-[11px] sm:text-sm font-black truncate block ${isSelected ? 'text-gray-400 line-through' : defaultColor}`}>{name}</span>;
+  };
+
   return (
     <div className="flex-1 w-full bg-[#111] border sm:border-2 border-gray-800 rounded-xl sm:rounded-3xl p-1.5 sm:p-6 shadow-2xl relative flex flex-col min-h-[500px] sm:min-h-[600px] overflow-hidden min-w-0">
       
@@ -139,7 +161,6 @@ export default function TeamPane({
               )}
           </div>
 
-          {/* 🚀 CONDITIONAL LAYOUT: 3 Teams (Stacked above Receiving) vs 2 Teams (Side-by-side) */}
           {teamsCount === 3 ? (
               <div className="flex flex-col mt-1 mb-2 sm:mb-3 border-b border-gray-800/60 pb-1.5 sm:pb-2 gap-1 sm:gap-1.5 min-w-0">
                   <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -181,7 +202,7 @@ export default function TeamPane({
                               </button>
                               <div className="flex flex-col min-w-0 flex-1">
                                   <div className="flex items-center gap-1 sm:gap-2 w-full min-w-0">
-                                      <span className="text-[11px] sm:text-sm font-black text-white truncate block">{p.name}</span>
+                                      {renderName(p.name, false, true)}
                                       {teamsCount === 3 && (
                                           <div className={`w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 rounded-full ${dotColors[p.fromTeam]} shadow-sm shrink-0`} title={`From Team ${p.fromTeam}`} />
                                       )}
@@ -203,7 +224,7 @@ export default function TeamPane({
           </div>
       </div>
 
-      {/* 🚀 FIXED: Roster / Picks Label won't truncate to "R..." anymore, flex-wrap ensures safety */}
+      {/* TOGGLE HEADER FOR ROSTER / PICKS */}
       <div className="flex flex-wrap justify-between items-center mb-2 sm:mb-3 gap-1.5 min-w-0">
           <h4 className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest shrink-0">
               {viewMode === 'players' ? 'Roster' : 'Picks'}
@@ -248,11 +269,11 @@ export default function TeamPane({
                               <div className="absolute z-50 top-full mt-1 sm:mt-2 w-full bg-[#1a1a1a] border border-gray-700 rounded-lg sm:rounded-xl shadow-2xl max-h-48 sm:max-h-60 overflow-y-auto custom-scroll">
                                   {playersData.filter(p => p.name.toLowerCase().includes(query.toLowerCase())).slice(0, 8).map(p => (
                                       <div key={p.name} className="px-2.5 sm:px-4 py-2 sm:py-3 hover:bg-[#252525] cursor-pointer flex justify-between items-center border-b border-gray-800/50" onClick={() => { onManualAdd(p, teamId); setQuery(''); }}>
-                                          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                                          <div className="flex items-center gap-2 sm:gap-3 w-full min-w-0">
                                               {p.team && p.team !== 'fa' && (
                                                   <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${p.team.toLowerCase()}.png`} alt={p.team} className="w-4 h-4 sm:w-5 sm:h-5 object-contain shrink-0" onError={(e) => e.target.style.display = 'none'} />
                                               )}
-                                              <span className="text-[11px] sm:text-sm font-bold text-white truncate block">{p.name}</span>
+                                              {renderName(p.name, false, true)}
                                               <span className="text-[8px] sm:text-[10px] font-black bg-gray-800 text-gray-400 px-1 sm:px-2 py-0.5 rounded uppercase shrink-0">{p.position}</span>
                                           </div>
                                       </div>
@@ -287,7 +308,7 @@ export default function TeamPane({
                                        )}
                                        <div className="flex flex-col min-w-0 flex-1">
                                           <div className="flex items-center gap-1 sm:gap-2 w-full min-w-0">
-                                            <span className={`text-[10px] sm:text-sm font-black truncate block ${isSelected ? 'text-gray-400 line-through' : 'text-gray-200'}`}>{p.name}</span>
+                                            {renderName(p.name, isSelected, false)}
                                             {isSelected && teamsCount === 3 && (
                                                 <div className={`w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 rounded-full ${dotColors[sentAsset.toTeam]} shadow-sm shrink-0`} title={`Sending to Team ${sentAsset.toTeam}`} />
                                             )}
@@ -336,7 +357,7 @@ export default function TeamPane({
                                         <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-yellow-600 flex items-center justify-center text-[8px] sm:text-xs font-black text-white shadow-md shrink-0">{p.year.toString().slice(-2)}</div>
                                         <div className="flex flex-col min-w-0 flex-1">
                                             <div className="flex items-center gap-1 sm:gap-2 w-full min-w-0">
-                                                <span className={`text-[10px] sm:text-sm font-black truncate block ${isSelected ? 'text-gray-400 line-through' : 'text-gray-200'}`}>{p.name}</span>
+                                                {renderName(p.name, isSelected, false)}
                                                 {isSelected && teamsCount === 3 && (
                                                     <div className={`w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 rounded-full ${dotColors[sentAsset.toTeam]} shadow-sm shrink-0`} title={`Sending to Team ${sentAsset.toTeam}`} />
                                                 )}
@@ -372,7 +393,7 @@ export default function TeamPane({
                                              <div className="flex items-center gap-1.5 sm:gap-3 w-full min-w-0">
                                                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-yellow-600 flex items-center justify-center text-[8px] sm:text-xs font-black text-white shadow-md shrink-0">{pick.year.toString().slice(-2)}</div>
                                                  <div className="flex flex-col min-w-0 flex-1">
-                                                     <span className={`text-[10px] sm:text-sm font-black truncate block ${isSelected ? 'text-gray-400 line-through' : 'text-gray-200'}`}>{pick.name}</span>
+                                                     {renderName(pick.name, isSelected, false)}
                                                      <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2 w-full min-w-0">
                                                          <span className="text-[8px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-wider block">PICK</span>
                                                          <span className="text-[9px] font-black text-gray-400 block sm:hidden">{getPlayerValue(pick, strategy)} PTS</span>
