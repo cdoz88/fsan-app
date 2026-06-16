@@ -2,11 +2,16 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Settings, RefreshCw } from 'lucide-react'; 
+import { Settings, RefreshCw, Trophy } from 'lucide-react'; 
+import { useLeague } from '../../../context/LeagueContext'; // 🚀 Added Context
 
 export default function RankingsModelClient({ initialRankings, mode, serverError }) {
   const [playersData, setPlayersData] = useState(initialRankings || []);
   const [isSyncing, setIsSyncing] = useState(true);
+
+  // 🚀 Hook into League Context
+  const { getActiveLeagueData } = useLeague();
+  const activeLeague = getActiveLeagueData('football');
 
   // --- UI State Variables ---
   const [currentPosition, setCurrentPosition] = useState('All');
@@ -16,11 +21,17 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
   const [rankingMode, setRankingMode] = useState('redraft'); 
   const isOffseason = mode === 'offseason';
 
-  // Scoring Format State Variables
-  const [isSuperflex, setIsSuperflex] = useState(false);
-  const [pprValue, setPprValue] = useState(1);       
-  const [passTdValue, setPassTdValue] = useState(4); 
-  const [tePremium, setTePremium] = useState(0);     
+  // Manual Scoring Format State Variables
+  const [manualIsSuperflex, setManualIsSuperflex] = useState(false);
+  const [manualPprValue, setManualPprValue] = useState(1);       
+  const [manualPassTdValue, setManualPassTdValue] = useState(4); 
+  const [manualTePremium, setManualTePremium] = useState(0);     
+
+  // 🚀 Active Scoring Formats (Overrides manual settings if a league is synced!)
+  const currentIsSuperflex = activeLeague?.rosterPositions ? activeLeague.rosterPositions.includes('SUPER_FLEX') : manualIsSuperflex;
+  const currentPprValue = activeLeague?.scoringSettings?.rec ?? manualPprValue;
+  const currentPassTdValue = activeLeague?.scoringSettings?.pass_td ?? manualPassTdValue;
+  const currentTePremium = activeLeague?.scoringSettings?.bonus_rec_te ?? manualTePremium;
 
   // Theme Constants
   const bgImage = 'https://admin.fsan.com/wp-content/uploads/2026/04/NFL-Logo.webp';
@@ -77,7 +88,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
     loadLiveDatabase();
   }, []);
 
-  // ⚡ DYNAMIC RECALCULATION ENGINE
+  // ⚡ DYNAMIC RECALCULATION ENGINE (Updated to use active context scoring rules)
   const processedRankings = useMemo(() => {
     let filteredData = playersData || [];
 
@@ -89,16 +100,16 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
       let pts = 0;
       
       pts += ((player.pass_yds || 0) / 25);
-      pts += ((player.pass_tds || 0) * passTdValue); 
+      pts += ((player.pass_tds || 0) * currentPassTdValue); 
       pts -= ((player.turnovers || player.ints || player.fumbles || 0) * 2);
       pts += ((player.rush_yds || 0) / 10);
       pts += ((player.rush_tds || 0) * 6);
       pts += ((player.rec_yds || 0) / 10);
       pts += ((player.rec_tds || 0) * 6);
       
-      let recPoints = ((player.receptions || 0) * pprValue);
+      let recPoints = ((player.receptions || 0) * currentPprValue);
       if (player.position === 'TE' || player.position === 'WR/TE') {
-        recPoints += ((player.receptions || 0) * tePremium);
+        recPoints += ((player.receptions || 0) * currentTePremium);
       }
       pts += recPoints;
 
@@ -109,7 +120,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
       }
 
       if (player.position === 'QB') {
-        if (isSuperflex) {
+        if (currentIsSuperflex) {
           pts *= 1.0;  
         } else {
           pts *= 0.60; 
@@ -138,7 +149,7 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
         posRank: `${pos}${posCounters[pos]}`
       };
     });
-  }, [playersData, pprValue, passTdValue, tePremium, isSuperflex, rankingMode]); 
+  }, [playersData, currentPprValue, currentPassTdValue, currentTePremium, currentIsSuperflex, rankingMode]); 
 
   const visibleData = processedRankings.filter((player) => {
     if (currentPosition === 'All') return true;
@@ -246,22 +257,29 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
           </div>
 
           <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto xl:justify-end">
-            <button 
-              onClick={() => setShowSettings(!showSettings)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ml-auto xl:ml-0 ${
-                showSettings 
-                  ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.2)]' 
-                  : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-gray-800'
-              }`}
-            >
-              <Settings size={16} /> 
-              {showSettings ? 'Hide Scoring' : 'Custom Scoring'}
-            </button>
+            {activeLeague ? (
+               <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 text-green-400 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg pointer-events-none">
+                 <Trophy size={16} /> 
+                 Synced to {activeLeague.name}
+               </div>
+            ) : (
+               <button 
+                 onClick={() => setShowSettings(!showSettings)}
+                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ml-auto xl:ml-0 ${
+                   showSettings 
+                     ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.2)]' 
+                     : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-gray-800'
+                 }`}
+               >
+                 <Settings size={16} /> 
+                 {showSettings ? 'Hide Scoring' : 'Custom Scoring'}
+               </button>
+            )}
           </div>
         </div>
 
         {/* Custom Scoring Panel */}
-        {showSettings && (
+        {showSettings && !activeLeague && (
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 mb-8 shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
             <h3 className="text-sm font-black text-white uppercase tracking-wider mb-6">
                Adjust League Scoring Format
@@ -271,8 +289,8 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
               <div className="flex flex-col gap-3">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">League Type</span>
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
-                  <button onClick={() => setIsSuperflex(false)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!isSuperflex ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>1QB</button>
-                  <button onClick={() => setIsSuperflex(true)} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${isSuperflex ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>SUPERFLEX</button>
+                  <button onClick={() => setManualIsSuperflex(false)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!manualIsSuperflex ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>1QB</button>
+                  <button onClick={() => setManualIsSuperflex(true)} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${manualIsSuperflex ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}>SUPERFLEX</button>
                 </div>
               </div>
 
@@ -281,8 +299,8 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
                   {[{ label: 'STD', val: 0 }, { label: 'HALF', val: 0.5 }, { label: 'FULL', val: 1 }].map(opt => (
                     <button 
-                      key={opt.label} onClick={() => setPprValue(opt.val)}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${pprValue === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}
+                      key={opt.label} onClick={() => setManualPprValue(opt.val)}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${manualPprValue === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}
                     >
                       {opt.label}
                     </button>
@@ -295,8 +313,8 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
                   {[{ label: '4 PTS', val: 4 }, { label: '6 PTS', val: 6 }].map(opt => (
                     <button 
-                      key={opt.label} onClick={() => setPassTdValue(opt.val)}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${passTdValue === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}
+                      key={opt.label} onClick={() => setManualPassTdValue(opt.val)}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${manualPassTdValue === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}
                     >
                       {opt.label}
                     </button>
@@ -309,8 +327,8 @@ export default function RankingsModelClient({ initialRankings, mode, serverError
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
                   {[{ label: 'NONE', val: 0 }, { label: '+0.5', val: 0.5 }, { label: '+1.0', val: 1 }].map(opt => (
                     <button 
-                      key={opt.label} onClick={() => setTePremium(opt.val)}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${tePremium === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}
+                      key={opt.label} onClick={() => setManualTePremium(opt.val)}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${manualTePremium === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}
                     >
                       {opt.label}
                     </button>
