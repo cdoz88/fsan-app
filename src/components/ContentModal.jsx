@@ -315,7 +315,7 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
            <YouTubePlayer key={selectedItem.youtubeId} videoId={selectedItem.youtubeId} className="absolute inset-0 w-full h-full" />
          ) : (
            <>
-             {selectedItem.imageUrl && <img src={selectedItem.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm" alt="" />}
+             {selectedItem.imageUrl && <img src={selectedItem.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm" alt="" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = e.currentTarget.src.replace('maxresdefault.jpg', 'hqdefault.jpg'); }} />}
              <PlayCircle size={64} className="text-white/80 z-10 hover:scale-110 transition-transform cursor-pointer" />
            </>
          )}
@@ -341,7 +341,7 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
         {videos.filter(v => v.type === 'video' && v.id !== selectedItem.id).slice(0, 10).map(v => (
           <div key={v.id} onClick={() => setSelectedItem(v)} className="w-48 sm:w-64 shrink-0 flex flex-col gap-3 group cursor-pointer">
             <div className="w-full aspect-video bg-[#111] rounded-xl relative flex items-center justify-center overflow-hidden border border-gray-800 group-hover:border-gray-500 transition-colors shadow-lg">
-              {v.imageUrl && <img src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-50 transition-opacity" alt="" />}
+              {v.imageUrl && <img src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-50 transition-opacity" alt="" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = e.currentTarget.src.replace('maxresdefault.jpg', 'hqdefault.jpg'); }} />}
               <PlayCircle size={32} className="text-white/60 z-10 group-hover:text-white group-hover:scale-110 transition-all" />
               <div className="absolute top-2 left-2 flex items-center bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-sm">
                 <span className={`w-1.5 h-1.5 rounded-full ${themes[v.sport]?.bg || 'bg-gray-500'}`}></span>
@@ -362,7 +362,7 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
         {videos.filter(v => v.type === 'video' && v.id !== selectedItem.id).slice(0, 10).map(v => (
           <div key={v.id} onClick={() => setSelectedItem(v)} className="flex gap-3 group cursor-pointer">
             <div className="w-24 h-16 bg-gray-800 rounded shrink-0 relative flex items-center justify-center overflow-hidden">
-              {v.imageUrl && <img src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-40" alt="" />}
+              {v.imageUrl && <img src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-40" alt="" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = e.currentTarget.src.replace('maxresdefault.jpg', 'hqdefault.jpg'); }} />}
               <PlayCircle size={16} className="text-white/50 z-10" />
             </div>
             <div className="flex flex-col justify-center">
@@ -398,7 +398,7 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
                <YouTubePlayer key={selectedItem.youtubeId} videoId={selectedItem.youtubeId} className="absolute inset-0 w-full h-full" />
              ) : (
                <>
-                 {selectedItem.imageUrl && <img src={selectedItem.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm" alt="" />}
+                 {selectedItem.imageUrl && <img src={selectedItem.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm" alt="" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = e.currentTarget.src.replace('maxresdefault.jpg', 'hqdefault.jpg'); }} />}
                  <PlayCircle size={64} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 z-10 hover:scale-110 transition-transform cursor-pointer" />
                </>
              )}
@@ -424,7 +424,7 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
           {shorts.slice(0, 10).map(v => (
             <div key={v.id} onClick={() => setSelectedItem(v)} className="w-20 md:w-24 shrink-0 flex flex-col gap-2 group cursor-pointer">
               <div className="w-full aspect-[9/16] bg-[#111] rounded-xl relative flex items-center justify-center overflow-hidden border border-gray-800 group-hover:border-gray-500 transition-colors shadow-lg">
-                {v.imageUrl && <img src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-50 transition-opacity" alt="" />}
+                {v.imageUrl && <img src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-50 transition-opacity" alt="" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = e.currentTarget.src.replace('maxresdefault.jpg', 'hqdefault.jpg'); }} />}
                 <PlayCircle size={24} className="text-white/60 z-10 group-hover:text-white group-hover:scale-110 transition-all" />
               </div>
               <div>
@@ -512,7 +512,7 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="w-full h-64 md:h-96 bg-gray-800 relative overflow-hidden shrink-0">
-        {selectedItem.imageUrl && <img loading="lazy" src={selectedItem.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-top opacity-60" />}
+        {selectedItem.imageUrl && <img loading="lazy" src={selectedItem.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-top opacity-60" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = e.currentTarget.src.replace('maxresdefault.jpg', 'hqdefault.jpg'); }} />}
         <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent"></div>
       </div>
       <div className="p-6 md:p-10 -mt-24 relative z-10 max-w-4xl mx-auto w-full flex-1 flex flex-col">

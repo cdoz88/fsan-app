@@ -62,22 +62,15 @@ export const formatPost = (post) => {
   let spreakerShowId = post.spreaker_show_id || null;
   let spreakerId = post.spreaker_episode_id || null;
 
-  // ====================================================================
-  // OPTION 2: THE BULLETPROOF SPREAKER FALLBACK LOGIC
-  // ====================================================================
-  
-  // 1. If Acast scraped an old Spreaker GUID, extract the Spreaker ID to use the legacy player
   if (rawAcastId && rawAcastId.includes('spreaker.com')) {
       const parts = rawAcastId.split('/');
       spreakerId = parts[parts.length - 1];
   }
 
-  // 2. If we have a Spreaker ID (natively or extracted), force Spreaker to handle it
   if (spreakerId) {
       rawAcastId = null; 
   }
 
-  // 3. Process native Acast BSON IDs for future episodes (like Operation Domination)
   let finalAcastId = null;
   if (rawAcastId) {
       let cleanId = rawAcastId.replace('acast:', '').replace(/^https?:\/\//, '').trim();
@@ -88,8 +81,6 @@ export const formatPost = (post) => {
           episodePart = parts[parts.length - 1]; 
       }
       
-      // Safety Check: Acast's iframe STRICTLY requires a 24-character BSON ID. 
-      // Text slugs will cause the player to spin endlessly. This protects the player.
       const isBson = /^[a-f0-9]{24}$/i.test(episodePart);
       
       if (isBson) {
@@ -115,11 +106,6 @@ export const formatPost = (post) => {
   excerpt = stripTags(excerpt);
 
   let imageUrl = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || null;
-  
-  // 🚀 FIXED: Intercept YouTube thumbnails coming from WP and force them to High Quality to prevent 404s
-  if (imageUrl && imageUrl.includes('maxresdefault.jpg')) {
-      imageUrl = imageUrl.replace('maxresdefault.jpg', 'hqdefault.jpg');
-  }
 
   const date = new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
   const rawTimestamp = new Date(post.date).getTime();
