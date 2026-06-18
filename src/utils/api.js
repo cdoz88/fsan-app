@@ -114,7 +114,13 @@ export const formatPost = (post) => {
   cleanContent = stripTags(cleanContent);
   excerpt = stripTags(excerpt);
 
-  const imageUrl = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || null;
+  let imageUrl = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || null;
+  
+  // 🚀 FIXED: Intercept YouTube thumbnails coming from WP and force them to High Quality to prevent 404s
+  if (imageUrl && imageUrl.includes('maxresdefault.jpg')) {
+      imageUrl = imageUrl.replace('maxresdefault.jpg', 'hqdefault.jpg');
+  }
+
   const date = new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
   const rawTimestamp = new Date(post.date).getTime();
   
