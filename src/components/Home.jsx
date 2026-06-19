@@ -21,21 +21,25 @@ const getItemUrl = (item) => {
   return `${sportPrefix}/${itemView}/${item.slug}`;
 };
 
-// 🚀 NEW: React-safe fallback component
+// 🚀 BULLETPROOF FALLBACK: Direct DOM Mutation Quality Ladder
 const SafeImage = ({ src, className, alt = "", loading }) => {
-  const [imgSrc, setImgSrc] = useState(src);
-  
-  useEffect(() => { setImgSrc(src); }, [src]);
-  
   return (
     <img 
-      src={imgSrc} 
+      src={src} 
       className={className} 
       alt={alt} 
       loading={loading}
-      onError={() => {
-        if (imgSrc && imgSrc.includes('maxresdefault')) {
-          setImgSrc(imgSrc.replace('maxresdefault', 'hqdefault'));
+      onError={(e) => {
+        const target = e.currentTarget;
+        if (target.src.includes('maxresdefault')) {
+          target.src = target.src.replace('maxresdefault', 'hqdefault');
+        } else if (target.src.includes('hqdefault')) {
+          target.src = target.src.replace('hqdefault', 'mqdefault');
+        } else if (target.src.includes('mqdefault')) {
+          target.src = target.src.replace('mqdefault', 'default');
+        } else {
+          target.onerror = null;
+          target.style.display = 'none';
         }
       }}
     />
@@ -253,7 +257,7 @@ const BoothCard = ({ item, setSelectedItem, activeSport, masterPodcasts }) => {
 };
 
 const LineupCard = ({ item, setSelectedItem, activeSport }) => (
-  <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group h-full w-full min-w-[160px] md:min-w-[200px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative aspect-square no-underline block`}>
+  <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group h-full w-full min-h-[160px] md:min-h-[200px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative aspect-square no-underline block`}>
     {item.imageUrl ? <SafeImage loading="lazy" src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
@@ -308,7 +312,6 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
   const basePath = activeSport === 'All' || !activeSport ? '' : `/${activeSport.toLowerCase()}`;
 
   // --- AD FETCHING ---
-  // FIX: Switched from POST to GET to avoid WAF 403 Forbidden errors!
   useEffect(() => {
     const fetchAds = async () => {
       const query = `

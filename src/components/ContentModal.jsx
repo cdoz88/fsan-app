@@ -7,21 +7,25 @@ import { useSession } from 'next-auth/react';
 import AuthModal from './AuthModal';
 import MeteredArticle from './MeteredArticle';
 
-// 🚀 NEW: React-safe fallback component
+// 🚀 BULLETPROOF FALLBACK: Direct DOM Mutation Quality Ladder
 const SafeImage = ({ src, className, alt = "", loading }) => {
-  const [imgSrc, setImgSrc] = useState(src);
-  
-  useEffect(() => { setImgSrc(src); }, [src]);
-  
   return (
     <img 
-      src={imgSrc} 
+      src={src} 
       className={className} 
       alt={alt} 
       loading={loading}
-      onError={() => {
-        if (imgSrc && imgSrc.includes('maxresdefault')) {
-          setImgSrc(imgSrc.replace('maxresdefault', 'hqdefault'));
+      onError={(e) => {
+        const target = e.currentTarget;
+        if (target.src.includes('maxresdefault')) {
+          target.src = target.src.replace('maxresdefault', 'hqdefault');
+        } else if (target.src.includes('hqdefault')) {
+          target.src = target.src.replace('hqdefault', 'mqdefault');
+        } else if (target.src.includes('mqdefault')) {
+          target.src = target.src.replace('mqdefault', 'default');
+        } else {
+          target.onerror = null;
+          target.style.display = 'none';
         }
       }}
     />
