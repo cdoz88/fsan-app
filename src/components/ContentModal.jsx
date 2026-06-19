@@ -7,6 +7,27 @@ import { useSession } from 'next-auth/react';
 import AuthModal from './AuthModal';
 import MeteredArticle from './MeteredArticle';
 
+// 🚀 NEW: React-safe fallback component
+const SafeImage = ({ src, className, alt = "", loading }) => {
+  const [imgSrc, setImgSrc] = useState(src);
+  
+  useEffect(() => { setImgSrc(src); }, [src]);
+  
+  return (
+    <img 
+      src={imgSrc} 
+      className={className} 
+      alt={alt} 
+      loading={loading}
+      onError={() => {
+        if (imgSrc && imgSrc.includes('maxresdefault')) {
+          setImgSrc(imgSrc.replace('maxresdefault', 'hqdefault'));
+        }
+      }}
+    />
+  );
+};
+
 const ShareButtons = ({ handleShare, handleCopy, copied, btnSize = "w-8 h-8", iconSize = 14 }) => (
   <div className="flex gap-2">
     <button onClick={() => handleShare('facebook')} className={`${btnSize} rounded-full bg-[#4267B2]/10 text-[#4267B2] flex items-center justify-center hover:bg-[#4267B2] hover:text-white transition-colors`} title="Share on Facebook"><Facebook size={iconSize} /></button>
@@ -315,7 +336,7 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
            <YouTubePlayer key={selectedItem.youtubeId} videoId={selectedItem.youtubeId} className="absolute inset-0 w-full h-full" />
          ) : (
            <>
-             {selectedItem.imageUrl && <img src={selectedItem.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm" alt="" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = e.currentTarget.src.replace('maxresdefault.jpg', 'hqdefault.jpg'); }} />}
+             {selectedItem.imageUrl && <SafeImage src={selectedItem.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm" alt="" />}
              <PlayCircle size={64} className="text-white/80 z-10 hover:scale-110 transition-transform cursor-pointer" />
            </>
          )}
@@ -341,7 +362,7 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
         {videos.filter(v => v.type === 'video' && v.id !== selectedItem.id).slice(0, 10).map(v => (
           <div key={v.id} onClick={() => setSelectedItem(v)} className="w-48 sm:w-64 shrink-0 flex flex-col gap-3 group cursor-pointer">
             <div className="w-full aspect-video bg-[#111] rounded-xl relative flex items-center justify-center overflow-hidden border border-gray-800 group-hover:border-gray-500 transition-colors shadow-lg">
-              {v.imageUrl && <img src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-50 transition-opacity" alt="" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = e.currentTarget.src.replace('maxresdefault.jpg', 'hqdefault.jpg'); }} />}
+              {v.imageUrl && <SafeImage src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-50 transition-opacity" alt="" />}
               <PlayCircle size={32} className="text-white/60 z-10 group-hover:text-white group-hover:scale-110 transition-all" />
               <div className="absolute top-2 left-2 flex items-center bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-sm">
                 <span className={`w-1.5 h-1.5 rounded-full ${themes[v.sport]?.bg || 'bg-gray-500'}`}></span>
@@ -362,7 +383,7 @@ const VideoModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
         {videos.filter(v => v.type === 'video' && v.id !== selectedItem.id).slice(0, 10).map(v => (
           <div key={v.id} onClick={() => setSelectedItem(v)} className="flex gap-3 group cursor-pointer">
             <div className="w-24 h-16 bg-gray-800 rounded shrink-0 relative flex items-center justify-center overflow-hidden">
-              {v.imageUrl && <img src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-40" alt="" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = e.currentTarget.src.replace('maxresdefault.jpg', 'hqdefault.jpg'); }} />}
+              {v.imageUrl && <SafeImage src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-40" alt="" />}
               <PlayCircle size={16} className="text-white/50 z-10" />
             </div>
             <div className="flex flex-col justify-center">
@@ -398,7 +419,7 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
                <YouTubePlayer key={selectedItem.youtubeId} videoId={selectedItem.youtubeId} className="absolute inset-0 w-full h-full" />
              ) : (
                <>
-                 {selectedItem.imageUrl && <img src={selectedItem.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm" alt="" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = e.currentTarget.src.replace('maxresdefault.jpg', 'hqdefault.jpg'); }} />}
+                 {selectedItem.imageUrl && <SafeImage src={selectedItem.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm" alt="" />}
                  <PlayCircle size={64} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/80 z-10 hover:scale-110 transition-transform cursor-pointer" />
                </>
              )}
@@ -424,7 +445,7 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
           {shorts.slice(0, 10).map(v => (
             <div key={v.id} onClick={() => setSelectedItem(v)} className="w-20 md:w-24 shrink-0 flex flex-col gap-2 group cursor-pointer">
               <div className="w-full aspect-[9/16] bg-[#111] rounded-xl relative flex items-center justify-center overflow-hidden border border-gray-800 group-hover:border-gray-500 transition-colors shadow-lg">
-                {v.imageUrl && <img src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-50 transition-opacity" alt="" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = e.currentTarget.src.replace('maxresdefault.jpg', 'hqdefault.jpg'); }} />}
+                {v.imageUrl && <SafeImage src={v.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-50 transition-opacity" alt="" />}
                 <PlayCircle size={24} className="text-white/60 z-10 group-hover:text-white group-hover:scale-110 transition-all" />
               </div>
               <div>
@@ -437,67 +458,6 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
     </div>
   );
 };
-
-const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) => (
-  <div className="flex flex-col lg:flex-row h-full min-h-0 overflow-y-auto lg:overflow-hidden">
-    <div className="flex-none lg:flex-1 bg-[#0a0a0a] flex flex-col items-center justify-center lg:border-r border-gray-800 p-4 sm:p-6 relative min-h-0">
-      <div className="w-full h-[380px] sm:h-[400px] lg:h-full lg:min-h-[400px] bg-[#111] rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800 shrink-0">
-        
-        {selectedItem.acastId ? (
-          <iframe 
-            src={`https://embed.acast.com/${selectedItem.acastId}?theme=podcast&hidePrivacy=true`} 
-            width="100%" 
-            height="100%" 
-            frameBorder="0" 
-            allow="autoplay; picture-in-picture" 
-            style={{ display: 'block', width: '100%', height: '100%' }}
-          ></iframe>
-        ) : selectedItem.isMasterShow && selectedItem.acastShowId ? (
-          <iframe 
-            src={`https://embed.acast.com/${selectedItem.acastShowId}?feed=true&theme=podcast&playlistType=full&hidePrivacy=true`} 
-            width="100%" 
-            height="100%" 
-            frameBorder="0" 
-            allow="autoplay; picture-in-picture" 
-            style={{ display: 'block', width: '100%', height: '100%' }}
-          ></iframe>
-        ) : selectedItem.spreakerId ? (
-          <iframe 
-            src={`https://widget.spreaker.com/player?episode_id=${selectedItem.spreakerId}&theme=dark&playlist=false&playlist-continuous=false&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-download=true`} 
-            width="100%" 
-            height="100%" 
-            frameBorder="0" 
-            allow="autoplay; picture-in-picture" 
-            style={{ display: 'block', width: '100%', height: '100%' }}
-          ></iframe>
-        ) : selectedItem.isMasterShow && selectedItem.spreakerShowId ? (
-          <iframe 
-            src={`https://widget.spreaker.com/player?show_id=${selectedItem.spreakerShowId}&theme=dark&playlist=show&playlist-continuous=true&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-download=true`} 
-            width="100%" 
-            height="100%" 
-            frameBorder="0" 
-            allow="autoplay; picture-in-picture" 
-            style={{ display: 'block', width: '100%', height: '100%' }}
-          ></iframe>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-500 font-bold uppercase tracking-widest text-xs">Audio Unavailable</div>
-        )}
-
-      </div>
-    </div>
-    <div className="flex-none lg:w-[400px] xl:w-[450px] shrink-0 p-6 sm:p-10 bg-[#121212] flex flex-col lg:overflow-y-auto border-t lg:border-t-0 border-gray-800">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex gap-2 items-center">
-          <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport]?.bg || 'bg-gray-500'}`}></span>
-          <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">{selectedItem.date}</span>
-        </div>
-        <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} btnSize="w-8 h-8" iconSize={14} />
-      </div>
-      <h1 className="text-2xl sm:text-3xl font-black text-white mb-6 leading-tight drop-shadow-lg" dangerouslySetInnerHTML={{ __html: selectedItem.title }} />
-      <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-1 pb-4" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
-    </div>
-  </div>
-);
 
 const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isAuthed, authStatus, openAuth, session }) => {
 
@@ -512,7 +472,7 @@ const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isA
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="w-full h-64 md:h-96 bg-gray-800 relative overflow-hidden shrink-0">
-        {selectedItem.imageUrl && <img loading="lazy" src={selectedItem.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-top opacity-60" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = e.currentTarget.src.replace('maxresdefault.jpg', 'hqdefault.jpg'); }} />}
+        {selectedItem.imageUrl && <SafeImage loading="lazy" src={selectedItem.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-top opacity-60" />}
         <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent"></div>
       </div>
       <div className="p-6 md:p-10 -mt-24 relative z-10 max-w-4xl mx-auto w-full flex-1 flex flex-col">

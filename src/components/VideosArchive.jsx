@@ -13,6 +13,27 @@ const getItemUrl = (item) => {
   return `${sportPrefix}/${itemView}/${item.slug}`;
 };
 
+// 🚀 NEW: React-safe fallback component
+const SafeImage = ({ src, className, alt = "", loading }) => {
+  const [imgSrc, setImgSrc] = useState(src);
+  
+  useEffect(() => { setImgSrc(src); }, [src]);
+  
+  return (
+    <img 
+      src={imgSrc} 
+      className={className} 
+      alt={alt} 
+      loading={loading}
+      onError={() => {
+        if (imgSrc && imgSrc.includes('maxresdefault')) {
+          setImgSrc(imgSrc.replace('maxresdefault', 'hqdefault'));
+        }
+      }}
+    />
+  );
+};
+
 // --- GLOBAL SUB-COMPONENTS ---
 
 const PostMeta = ({ item, activeSport }) => {
@@ -122,7 +143,7 @@ const WideVideoCard = ({ item, setSelectedItem, activeSport }) => {
   const cardTheme = themes[item.sport] || themes.All;
   return (
     <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group relative w-full aspect-video cursor-pointer bg-[#111] border ${cardTheme.border} rounded-2xl overflow-hidden shadow-2xl ${cardTheme.hoverBorder} transition-all no-underline block`}>
-      {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = e.currentTarget.src.replace('maxresdefault.jpg', 'hqdefault.jpg'); }} /> : <div className="absolute inset-0 bg-gray-900" />}
+      {item.imageUrl ? <SafeImage src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" /> : <div className="absolute inset-0 bg-gray-900" />}
       <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
       <PlayCircle size={64} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-20 drop-shadow-lg" />
       <div className="absolute bottom-0 left-0 right-0 p-6 z-20 flex flex-col justify-end opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
@@ -138,7 +159,7 @@ const VideoListCard = ({ item, setSelectedItem, activeSport }) => {
   return (
     <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group relative w-full flex flex-row cursor-pointer bg-[#1e1e1e] border ${cardTheme.border} border-opacity-40 rounded-2xl overflow-hidden shadow-lg ${cardTheme.hoverBorder} transition-all items-stretch h-full no-underline block`}>
       <div className="w-2/5 shrink-0 relative bg-gray-900 overflow-hidden aspect-video">
-         {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = e.currentTarget.src.replace('maxresdefault.jpg', 'hqdefault.jpg'); }} />}
+         {item.imageUrl && <SafeImage src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80" />}
          <PlayCircle size={24} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/70 group-hover:text-white group-hover:scale-110 transition-all z-20 drop-shadow-lg" />
       </div>
       <div className="flex-1 p-3 lg:p-4 relative z-20 flex flex-col justify-center">
@@ -153,7 +174,7 @@ const GridVideoCard = ({ item, setSelectedItem, activeSport }) => {
   const cardTheme = themes[item.sport] || themes.All;
   return (
     <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group relative w-full aspect-video cursor-pointer bg-[#111] border ${cardTheme.border} border-opacity-40 rounded-2xl overflow-hidden shadow-xl ${cardTheme.hoverBorder} transition-all no-underline block`}>
-      {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = e.currentTarget.src.replace('maxresdefault.jpg', 'hqdefault.jpg'); }} /> : <div className="absolute inset-0 bg-gray-900" />}
+      {item.imageUrl ? <SafeImage src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
       <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
       <PlayCircle size={40} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-20 drop-shadow-lg" />
       <div className="absolute bottom-0 left-0 right-0 p-4 z-20 flex flex-col justify-end opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
@@ -166,7 +187,7 @@ const GridVideoCard = ({ item, setSelectedItem, activeSport }) => {
 
 const ShortCard = ({ item, setSelectedItem, activeSport }) => (
   <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group h-full w-full min-h-[300px] md:min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative no-underline block`}>
-    {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = e.currentTarget.src.replace('maxresdefault.jpg', 'hqdefault.jpg'); }} /> : <div className="absolute inset-0 bg-gray-900" />}
+    {item.imageUrl ? <SafeImage src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
       <div className="bg-black/50 backdrop-blur-sm rounded-full p-3 md:p-4 border border-white/10"><Play size={24} className="text-white ml-1" fill="currentColor"/></div>
