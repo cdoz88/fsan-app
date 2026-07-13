@@ -463,6 +463,68 @@ const ShortModalLayout = ({ selectedItem, videos, setSelectedItem, handleShare, 
   );
 };
 
+// 🚀 RESTORED: Podcast Modal Layout logic exactly as it was!
+const PodcastModalLayout = ({ selectedItem, handleShare, handleCopy, copied }) => (
+  <div className="flex flex-col lg:flex-row h-full min-h-0 overflow-y-auto lg:overflow-hidden">
+    <div className="flex-none lg:flex-1 bg-[#0a0a0a] flex flex-col items-center justify-center lg:border-r border-gray-800 p-4 sm:p-6 relative min-h-0">
+      <div className="w-full h-[380px] sm:h-[400px] lg:h-full lg:min-h-[400px] bg-[#111] rounded-2xl overflow-hidden shadow-2xl relative border border-gray-800 shrink-0">
+        
+        {selectedItem.acastId ? (
+          <iframe 
+            src={`https://embed.acast.com/${selectedItem.acastId}?theme=podcast&hidePrivacy=true`} 
+            width="100%" 
+            height="100%" 
+            frameBorder="0" 
+            allow="autoplay; picture-in-picture" 
+            style={{ display: 'block', width: '100%', height: '100%' }}
+          ></iframe>
+        ) : selectedItem.isMasterShow && selectedItem.acastShowId ? (
+          <iframe 
+            src={`https://embed.acast.com/${selectedItem.acastShowId}?feed=true&theme=podcast&playlistType=full&hidePrivacy=true`} 
+            width="100%" 
+            height="100%" 
+            frameBorder="0" 
+            allow="autoplay; picture-in-picture" 
+            style={{ display: 'block', width: '100%', height: '100%' }}
+          ></iframe>
+        ) : selectedItem.spreakerId ? (
+          <iframe 
+            src={`https://widget.spreaker.com/player?episode_id=${selectedItem.spreakerId}&theme=dark&playlist=false&playlist-continuous=false&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-download=true`} 
+            width="100%" 
+            height="100%" 
+            frameBorder="0" 
+            allow="autoplay; picture-in-picture" 
+            style={{ display: 'block', width: '100%', height: '100%' }}
+          ></iframe>
+        ) : selectedItem.isMasterShow && selectedItem.spreakerShowId ? (
+          <iframe 
+            src={`https://widget.spreaker.com/player?show_id=${selectedItem.spreakerShowId}&theme=dark&playlist=show&playlist-continuous=true&chapters-image=true&episode_image_position=right&hide-logo=true&hide-likes=true&hide-comments=true&hide-sharing=false&hide-download=true`} 
+            width="100%" 
+            height="100%" 
+            frameBorder="0" 
+            allow="autoplay; picture-in-picture" 
+            style={{ display: 'block', width: '100%', height: '100%' }}
+          ></iframe>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-500 font-bold uppercase tracking-widest text-xs">Audio Unavailable</div>
+        )}
+
+      </div>
+    </div>
+    <div className="flex-none lg:w-[400px] xl:w-[450px] shrink-0 p-6 sm:p-10 bg-[#121212] flex flex-col lg:overflow-y-auto border-t lg:border-t-0 border-gray-800">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex gap-2 items-center">
+          <span className={`w-2 h-2 rounded-full ${themes[selectedItem.sport]?.bg || 'bg-gray-500'}`}></span>
+          <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">{selectedItem.date}</span>
+        </div>
+        <ShareButtons handleShare={handleShare} handleCopy={handleCopy} copied={copied} btnSize="w-8 h-8" iconSize={14} />
+      </div>
+      <h1 className="text-2xl sm:text-3xl font-black text-white mb-6 leading-tight drop-shadow-lg" dangerouslySetInnerHTML={{ __html: selectedItem.title }} />
+      <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed flex-1 pb-4" dangerouslySetInnerHTML={{ __html: selectedItem.content }} />
+    </div>
+  </div>
+);
+
 const ArticleModalLayout = ({ selectedItem, handleShare, handleCopy, copied, isAuthed, authStatus, openAuth, session }) => {
 
   if (authStatus === 'loading') {
@@ -665,7 +727,15 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
               />
             )}
             
-            {selectedItem.type === 'podcast' && <PodcastModalLayout selectedItem={selectedItem} handleShare={handleShare} handleCopy={handleCopy} copied={copied} />}
+            {/* 🚀 RESTORED: Podcast Layout Call */}
+            {selectedItem.type === 'podcast' && (
+              <PodcastModalLayout 
+                selectedItem={selectedItem} 
+                handleShare={handleShare} 
+                handleCopy={handleCopy} 
+                copied={copied} 
+              />
+            )}
             
             {selectedItem.type === 'article' && (
               <ArticleModalLayout 
