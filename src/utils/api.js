@@ -92,7 +92,6 @@ export const formatPost = (post) => {
       }
   }
 
-  // 🚀 FIXED: Added Racing and Golf to the category dictionaries!
   const isMasterCategory = slugs.some(s => [
       'football-podcast', 'podcast-football', 
       'basketball-podcast', 'podcast-basketball', 
@@ -107,8 +106,9 @@ export const formatPost = (post) => {
       'golf-pod-episode', 'pod-episode'
   ].includes(s));
   
-  // 🚀 FIXED: Checked !rawAcastId instead of !finalAcastId so non-BSON episodes aren't flagged as Master Shows!
-  const isMasterShow = (!rawAcastId && !spreakerId && (!!acastShowId || !!spreakerShowId)) || isMasterCategory;
+  // 🚀 FIXED: Absolute foolproof Master Show check!
+  // If it has an episode ID (rawAcastId or spreakerId), it CANNOT be a master show, overriding any category quirks!
+  const isMasterShow = !rawAcastId && !spreakerId && ((!!acastShowId || !!spreakerShowId) || isMasterCategory);
 
   if (finalAcastId || acastShowId || spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('acast')) {
      type = 'podcast';
@@ -174,16 +174,18 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
     let rawPosts = [];
     let totalPages = 1;
     const fetchOptions = { next: { revalidate: 60 } }; 
-
     const timeBuster = Math.floor(Date.now() / (1000 * 60 * 5));
+
+    // 🚀 FIXED: Bypass the WP backend filters for Racing/Golf since the REST API doesn't fully support them.
+    const apiSport = ['Racing', 'Golf'].includes(activeSport) ? 'All' : activeSport;
 
     if (targetType === 'all') {
       const endpoints = [
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=${currentPage}&sport=${activeSport}&type=articles&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=40&page=${currentPage}&sport=${activeSport}&type=videos&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=${currentPage}&sport=${activeSport}&type=podcasts&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=${currentPage}&sport=${activeSport}&type=shorts&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=${currentPage}&sport=${activeSport}&type=shows&t=${timeBuster}`
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=${currentPage}&sport=${apiSport}&type=articles&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=40&page=${currentPage}&sport=${apiSport}&type=videos&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=${currentPage}&sport=${apiSport}&type=podcasts&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=${currentPage}&sport=${apiSport}&type=shorts&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=${currentPage}&sport=${apiSport}&type=shows&t=${timeBuster}`
       ];
       
       const responses = await Promise.all(endpoints.map(url => fetch(url, fetchOptions)));
@@ -194,6 +196,7 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
       
       const dataArrays = await Promise.all(responses.map(res => res.json()));
       let combinedRaw = dataArrays.flat().filter(post => post && post.id);
+      
       const uniqueRawMap = new Map();
       combinedRaw.forEach(post => {
         if (!uniqueRawMap.has(post.id)) uniqueRawMap.set(post.id, post);
@@ -201,16 +204,43 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
       rawPosts = Array.from(uniqueRawMap.values());
       rawPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
+    } else if (targetType === 'podcasts') {
+      // 🚀 FIXED: Fetch both episodes AND all master shows to prevent older shows from falling off page 1
+      const endpoints = [
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=100&page=${currentPage}&sport=${apiSport}&type=podcasts&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=50&page=1&sport=All&type=shows&t=${timeBuster}` // Always fetch all network shows globally
+      ];
+
+      const responses = await Promise.all(endpoints.map(url => fetch(url, fetchOptions)));
+      totalPages = parseInt(responses[0].headers.get('X-WP-TotalPages') || '1', 10);
+
+      const dataArrays = await Promise.all(responses.map(res => res.json()));
+      let combinedRaw = dataArrays.flat().filter(post => post && post.id);
+
+      const uniqueRawMap = new Map();
+      combinedRaw.forEach(post => {
+        if (!uniqueRawMap.has(post.id)) uniqueRawMap.set(post.id, post);
+      });
+      rawPosts = Array.from(uniqueRawMap.values());
+      rawPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
     } else {
-      const fetchLimit = targetType === 'videos' ? 60 : 36;
-      
-      const res = await fetch(`https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=${fetchLimit}&page=${currentPage}&sport=${activeSport}&type=${targetType}&t=${timeBuster}`, fetchOptions);
+      const fetchLimit = targetType === 'videos' ? 60 : (apiSport === 'All' ? 100 : 36);
+      const res = await fetch(`https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=${fetchLimit}&page=${currentPage}&sport=${apiSport}&type=${targetType}&t=${timeBuster}`, fetchOptions);
       if (!res.ok) throw new Error("API failed");
       totalPages = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);
       rawPosts = await res.json();
     }
 
-    return { posts: rawPosts.map(formatPost), totalPages };
+    let formattedPosts = rawPosts.map(formatPost);
+
+    // 🚀 FIXED: Local Sport Filter (Bulletproof Catch-All)
+    // Ensures that even if the WP backend fails to filter Racing/Golf perfectly, the frontend handles it flawlessly.
+    if (activeSport && activeSport !== 'All') {
+        formattedPosts = formattedPosts.filter(p => p.sport.toLowerCase() === activeSport.toLowerCase());
+    }
+
+    return { posts: formattedPosts, totalPages };
   } catch (error) {
     console.warn("API fetch failed: ", error);
     return { posts: [], totalPages: 1 };
