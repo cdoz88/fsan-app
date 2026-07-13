@@ -92,10 +92,23 @@ export const formatPost = (post) => {
       }
   }
 
-  const isMasterCategory = slugs.some(s => ['football-podcast', 'podcast-football', 'basketball-podcast', 'podcast-basketball', 'baseball-podcast', 'podcast-baseball'].includes(s));
-  const isEpisodeCategory = slugs.some(s => ['football-pod-episode', 'basketball-pod-episode', 'baseball-pod-episode', 'pod-episode'].includes(s));
+  // 🚀 FIXED: Added Racing and Golf to the category dictionaries!
+  const isMasterCategory = slugs.some(s => [
+      'football-podcast', 'podcast-football', 
+      'basketball-podcast', 'podcast-basketball', 
+      'baseball-podcast', 'podcast-baseball', 
+      'racing-podcast', 'podcast-racing',
+      'golf-podcast', 'podcast-golf'
+  ].includes(s));
   
-  const isMasterShow = (!finalAcastId && !spreakerId && (!!acastShowId || !!spreakerShowId)) || isMasterCategory;
+  const isEpisodeCategory = slugs.some(s => [
+      'football-pod-episode', 'basketball-pod-episode', 
+      'baseball-pod-episode', 'racing-pod-episode', 
+      'golf-pod-episode', 'pod-episode'
+  ].includes(s));
+  
+  // 🚀 FIXED: Checked !rawAcastId instead of !finalAcastId so non-BSON episodes aren't flagged as Master Shows!
+  const isMasterShow = (!rawAcastId && !spreakerId && (!!acastShowId || !!spreakerShowId)) || isMasterCategory;
 
   if (finalAcastId || acastShowId || spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('acast')) {
      type = 'podcast';
