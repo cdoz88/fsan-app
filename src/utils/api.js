@@ -106,7 +106,6 @@ export const formatPost = (post) => {
       'golf-pod-episode', 'pod-episode'
   ].includes(s));
   
-  // Strict Master Show Check: If it has an episode ID attached, it CANNOT be a master show.
   const isMasterShow = !rawAcastId && !spreakerId && ((!!acastShowId || !!spreakerShowId) || isMasterCategory);
 
   if (finalAcastId || acastShowId || spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('acast')) {
@@ -175,89 +174,68 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
     const fetchOptions = { next: { revalidate: 60 } }; 
     const timeBuster = Math.floor(Date.now() / (1000 * 60 * 5));
 
-    // 🚀 FIXED: We dynamically pass the activeSport to WP so episodes don't get buried!
-    const apiSport = activeSport || 'All';
-    const isPodcasts = targetType.includes('podcast');
+    const apiSport = activeSport;
+    let endpoints = [];
 
     if (targetType === 'all') {
-      const endpoints = [
+      endpoints = [
         `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=${currentPage}&sport=${apiSport}&type=articles&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=${currentPage}&sport=${apiSport}&type=videos&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=40&page=${currentPage}&sport=${apiSport}&type=videos&t=${timeBuster}`,
         `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=${currentPage}&sport=${apiSport}&type=podcasts&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=${currentPage}&sport=${apiSport}&type=shorts&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=100&page=1&sport=All&type=shows&t=${timeBuster}` // 🚀 ALWAYS get all Master Shows globally
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=1&sport=All&type=shows&t=${timeBuster}`
       ];
-      
-      const responses = await Promise.all(endpoints.map(url => fetch(url, fetchOptions).catch(() => null)));
-      responses.forEach((res, idx) => {
-        // Use the first endpoint to calculate total pagination
-        if (res && res.ok && idx === 0) { 
-          const tp = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);
-          if (tp > totalPages) totalPages = tp;
-        }
-      });
-      
-      const dataArrays = await Promise.all(responses.map(async (res) => (res && res.ok) ? await res.json() : []));
-      let combinedRaw = dataArrays.flat().filter(post => post && post.id);
-      
-      const uniqueRawMap = new Map();
-      combinedRaw.forEach(post => {
-        if (!uniqueRawMap.has(post.id)) uniqueRawMap.set(post.id, post);
-      });
-      rawPosts = Array.from(uniqueRawMap.values());
-      
-    } else if (isPodcasts) {
-      
-      // 🚀 FIXED: Fetch the exact sport's episodes + ALL global master shows
-      const endpoints = [
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=${currentPage}&sport=${apiSport}&type=${targetType}&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=${currentPage + 1}&sport=${apiSport}&type=${targetType}&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=100&page=1&sport=All&type=shows&t=${timeBuster}` 
+    } else if (targetType === 'podcasts') {
+      // 🚀 THE CATCH-ALL FIX
+      // Because the WP backend drops Racing/Golf when 'type=podcasts' is explicitly requested,
+      // we cast a massive net by also fetching 'type=articles'. This bypasses the API block,
+      // allowing our formatPost function to dynamically identify and upgrade them into podcasts!
+      endpoints = [
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=40&page=${currentPage}&sport=${apiSport}&type=podcasts&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=40&page=${currentPage}&sport=${apiSport}&type=articles&t=${timeBuster}`, 
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=40&page=1&sport=All&type=shows&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=40&page=2&sport=All&type=shows&t=${timeBuster}`
       ];
-
-      const responses = await Promise.all(endpoints.map(url => fetch(url, fetchOptions).catch(() => null)));
-      
-      if (responses[0] && responses[0].ok) {
-          totalPages = parseInt(responses[0].headers.get('X-WP-TotalPages') || '1', 10);
-      }
-
-      const dataArrays = await Promise.all(responses.map(async (res) => (res && res.ok) ? await res.json() : []));
-      let combinedRaw = dataArrays.flat().filter(post => post && post.id);
-
-      const uniqueRawMap = new Map();
-      combinedRaw.forEach(post => {
-        if (!uniqueRawMap.has(post.id)) uniqueRawMap.set(post.id, post);
-      });
-      rawPosts = Array.from(uniqueRawMap.values());
-
     } else {
-      const fetchLimit = targetType === 'videos' ? 50 : 36;
-      const endpoints = [
+      const fetchLimit = targetType === 'videos' ? 60 : 40;
+      endpoints = [
         `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=${fetchLimit}&page=${currentPage}&sport=${apiSport}&type=${targetType}&t=${timeBuster}`,
         `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=${fetchLimit}&page=${currentPage + 1}&sport=${apiSport}&type=${targetType}&t=${timeBuster}`
       ];
-      
-      const responses = await Promise.all(endpoints.map(url => fetch(url, fetchOptions).catch(() => null)));
-      if (responses[0] && responses[0].ok) {
-          totalPages = parseInt(responses[0].headers.get('X-WP-TotalPages') || '1', 10);
-      }
-
-      const dataArrays = await Promise.all(responses.map(async (res) => (res && res.ok) ? await res.json() : []));
-      let combinedRaw = dataArrays.flat().filter(post => post && post.id);
-
-      const uniqueRawMap = new Map();
-      combinedRaw.forEach(post => {
-        if (!uniqueRawMap.has(post.id)) uniqueRawMap.set(post.id, post);
-      });
-      rawPosts = Array.from(uniqueRawMap.values());
     }
 
+    const responses = await Promise.all(endpoints.map(url => fetch(url, fetchOptions).catch(() => null)));
+    
+    responses.forEach(res => {
+      if (res && res.ok) {
+        const tp = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);
+        if (tp > totalPages) totalPages = tp;
+      }
+    });
+
+    const dataArrays = await Promise.all(responses.map(async (res) => (res && res.ok) ? await res.json() : []));
+    let combinedRaw = dataArrays.flat().filter(post => post && post.id);
+
+    const uniqueRawMap = new Map();
+    combinedRaw.forEach(post => {
+      if (!uniqueRawMap.has(post.id)) uniqueRawMap.set(post.id, post);
+    });
+    rawPosts = Array.from(uniqueRawMap.values());
     rawPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
     let formattedPosts = rawPosts.map(formatPost);
 
-    // 🚀 FIXED: Flawless strict filtering to ensure Master Shows align with the selected page
-    if (apiSport && apiSport !== 'All') {
-        formattedPosts = formattedPosts.filter(p => p.sport.toLowerCase() === apiSport.toLowerCase());
+    // 🚀 STRICT FRONTEND FILTERING
+    // Ensures components ONLY receive exactly what they requested, regardless of WP anomalies.
+    if (activeSport && activeSport !== 'All') {
+        formattedPosts = formattedPosts.filter(p => p.sport.toLowerCase() === activeSport.toLowerCase());
+    }
+
+    if (targetType === 'podcasts') {
+        formattedPosts = formattedPosts.filter(p => p.type === 'podcast');
+    } else if (targetType === 'videos') {
+        formattedPosts = formattedPosts.filter(p => p.type === 'video' || p.type === 'short');
+    } else if (targetType === 'articles') {
+        formattedPosts = formattedPosts.filter(p => p.type === 'article');
     }
 
     return { posts: formattedPosts, totalPages };
