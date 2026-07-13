@@ -106,8 +106,7 @@ export const formatPost = (post) => {
       'golf-pod-episode', 'pod-episode'
   ].includes(s));
   
-  // 🚀 FIXED: Absolute foolproof Master Show check!
-  // If it has an episode ID (rawAcastId or spreakerId), it CANNOT be a master show, overriding any category quirks!
+  // Strict Master Show Check: If it has an episode ID attached, it CANNOT be a master show.
   const isMasterShow = !rawAcastId && !spreakerId && ((!!acastShowId || !!spreakerShowId) || isMasterCategory);
 
   if (finalAcastId || acastShowId || spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('acast')) {
@@ -176,8 +175,8 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
     const fetchOptions = { next: { revalidate: 60 } }; 
     const timeBuster = Math.floor(Date.now() / (1000 * 60 * 5));
 
-    // 🚀 FIXED: Bypass the WP backend filters for Racing/Golf since the REST API doesn't fully support them.
-    const apiSport = ['Racing', 'Golf'].includes(activeSport) ? 'All' : activeSport;
+    // 🚀 FIXED: Pass the sport dynamically so WP queries the actual category (e.g. sport=Racing targets "racing" slug)
+    const apiSport = activeSport;
 
     if (targetType === 'all') {
       const endpoints = [
@@ -205,17 +204,29 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
       rawPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
     } else if (targetType === 'podcasts') {
-      // 🚀 FIXED: Fetch both episodes AND all master shows to prevent older shows from falling off page 1
-      const endpoints = [
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=100&page=${currentPage}&sport=${apiSport}&type=podcasts&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=50&page=1&sport=All&type=shows&t=${timeBuster}` // Always fetch all network shows globally
-      ];
+      
+      // 🚀 FIXED: Fetch both episodes (for the specific sport) AND all master shows (globally) with safe per_page limits
+      const episodesUrl = `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=60&page=${currentPage}&sport=${apiSport}&type=podcasts&t=${timeBuster}`;
+      const showsUrl = `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=36&page=1&sport=All&type=shows&t=${timeBuster}`; 
 
-      const responses = await Promise.all(endpoints.map(url => fetch(url, fetchOptions)));
-      totalPages = parseInt(responses[0].headers.get('X-WP-TotalPages') || '1', 10);
+      const [episodesRes, showsRes] = await Promise.all([
+          fetch(episodesUrl, fetchOptions),
+          fetch(showsUrl, fetchOptions)
+      ]);
 
-      const dataArrays = await Promise.all(responses.map(res => res.json()));
-      let combinedRaw = dataArrays.flat().filter(post => post && post.id);
+      let episodesData = [];
+      if (episodesRes.ok) {
+          episodesData = await episodesRes.json();
+          totalPages = parseInt(episodesRes.headers.get('X-WP-TotalPages') || '1', 10);
+      }
+
+      let showsData = [];
+      if (showsRes.ok) {
+          showsData = await showsRes.json();
+      }
+
+      // Merge them together safely
+      let combinedRaw = [...episodesData, ...showsData].filter(post => post && post.id);
 
       const uniqueRawMap = new Map();
       combinedRaw.forEach(post => {
@@ -234,8 +245,7 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
 
     let formattedPosts = rawPosts.map(formatPost);
 
-    // 🚀 FIXED: Local Sport Filter (Bulletproof Catch-All)
-    // Ensures that even if the WP backend fails to filter Racing/Golf perfectly, the frontend handles it flawlessly.
+    // 🚀 FIXED: Local Sport Filter ensures the global Master Shows pull is perfectly refined down to the active sport!
     if (activeSport && activeSport !== 'All') {
         formattedPosts = formattedPosts.filter(p => p.sport.toLowerCase() === activeSport.toLowerCase());
     }
