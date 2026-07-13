@@ -106,7 +106,6 @@ export const formatPost = (post) => {
       'golf-pod-episode', 'pod-episode'
   ].includes(s));
   
-  // Strict Master Show Check: If it has an episode ID attached, it CANNOT be a master show.
   const isMasterShow = !rawAcastId && !spreakerId && ((!!acastShowId || !!spreakerShowId) || isMasterCategory);
 
   if (finalAcastId || acastShowId || spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('acast')) {
@@ -175,25 +174,22 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
     const fetchOptions = { next: { revalidate: 60 } }; 
     const timeBuster = Math.floor(Date.now() / (1000 * 60 * 5));
 
-    // 🚀 FIXED: Pass the sport dynamically so WP queries the actual category (e.g. sport=Racing targets "racing" slug)
-    const apiSport = activeSport;
-
+    // 🚀 THE FIX: Concurrent Chunking Strategy
+    // We break requests into small chunks (20-25) to prevent WP REST API timeouts,
+    // and we ALWAYS pull sport=All globally, filtering the sports locally in React.
+    
     if (targetType === 'all') {
       const endpoints = [
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=${currentPage}&sport=${apiSport}&type=articles&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=40&page=${currentPage}&sport=${apiSport}&type=videos&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=${currentPage}&sport=${apiSport}&type=podcasts&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=${currentPage}&sport=${apiSport}&type=shorts&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=${currentPage}&sport=${apiSport}&type=shows&t=${timeBuster}`
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=25&page=${currentPage}&sport=All&type=articles&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=25&page=${currentPage}&sport=All&type=videos&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=25&page=${currentPage}&sport=All&type=podcasts&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=1&sport=All&type=shows&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=2&sport=All&type=shows&t=${timeBuster}`
       ];
       
-      const responses = await Promise.all(endpoints.map(url => fetch(url, fetchOptions)));
-      responses.forEach(res => {
-        const tp = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);
-        if (tp > totalPages) totalPages = tp;
-      });
+      const responses = await Promise.all(endpoints.map(url => fetch(url, fetchOptions).catch(() => null)));
+      const dataArrays = await Promise.all(responses.map(async (res) => (res && res.ok) ? await res.json() : []));
       
-      const dataArrays = await Promise.all(responses.map(res => res.json()));
       let combinedRaw = dataArrays.flat().filter(post => post && post.id);
       
       const uniqueRawMap = new Map();
@@ -201,51 +197,56 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
         if (!uniqueRawMap.has(post.id)) uniqueRawMap.set(post.id, post);
       });
       rawPosts = Array.from(uniqueRawMap.values());
-      rawPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
     } else if (targetType === 'podcasts') {
+      const endpoints = [
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=25&page=${currentPage}&sport=All&type=podcasts&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=25&page=${currentPage + 1}&sport=All&type=podcasts&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=1&sport=All&type=shows&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=2&sport=All&type=shows&t=${timeBuster}`
+      ];
+
+      const responses = await Promise.all(endpoints.map(url => fetch(url, fetchOptions).catch(() => null)));
       
-      // 🚀 FIXED: Fetch both episodes (for the specific sport) AND all master shows (globally) with safe per_page limits
-      const episodesUrl = `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=60&page=${currentPage}&sport=${apiSport}&type=podcasts&t=${timeBuster}`;
-      const showsUrl = `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=36&page=1&sport=All&type=shows&t=${timeBuster}`; 
-
-      const [episodesRes, showsRes] = await Promise.all([
-          fetch(episodesUrl, fetchOptions),
-          fetch(showsUrl, fetchOptions)
-      ]);
-
-      let episodesData = [];
-      if (episodesRes.ok) {
-          episodesData = await episodesRes.json();
-          totalPages = parseInt(episodesRes.headers.get('X-WP-TotalPages') || '1', 10);
+      if (responses[0] && responses[0].ok) {
+          totalPages = parseInt(responses[0].headers.get('X-WP-TotalPages') || '1', 10);
       }
 
-      let showsData = [];
-      if (showsRes.ok) {
-          showsData = await showsRes.json();
-      }
-
-      // Merge them together safely
-      let combinedRaw = [...episodesData, ...showsData].filter(post => post && post.id);
+      const dataArrays = await Promise.all(responses.map(async (res) => (res && res.ok) ? await res.json() : []));
+      let combinedRaw = dataArrays.flat().filter(post => post && post.id);
 
       const uniqueRawMap = new Map();
       combinedRaw.forEach(post => {
         if (!uniqueRawMap.has(post.id)) uniqueRawMap.set(post.id, post);
       });
       rawPosts = Array.from(uniqueRawMap.values());
-      rawPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     } else {
-      const fetchLimit = targetType === 'videos' ? 60 : (apiSport === 'All' ? 100 : 36);
-      const res = await fetch(`https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=${fetchLimit}&page=${currentPage}&sport=${apiSport}&type=${targetType}&t=${timeBuster}`, fetchOptions);
-      if (!res.ok) throw new Error("API failed");
-      totalPages = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);
-      rawPosts = await res.json();
+      const endpoints = [
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=25&page=${currentPage}&sport=All&type=${targetType}&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=25&page=${currentPage + 1}&sport=All&type=${targetType}&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=25&page=${currentPage + 2}&sport=All&type=${targetType}&t=${timeBuster}`
+      ];
+      
+      const responses = await Promise.all(endpoints.map(url => fetch(url, fetchOptions).catch(() => null)));
+      if (responses[0] && responses[0].ok) {
+          totalPages = parseInt(responses[0].headers.get('X-WP-TotalPages') || '1', 10);
+      }
+
+      const dataArrays = await Promise.all(responses.map(async (res) => (res && res.ok) ? await res.json() : []));
+      let combinedRaw = dataArrays.flat().filter(post => post && post.id);
+
+      const uniqueRawMap = new Map();
+      combinedRaw.forEach(post => {
+        if (!uniqueRawMap.has(post.id)) uniqueRawMap.set(post.id, post);
+      });
+      rawPosts = Array.from(uniqueRawMap.values());
     }
 
+    rawPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     let formattedPosts = rawPosts.map(formatPost);
 
-    // 🚀 FIXED: Local Sport Filter ensures the global Master Shows pull is perfectly refined down to the active sport!
+    // 🚀 FIXED: Strict Local Filtering ensures exact sports rendering regardless of backend logic
     if (activeSport && activeSport !== 'All') {
         formattedPosts = formattedPosts.filter(p => p.sport.toLowerCase() === activeSport.toLowerCase());
     }
