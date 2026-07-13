@@ -106,6 +106,7 @@ export const formatPost = (post) => {
       'golf-pod-episode', 'pod-episode'
   ].includes(s));
   
+  // Strict Master Show Check: If it has an episode ID attached, it CANNOT be a master show.
   const isMasterShow = !rawAcastId && !spreakerId && ((!!acastShowId || !!spreakerShowId) || isMasterCategory);
 
   if (finalAcastId || acastShowId || spreakerId || spreakerShowId || isMasterCategory || isEpisodeCategory || cleanContent.includes('acast')) {
@@ -174,22 +175,29 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
     const fetchOptions = { next: { revalidate: 60 } }; 
     const timeBuster = Math.floor(Date.now() / (1000 * 60 * 5));
 
-    // 🚀 THE FIX: Concurrent Chunking Strategy
-    // We break requests into small chunks (20-25) to prevent WP REST API timeouts,
-    // and we ALWAYS pull sport=All globally, filtering the sports locally in React.
-    
+    // 🚀 FIXED: We dynamically pass the activeSport to WP so episodes don't get buried!
+    const apiSport = activeSport || 'All';
+    const isPodcasts = targetType.includes('podcast');
+
     if (targetType === 'all') {
       const endpoints = [
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=25&page=${currentPage}&sport=All&type=articles&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=25&page=${currentPage}&sport=All&type=videos&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=25&page=${currentPage}&sport=All&type=podcasts&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=1&sport=All&type=shows&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=2&sport=All&type=shows&t=${timeBuster}`
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=${currentPage}&sport=${apiSport}&type=articles&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=${currentPage}&sport=${apiSport}&type=videos&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=${currentPage}&sport=${apiSport}&type=podcasts&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=${currentPage}&sport=${apiSport}&type=shorts&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=100&page=1&sport=All&type=shows&t=${timeBuster}` // 🚀 ALWAYS get all Master Shows globally
       ];
       
       const responses = await Promise.all(endpoints.map(url => fetch(url, fetchOptions).catch(() => null)));
-      const dataArrays = await Promise.all(responses.map(async (res) => (res && res.ok) ? await res.json() : []));
+      responses.forEach((res, idx) => {
+        // Use the first endpoint to calculate total pagination
+        if (res && res.ok && idx === 0) { 
+          const tp = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);
+          if (tp > totalPages) totalPages = tp;
+        }
+      });
       
+      const dataArrays = await Promise.all(responses.map(async (res) => (res && res.ok) ? await res.json() : []));
       let combinedRaw = dataArrays.flat().filter(post => post && post.id);
       
       const uniqueRawMap = new Map();
@@ -198,12 +206,13 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
       });
       rawPosts = Array.from(uniqueRawMap.values());
       
-    } else if (targetType === 'podcasts') {
+    } else if (isPodcasts) {
+      
+      // 🚀 FIXED: Fetch the exact sport's episodes + ALL global master shows
       const endpoints = [
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=25&page=${currentPage}&sport=All&type=podcasts&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=25&page=${currentPage + 1}&sport=All&type=podcasts&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=1&sport=All&type=shows&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=20&page=2&sport=All&type=shows&t=${timeBuster}`
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=${currentPage}&sport=${apiSport}&type=${targetType}&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=${currentPage + 1}&sport=${apiSport}&type=${targetType}&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=100&page=1&sport=All&type=shows&t=${timeBuster}` 
       ];
 
       const responses = await Promise.all(endpoints.map(url => fetch(url, fetchOptions).catch(() => null)));
@@ -222,10 +231,10 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
       rawPosts = Array.from(uniqueRawMap.values());
 
     } else {
+      const fetchLimit = targetType === 'videos' ? 50 : 36;
       const endpoints = [
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=25&page=${currentPage}&sport=All&type=${targetType}&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=25&page=${currentPage + 1}&sport=All&type=${targetType}&t=${timeBuster}`,
-        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=25&page=${currentPage + 2}&sport=All&type=${targetType}&t=${timeBuster}`
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=${fetchLimit}&page=${currentPage}&sport=${apiSport}&type=${targetType}&t=${timeBuster}`,
+        `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=${fetchLimit}&page=${currentPage + 1}&sport=${apiSport}&type=${targetType}&t=${timeBuster}`
       ];
       
       const responses = await Promise.all(endpoints.map(url => fetch(url, fetchOptions).catch(() => null)));
@@ -246,9 +255,9 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
     rawPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     let formattedPosts = rawPosts.map(formatPost);
 
-    // 🚀 FIXED: Strict Local Filtering ensures exact sports rendering regardless of backend logic
-    if (activeSport && activeSport !== 'All') {
-        formattedPosts = formattedPosts.filter(p => p.sport.toLowerCase() === activeSport.toLowerCase());
+    // 🚀 FIXED: Flawless strict filtering to ensure Master Shows align with the selected page
+    if (apiSport && apiSport !== 'All') {
+        formattedPosts = formattedPosts.filter(p => p.sport.toLowerCase() === apiSport.toLowerCase());
     }
 
     return { posts: formattedPosts, totalPages };
