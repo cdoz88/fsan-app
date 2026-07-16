@@ -244,11 +244,11 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                 </div>
               )}
 
-              {/* ONLINE DIVISIONS TAB - NEW SLEEPER LOGIC */}
+              {/* ONLINE DIVISIONS TAB - CONDENSED SLEEPER LOGIC */}
               {activeTab === 'online' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
                   <div className="flex items-center gap-6 mb-8">
-                      <h2 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">Live Open War Rooms</h2>
+                      <h2 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">Online Drafts</h2>
                       <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
                   </div>
 
@@ -298,34 +298,34 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                     ) : leagues.length === 0 ? (
                       <div className="w-full bg-[#151515] rounded-2xl p-12 text-center border border-gray-800 text-gray-500 text-sm font-bold uppercase tracking-widest">No active divisions found in database. Check back soon!</div>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         {leagues.map((league) => {
                           const openSpots = Math.max(0, league.total_spots - league.filled_spots);
                           const isFull = openSpots === 0;
                           const hasNoEntriesLeft = userJoinedCount >= allottedEntries;
 
                           return (
-                            <div key={league.id} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-5 flex flex-col justify-between shadow-md relative overflow-hidden group">
-                              <div>
-                                <h4 className="text-lg font-black text-white uppercase tracking-wide italic mb-2 line-clamp-1">{league.name}</h4>
-                                <div className="flex items-center justify-between bg-[#111] px-4 py-2.5 rounded-xl border border-gray-800 shadow-inner mb-4">
-                                  <span className="text-gray-400 font-bold text-[10px] uppercase tracking-widest">Roster Fill Rate</span>
-                                  <span className={`text-xs font-black ${isFull ? 'text-red-500' : 'text-green-500'}`}>{league.filled_spots} / {league.total_spots} Teams Filled</span>
-                                </div>
+                            <div key={league.id} className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md relative overflow-hidden group">
+                              
+                              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                <h4 className="text-lg font-black text-white uppercase tracking-wide italic mb-1 line-clamp-1">{league.name}</h4>
+                                <span className={`text-xs font-black uppercase tracking-wider ${isFull ? 'text-red-500' : 'text-green-500'}`}>
+                                  {league.filled_spots} / {league.total_spots} Teams Filled
+                                </span>
                               </div>
 
-                              <div className="mt-4">
+                              <div className="shrink-0 w-full sm:w-auto">
                                 {isFull ? (
-                                  <button disabled className="w-full bg-gray-800 text-gray-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-gray-700 cursor-not-allowed">League Full</button>
+                                  <button disabled className="w-full sm:w-auto px-6 bg-gray-800 text-gray-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-gray-700 cursor-not-allowed">League Full</button>
                                 ) : hasNoEntriesLeft ? (
-                                  <button onClick={handlePurchaseExtraEntry} className="w-full bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 text-white font-black uppercase tracking-widest text-xs py-3 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2"><Coins size={14} /> Buy Entry token to unlock</button>
+                                  <button onClick={handlePurchaseExtraEntry} className="w-full sm:w-auto px-6 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 text-white font-black uppercase tracking-widest text-xs py-3 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2"><Coins size={14} /> Buy Entry</button>
                                 ) : (
                                   <button 
                                     disabled={isProcessingEntry !== null}
                                     onClick={() => handleClaimSpot(league.id)}
-                                    className="w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest text-xs py-3 rounded-xl shadow-md transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                                    className="w-full sm:w-auto px-6 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest text-xs py-3 rounded-xl shadow-md transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
                                   >
-                                    {isProcessingEntry === league.id ? <Loader2 size={14} className="animate-spin" /> : <>Claim Team ({openSpots} Open Spots Left)</>}
+                                    {isProcessingEntry === league.id ? <Loader2 size={14} className="animate-spin" /> : <>Claim Team</>}
                                   </button>
                                 )}
                               </div>
