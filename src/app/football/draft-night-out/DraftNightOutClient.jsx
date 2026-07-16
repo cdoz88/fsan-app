@@ -10,8 +10,9 @@ import { useSession } from 'next-auth/react';
 export default function DraftNightOutClient({ proToolsMenu, connectMenu, initialLeaderboard }) {
   const { data: session, status } = useSession();
   const isAuthed = status === 'authenticated';
+  const isProPlus = session?.user?.tier === 'pro-plus';
   
-  // DNO Live Sync States (Replaces Gravity Forms Logic)
+  // DNO Live Sync States
   const [leagues, setLeagues] = useState([]);
   const [loadingLeagues, setLoadingLeagues] = useState(true);
   const [userJoinedCount, setUserJoinedCount] = useState(0);
@@ -110,6 +111,8 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     }
   };
 
+  const ticketsAvailable = Math.max(0, allottedEntries - userJoinedCount);
+
   return (
     <>
       <Header activeSport="Football" />
@@ -119,7 +122,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
         <div className="flex-1 w-full min-w-0 pt-6">
           <main className="w-full animate-in fade-in duration-500">
             
-            {/* HERO BANNER - RESTORED EXACTLY */}
+            {/* HERO BANNER */}
             <div className="relative w-full h-[260px] md:h-[300px] flex items-end overflow-hidden rounded-2xl mb-10 shadow-2xl bg-gray-900">
               <div 
                 className="absolute inset-0 opacity-80 z-0" 
@@ -143,7 +146,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
 
             <div className="max-w-5xl mx-auto">
               
-              {/* TAB SWITCHER - RESTORED EXACTLY */}
+              {/* TAB SWITCHER */}
               <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 py-2 mb-10 bg-[#151515] p-2 rounded-2xl border border-gray-800/50 w-fit mx-auto shadow-inner animate-in fade-in duration-500 delay-100">
                  <button 
                     onClick={() => handleTabClick('live')} 
@@ -183,7 +186,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                  </button>
               </div>
 
-              {/* LIVE EVENTS TAB - RESTORED EXACTLY */}
+              {/* LIVE EVENTS TAB */}
               {activeTab === 'live' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
                   <div className="flex items-center gap-6 mb-8">
@@ -244,7 +247,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                 </div>
               )}
 
-              {/* ONLINE DIVISIONS TAB - CONDENSED SLEEPER LOGIC */}
+              {/* ONLINE DIVISIONS TAB */}
               {activeTab === 'online' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
                   <div className="flex items-center gap-6 mb-8">
@@ -252,27 +255,40 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                       <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
                   </div>
 
-                  {isAuthed && (
-                    <div className="mb-8 flex flex-col sm:flex-row items-center justify-between bg-[#151515] border border-gray-800 p-4 px-6 rounded-2xl gap-4">
-                      <div className="flex items-center gap-3">
-                        <Users size={20} className="text-red-500" />
-                        <div>
-                          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Your Entry Ledger</p>
-                          <p className="text-white text-sm font-bold">Used <span className="text-red-500">{userJoinedCount}</span> of your <span className="text-green-500">{allottedEntries}</span> allotted slots</p>
-                        </div>
-                      </div>
-                      
-                      {userJoinedCount >= allottedEntries ? (
-                        <button onClick={handlePurchaseExtraEntry} className="bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 text-white text-xs font-black uppercase tracking-widest px-5 py-3 rounded-xl flex items-center gap-2 shadow-lg transition-transform hover:-translate-y-0.5">
-                          <Coins size={14} /> Buy Extra Entry (+$20)
-                        </button>
+                  {/* 🚀 DNO TICKET BANNER */}
+                  <div className="mb-8 p-[2px] rounded-2xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(220,38,38,0.15)]">
+                    <div className="flex flex-col sm:flex-row items-center justify-between bg-[#151515] p-5 px-6 rounded-[14px] gap-4 w-full h-full">
+                      {isProPlus ? (
+                        <>
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-red-600/20 flex items-center justify-center shrink-0 border border-red-500/30">
+                              <Ticket size={20} className="text-red-500" />
+                            </div>
+                            <h3 className="text-white text-lg md:text-xl font-black uppercase tracking-wide italic text-center sm:text-left">
+                              You have <span className="text-red-500">{ticketsAvailable}</span> online draft ticket{ticketsAvailable !== 1 ? 's' : ''} available
+                            </h3>
+                          </div>
+                          <button onClick={handlePurchaseExtraEntry} className="shrink-0 w-full sm:w-auto bg-[#222] hover:bg-[#2a2a2a] text-white text-xs font-black uppercase tracking-widest px-6 py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-transform hover:-translate-y-0.5 border border-gray-700">
+                            <Ticket size={16} /> Buy More Tickets
+                          </button>
+                        </>
                       ) : (
-                        <div className="flex items-center gap-1.5 bg-green-950/40 text-green-500 text-[10px] font-bold uppercase tracking-wider px-3 py-2 rounded-xl border border-green-900 shadow-sm">
-                          <UserCheck size={14} /> Ready to Draft
-                        </div>
+                        <>
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shrink-0 border border-gray-700">
+                              <Lock size={20} className="text-gray-400" />
+                            </div>
+                            <h3 className="text-white text-lg md:text-xl font-black uppercase tracking-wide italic text-center sm:text-left">
+                              A Pro+ account is required to enter Draft Night Out
+                            </h3>
+                          </div>
+                          <Link href="/subscribe" className="shrink-0 w-full sm:w-auto bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white text-xs font-black uppercase tracking-widest px-8 py-3.5 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                            Upgrade
+                          </Link>
+                        </>
                       )}
                     </div>
-                  )}
+                  </div>
 
                   {errorMessage && (
                     <div className="mb-6 bg-red-900/20 border border-red-500/30 rounded-xl p-4 flex items-center gap-3 text-red-400 text-xs font-bold uppercase tracking-wider shadow-md">
@@ -281,11 +297,11 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                   )}
 
                   <div className="relative w-full min-h-[300px]">
-                    {!isAuthed && (
+                    {!isProPlus && (
                         <div className="absolute inset-0 z-20 rounded-2xl bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center border border-gray-800 shadow-2xl">
                             <Lock size={40} className="text-red-500 mb-4" />
-                            <h4 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider mb-2">Membership Required</h4>
-                            <p className="text-sm text-gray-300 mb-6 max-w-[280px] leading-relaxed">Log in or upgrade to Pro+ to browse and claim your live Sleeper roster slots.</p>
+                            <h4 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider mb-2">Pro+ Required</h4>
+                            <p className="text-sm text-gray-300 mb-6 max-w-[280px] leading-relaxed">Upgrade to Pro+ to browse and claim your live Sleeper roster slots.</p>
                             <Link href="/subscribe" className="bg-gradient-to-r from-[#e42d38] to-[#8a1a20] text-white text-sm font-black uppercase tracking-widest px-8 py-3.5 rounded-xl shadow-lg hover:-translate-y-0.5 transition-all">Upgrade to Pro+</Link>
                         </div>
                     )}
@@ -338,14 +354,14 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                 </div>
               )}
 
-              {/* LEADERBOARD TAB - RESTORED EXACTLY */}
+              {/* LEADERBOARD TAB */}
               {activeTab === 'leaderboard' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <NapkinLeaderboard initialLeaderboard={initialLeaderboard} />
                 </div>
               )}
 
-              {/* PRIZES TAB - RESTORED EXACTLY */}
+              {/* PRIZES TAB */}
               {activeTab === 'prizes' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
                   <div className="flex items-center gap-6 mb-8">
@@ -392,7 +408,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                 </div>
               )}
 
-              {/* RULES TAB - RESTORED EXACTLY */}
+              {/* RULES TAB */}
               {activeTab === 'rules' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
                   <section className="bg-[#1a1a1a] rounded-3xl p-8 md:p-10 border border-gray-800 shadow-xl mb-16">
@@ -440,7 +456,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                 </div>
               )}
 
-              {/* SPONSORS TAB - RESTORED EXACTLY */}
+              {/* SPONSORS TAB */}
               {activeTab === 'sponsors' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
                   <div className="flex items-center gap-6 mb-8">
