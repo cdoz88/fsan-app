@@ -4,29 +4,24 @@ import Link from 'next/link';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
-import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Utensils, MessageSquare, Users, Trophy, Heart, Shield, Sparkles, Medal, Gift, ListOrdered, BookOpen, Clock, Handshake, Mail, User } from 'lucide-react';
+import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trophy, Shield, Users, Coins, UserCheck, BookOpen, Handshake, Mail, Medal, Gift } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
-export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm, formId, initialLeaderboard }) {
+export default function DraftNightOutClient({ proToolsMenu, connectMenu, initialLeaderboard }) {
   const { data: session, status } = useSession();
   const isAuthed = status === 'authenticated';
   
-  const [formData, setFormData] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState(null); 
-  const [errorMessage, setErrorMessage] = useState(''); 
-
-  // Sleeper Verification State
-  const [sleeperFieldId, setSleeperFieldId] = useState('4'); // Default hardcoded ID
-  const [isVerifyingSleeper, setIsVerifyingSleeper] = useState(false);
-  const [sleeperVerified, setSleeperVerified] = useState(false);
-  const [sleeperUserData, setSleeperUserData] = useState(null);
-
-  const [liveForm, setLiveForm] = useState(gfForm);
+  // DNO Live Sync States (Replaces Gravity Forms Logic)
+  const [leagues, setLeagues] = useState([]);
+  const [loadingLeagues, setLoadingLeagues] = useState(true);
+  const [userJoinedCount, setUserJoinedCount] = useState(0);
+  const [allottedEntries, setAllottedEntries] = useState(1);
+  const [isProcessingEntry, setIsProcessingEntry] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Tab State & Styling
   const validTabs = ['live', 'online', 'leaderboard', 'prizes', 'rules', 'sponsors'];
-  const [activeTab, setActiveTab] = useState('live'); // Defaulting to live
+  const [activeTab, setActiveTab] = useState('live');
 
   const activeTabStyle = "bg-gradient-to-r from-red-600 to-red-800 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)] border border-red-500";
   const inactiveTabStyle = "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 border border-transparent";
@@ -39,261 +34,80 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
         setActiveTab(hash);
       }
     };
-
-    // Check hash on initial load
     handleHashChange();
-
-    // Listen for hash changes if user navigates back/forward
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
-    // Update the URL without reloading the page
     window.history.pushState(null, '', `#${tabId}`);
   };
 
-  // Sync Gravity Forms & Identify Sleeper Field
+  // 🚀 Live Pull Open League Data from WordPress API
   useEffect(() => {
-     if (!liveForm || !liveForm.fields) {
-         fetch(`/api/gravityforms?formId=${formId}`)
-             .then(res => {
-                 if (res.ok) return res.json();
-                 throw new Error('Sync endpoint failed');
-             })
-             .then(data => {
-                 if (data && data.fields) {
-                     setLiveForm(data);
-                     const sField = data.fields.find(f => f.label.toLowerCase().includes('sleeper'));
-                     if (sField) setSleeperFieldId(sField.id.toString());
-                 }
-             })
-             .catch(err => console.error("Client-side GF sync failed:", err));
-     } else {
-         const sField = liveForm.fields.find(f => f.label.toLowerCase().includes('sleeper'));
-         if (sField) setSleeperFieldId(sField.id.toString());
-     }
-  }, [liveForm, formId]);
-
-  // Pre-fill email from session
-  useEffect(() => {
-      if (session?.user?.email && liveForm?.fields) {
-          const emailField = liveForm.fields.find(f => f.type === 'email' || f.label.toLowerCase().includes('email'));
-          if (emailField) {
-              setFormData(prev => ({ ...prev, [emailField.id]: session.user.email }));
-          }
-      } else if (session?.user?.email) {
-          setFormData(prev => ({ ...prev, ['1']: session.user.email }));
-      }
-  }, [session, liveForm]);
-
-  const handleInputChange = (fieldId, value) => {
-      setFormData(prev => ({ ...prev, [fieldId]: value }));
-      if (fieldId === sleeperFieldId) {
-          setErrorMessage('');
-      }
-  };
-
-  // Real-time Debounced Sleeper Verification
-  const sleeperUsernameValue = formData[sleeperFieldId];
-
-  useEffect(() => {
-    const username = sleeperUsernameValue;
-    
-    if (!username || username.trim().length === 0) {
-      setSleeperVerified(false);
-      setSleeperUserData(null);
-      setIsVerifyingSleeper(false);
-      return;
-    }
-
-    setIsVerifyingSleeper(true);
-    setSleeperVerified(false);
-    setSleeperUserData(null);
-
-    const timer = setTimeout(async () => {
+    const loadDnoPool = async () => {
       try {
-          const res = await fetch(`https://api.sleeper.app/v1/user/${username.trim()}`);
-          if (!res.ok) {
-              setSleeperVerified(false);
-              setIsVerifyingSleeper(false);
-              return;
-          }
-          const text = await res.text();
-          if (!text) {
-              setSleeperVerified(false);
-              setIsVerifyingSleeper(false);
-              return;
-          }
-          const data = JSON.parse(text);
-          
-          if (data && data.user_id) {
-              setSleeperVerified(true);
-              setSleeperUserData(data);
-          } else {
-              setSleeperVerified(false);
-          }
-      } catch (error) {
-          setSleeperVerified(false);
+        const res = await fetch('/api/scl?type=dno_pool');
+        if (!res.ok) throw new Error("Could not reach DNO matrix");
+        const data = await res.json();
+        
+        setLeagues(data.leagues || []);
+        setUserJoinedCount(data.user_joined_count || 0);
+        setAllottedEntries(data.allotted_entries || 1);
+      } catch (err) {
+        console.warn("Failed syncing live DNO array: ", err);
       } finally {
-          setIsVerifyingSleeper(false);
+        setLoadingLeagues(false);
       }
-    }, 600); // Wait 600ms after user stops typing to ping the API
+    };
 
-    return () => clearTimeout(timer);
-  }, [sleeperUsernameValue]); 
+    if (isAuthed) {
+      loadDnoPool();
+    } else {
+      setLoadingLeagues(false);
+    }
+  }, [isAuthed]);
 
-  const handleSubmit = async (e) => {
-      e.preventDefault();
-      setIsSubmitting(true);
-      setSubmitStatus(null);
-      setErrorMessage('');
+  // 🚀 Process Entry Claim
+  const handleClaimSpot = async (leagueId) => {
+    setIsProcessingEntry(leagueId);
+    setErrorMessage('');
 
-      // Require Sleeper Verification before allowing submission
-      if (!sleeperVerified) {
-          setSubmitStatus('error');
-          setErrorMessage('Please enter a valid Sleeper username to continue.');
-          setIsSubmitting(false);
-          return; 
+    try {
+      const res = await fetch('/api/scl/claim-spot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leagueId })
+      });
+      const data = await res.json();
+
+      if (data.success && data.invite_link) {
+        setUserJoinedCount(prev => prev + 1);
+        window.open(data.invite_link, '_blank');
+      } else {
+        setErrorMessage(data.message || 'Could not claim roster spot. Please try again.');
       }
-
-      try {
-          const payload = {
-             formId: formId,
-             ...formData
-          };
-
-          const res = await fetch('/api/gravityforms', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-          });
-          
-          const result = await res.json();
-          
-          if (result.is_valid) {
-              setSubmitStatus('success');
-              setFormData({}); 
-          } else {
-              setSubmitStatus('error');
-              setErrorMessage('Error submitting entry. Please ensure all fields are correct.');
-          }
-      } catch (error) {
-          setSubmitStatus('error');
-          setErrorMessage('Network error submitting entry. Please try again.');
-      }
-      setIsSubmitting(false);
+    } catch (err) {
+      setErrorMessage('Network error processing registration.');
+    } finally {
+      setIsProcessingEntry(null);
+    }
   };
 
-  const renderInput = (fieldId, type, placeholder, isRequired) => {
-      const isSleeperField = fieldId.toString() === sleeperFieldId;
-
-      return (
-          <div className="relative flex items-center w-full">
-              <input 
-                  type={type} 
-                  required={isRequired} 
-                  onChange={(e) => handleInputChange(fieldId, e.target.value)} 
-                  value={formData[fieldId] || ''} 
-                  className={`w-full bg-[#111] border ${isSleeperField && sleeperVerified ? 'border-green-500' : 'border-gray-700'} rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors text-sm shadow-inner ${isSleeperField ? 'pr-[100px]' : ''}`} 
-                  placeholder={placeholder} 
-              />
-              {isSleeperField && (
-                  <div className="absolute right-1.5 flex items-center">
-                      {isVerifyingSleeper ? (
-                          <div className="px-3 text-gray-500 flex items-center gap-2">
-                             <Loader2 size={14} className="animate-spin" />
-                          </div>
-                      ) : sleeperVerified && sleeperUserData ? (
-                          <div className="flex items-center gap-1.5 bg-green-900/40 text-green-500 text-[10px] font-bold uppercase tracking-wider px-2 py-1.5 rounded-lg border border-green-900 shadow-sm">
-                              {sleeperUserData.avatar ? (
-                                  <img 
-                                      src={`https://sleepercdn.com/avatars/thumbs/${sleeperUserData.avatar}`} 
-                                      alt="Avatar" 
-                                      className="w-4 h-4 rounded-full object-cover bg-black"
-                                  />
-                              ) : (
-                                  <div className="w-4 h-4 rounded-full bg-black flex items-center justify-center">
-                                      <User size={10} className="text-gray-400" />
-                                  </div>
-                              )}
-                              <span>Verified</span>
-                          </div>
-                      ) : formData[fieldId] && formData[fieldId].trim().length > 0 ? (
-                           <div className="px-3 text-red-500/70 text-[10px] font-bold uppercase tracking-wider">
-                              Not Found
-                           </div>
-                      ) : null}
-                  </div>
-              )}
-          </div>
-      );
-  };
-
-  const renderForm = () => {
-      const hasFields = liveForm && liveForm.fields && liveForm.fields.length > 0;
-      
-      if (!hasFields) {
-          return (
-              <form onSubmit={handleSubmit} className={`w-full flex flex-col gap-4 ${!isAuthed ? 'opacity-30 pointer-events-none blur-[2px]' : ''}`}>
-                  <div className="flex flex-col gap-4">
-                      <div className="flex flex-col flex-1">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Your Email</label>
-                          {renderInput('1', 'email', 'Enter your email', true)}
-                      </div>
-                      <div className="flex flex-col flex-1">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Sleeper Username</label>
-                          {renderInput('4', 'text', 'Your Sleeper ID', true)}
-                      </div>
-                  </div>
-                  <div className="flex flex-col">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Select League</label>
-                      <select required onChange={(e) => handleInputChange('5', e.target.value)} value={formData['5'] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors appearance-none text-sm cursor-pointer shadow-inner">
-                          <option value="">(Waiting for Gravity Forms Sync...)</option>
-                          <option value="Online Redraft">Online Redraft</option>
-                          <option value="Online Superflex">Online Superflex</option>
-                          <option value="Online Best Ball">Online Best Ball</option>
-                      </select>
-                  </div>
-                  <button type="submit" disabled={isSubmitting} className="mt-2 w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest text-xs py-3.5 rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.2)] transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2 disabled:opacity-50">
-                      {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : 'Submit Online Entry'}
-                  </button>
-              </form>
-          );
-      }
-
-      return (
-          <form onSubmit={handleSubmit} className={`w-full flex flex-col gap-4 ${!isAuthed ? 'opacity-30 pointer-events-none blur-[2px] transition-all duration-300' : ''}`}>
-              <div className="flex flex-col gap-4">
-                  {liveForm.fields.filter(f => f.type === 'email' || f.type === 'text').map(field => {
-                      const isEmail = field.type === 'email' || field.label.toLowerCase().includes('email');
-                      const displayLabel = isEmail ? 'Your Email' : field.label;
-
-                      return (
-                          <div key={field.id} className="flex flex-col flex-1">
-                              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{displayLabel}</label>
-                              {renderInput(field.id, field.type, `Enter ${displayLabel.toLowerCase()}`, field.isRequired)}
-                          </div>
-                      );
-                  })}
-              </div>
-              {liveForm.fields.filter(f => f.type === 'select').map(field => (
-                  <div key={field.id} className="flex flex-col">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{field.label}</label>
-                      <select required={field.isRequired} onChange={(e) => handleInputChange(field.id, e.target.value)} value={formData[field.id] || ''} className="w-full bg-[#111] border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-red-500 transition-colors appearance-none text-sm shadow-inner cursor-pointer">
-                          <option value="">Select your preferred league...</option>
-                          {field.choices.map((c, i) => (
-                              <option key={i} value={c.value}>{c.text}</option>
-                          ))}
-                      </select>
-                  </div>
-              ))}
-              <button type="submit" disabled={isSubmitting} className="mt-2 w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest text-xs py-3.5 rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.2)] transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2 disabled:opacity-50">
-                  {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : 'Submit Online Entry'}
-              </button>
-          </form>
-      );
+  // 🚀 Trigger Stripe $20 Upsell Checkout for Extra Entry
+  const handlePurchaseExtraEntry = async () => {
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId: 'price_dno_additional_entry_20' })
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } catch (e) {
+      setErrorMessage('Could not initiate additional entry purchase window.');
+    }
   };
 
   return (
@@ -305,7 +119,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
         <div className="flex-1 w-full min-w-0 pt-6">
           <main className="w-full animate-in fade-in duration-500">
             
-            {/* HERO BANNER */}
+            {/* HERO BANNER - RESTORED EXACTLY */}
             <div className="relative w-full h-[260px] md:h-[300px] flex items-end overflow-hidden rounded-2xl mb-10 shadow-2xl bg-gray-900">
               <div 
                 className="absolute inset-0 opacity-80 z-0" 
@@ -329,7 +143,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
 
             <div className="max-w-5xl mx-auto">
               
-              {/* TAB SWITCHER */}
+              {/* TAB SWITCHER - RESTORED EXACTLY */}
               <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 py-2 mb-10 bg-[#151515] p-2 rounded-2xl border border-gray-800/50 w-fit mx-auto shadow-inner animate-in fade-in duration-500 delay-100">
                  <button 
                     onClick={() => handleTabClick('live')} 
@@ -369,7 +183,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                  </button>
               </div>
 
-              {/* LIVE EVENTS TAB */}
+              {/* LIVE EVENTS TAB - RESTORED EXACTLY */}
               {activeTab === 'live' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
                   <div className="flex items-center gap-6 mb-8">
@@ -377,10 +191,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                       <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
                   </div>
 
-                  {/* LIVE LOCATIONS GRID */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    
-                    {/* CANTON LOCATION CARD */}
                     <div className="bg-[#1a1a1a] rounded-3xl border border-gray-800 p-6 flex flex-col relative overflow-hidden group shadow-lg">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-red-900/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
                       
@@ -398,7 +209,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                         Secure your spot to draft in person. You will be able to select your specific division (named after NFL legends) during checkout.
                       </p>
 
-                      {/* Location Details Grid */}
                       <div className="bg-[#111] rounded-2xl border border-gray-800 p-4 mb-6 grid grid-cols-2 gap-4 relative z-10">
                           <div>
                             <div className="flex items-center gap-2 mb-1"><Calendar size={14} className="text-red-500"/><span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Date</span></div>
@@ -420,10 +230,8 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                         </a>
                       </div>
                     </div>
-
                   </div>
 
-                  {/* GLOBAL LIVE EVENT NOTE */}
                   <div className="mt-8 bg-red-900/10 border border-red-900/30 rounded-xl p-4 flex items-start gap-3">
                     <Ticket size={20} className="text-red-500 shrink-0 mt-0.5" />
                     <div>
@@ -436,78 +244,108 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                 </div>
               )}
 
-              {/* ONLINE DIVISIONS TAB */}
+              {/* ONLINE DIVISIONS TAB - NEW SLEEPER LOGIC */}
               {activeTab === 'online' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
                   <div className="flex items-center gap-6 mb-8">
-                      <h2 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">Enter the War Room</h2>
+                      <h2 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">Live Open War Rooms</h2>
                       <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
                   </div>
 
-                  {/* ONLINE REGISTRATION CARD */}
-                  <div className="max-w-2xl mx-auto bg-[#1a1a1a] rounded-3xl border border-gray-800 p-6 md:p-8 flex flex-col relative overflow-hidden shadow-lg">
-                    <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
-                      <MonitorSmartphone size={120} />
-                    </div>
-                    
-                    <div className="relative z-10 flex items-center gap-4 w-full mb-6">
-                      <div className="w-14 h-14 rounded-2xl bg-[#111] border border-gray-700 flex items-center justify-center shrink-0 shadow-inner">
-                        <MonitorSmartphone className="text-red-500" size={28} />
+                  {isAuthed && (
+                    <div className="mb-8 flex flex-col sm:flex-row items-center justify-between bg-[#151515] border border-gray-800 p-4 px-6 rounded-2xl gap-4">
+                      <div className="flex items-center gap-3">
+                        <Users size={20} className="text-red-500" />
+                        <div>
+                          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Your Entry Ledger</p>
+                          <p className="text-white text-sm font-bold">Used <span className="text-red-500">{userJoinedCount}</span> of your <span className="text-green-500">{allottedEntries}</span> allotted slots</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-2xl font-black text-white uppercase tracking-wide leading-tight italic">Draft Online</h3>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">From anywhere in the world</p>
-                      </div>
+                      
+                      {userJoinedCount >= allottedEntries ? (
+                        <button onClick={handlePurchaseExtraEntry} className="bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 text-white text-xs font-black uppercase tracking-widest px-5 py-3 rounded-xl flex items-center gap-2 shadow-lg transition-transform hover:-translate-y-0.5">
+                          <Coins size={14} /> Buy Extra Entry (+$20)
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-1.5 bg-green-950/40 text-green-500 text-[10px] font-bold uppercase tracking-wider px-3 py-2 rounded-xl border border-green-900 shadow-sm">
+                          <UserCheck size={14} /> Ready to Draft
+                        </div>
+                      )}
                     </div>
-                    
-                    <p className="text-sm text-gray-400 leading-relaxed mb-6 relative z-10">
-                      Can't make it to a live event? No problem! Join an online division and draft remotely against other members of the FSAN community. Select your preferred format below to submit your entry request.
-                    </p>
-                    
-                    <div className="relative z-10 w-full bg-[#111] border border-gray-800 rounded-2xl p-6">
-                          
-                          {!isAuthed && (
-                              <div className="absolute inset-0 z-20 p-[3px] rounded-2xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_10px_40px_rgba(195,11,22,0.3)]">
-                                  <div className="bg-[#111]/95 backdrop-blur-xl w-full h-full rounded-[13px] flex flex-col items-center justify-center p-6 text-center">
-                                      <Lock size={40} className="text-red-500 mb-4 drop-shadow-md" />
-                                      <h4 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider mb-2">Pro+ Required</h4>
-                                      <p className="text-sm text-gray-300 mb-6 max-w-[250px] leading-relaxed">Sign up to unlock the online tournament registration.</p>
-                                      <Link href="/subscribe" className="bg-gradient-to-r from-[#e42d38] to-[#8a1a20] hover:from-[#f03a45] hover:to-[#a3222a] text-white text-sm font-black uppercase tracking-widest px-8 py-3.5 rounded-xl shadow-lg hover:-translate-y-0.5 transition-all border border-[#e42d38]/50">
-                                          Upgrade to Pro+
-                                      </Link>
-                                  </div>
-                              </div>
-                          )}
+                  )}
 
-                          {submitStatus === 'success' ? (
-                              <div className="bg-green-900/20 border border-green-500/30 rounded-xl p-6 flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-300">
-                                  <CheckCircle2 size={40} className="text-green-500 mb-3 drop-shadow-md" />
-                                  <h4 className="text-lg font-black text-white uppercase tracking-wider mb-2">Entry Received!</h4>
-                                  <p className="text-xs text-green-400 font-medium">Keep an eye on your inbox. We'll send your invite link shortly.</p>
-                              </div>
-                          ) : (
-                              <>
-                                  {errorMessage && (
-                                      <div className="mb-4 bg-red-900/20 border border-red-500/30 rounded-xl p-3 flex items-center gap-3 text-red-400 text-[10px] font-bold uppercase tracking-wider">
-                                          <AlertCircle size={16} className="shrink-0" /> {errorMessage}
-                                      </div>
-                                  )}
-                                  {renderForm()}
-                              </>
-                          )}
+                  {errorMessage && (
+                    <div className="mb-6 bg-red-900/20 border border-red-500/30 rounded-xl p-4 flex items-center gap-3 text-red-400 text-xs font-bold uppercase tracking-wider shadow-md">
+                      <AlertCircle size={16} /> {errorMessage}
                     </div>
+                  )}
+
+                  <div className="relative w-full min-h-[300px]">
+                    {!isAuthed && (
+                        <div className="absolute inset-0 z-20 rounded-2xl bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center border border-gray-800 shadow-2xl">
+                            <Lock size={40} className="text-red-500 mb-4" />
+                            <h4 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider mb-2">Membership Required</h4>
+                            <p className="text-sm text-gray-300 mb-6 max-w-[280px] leading-relaxed">Log in or upgrade to Pro+ to browse and claim your live Sleeper roster slots.</p>
+                            <Link href="/subscribe" className="bg-gradient-to-r from-[#e42d38] to-[#8a1a20] text-white text-sm font-black uppercase tracking-widest px-8 py-3.5 rounded-xl shadow-lg hover:-translate-y-0.5 transition-all">Upgrade to Pro+</Link>
+                        </div>
+                    )}
+
+                    {loadingLeagues ? (
+                      <div className="w-full flex flex-col items-center justify-center py-20 text-gray-500 gap-3">
+                        <Loader2 size={32} className="animate-spin text-red-500" /> 
+                        <span className="text-xs font-bold uppercase tracking-widest">Querying Sleeper API Matrix...</span>
+                      </div>
+                    ) : leagues.length === 0 ? (
+                      <div className="w-full bg-[#151515] rounded-2xl p-12 text-center border border-gray-800 text-gray-500 text-sm font-bold uppercase tracking-widest">No active divisions found in database. Check back soon!</div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {leagues.map((league) => {
+                          const openSpots = Math.max(0, league.total_spots - league.filled_spots);
+                          const isFull = openSpots === 0;
+                          const hasNoEntriesLeft = userJoinedCount >= allottedEntries;
+
+                          return (
+                            <div key={league.id} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-5 flex flex-col justify-between shadow-md relative overflow-hidden group">
+                              <div>
+                                <h4 className="text-lg font-black text-white uppercase tracking-wide italic mb-2 line-clamp-1">{league.name}</h4>
+                                <div className="flex items-center justify-between bg-[#111] px-4 py-2.5 rounded-xl border border-gray-800 shadow-inner mb-4">
+                                  <span className="text-gray-400 font-bold text-[10px] uppercase tracking-widest">Roster Fill Rate</span>
+                                  <span className={`text-xs font-black ${isFull ? 'text-red-500' : 'text-green-500'}`}>{league.filled_spots} / {league.total_spots} Teams Filled</span>
+                                </div>
+                              </div>
+
+                              <div className="mt-4">
+                                {isFull ? (
+                                  <button disabled className="w-full bg-gray-800 text-gray-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-gray-700 cursor-not-allowed">League Full</button>
+                                ) : hasNoEntriesLeft ? (
+                                  <button onClick={handlePurchaseExtraEntry} className="w-full bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 text-white font-black uppercase tracking-widest text-xs py-3 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2"><Coins size={14} /> Buy Entry token to unlock</button>
+                                ) : (
+                                  <button 
+                                    disabled={isProcessingEntry !== null}
+                                    onClick={() => handleClaimSpot(league.id)}
+                                    className="w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest text-xs py-3 rounded-xl shadow-md transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                                  >
+                                    {isProcessingEntry === league.id ? <Loader2 size={14} className="animate-spin" /> : <>Claim Team ({openSpots} Open Spots Left)</>}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* LEADERBOARD TAB */}
+              {/* LEADERBOARD TAB - RESTORED EXACTLY */}
               {activeTab === 'leaderboard' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <NapkinLeaderboard initialLeaderboard={initialLeaderboard} />
                 </div>
               )}
 
-              {/* PRIZES TAB */}
+              {/* PRIZES TAB - RESTORED EXACTLY */}
               {activeTab === 'prizes' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
                   <div className="flex items-center gap-6 mb-8">
@@ -516,21 +354,18 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                     {/* League Winners */}
                      <div className="bg-[#111] p-8 rounded-3xl border border-gray-800 flex flex-col items-center text-center shadow-lg hover:-translate-y-1 transition-transform">
                        <Medal className="text-gray-400 mb-4" size={40} />
                        <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">League Winners</h4>
                        <p className="text-sm text-gray-400 leading-relaxed">Championship plaque provided by <strong className="text-white">Dynasty Decks</strong>.</p>
                      </div>
 
-                     {/* Overall Regular Season Winner */}
                      <div className="bg-[#111] p-8 rounded-3xl border border-gray-800 flex flex-col items-center text-center shadow-lg hover:-translate-y-1 transition-transform">
                        <Gift className="text-green-500 mb-4" size={40} />
                        <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Overall Regular Season Champ</h4>
                        <p className="text-sm text-gray-400 leading-relaxed">A <strong className="text-green-400">$75 Gift Card</strong> to the official FSAN Shop.</p>
                      </div>
 
-                     {/* Playoff Challenge Champ */}
                      <div className="bg-gradient-to-b from-[#1a0f0f] to-[#111] p-8 rounded-3xl border border-red-500/30 flex flex-col items-center text-center shadow-[0_0_30px_rgba(220,38,38,0.15)] hover:-translate-y-1 transition-transform relative overflow-hidden">
                        <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/10 blur-2xl rounded-full"></div>
                        <Trophy className="text-yellow-500 mb-4 relative z-10" size={40} />
@@ -540,11 +375,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                   </div>
 
                   <div className="bg-gradient-to-br from-[#1b1010] to-[#111] rounded-3xl border border-red-900/30 p-8 md:p-12 mb-12 shadow-[0_0_40px_rgba(220,38,38,0.1)] relative overflow-hidden flex flex-col md:flex-row items-center gap-8 md:gap-12">
-                    
-                    <div className="absolute -right-4 -top-4 text-[120px] md:text-[180px] font-black text-red-900/10 z-0 select-none transition-colors leading-none pointer-events-none">
-                        🏆
-                    </div>
-
+                    <div className="absolute -right-4 -top-4 text-[120px] md:text-[180px] font-black text-red-900/10 z-0 select-none transition-colors leading-none pointer-events-none">🏆</div>
                     <div className="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-red-600 to-red-900 rounded-full flex items-center justify-center shrink-0 shadow-[0_0_30px_rgba(220,38,38,0.4)] border-4 border-[#111] relative z-10">
                       <Shield size={48} className="text-white drop-shadow-md" />
                     </div>
@@ -553,7 +384,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                       <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter mb-4 italic">
                         The Playoff Challenge
                       </h2>
-                      
                       <p className="text-gray-300 text-base md:text-lg leading-relaxed">
                         We are hosting a massive playoff challenge for <strong>all league winners</strong> from the regular season. Qualify for the playoffs to compete for the ultimate prize package and prove you are the undisputed champion!
                       </p>
@@ -562,7 +392,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                 </div>
               )}
 
-              {/* RULES TAB */}
+              {/* RULES TAB - RESTORED EXACTLY */}
               {activeTab === 'rules' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
                   <section className="bg-[#1a1a1a] rounded-3xl p-8 md:p-10 border border-gray-800 shadow-xl mb-16">
@@ -610,7 +440,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, gfForm,
                 </div>
               )}
 
-              {/* SPONSORS TAB */}
+              {/* SPONSORS TAB - RESTORED EXACTLY */}
               {activeTab === 'sponsors' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
                   <div className="flex items-center gap-6 mb-8">
