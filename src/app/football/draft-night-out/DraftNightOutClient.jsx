@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
-import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trophy, Shield, Users, Coins, UserCheck, BookOpen, Handshake, Mail, Medal, Gift, ListOrdered, Clock, LogOut } from 'lucide-react';
+import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trophy, Shield, Users, Coins, UserCheck, BookOpen, Handshake, Mail, Medal, Gift, ListOrdered, Clock, LogOut, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 export default function DraftNightOutClient({ proToolsMenu, connectMenu, initialLeaderboard }) {
@@ -147,37 +147,45 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
       {/* 🚀 REDESIGNED CONFIRMATION MODAL */}
       {confirmingLeague && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-[#151515] border border-gray-800 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col">
+          <div className="bg-[#151515] border border-gray-800 rounded-3xl max-w-md w-full shadow-2xl relative flex flex-col">
             
-            <div className="p-6 md:p-8 text-center">
+            <button 
+              onClick={() => setConfirmingLeague(null)} 
+              disabled={isProcessingEntry !== null}
+              className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-[#111] hover:bg-gray-800 border border-gray-700 text-gray-400 hover:text-white transition-colors z-10"
+              aria-label="Close Modal"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="p-6 md:p-8 text-center pt-12">
               <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight italic mb-3">Ready to Draft?</h3>
               <p className="text-gray-300 text-sm leading-relaxed mb-6">
                 You are about to use <strong className="text-white">1 draft ticket</strong> to claim a team in:
               </p>
               
-              <div className="bg-[#111] border border-gray-800 rounded-xl p-5 text-center shadow-inner">
-                <span className="text-lg font-black text-white uppercase tracking-wider">{confirmingLeague.name}</span>
+              <div className="mb-6 text-center">
+                <span className="text-xl md:text-2xl font-black text-white uppercase tracking-wider">{confirmingLeague.name}</span>
               </div>
             </div>
             
-            <div className="flex items-center gap-3 px-6 md:px-8 pb-5">
-              <button 
-                onClick={() => setConfirmingLeague(null)} 
-                disabled={isProcessingEntry !== null}
-                className="flex-1 px-4 py-3.5 rounded-xl font-black uppercase tracking-widest text-xs text-gray-400 bg-[#111] hover:bg-gray-800 hover:text-white transition-colors border border-gray-800"
-              >
-                Cancel
-              </button>
+            <div className="px-6 md:px-8 pb-3">
               <button 
                 onClick={() => handleClaimSpot(confirmingLeague.id)}
                 disabled={isProcessingEntry !== null}
-                className="flex-1 px-4 py-3.5 rounded-xl font-black uppercase tracking-widest text-xs text-white bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 shadow-lg transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                className="w-full relative group p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(220,38,38,0.15)] transition-transform hover:-translate-y-0.5"
               >
-                {isProcessingEntry === confirmingLeague.id ? <Loader2 size={16} className="animate-spin" /> : 'Confirm & Join'}
+                <div className="bg-[#151515] hover:bg-[#1a1a1a] transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center gap-2 w-full h-full">
+                  {isProcessingEntry === confirmingLeague.id ? (
+                    <Loader2 size={16} className="animate-spin text-white" />
+                  ) : (
+                    <span className="font-black uppercase tracking-widest text-xs text-white">Join and Draft</span>
+                  )}
+                </div>
               </button>
             </div>
 
-            <div className="px-6 md:px-8 pb-6 md:pb-8">
+            <div className="px-6 md:px-8 pb-6 md:pb-8 pt-3">
               <div className="flex items-start gap-3 bg-[#111] border border-gray-800 p-4 rounded-xl">
                 <AlertCircle size={16} className="text-gray-500 shrink-0 mt-0.5" />
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-relaxed">
@@ -285,7 +293,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                 </div>
               )}
 
-              {/* ONLINE DIVISIONS TAB */}
+              {/* ONLINE DIVISIONS TAB - DYNAMIC TICKETING */}
               {activeTab === 'online' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
                   <div className="flex items-center gap-6 mb-8">
