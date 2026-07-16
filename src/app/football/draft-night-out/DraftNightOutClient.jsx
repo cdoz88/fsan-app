@@ -53,7 +53,15 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
         if (!res.ok) throw new Error("Could not reach DNO matrix");
         const data = await res.json();
         
-        setLeagues(data.leagues || []);
+        // 🚀 INJECT DUMMY LEAGUE FOR TESTING
+        const dummyLeague = {
+          id: 'dummy_test_league_1',
+          name: 'FSAN Test War Room (Open)',
+          total_spots: 12,
+          filled_spots: 8
+        };
+
+        setLeagues([dummyLeague, ...(data.leagues || [])]);
         setUserJoinedCount(data.user_joined_count || 0);
         setAllottedEntries(data.allotted_entries || 1);
       } catch (err) {
@@ -74,6 +82,16 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   const handleClaimSpot = async (leagueId) => {
     setIsProcessingEntry(leagueId);
     setErrorMessage('');
+
+    // 🚀 DUMMY LEAGUE BYPASS
+    if (leagueId === 'dummy_test_league_1') {
+      setTimeout(() => {
+        setUserJoinedCount(prev => prev + 1);
+        window.open('https://sleeper.com/i/fsantestdummy', '_blank');
+        setIsProcessingEntry(null);
+      }, 1000);
+      return;
+    }
 
     try {
       const res = await fetch('/api/scl/claim-spot', {
@@ -247,7 +265,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                 </div>
               )}
 
-              {/* ONLINE DIVISIONS TAB */}
+              {/* ONLINE DIVISIONS TAB - CONDENSED SLEEPER LOGIC */}
               {activeTab === 'online' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
                   <div className="flex items-center gap-6 mb-8">
