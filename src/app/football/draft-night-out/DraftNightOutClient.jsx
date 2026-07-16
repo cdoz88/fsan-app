@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
-import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trophy, Shield, Users, Coins, UserCheck, BookOpen, Handshake, Mail, Medal, Gift, ListOrdered, Clock, LogOut } from 'lucide-react';
+import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trophy, Shield, Users, Coins, UserCheck, BookOpen, Handshake, Mail, Medal, Gift, ListOrdered, Clock } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 export default function DraftNightOutClient({ proToolsMenu, connectMenu, initialLeaderboard }) {
@@ -19,8 +19,11 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   const [allottedEntries, setAllottedEntries] = useState(1);
   const [isProcessingEntry, setIsProcessingEntry] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+  
+  // 🚀 New State for the Confirmation Popup
+  const [confirmingLeague, setConfirmingLeague] = useState(null);
 
-  // 🚀 Dummy State to track joined test leagues for UI visualization
+  // Dummy State to track joined test leagues for UI visualization
   const [joinedDummyLeagues, setJoinedDummyLeagues] = useState([]);
 
   // Tab State & Styling
@@ -54,7 +57,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
         if (!res.ok) throw new Error("Could not reach DNO matrix");
         const data = await res.json();
         
-        // 🚀 INJECT TWO DUMMY LEAGUES FOR UI TESTING
         const dummyLeague1 = {
           id: 'dummy_test_league_1',
           name: 'FSAN Test War Room 1',
@@ -89,13 +91,13 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     setIsProcessingEntry(leagueId);
     setErrorMessage('');
 
-    // 🚀 DUMMY LEAGUE BYPASS
     if (leagueId.includes('dummy_test_league')) {
       setTimeout(() => {
         setUserJoinedCount(prev => prev + 1);
         setJoinedDummyLeagues(prev => [...prev, leagueId]);
         window.open('https://sleeper.com/i/fsantestdummy', '_blank');
         setIsProcessingEntry(null);
+        setConfirmingLeague(null); // Close modal
       }, 1000);
       return;
     }
@@ -110,7 +112,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
 
       if (data.success && data.invite_link) {
         setUserJoinedCount(prev => prev + 1);
-        // In a real scenario, you'd also record this joined league ID to state/db
         window.open(data.invite_link, '_blank');
       } else {
         setErrorMessage(data.message || 'Could not claim roster spot. Please try again.');
@@ -119,6 +120,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
       setErrorMessage('Network error processing registration.');
     } finally {
       setIsProcessingEntry(null);
+      setConfirmingLeague(null); // Close modal
     }
   };
 
@@ -141,21 +143,59 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   return (
     <>
       <Header activeSport="Football" />
-      <div className="max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-8 w-full pb-24">
+      
+      {/* 🚀 CONFIRMATION MODAL OVERLAY */}
+      {confirmingLeague && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#151515] border border-gray-800 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col">
+            <div className="p-6 md:p-8 pb-0">
+              <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight italic mb-3">Confirm Entry</h3>
+              <p className="text-gray-300 text-sm leading-relaxed mb-6">
+                You are about to use <strong className="text-white">1 draft ticket</strong> to claim a team in:
+              </p>
+              
+              <div className="bg-[#111] border border-gray-800 rounded-xl p-5 mb-6 text-center shadow-inner">
+                <span className="text-lg font-black text-red-500 uppercase tracking-wider">{confirmingLeague.name}</span>
+              </div>
+              
+              <div className="flex items-start gap-3 bg-red-900/10 border border-red-900/30 p-4 rounded-xl mb-8">
+                <AlertCircle size={18} className="text-red-500 shrink-0 mt-0.5" />
+                <p className="text-[10px] text-red-400/90 font-bold uppercase tracking-wider leading-relaxed">
+                  Please note: This action is final. Entry tickets cannot be refunded or transferred once you have joined a draft room.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3 p-6 md:p-8 pt-0 mt-auto">
+              <button 
+                onClick={() => setConfirmingLeague(null)} 
+                disabled={isProcessingEntry !== null}
+                className="flex-1 px-4 py-3.5 rounded-xl font-black uppercase tracking-widest text-xs text-gray-400 bg-[#111] hover:bg-gray-800 hover:text-white transition-colors border border-gray-800"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => handleClaimSpot(confirmingLeague.id)}
+                disabled={isProcessingEntry !== null}
+                className="flex-1 px-4 py-3.5 rounded-xl font-black uppercase tracking-widest text-xs text-white bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 shadow-lg transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+              >
+                {isProcessingEntry === confirmingLeague.id ? <Loader2 size={16} className="animate-spin" /> : 'Confirm & Join'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-8 w-full pb-24 relative z-10">
         <Sidebar activeSport="Football" proToolsMenu={proToolsMenu} connectMenu={connectMenu} />
         
         <div className="flex-1 w-full min-w-0 pt-6">
           <main className="w-full animate-in fade-in duration-500">
             
-            {/* HERO BANNER */}
             <div className="relative w-full h-[260px] md:h-[300px] flex items-end overflow-hidden rounded-2xl mb-10 shadow-2xl bg-gray-900">
-              <div 
-                className="absolute inset-0 opacity-80 z-0" 
-                style={{ background: `linear-gradient(135deg, #e42d38 0%, #8a1a20 100%)` }}
-              />
+              <div className="absolute inset-0 opacity-80 z-0" style={{ background: `linear-gradient(135deg, #e42d38 0%, #8a1a20 100%)` }} />
               <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent z-0" />
               <div className="absolute inset-0 bg-gradient-to-r from-[#121212]/50 to-transparent z-0" />
-              
               <div className="relative z-10 w-full flex flex-col items-start justify-end h-full px-6 md:px-10 pb-8">
                 <span className="inline-block py-1 px-3 rounded-full bg-red-600/20 border border-red-500/30 text-red-400 font-bold text-[10px] uppercase tracking-widest mb-3 backdrop-blur-sm">
                   The Biggest Fantasy Hang of the Year
@@ -171,44 +211,13 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
 
             <div className="max-w-5xl mx-auto">
               
-              {/* TAB SWITCHER */}
               <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 py-2 mb-10 bg-[#151515] p-2 rounded-2xl border border-gray-800/50 w-fit mx-auto shadow-inner animate-in fade-in duration-500 delay-100">
-                 <button 
-                    onClick={() => handleTabClick('live')} 
-                    className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'live' ? activeTabStyle : inactiveTabStyle}`}
-                 >
-                   <MapPin size={16} /> Live Events
-                 </button>
-                 <button 
-                    onClick={() => handleTabClick('online')} 
-                    className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'online' ? activeTabStyle : inactiveTabStyle}`}
-                 >
-                   <MonitorSmartphone size={16} /> Online
-                 </button>
-                 <button 
-                    onClick={() => handleTabClick('leaderboard')} 
-                    className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'leaderboard' ? activeTabStyle : inactiveTabStyle}`}
-                 >
-                   <ListOrdered size={16} /> Leaderboard
-                 </button>
-                 <button 
-                    onClick={() => handleTabClick('prizes')} 
-                    className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'prizes' ? activeTabStyle : inactiveTabStyle}`}
-                 >
-                   <Trophy size={16} /> Prizes
-                 </button>
-                 <button 
-                    onClick={() => handleTabClick('rules')} 
-                    className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'rules' ? activeTabStyle : inactiveTabStyle}`}
-                 >
-                   <BookOpen size={16} /> Rules
-                 </button>
-                 <button 
-                    onClick={() => handleTabClick('sponsors')} 
-                    className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'sponsors' ? activeTabStyle : inactiveTabStyle}`}
-                 >
-                   <Handshake size={16} /> Sponsor
-                 </button>
+                 <button onClick={() => handleTabClick('live')} className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'live' ? activeTabStyle : inactiveTabStyle}`}><MapPin size={16} /> Live Events</button>
+                 <button onClick={() => handleTabClick('online')} className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'online' ? activeTabStyle : inactiveTabStyle}`}><MonitorSmartphone size={16} /> Online</button>
+                 <button onClick={() => handleTabClick('leaderboard')} className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'leaderboard' ? activeTabStyle : inactiveTabStyle}`}><ListOrdered size={16} /> Leaderboard</button>
+                 <button onClick={() => handleTabClick('prizes')} className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'prizes' ? activeTabStyle : inactiveTabStyle}`}><Trophy size={16} /> Prizes</button>
+                 <button onClick={() => handleTabClick('rules')} className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'rules' ? activeTabStyle : inactiveTabStyle}`}><BookOpen size={16} /> Rules</button>
+                 <button onClick={() => handleTabClick('sponsors')} className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'sponsors' ? activeTabStyle : inactiveTabStyle}`}><Handshake size={16} /> Sponsor</button>
               </div>
 
               {/* LIVE EVENTS TAB */}
@@ -280,7 +289,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                       <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
                   </div>
 
-                  {/* 🚀 DNO TICKET BANNER */}
                   <div className="mb-8 p-[2px] rounded-2xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(220,38,38,0.15)]">
                     <div className="flex flex-col sm:flex-row items-center justify-between bg-[#151515] p-5 px-6 rounded-[14px] gap-4 w-full h-full">
                       {isProPlus ? (
@@ -344,6 +352,8 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                           const openSpots = Math.max(0, league.total_spots - league.filled_spots);
                           const isFull = openSpots === 0;
                           const hasNoEntriesLeft = ticketsAvailable === 0;
+                          
+                          // Check if user has joined THIS specific league (dummy validation)
                           const isJoinedLocal = joinedDummyLeagues.includes(league.id);
 
                           return (
@@ -362,23 +372,20 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                                     href="https://sleeper.com" 
                                     target="_blank" 
                                     rel="noopener noreferrer"
-                                    className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-gray-300 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-gray-700 transition-colors flex items-center justify-center gap-2"
+                                    className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-green-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-green-900/50 transition-colors flex items-center justify-center gap-2"
                                   >
-                                    <LogOut size={14} /> Leave League
+                                    <ExternalLink size={14} /> Go to League
                                   </a>
                                 ) : isFull ? (
                                   <button disabled className="w-full sm:w-auto px-6 bg-gray-800 text-gray-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-gray-700 cursor-not-allowed">League Full</button>
                                 ) : hasNoEntriesLeft ? (
-                                  <button onClick={handlePurchaseExtraEntry} className="w-full sm:w-auto px-6 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 text-white font-black uppercase tracking-widest text-xs py-3 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
-                                    <Ticket size={14} /> Buy Ticket
-                                  </button>
+                                  <button onClick={handlePurchaseExtraEntry} className="w-full sm:w-auto px-6 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 text-white font-black uppercase tracking-widest text-xs py-3 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2"><Coins size={14} /> Buy Ticket</button>
                                 ) : (
                                   <button 
-                                    disabled={isProcessingEntry !== null}
-                                    onClick={() => handleClaimSpot(league.id)}
+                                    onClick={() => setConfirmingLeague(league)}
                                     className="w-full sm:w-auto px-6 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest text-xs py-3 rounded-xl shadow-md transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
                                   >
-                                    {isProcessingEntry === league.id ? <Loader2 size={14} className="animate-spin" /> : <>Join League</>}
+                                    Join League
                                   </button>
                                 )}
                               </div>
