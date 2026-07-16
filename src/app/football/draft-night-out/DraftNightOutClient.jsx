@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
-import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trophy, Shield, Users, Coins, UserCheck, BookOpen, Handshake, Mail, Medal, Gift, ListOrdered, Clock } from 'lucide-react';
+import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trophy, Shield, Users, Coins, UserCheck, BookOpen, Handshake, Mail, Medal, Gift, ListOrdered, Clock, LogOut } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 export default function DraftNightOutClient({ proToolsMenu, connectMenu, initialLeaderboard }) {
@@ -20,7 +20,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   const [isProcessingEntry, setIsProcessingEntry] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   
-  // 🚀 New State for the Confirmation Popup
+  // Confirmation Popup State
   const [confirmingLeague, setConfirmingLeague] = useState(null);
 
   // Dummy State to track joined test leagues for UI visualization
@@ -97,7 +97,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
         setJoinedDummyLeagues(prev => [...prev, leagueId]);
         window.open('https://sleeper.com/i/fsantestdummy', '_blank');
         setIsProcessingEntry(null);
-        setConfirmingLeague(null); // Close modal
+        setConfirmingLeague(null);
       }, 1000);
       return;
     }
@@ -120,7 +120,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
       setErrorMessage('Network error processing registration.');
     } finally {
       setIsProcessingEntry(null);
-      setConfirmingLeague(null); // Close modal
+      setConfirmingLeague(null);
     }
   };
 
@@ -144,29 +144,23 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     <>
       <Header activeSport="Football" />
       
-      {/* 🚀 CONFIRMATION MODAL OVERLAY */}
+      {/* 🚀 REDESIGNED CONFIRMATION MODAL */}
       {confirmingLeague && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-[#151515] border border-gray-800 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col">
-            <div className="p-6 md:p-8 pb-0">
-              <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight italic mb-3">Confirm Entry</h3>
+            
+            <div className="p-6 md:p-8 text-center">
+              <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight italic mb-3">Ready to Draft?</h3>
               <p className="text-gray-300 text-sm leading-relaxed mb-6">
                 You are about to use <strong className="text-white">1 draft ticket</strong> to claim a team in:
               </p>
               
-              <div className="bg-[#111] border border-gray-800 rounded-xl p-5 mb-6 text-center shadow-inner">
-                <span className="text-lg font-black text-red-500 uppercase tracking-wider">{confirmingLeague.name}</span>
-              </div>
-              
-              <div className="flex items-start gap-3 bg-red-900/10 border border-red-900/30 p-4 rounded-xl mb-8">
-                <AlertCircle size={18} className="text-red-500 shrink-0 mt-0.5" />
-                <p className="text-[10px] text-red-400/90 font-bold uppercase tracking-wider leading-relaxed">
-                  Please note: This action is final. Entry tickets cannot be refunded or transferred once you have joined a draft room.
-                </p>
+              <div className="bg-[#111] border border-gray-800 rounded-xl p-5 text-center shadow-inner">
+                <span className="text-lg font-black text-white uppercase tracking-wider">{confirmingLeague.name}</span>
               </div>
             </div>
             
-            <div className="flex items-center gap-3 p-6 md:p-8 pt-0 mt-auto">
+            <div className="flex items-center gap-3 px-6 md:px-8 pb-5">
               <button 
                 onClick={() => setConfirmingLeague(null)} 
                 disabled={isProcessingEntry !== null}
@@ -182,6 +176,16 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                 {isProcessingEntry === confirmingLeague.id ? <Loader2 size={16} className="animate-spin" /> : 'Confirm & Join'}
               </button>
             </div>
+
+            <div className="px-6 md:px-8 pb-6 md:pb-8">
+              <div className="flex items-start gap-3 bg-[#111] border border-gray-800 p-4 rounded-xl">
+                <AlertCircle size={16} className="text-gray-500 shrink-0 mt-0.5" />
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-relaxed">
+                  Please note: This action is final. Entry tickets cannot be refunded or transferred once you have joined a draft room.
+                </p>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
@@ -281,7 +285,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                 </div>
               )}
 
-              {/* ONLINE DIVISIONS TAB - DYNAMIC TICKETING */}
+              {/* ONLINE DIVISIONS TAB */}
               {activeTab === 'online' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
                   <div className="flex items-center gap-6 mb-8">
@@ -353,7 +357,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                           const isFull = openSpots === 0;
                           const hasNoEntriesLeft = ticketsAvailable === 0;
                           
-                          // Check if user has joined THIS specific league (dummy validation)
                           const isJoinedLocal = joinedDummyLeagues.includes(league.id);
 
                           return (
@@ -374,7 +377,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                                     rel="noopener noreferrer"
                                     className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-green-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-green-900/50 transition-colors flex items-center justify-center gap-2"
                                   >
-                                    <ExternalLink size={14} /> Go to League
+                                    <ExternalLink size={14} /> Go to Draft Room
                                   </a>
                                 ) : isFull ? (
                                   <button disabled className="w-full sm:w-auto px-6 bg-gray-800 text-gray-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-gray-700 cursor-not-allowed">League Full</button>
