@@ -1,7 +1,8 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-const authOptions = {
+// 🚀 FIXED: Added "export" so other API routes can securely reference authOptions
+export const authOptions = {
   providers: [
     CredentialsProvider({
       name: "WordPress",
@@ -56,7 +57,6 @@ const authOptions = {
           
           let tier = 'free';
           
-          // 🚀 FIXED: Hyphen instead of underscore for pro-plus
           if (roles.some(r => r.includes('pro+') || r.includes('pro plus') || r.includes('pro_plus') || r.includes('pro-plus') || r.includes('author') || r.includes('administrator') || r.includes('editor'))) {
             tier = 'pro-plus';
           } else if (roles.some(r => r.includes('pro') || r.includes('pro member') || r.includes('fsan_pro'))) {
