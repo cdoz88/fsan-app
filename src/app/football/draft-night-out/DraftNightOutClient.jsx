@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
-import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trophy, Shield, Users, Coins, UserCheck, BookOpen, Handshake, Mail, Medal, Gift, ListOrdered, Clock } from 'lucide-react';
+import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trophy, Shield, Users, Coins, UserCheck, BookOpen, Handshake, Mail, Medal, Gift, ListOrdered, Clock, LogOut } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 export default function DraftNightOutClient({ proToolsMenu, connectMenu, initialLeaderboard }) {
@@ -20,6 +20,9 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   const [isProcessingEntry, setIsProcessingEntry] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // 🚀 Dummy State to track joined test leagues for UI visualization
+  const [joinedDummyLeagues, setJoinedDummyLeagues] = useState([]);
+
   // Tab State & Styling
   const validTabs = ['live', 'online', 'leaderboard', 'prizes', 'rules', 'sponsors'];
   const [activeTab, setActiveTab] = useState('live');
@@ -27,7 +30,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   const activeTabStyle = "bg-gradient-to-r from-red-600 to-red-800 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)] border border-red-500";
   const inactiveTabStyle = "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 border border-transparent";
 
-  // Handle URL Hashes for direct linking
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
@@ -45,7 +47,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     window.history.pushState(null, '', `#${tabId}`);
   };
 
-  // 🚀 Live Pull Open League Data from WordPress API
   useEffect(() => {
     const loadDnoPool = async () => {
       try {
@@ -53,15 +54,21 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
         if (!res.ok) throw new Error("Could not reach DNO matrix");
         const data = await res.json();
         
-        // 🚀 INJECT DUMMY LEAGUE FOR TESTING
-        const dummyLeague = {
+        // 🚀 INJECT TWO DUMMY LEAGUES FOR UI TESTING
+        const dummyLeague1 = {
           id: 'dummy_test_league_1',
-          name: 'FSAN Test War Room (Open)',
+          name: 'FSAN Test War Room 1',
           total_spots: 12,
           filled_spots: 8
         };
+        const dummyLeague2 = {
+          id: 'dummy_test_league_2',
+          name: 'FSAN Test War Room 2',
+          total_spots: 12,
+          filled_spots: 11
+        };
 
-        setLeagues([dummyLeague, ...(data.leagues || [])]);
+        setLeagues([dummyLeague1, dummyLeague2, ...(data.leagues || [])]);
         setUserJoinedCount(data.user_joined_count || 0);
         setAllottedEntries(data.allotted_entries || 1);
       } catch (err) {
@@ -78,15 +85,15 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     }
   }, [isAuthed]);
 
-  // 🚀 Process Entry Claim
   const handleClaimSpot = async (leagueId) => {
     setIsProcessingEntry(leagueId);
     setErrorMessage('');
 
     // 🚀 DUMMY LEAGUE BYPASS
-    if (leagueId === 'dummy_test_league_1') {
+    if (leagueId.includes('dummy_test_league')) {
       setTimeout(() => {
         setUserJoinedCount(prev => prev + 1);
+        setJoinedDummyLeagues(prev => [...prev, leagueId]);
         window.open('https://sleeper.com/i/fsantestdummy', '_blank');
         setIsProcessingEntry(null);
       }, 1000);
@@ -103,6 +110,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
 
       if (data.success && data.invite_link) {
         setUserJoinedCount(prev => prev + 1);
+        // In a real scenario, you'd also record this joined league ID to state/db
         window.open(data.invite_link, '_blank');
       } else {
         setErrorMessage(data.message || 'Could not claim roster spot. Please try again.');
@@ -114,7 +122,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     }
   };
 
-  // 🚀 Trigger Stripe $20 Upsell Checkout for Extra Entry
   const handlePurchaseExtraEntry = async () => {
     try {
       const res = await fetch('/api/stripe/checkout', {
@@ -265,7 +272,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                 </div>
               )}
 
-              {/* ONLINE DIVISIONS TAB - CONDENSED SLEEPER LOGIC */}
+              {/* ONLINE DIVISIONS TAB - DYNAMIC TICKETING */}
               {activeTab === 'online' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
                   <div className="flex items-center gap-6 mb-8">
@@ -336,30 +343,42 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                         {leagues.map((league) => {
                           const openSpots = Math.max(0, league.total_spots - league.filled_spots);
                           const isFull = openSpots === 0;
-                          const hasNoEntriesLeft = userJoinedCount >= allottedEntries;
+                          const hasNoEntriesLeft = ticketsAvailable === 0;
+                          const isJoinedLocal = joinedDummyLeagues.includes(league.id);
 
                           return (
                             <div key={league.id} className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md relative overflow-hidden group">
                               
                               <div className="flex-1 min-w-0 flex flex-col justify-center">
                                 <h4 className="text-lg font-black text-white uppercase tracking-wide italic mb-1 line-clamp-1">{league.name}</h4>
-                                <span className={`text-xs font-black uppercase tracking-wider ${isFull ? 'text-red-500' : 'text-green-500'}`}>
+                                <span className={`text-xs font-black uppercase tracking-wider ${isFull && !isJoinedLocal ? 'text-red-500' : 'text-green-500'}`}>
                                   {league.filled_spots} / {league.total_spots} Teams Filled
                                 </span>
                               </div>
 
                               <div className="shrink-0 w-full sm:w-auto">
-                                {isFull ? (
+                                {isJoinedLocal ? (
+                                  <a 
+                                    href="https://sleeper.com" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-gray-300 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-gray-700 transition-colors flex items-center justify-center gap-2"
+                                  >
+                                    <LogOut size={14} /> Leave League
+                                  </a>
+                                ) : isFull ? (
                                   <button disabled className="w-full sm:w-auto px-6 bg-gray-800 text-gray-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-gray-700 cursor-not-allowed">League Full</button>
                                 ) : hasNoEntriesLeft ? (
-                                  <button onClick={handlePurchaseExtraEntry} className="w-full sm:w-auto px-6 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 text-white font-black uppercase tracking-widest text-xs py-3 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2"><Coins size={14} /> Buy Entry</button>
+                                  <button onClick={handlePurchaseExtraEntry} className="w-full sm:w-auto px-6 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 text-white font-black uppercase tracking-widest text-xs py-3 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                                    <Ticket size={14} /> Buy Ticket
+                                  </button>
                                 ) : (
                                   <button 
                                     disabled={isProcessingEntry !== null}
                                     onClick={() => handleClaimSpot(league.id)}
                                     className="w-full sm:w-auto px-6 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black uppercase tracking-widest text-xs py-3 rounded-xl shadow-md transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
                                   >
-                                    {isProcessingEntry === league.id ? <Loader2 size={14} className="animate-spin" /> : <>Claim Team</>}
+                                    {isProcessingEntry === league.id ? <Loader2 size={14} className="animate-spin" /> : <>Join League</>}
                                   </button>
                                 )}
                               </div>
