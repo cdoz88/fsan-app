@@ -293,7 +293,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                 </div>
               )}
 
-              {/* ONLINE DIVISIONS TAB - DYNAMIC TICKETING */}
+              {/* ONLINE DIVISIONS TAB */}
               {activeTab === 'online' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
                   <div className="flex items-center gap-6 mb-8">
@@ -385,7 +385,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                                     rel="noopener noreferrer"
                                     className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-green-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-green-900/50 transition-colors flex items-center justify-center gap-2"
                                   >
-                                    <ExternalLink size={14} /> Go to Draft Room
+                                    <ExternalLink size={14} /> Go to League
                                   </a>
                                 ) : isFull ? (
                                   <button disabled className="w-full sm:w-auto px-6 bg-gray-800 text-gray-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-gray-700 cursor-not-allowed">League Full</button>
