@@ -351,7 +351,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                               You have <span className="text-[#f5a623]">{ticketsAvailable}</span> online draft ticket{ticketsAvailable !== 1 ? 's' : ''} available
                             </h3>
                           </div>
-                          {/* 🚀 Changed to a solid Teal to avoid double-gradients */}
                           <button onClick={handlePurchaseExtraEntry} className="shrink-0 w-full sm:w-auto bg-teal-600 hover:bg-teal-500 transition-colors text-white text-xs font-black uppercase tracking-widest px-6 py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:-translate-y-0.5">
                             <Ticket size={16} /> Buy More Tickets
                           </button>
@@ -366,7 +365,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                               A Pro+ account is required to enter Draft Night Out
                             </h3>
                           </div>
-                          {/* 🚀 Changed to a solid Blue to avoid double-gradients */}
                           <Link href="/subscribe" className="shrink-0 w-full sm:w-auto bg-[#1b75bb] hover:bg-[#155d96] transition-colors text-white text-xs font-black uppercase tracking-widest px-8 py-3.5 rounded-xl shadow-lg hover:-translate-y-0.5 flex items-center justify-center gap-2">
                             Upgrade
                           </Link>
@@ -478,20 +476,20 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                      <div className="bg-[#111] p-8 rounded-3xl border border-gray-800 flex flex-col items-center text-center shadow-lg hover:-translate-y-1 transition-transform">
                        <Medal className="text-gray-400 mb-4" size={40} />
                        <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">League Winners</h4>
-                       <p className="text-sm text-gray-400 leading-relaxed">Championship plaque provided by <strong className="text-white">Dynasty Decks</strong>.</p>
+                       <p className="text-sm text-gray-400 leading-relaxed">Mini Championship Belt from <strong className="text-white">TrophySmack</strong>.</p>
                      </div>
 
                      <div className="bg-[#111] p-8 rounded-3xl border border-gray-800 flex flex-col items-center text-center shadow-lg hover:-translate-y-1 transition-transform">
                        <Gift className="text-[#f5a623] mb-4" size={40} />
                        <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Overall Regular Season Champ</h4>
-                       <p className="text-sm text-gray-400 leading-relaxed">A <strong className="text-[#f5a623]">$75 Gift Card</strong> to the official FSAN Shop.</p>
+                       <p className="text-sm text-gray-400 leading-relaxed">Ultimate 6lb Custom Championship Belt from <strong className="text-[#f5a623]">TrophySmack</strong>.</p>
                      </div>
 
                      <div className="bg-gradient-to-b from-[#0a1220] to-[#111] p-8 rounded-3xl border border-[#1b75bb]/30 flex flex-col items-center text-center shadow-[0_0_30px_rgba(27,117,187,0.15)] hover:-translate-y-1 transition-transform relative overflow-hidden">
                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#1b75bb]/10 blur-2xl rounded-full"></div>
                        <Trophy className="text-yellow-500 mb-4 relative z-10" size={40} />
-                       <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2 relative z-10">Playoff Champion</h4>
-                       <p className="text-sm text-gray-300 leading-relaxed relative z-10">Championship plaque by <strong className="text-white">Dynasty Decks</strong> & Champ Chain by <strong className="text-white">TrophySmack</strong>!</p>
+                       <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2 relative z-10">Playoff Challenge Champion</h4>
+                       <p className="text-sm text-gray-300 leading-relaxed relative z-10">Playstation 5, Madden 2026, and championship ring from <strong className="text-white">TrophySmack</strong>!</p>
                      </div>
                   </div>
 
