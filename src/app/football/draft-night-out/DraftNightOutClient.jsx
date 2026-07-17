@@ -26,14 +26,9 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   // Dummy State to track joined test leagues for UI visualization
   const [joinedDummyLeagues, setJoinedDummyLeagues] = useState([]);
 
-  // Tab State & Styling
+  // Tab State
   const validTabs = ['live', 'online', 'leaderboard', 'prizes', 'rules', 'sponsors'];
   const [activeTab, setActiveTab] = useState('live');
-
-  // BRAND COLORS: Blue #1b75bb, Red #c30b16, Orange #f5a623
-  const activeTabStyle = "bg-gradient-to-r from-[#1b75bb] to-[#0d4a7a] text-white shadow-[0_0_15px_rgba(27,117,187,0.5)] border border-[#1b75bb]";
-  const inactiveTabStyle = "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 border border-transparent";
-  const dnoGradientBtn = "bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] hover:from-[#155d96] hover:via-[#a10912] hover:to-[#d9901c] text-white shadow-lg transition-transform hover:-translate-y-0.5 border border-transparent";
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -185,7 +180,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                 disabled={isProcessingEntry !== null}
                 className="w-full relative group p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5"
               >
-                <div className="bg-[#151515] hover:bg-[#1a1a1a] transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center gap-2 w-full h-full">
+                <div className="bg-[#151515] group-hover:bg-[#1a1a1a] transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center gap-2 w-full h-full">
                   {isProcessingEntry === confirmingLeague.id ? (
                     <Loader2 size={16} className="animate-spin text-white" />
                   ) : (
@@ -243,13 +238,29 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
 
             <div className="max-w-5xl mx-auto">
               
+              {/* TAB SWITCHER - DYNAMIC GRADIENT OUTLINES */}
               <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 py-2 mb-10 bg-[#151515] p-2 rounded-2xl border border-gray-800/50 w-fit mx-auto shadow-inner animate-in fade-in duration-500 delay-100">
-                 <button onClick={() => handleTabClick('live')} className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'live' ? activeTabStyle : inactiveTabStyle}`}><MapPin size={16} /> Live Events</button>
-                 <button onClick={() => handleTabClick('online')} className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'online' ? activeTabStyle : inactiveTabStyle}`}><MonitorSmartphone size={16} /> Online</button>
-                 <button onClick={() => handleTabClick('leaderboard')} className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'leaderboard' ? activeTabStyle : inactiveTabStyle}`}><ListOrdered size={16} /> Leaderboard</button>
-                 <button onClick={() => handleTabClick('prizes')} className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'prizes' ? activeTabStyle : inactiveTabStyle}`}><Trophy size={16} /> Prizes</button>
-                 <button onClick={() => handleTabClick('rules')} className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'rules' ? activeTabStyle : inactiveTabStyle}`}><BookOpen size={16} /> Rules</button>
-                 <button onClick={() => handleTabClick('sponsors')} className={`px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 ${activeTab === 'sponsors' ? activeTabStyle : inactiveTabStyle}`}><Handshake size={16} /> Sponsor</button>
+                {[
+                  { id: 'live', icon: MapPin, label: 'Live Events' },
+                  { id: 'online', icon: MonitorSmartphone, label: 'Online' },
+                  { id: 'leaderboard', icon: ListOrdered, label: 'Leaderboard' },
+                  { id: 'prizes', icon: Trophy, label: 'Prizes' },
+                  { id: 'rules', icon: BookOpen, label: 'Rules' },
+                  { id: 'sponsors', icon: Handshake, label: 'Sponsor' }
+                ].map(tab => {
+                  const Icon = tab.icon;
+                  return activeTab === tab.id ? (
+                    <button key={tab.id} onClick={() => handleTabClick(tab.id)} className="relative p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_15px_rgba(27,117,187,0.3)] transition-all">
+                      <div className="bg-[#151515] rounded-[10px] px-5 py-3 flex items-center gap-2 text-white font-black uppercase tracking-widest text-xs">
+                        <Icon size={16} /> {tab.label}
+                      </div>
+                    </button>
+                  ) : (
+                    <button key={tab.id} onClick={() => handleTabClick(tab.id)} className="px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 border border-transparent">
+                      <Icon size={16} /> {tab.label}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* LIVE EVENTS TAB */}
@@ -294,8 +305,10 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                       </div>
                       
                       <div className="mt-auto relative z-10">
-                        <a href="https://in-betweenmedia.com/product/draft-night-out-2026-tickets/" target="_blank" rel="noopener noreferrer" className={`w-full px-6 py-3.5 rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 ${dnoGradientBtn}`}>
-                          Get Canton Tickets <ExternalLink size={16} />
+                        <a href="https://in-betweenmedia.com/product/draft-night-out-2026-tickets/" target="_blank" rel="noopener noreferrer" className="w-full inline-block relative group p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5">
+                          <div className="bg-[#1a1a1a] group-hover:bg-[#222] transition-colors rounded-[10px] px-6 py-3.5 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">
+                            Get Canton Tickets <ExternalLink size={16} />
+                          </div>
                         </a>
                       </div>
                     </div>
@@ -333,8 +346,10 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                               You have <span className="text-[#f5a623]">{ticketsAvailable}</span> online draft ticket{ticketsAvailable !== 1 ? 's' : ''} available
                             </h3>
                           </div>
-                          <button onClick={handlePurchaseExtraEntry} className="shrink-0 w-full sm:w-auto bg-[#222] hover:bg-[#2a2a2a] text-white text-xs font-black uppercase tracking-widest px-6 py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-transform hover:-translate-y-0.5 border border-gray-700">
-                            <Ticket size={16} className="text-[#f5a623]" /> Buy More Tickets
+                          <button onClick={handlePurchaseExtraEntry} className="shrink-0 w-full sm:w-auto relative group p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-lg transition-transform hover:-translate-y-0.5">
+                            <div className="bg-[#151515] group-hover:bg-[#1a1a1a] transition-colors rounded-[10px] px-6 py-3 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">
+                              <Ticket size={16} className="text-[#f5a623]" /> Buy More Tickets
+                            </div>
                           </button>
                         </>
                       ) : (
@@ -347,8 +362,10 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                               A Pro+ account is required to enter Draft Night Out
                             </h3>
                           </div>
-                          <Link href="/subscribe" className={`shrink-0 w-full sm:w-auto px-8 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 ${dnoGradientBtn}`}>
-                            Upgrade
+                          <Link href="/subscribe" className="shrink-0 w-full sm:w-auto relative group p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-lg transition-transform hover:-translate-y-0.5">
+                            <div className="bg-[#151515] group-hover:bg-[#1a1a1a] transition-colors rounded-[10px] px-8 py-3.5 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">
+                              Upgrade
+                            </div>
                           </Link>
                         </>
                       )}
@@ -367,7 +384,11 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                             <Lock size={40} className="text-[#1b75bb] mb-4" />
                             <h4 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider mb-2">Pro+ Required</h4>
                             <p className="text-sm text-gray-300 mb-6 max-w-[280px] leading-relaxed">Upgrade to Pro+ to browse and claim your live Sleeper roster slots.</p>
-                            <Link href="/subscribe" className={`px-8 py-3.5 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${dnoGradientBtn}`}>Upgrade to Pro+</Link>
+                            <Link href="/subscribe" className="relative group p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-lg transition-transform hover:-translate-y-0.5 inline-block">
+                              <div className="bg-black group-hover:bg-gray-900 transition-colors rounded-[10px] px-8 py-3.5 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-sm">
+                                Upgrade to Pro+
+                              </div>
+                            </Link>
                         </div>
                     )}
 
@@ -410,13 +431,19 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                                 ) : isFull ? (
                                   <button disabled className="w-full sm:w-auto px-6 bg-gray-800 text-gray-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-gray-700 cursor-not-allowed">League Full</button>
                                 ) : hasNoEntriesLeft ? (
-                                  <button onClick={handlePurchaseExtraEntry} className="w-full sm:w-auto px-6 bg-gradient-to-r from-[#1b75bb] to-[#0f4673] hover:from-[#155d96] hover:to-[#0a3356] text-white font-black uppercase tracking-widest text-xs py-3 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2"><Coins size={14} className="text-[#f5a623]" /> Buy Ticket</button>
+                                  <button onClick={handlePurchaseExtraEntry} className="w-full sm:w-auto relative group p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-lg transition-transform hover:-translate-y-0.5">
+                                    <div className="bg-[#1a1a1a] group-hover:bg-[#222] transition-colors rounded-[10px] px-6 py-3 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">
+                                      <Coins size={14} className="text-[#f5a623]" /> Buy Ticket
+                                    </div>
+                                  </button>
                                 ) : (
                                   <button 
                                     onClick={() => setConfirmingLeague(league)}
-                                    className={`w-full sm:w-auto px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 ${dnoGradientBtn}`}
+                                    className="w-full sm:w-auto relative group p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-md transition-transform hover:-translate-y-0.5"
                                   >
-                                    Join League
+                                    <div className="bg-[#1a1a1a] group-hover:bg-[#222] transition-colors rounded-[10px] px-6 py-3 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">
+                                      Join League
+                                    </div>
                                   </button>
                                 )}
                               </div>
@@ -548,8 +575,10 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                         We are always looking to collaborate with brands and individuals who want to make Draft Night Out the ultimate fantasy football experience. Whether you're interested in location hosting, providing prize giveaways, donating raffle items, or exploring other partnership opportunities, we'd love to hear from you!
                       </p>
                       
-                      <a href="mailto:info@fsannetwork.com" className={`inline-flex items-center gap-2 px-8 py-4 rounded-xl text-xs font-black uppercase tracking-widest ${dnoGradientBtn}`}>
-                        <Mail size={16} /> Contact Us About Sponsorships
+                      <a href="mailto:info@fsannetwork.com" className="inline-block relative group p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5">
+                        <div className="bg-[#1a1a1a] group-hover:bg-[#222] transition-colors rounded-[10px] px-8 py-4 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">
+                          <Mail size={16} /> Contact Us About Sponsorships
+                        </div>
                       </a>
                     </div>
                   </div>
