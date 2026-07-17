@@ -26,9 +26,14 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   // Dummy State to track joined test leagues for UI visualization
   const [joinedDummyLeagues, setJoinedDummyLeagues] = useState([]);
 
-  // Tab State
+  // Tab State & Styling
   const validTabs = ['live', 'online', 'leaderboard', 'prizes', 'rules', 'sponsors'];
   const [activeTab, setActiveTab] = useState('live');
+
+  // BRAND COLORS: Blue #1b75bb, Red #c30b16, Orange #f5a623
+  const activeTabStyle = "bg-gradient-to-r from-[#1b75bb] to-[#0d4a7a] text-white shadow-[0_0_15px_rgba(27,117,187,0.5)] border border-[#1b75bb]";
+  const inactiveTabStyle = "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 border border-transparent";
+  const dnoGradientBtn = "bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] hover:from-[#155d96] hover:via-[#a10912] hover:to-[#d9901c] text-white shadow-lg transition-transform hover:-translate-y-0.5 border border-transparent";
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -346,10 +351,9 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                               You have <span className="text-[#f5a623]">{ticketsAvailable}</span> online draft ticket{ticketsAvailable !== 1 ? 's' : ''} available
                             </h3>
                           </div>
-                          <button onClick={handlePurchaseExtraEntry} className="shrink-0 w-full sm:w-auto relative group p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-lg transition-transform hover:-translate-y-0.5">
-                            <div className="bg-[#151515] group-hover:bg-[#1a1a1a] transition-colors rounded-[10px] px-6 py-3 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">
-                              <Ticket size={16} className="text-[#f5a623]" /> Buy More Tickets
-                            </div>
+                          {/* 🚀 Changed to a solid Teal to avoid double-gradients */}
+                          <button onClick={handlePurchaseExtraEntry} className="shrink-0 w-full sm:w-auto bg-teal-600 hover:bg-teal-500 transition-colors text-white text-xs font-black uppercase tracking-widest px-6 py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:-translate-y-0.5">
+                            <Ticket size={16} /> Buy More Tickets
                           </button>
                         </>
                       ) : (
@@ -362,10 +366,9 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                               A Pro+ account is required to enter Draft Night Out
                             </h3>
                           </div>
-                          <Link href="/subscribe" className="shrink-0 w-full sm:w-auto relative group p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-lg transition-transform hover:-translate-y-0.5">
-                            <div className="bg-[#151515] group-hover:bg-[#1a1a1a] transition-colors rounded-[10px] px-8 py-3.5 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">
-                              Upgrade
-                            </div>
+                          {/* 🚀 Changed to a solid Blue to avoid double-gradients */}
+                          <Link href="/subscribe" className="shrink-0 w-full sm:w-auto bg-[#1b75bb] hover:bg-[#155d96] transition-colors text-white text-xs font-black uppercase tracking-widest px-8 py-3.5 rounded-xl shadow-lg hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                            Upgrade
                           </Link>
                         </>
                       )}
