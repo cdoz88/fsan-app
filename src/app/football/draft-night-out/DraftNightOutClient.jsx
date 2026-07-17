@@ -65,9 +65,9 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
         };
         const dummyLeague2 = {
           id: 'dummy_test_league_2',
-          name: 'FSAN Test War Room 2',
+          name: 'FSAN Test War Room 2 (Full)',
           total_spots: 12,
-          filled_spots: 11
+          filled_spots: 12
         };
 
         setLeagues([dummyLeague1, dummyLeague2, ...(data.leagues || [])]);
@@ -140,11 +140,19 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
 
   const ticketsAvailable = Math.max(0, allottedEntries - userJoinedCount);
 
+  // Sort leagues so open ones appear first
+  const sortedLeagues = [...leagues].sort((a, b) => {
+    const isFullA = a.filled_spots >= a.total_spots;
+    const isFullB = b.filled_spots >= b.total_spots;
+    if (isFullA === isFullB) return 0;
+    return isFullA ? 1 : -1;
+  });
+
   return (
     <>
       <Header activeSport="Football" />
       
-      {/* 🚀 REDESIGNED CONFIRMATION MODAL */}
+      {/* CONFIRMATION MODAL */}
       {confirmingLeague && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-[#151515] border border-gray-800 rounded-3xl max-w-md w-full shadow-2xl relative flex flex-col">
@@ -204,10 +212,26 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
         <div className="flex-1 w-full min-w-0 pt-6">
           <main className="w-full animate-in fade-in duration-500">
             
-            <div className="relative w-full h-[260px] md:h-[300px] flex items-end overflow-hidden rounded-2xl mb-10 shadow-2xl bg-gray-900">
-              <div className="absolute inset-0 opacity-80 z-0" style={{ background: `linear-gradient(135deg, #e42d38 0%, #8a1a20 100%)` }} />
+            {/* HERO BANNER - REDESIGNED WITH IMAGES */}
+            <div className="relative w-full h-[260px] md:h-[300px] flex items-end overflow-hidden rounded-2xl mb-10 shadow-2xl bg-[#0a0a0a]">
+              
+              {/* Main Background Image */}
+              <div 
+                className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-60" 
+                style={{ backgroundImage: `url('https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Background.webp')` }} 
+              />
+              
+              {/* Large Faded Right-Aligned Logo */}
+              <img 
+                src="https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp"
+                alt="Draft Night Out Logo"
+                className="absolute -right-10 md:right-4 top-1/2 -translate-y-1/2 w-[280px] md:w-[380px] h-auto object-contain opacity-20 md:opacity-40 z-0 pointer-events-none mix-blend-plus-lighter drop-shadow-2xl"
+              />
+
+              {/* Gradients to keep text readable */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent z-0" />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#121212]/50 to-transparent z-0" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#121212]/90 via-[#121212]/50 to-transparent z-0 md:w-2/3" />
+              
               <div className="relative z-10 w-full flex flex-col items-start justify-end h-full px-6 md:px-10 pb-8">
                 <span className="inline-block py-1 px-3 rounded-full bg-red-600/20 border border-red-500/30 text-red-400 font-bold text-[10px] uppercase tracking-widest mb-3 backdrop-blur-sm">
                   The Biggest Fantasy Hang of the Year
@@ -360,7 +384,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                       <div className="w-full bg-[#151515] rounded-2xl p-12 text-center border border-gray-800 text-gray-500 text-sm font-bold uppercase tracking-widest">No active divisions found in database. Check back soon!</div>
                     ) : (
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {leagues.map((league) => {
+                        {sortedLeagues.map((league) => {
                           const openSpots = Math.max(0, league.total_spots - league.filled_spots);
                           const isFull = openSpots === 0;
                           const hasNoEntriesLeft = ticketsAvailable === 0;
