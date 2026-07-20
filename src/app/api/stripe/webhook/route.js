@@ -16,7 +16,7 @@ export async function POST(req) {
   try {
     const body = await req.text();
     
-    // FIX: Use standard web Request headers instead of the async next/headers API
+    // Use standard web Request headers instead of the async next/headers API
     const signature = req.headers.get('stripe-signature');
 
     if (!signature) {
@@ -46,7 +46,41 @@ export async function POST(req) {
 
       // Get the WordPress User ID we secretly passed during checkout
       const wpUserId = parseInt(session.metadata.wpUserId, 10);
-      
+
+      // 🚀 NEW LOGIC: Handle DNO Extra Ticket Purchases
+      if (session.metadata.purchaseType === 'dno_extra_ticket') {
+        const query = `
+          mutation AddDnoTicket {
+            addDnoTicket(
+              input: {
+                userId: ${wpUserId}, 
+                amount: 1, 
+                secret: "fsan_super_secret_webhook_key_2026"
+              }
+            ) {
+              success
+            }
+          }
+        `;
+
+        const wpRes = await fetch('https://admin.fsan.com/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query }),
+        });
+
+        const wpJson = await wpRes.json();
+
+        if (wpJson.errors) {
+          console.error("WordPress failed to add DNO ticket:", wpJson.errors);
+          return NextResponse.json({ error: 'Failed to update WP DNO tickets' }, { status: 500 });
+        }
+
+        console.log(`Successfully added 1 DNO ticket to WP User ${wpUserId}`);
+        return NextResponse.json({ received: true }, { status: 200 });
+      }
+
+      // 🚀 EXISTING LOGIC: Handle Subscription Upgrades
       // Retrieve the session line items to figure out exactly what they bought
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
       const purchasedPriceId = lineItems.data[0]?.price?.id;

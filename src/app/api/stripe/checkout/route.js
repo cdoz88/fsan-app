@@ -1,24 +1,28 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../../auth/[...nextauth]/route";
 
 // Initialize Stripe securely using our environment variable
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function POST(req) {
   try {
-    const { priceId, userId, userEmail } = await req.json();
+    // Securely get the user session on the server
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json({ error: 'Unauthorized. Please log in.' }, { status: 401 });
+    }
+
+    const { priceId } = await req.json();
 
     if (!priceId) {
       return NextResponse.json({ error: 'Price ID is required' }, { status: 400 });
     }
-    
-    // Safety Net: Catch a missing User ID before it even goes to Stripe
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is missing from session' }, { status: 400 });
-    }
 
     // Create a Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create({
+    const stripeSession = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
         {
@@ -26,19 +30,20 @@ export async function POST(req) {
           quantity: 1,
         },
       ],
-      mode: 'subscription',
-      allow_promotion_codes: true, // <--- This enables the coupon input box
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/account?checkout=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/subscribe?checkout=canceled`,
-      customer_email: userEmail,
-      client_reference_id: String(userId), // Stripe prefers this as a string
+      mode: 'payment', // Changed to 'payment' since this is a one-time ticket, not a subscription
+      allow_promotion_codes: true, 
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/football/draft-night-out?checkout=success`, // Send them right back to the lobby
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/football/draft-night-out?checkout=canceled`,
+      customer_email: session.user.email,
+      client_reference_id: String(session.user.id), 
       metadata: {
-        wpUserId: String(userId), // Stripe strictly requires metadata to be strings
+        wpUserId: String(session.user.id), 
+        purchaseType: 'dno_extra_ticket'
       }
     });
 
     // Return the secure Stripe URL to the frontend
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: stripeSession.url });
   } catch (err) {
     console.error('Stripe Error:', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
