@@ -33,7 +33,7 @@ const Club200SVG = () => (
   </svg>
 );
 
-export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams: [], available_weeks: [], winners_registry: {} } } }) {
+export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams: [], available_weeks: [], winners_registry: {} } }, overrideSeasonLabel }) {
   const [overallTeams, setOverallTeams] = useState(initialLeaderboard.data?.teams || []);
   const [activeTeams, setActiveTeams] = useState(initialLeaderboard.data?.teams || []);
   const [winnersRegistry, setWinnersRegistry] = useState(initialLeaderboard.data?.winners_registry || {});
@@ -48,12 +48,29 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
 
   const [activeHistoryAward, setActiveHistoryAward] = useState(null);
 
+  // Sync internal states dynamically if parent pushes fresh leaderboard updates
+  useEffect(() => {
+    if (initialLeaderboard?.data?.teams) {
+      setOverallTeams(initialLeaderboard.data.teams);
+      if (currentWeek === 'overall') {
+        setActiveTeams(initialLeaderboard.data.teams);
+      }
+    }
+    if (initialLeaderboard?.data?.available_weeks) {
+      setAvailableWeeks(initialLeaderboard.data.available_weeks);
+    }
+    if (initialLeaderboard?.data?.winners_registry) {
+      setWinnersRegistry(initialLeaderboard.data.winners_registry);
+    }
+  }, [initialLeaderboard, currentWeek]);
+
+  // Initial mount fetch to populate arrays (Using the correct DNO endpoints!)
   useEffect(() => {
     if (availableWeeks.length > 0) return;
     const fetchMeta = async () => {
       setLoading(true);
       try {
-        const res = await fetch('/api/scl?action=scl_get_leaderboard_data');
+        const res = await fetch(`/api/scl?action=dno_get_leaderboard_data&t=${Date.now()}`);
         const json = await res.json();
         const data = json.data;
         if (data?.available_weeks) setAvailableWeeks(data.available_weeks);
@@ -68,7 +85,8 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
     setLoading(true); setCurrentWeek(week);
     if (week === 'overall') { setActiveTeams(overallTeams); setLoading(false); return; }
     try {
-      const res = await fetch(`/api/scl?action=scl_get_weekly_data&week=${week}`);
+      // Pointed to correct DNO action with cache busting
+      const res = await fetch(`/api/scl?action=dno_get_weekly_data&week=${week}&t=${Date.now()}`);
       const result = await res.json();
       if (result.success && result.data?.teams) setActiveTeams(result.data.teams);
     } catch (err) { console.error('Weekly sync failed'); } finally { setLoading(false); }
@@ -79,7 +97,8 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
     if (!team) return;
     setSelectedTeam(team); setModalLoading(true); setModalData(null);
     try {
-      const res = await fetch(`/api/scl?action=scl_get_user_details&user_id=${team.ownerId}&league_id=${team.leagueId}`);
+      // Pointed to correct DNO action with cache busting
+      const res = await fetch(`/api/scl?action=dno_get_user_details&user_id=${team.ownerId}&league_id=${team.leagueId}&t=${Date.now()}`);
       const json = await res.json();
       if (json.success) setModalData(json.data);
     } catch (err) { console.error('Manager lookup failed'); } finally { setModalLoading(false); }
@@ -101,7 +120,10 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
       
       <div className="p-4 md:p-6 border-b border-gray-800 bg-[#151515] flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-           <h2 className="text-xl font-black uppercase tracking-wider text-white mr-4 whitespace-nowrap">2025-2026 Season</h2>
+           {/* Dynamic Season Label injected here */}
+           <h2 className="text-xl font-black uppercase tracking-wider text-white mr-4 whitespace-nowrap">
+             {overrideSeasonLabel || initialLeaderboard?.data?.season_label || "2026 Season"}
+           </h2>
            <div className="relative w-full md:w-48">
              <select 
                value={currentWeek} 
