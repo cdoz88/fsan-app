@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Header from '../../../components/Header';
@@ -9,23 +9,29 @@ import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle
 import { useSession } from 'next-auth/react';
 
 // 🚀 ISOLATED SUCCESS TOAST COMPONENT
-// Wrapping useSearchParams in a separate component allows us to use <Suspense> 
-// so the Vercel build doesn't crash during static generation.
-function SuccessToast() {
+function SuccessToast({ setActiveTab, loadDnoPool, isAuthed }) {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   useEffect(() => {
     if (searchParams?.get('checkout') === 'success') {
       setShowSuccessToast(true);
-      // Clean up the URL to prevent the toast from showing again on refresh
-      router.replace('/football/draft-night-out', { scroll: false });
       
-      // Auto-hide the toast after 8 seconds so they have time to read the disclaimer
+      // 1. Force the user to the Online tab where their tickets are
+      setActiveTab('online');
+      
+      // 2. Instantly wipe the ?checkout=success parameter from the browser so it never gets stuck
+      window.history.replaceState(null, '', window.location.pathname + '#online');
+      
+      // 3. Auto-hide the toast after 8 seconds
       setTimeout(() => setShowSuccessToast(false), 8000);
+
+      // 4. Wait 3 seconds for the Stripe Webhook to update the WP database, then silently fetch the new ticket count!
+      setTimeout(() => {
+         if (isAuthed) loadDnoPool();
+      }, 3000);
     }
-  }, [searchParams, router]);
+  }, [searchParams, setActiveTab, loadDnoPool, isAuthed]);
 
   if (!showSuccessToast) return null;
 
@@ -80,6 +86,12 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   const inactiveTabStyle = "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 border border-transparent";
   const dnoGradientBtn = "bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] hover:from-[#155d96] hover:via-[#a10912] hover:to-[#d9901c] text-white shadow-lg transition-transform hover:-translate-y-0.5 border border-transparent";
 
+  const handleTabClick = (tabId) => {
+    setActiveTab(tabId);
+    // Use replaceState to ensure query strings are stripped when navigating tabs manually
+    window.history.replaceState(null, '', window.location.pathname + `#${tabId}`);
+  };
+
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
@@ -92,34 +104,30 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const handleTabClick = (tabId) => {
-    setActiveTab(tabId);
-    window.history.pushState(null, '', `#${tabId}`);
-  };
+  // Wrapped in useCallback so we can pass it securely to the SuccessToast
+  const loadDnoPool = useCallback(async () => {
+    try {
+      const res = await fetch('/api/scl?type=dno_pool');
+      if (!res.ok) throw new Error("Could not reach DNO matrix");
+      const data = await res.json();
+
+      setLeagues(data.leagues || []);
+      setUserJoinedCount(data.user_joined_count || 0);
+      setAllottedEntries(data.allotted_entries || 1);
+    } catch (err) {
+      console.warn("Failed syncing live DNO array: ", err);
+    } finally {
+      setLoadingLeagues(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const loadDnoPool = async () => {
-      try {
-        const res = await fetch('/api/scl?type=dno_pool');
-        if (!res.ok) throw new Error("Could not reach DNO matrix");
-        const data = await res.json();
-
-        setLeagues(data.leagues || []);
-        setUserJoinedCount(data.user_joined_count || 0);
-        setAllottedEntries(data.allotted_entries || 1);
-      } catch (err) {
-        console.warn("Failed syncing live DNO array: ", err);
-      } finally {
-        setLoadingLeagues(false);
-      }
-    };
-
     if (isAuthed) {
       loadDnoPool();
     } else {
       setLoadingLeagues(false);
     }
-  }, [isAuthed]);
+  }, [isAuthed, loadDnoPool]);
 
   const handleClaimSpot = async (leagueId) => {
     setIsProcessingEntry(leagueId);
@@ -179,7 +187,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
       
       {/* 🚀 Render the success toast safely wrapped in Suspense */}
       <Suspense fallback={null}>
-        <SuccessToast />
+        <SuccessToast setActiveTab={setActiveTab} loadDnoPool={loadDnoPool} isAuthed={isAuthed} />
       </Suspense>
 
       {/* CONFIRMATION MODAL */}
