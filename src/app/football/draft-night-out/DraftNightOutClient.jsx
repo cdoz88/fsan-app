@@ -108,7 +108,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId: 'price_1Tv8VeBaSOn1la2fIytAwZZ7' })
+        body: JSON.stringify({ priceId: 'price_1Tv8ANBaSOn1la2fsYurqR32' })
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
