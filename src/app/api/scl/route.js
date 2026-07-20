@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../auth/[...nextauth]/route'; // Ensure your import path matches your project structure
+import { authOptions } from '../auth/[...nextauth]/route'; 
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -14,8 +14,8 @@ export async function GET(request) {
 
   try {
     if (type === 'dno_pool') {
-      // 🚀 Redirect to the precise WordPress AJAX action we just built
-      const wpUrl = `https://admin.fsan.com/wp-admin/admin-ajax.php?action=dno_get_leagues_pool`;
+      // 🚀 FIX: Append the user_id to the WP URL so WordPress knows whose live tickets to fetch!
+      const wpUrl = `https://admin.fsan.com/wp-admin/admin-ajax.php?action=dno_get_leagues_pool&user_id=${session.user.id}&t=${Date.now()}`;
       const res = await fetch(wpUrl, { cache: 'no-store' });
       const wpData = await res.json();
 
@@ -31,9 +31,9 @@ export async function GET(request) {
         filled_spots: l.filled_spots || 0
       }));
 
-      // Pull user specific tokens/entries from database (mock values; hook to user record columns)
-      const userJoinedCount = session.user?.dno_joined_count || 0;
-      const allottedEntries = session.user?.dno_allotted_entries || 1; 
+      // 🚀 FIX: Read the LIVE ticket count directly from the WordPress database response instead of the stale session
+      const userJoinedCount = wpData.data.user_joined_count || 0;
+      const allottedEntries = wpData.data.allotted_entries || 1; 
 
       return NextResponse.json({
         leagues: sanitizedLeagues,
@@ -70,21 +70,22 @@ export async function POST(request) {
     if (url.pathname.endsWith('/claim-spot')) {
       const { leagueId } = await request.json();
       
-      const userJoinedCount = session.user?.dno_joined_count || 0;
-      const allottedEntries = session.user?.dno_allotted_entries || 1;
-
-      // Restrict access if user ledger is exhausted
-      if (userJoinedCount >= allottedEntries) {
-        return NextResponse.json({ success: false, message: 'No available entries remaining. Purchase an additional entry token to continue!' }, { status: 403 });
-      }
-
-      // Securely fetch original raw league options stack from WordPress options
-      const wpUrl = `https://admin.fsan.com/wp-admin/admin-ajax.php?action=dno_get_leagues_pool`;
+      // Securely fetch original raw league options stack AND the user's live ticket count
+      const wpUrl = `https://admin.fsan.com/wp-admin/admin-ajax.php?action=dno_get_leagues_pool&user_id=${session.user.id}&t=${Date.now()}`;
       const wpRes = await fetch(wpUrl, { cache: 'no-store' });
       const wpData = await wpRes.json();
 
       if (!wpData.success || !wpData.data) {
         return NextResponse.json({ success: false, message: 'DNO configurations unavailable.' }, { status: 500 });
+      }
+
+      // 🚀 FIX: Use LIVE ticket counts for the gate validation
+      const userJoinedCount = wpData.data.user_joined_count || 0;
+      const allottedEntries = wpData.data.allotted_entries || 1;
+
+      // Restrict access if user ledger is exhausted
+      if (userJoinedCount >= allottedEntries) {
+        return NextResponse.json({ success: false, message: 'No available entries remaining. Purchase an additional entry token to continue!' }, { status: 403 });
       }
 
       const targetedLeague = wpData.data.leagues.find(l => l.id === leagueId);
