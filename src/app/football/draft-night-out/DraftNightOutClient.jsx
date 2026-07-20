@@ -23,13 +23,16 @@ function SuccessToast({ setActiveTab, loadDnoPool, isAuthed }) {
       // 2. Instantly wipe the ?checkout=success parameter from the browser so it never gets stuck
       window.history.replaceState(null, '', window.location.pathname + '#online');
       
-      // 3. Auto-hide the toast after 8 seconds
-      setTimeout(() => setShowSuccessToast(false), 8000);
+      // Removed auto-hide timer - Toast will stay until user clicks 'X'
 
-      // 4. Wait 3 seconds for the Stripe Webhook to update the WP database, then silently fetch the new ticket count!
+      // 3. Webhook takes a moment to process. Fetch updated ticket counts at 3s and 7s marks.
       setTimeout(() => {
          if (isAuthed) loadDnoPool();
       }, 3000);
+      
+      setTimeout(() => {
+         if (isAuthed) loadDnoPool();
+      }, 7000);
     }
   }, [searchParams, setActiveTab, loadDnoPool, isAuthed]);
 
@@ -107,7 +110,8 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   // Wrapped in useCallback so we can pass it securely to the SuccessToast
   const loadDnoPool = useCallback(async () => {
     try {
-      const res = await fetch('/api/scl?type=dno_pool');
+      // 🚀 Added cache-busting timestamp and no-store so Next.js doesn't serve old ticket counts
+      const res = await fetch(`/api/scl?type=dno_pool&t=${Date.now()}`, { cache: 'no-store' });
       if (!res.ok) throw new Error("Could not reach DNO matrix");
       const data = await res.json();
 
