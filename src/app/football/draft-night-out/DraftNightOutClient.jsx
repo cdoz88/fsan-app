@@ -72,8 +72,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   const [isProcessingEntry, setIsProcessingEntry] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   
-  // 🚀 LIVE LEADERBOARD OVERRIDES
-  // Client-side states to overwrite stale pre-rendered data with live plugin data
+  // LIVE LEADERBOARD OVERRIDES
   const [liveLeaderboard, setLiveLeaderboard] = useState(initialLeaderboard || { teams: [] });
   const [liveSeasonLabel, setLiveSeasonLabel] = useState("2025-2026 SEASON");
 
@@ -169,7 +168,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
         setUserJoinedCount(prev => prev + 1);
         setRecentlyJoinedLeagues(prev => [...prev, leagueId]);
         window.open(data.invite_link, '_blank');
-        // Refresh live data so newly claimed spots instantly lock in numbers
         loadLiveLeaderboard();
       } else {
         setErrorMessage(data.message || 'Could not claim roster spot. Please try again.');
@@ -521,7 +519,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
               {/* LEADERBOARD TAB */}
               {activeTab === 'leaderboard' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  {/* 🚀 FIXED: We now pass our custom client-side override states straight to the leaderboard renderer */}
                   <NapkinLeaderboard 
                     initialLeaderboard={liveLeaderboard} 
                     overrideSeasonLabel={liveSeasonLabel}
@@ -590,8 +587,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                              <li className="flex gap-3 items-center"><span className="text-[#1b75bb] font-black text-lg">1.</span> Be Cool.</li>
                              <li className="flex gap-3 items-center"><span className="text-[#1b75bb] font-black text-lg">2.</span> Must be over 18 to play.</li>
                              <li className="flex gap-3 items-center"><span className="text-[#1b75bb] font-black text-lg">3.</span> No Colluding.</li>
-                             <li className="flex gap-3 items-center"><span className="text-[#1b75bb] font-black text-lg">4.</span> Max 5 Teams per Owner.</li>
-                             <li className="flex gap-3 items-center"><span className="text-[#1b75bb] font-black text-lg">5.</span> Max 1 Team per League.</li>
+                             <li className="flex gap-3 items-center"><span className="text-[#1b75bb] font-black text-lg">4.</span> Max 1 Team per League.</li>
                            </ul>
                         </div>
 
@@ -601,21 +597,19 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                              <li className="flex gap-3 items-center"><span className="text-[#f5a623] font-black text-lg">•</span> Hosted on Sleeper App</li>
                              <li className="flex gap-3 items-center"><span className="text-[#f5a623] font-black text-lg">•</span> 12 Teams Per League</li>
                              <li className="flex gap-3 items-center"><span className="text-[#f5a623] font-black text-lg">•</span> Randomized Pick Order</li>
-                             <li className="flex gap-3 items-center"><span className="text-[#f5a623] font-black text-lg">•</span> Slow Draft, Snake format</li>
-                             <li className="flex gap-3 items-center"><span className="text-[#f5a623] font-black text-lg">•</span> 8 Hour Pick Clock (Off 12p-10a ET)</li>
-                             <li className="flex gap-3 items-center"><span className="text-[#f5a623] font-black text-lg">•</span> Draft starts once league fills</li>
+                             <li className="flex gap-3 items-center"><span className="text-[#f5a623] font-black text-lg">•</span> Snake Draft</li>
                            </ul>
                         </div>
 
                         <div className="bg-[#111] rounded-2xl p-6 border border-gray-800 shadow-inner">
                            <h3 className="text-lg font-black uppercase tracking-widest text-gray-300 mb-6 border-b border-gray-800 pb-3">Scoring & Format</h3>
                            <ul className="space-y-4 text-sm text-gray-400 font-medium">
-                             <li className="flex gap-3 items-start"><span className="text-[#f5a623] font-black text-lg leading-none mt-1">»</span> <span className="pt-0.5">PPR PPFD "Big Plays"</span></li>
-                             <li className="flex gap-3 items-start"><span className="text-[#f5a623] font-black text-lg leading-none mt-1">»</span> <span className="pt-0.5">Start: 1QB 2RB 3WR 1TE 1FLEX 1DST</span></li>
-                             <li className="flex gap-3 items-start"><span className="text-[#f5a623] font-black text-lg leading-none mt-1">»</span> <span className="pt-0.5">Bench: 5 Players (Plus 1 IR)</span></li>
+                             <li className="flex gap-3 items-start"><span className="text-[#f5a623] font-black text-lg leading-none mt-1">»</span> <span className="pt-0.5">PPR</span></li>
+                             <li className="flex gap-3 items-start"><span className="text-[#f5a623] font-black text-lg leading-none mt-1">»</span> <span className="pt-0.5">Start: 1 QB 2 RB 3 WR 1 TE 3 FLEX 1 DST</span></li>
+                             <li className="flex gap-3 items-start"><span className="text-[#f5a623] font-black text-lg leading-none mt-1">»</span> <span className="pt-0.5">Bench: 8 Players plus 1 IR</span></li>
                              <li className="flex gap-3 items-start"><span className="text-[#f5a623] font-black text-lg leading-none mt-1">»</span> <span className="pt-0.5">Playoffs: Top 4 advance in Wk 15</span></li>
                              <li className="flex gap-3 items-start"><span className="text-[#f5a623] font-black text-lg leading-none mt-1">»</span> <span className="pt-0.5">Two-Week Championship (Wks 16 & 17)</span></li>
-                             <li className="flex gap-3 items-start"><span className="text-[#f5a623] font-black text-lg leading-none mt-1">»</span> <span className="pt-0.5">Winner: Most points among league champs</span></li>
+                             <li className="flex gap-3 items-start"><span className="text-[#f5a623] font-black text-lg leading-none mt-1">»</span> <span className="pt-0.5">League winner advances to the Playoff Challenge</span></li>
                            </ul>
                         </div>
 
