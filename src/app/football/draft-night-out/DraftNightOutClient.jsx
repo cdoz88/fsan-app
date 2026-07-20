@@ -23,8 +23,8 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   // Confirmation Popup State
   const [confirmingLeague, setConfirmingLeague] = useState(null);
 
-  // Dummy State to track joined test leagues for UI visualization
-  const [joinedDummyLeagues, setJoinedDummyLeagues] = useState([]);
+  // State to visually flip the button to "Go to League" for leagues joined this session
+  const [recentlyJoinedLeagues, setRecentlyJoinedLeagues] = useState([]);
 
   // Tab State & Styling
   const validTabs = ['live', 'online', 'leaderboard', 'prizes', 'rules', 'sponsors'];
@@ -58,21 +58,8 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
         const res = await fetch('/api/scl?type=dno_pool');
         if (!res.ok) throw new Error("Could not reach DNO matrix");
         const data = await res.json();
-        
-        const dummyLeague1 = {
-          id: 'dummy_test_league_1',
-          name: 'FSAN Test War Room 1',
-          total_spots: 12,
-          filled_spots: 8
-        };
-        const dummyLeague2 = {
-          id: 'dummy_test_league_2',
-          name: 'FSAN Test War Room 2 (Full)',
-          total_spots: 12,
-          filled_spots: 12
-        };
 
-        setLeagues([dummyLeague1, dummyLeague2, ...(data.leagues || [])]);
+        setLeagues(data.leagues || []);
         setUserJoinedCount(data.user_joined_count || 0);
         setAllottedEntries(data.allotted_entries || 1);
       } catch (err) {
@@ -93,17 +80,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     setIsProcessingEntry(leagueId);
     setErrorMessage('');
 
-    if (leagueId.includes('dummy_test_league')) {
-      setTimeout(() => {
-        setUserJoinedCount(prev => prev + 1);
-        setJoinedDummyLeagues(prev => [...prev, leagueId]);
-        window.open('https://sleeper.com/i/fsantestdummy', '_blank');
-        setIsProcessingEntry(null);
-        setConfirmingLeague(null);
-      }, 1000);
-      return;
-    }
-
     try {
       const res = await fetch('/api/scl/claim-spot', {
         method: 'POST',
@@ -114,6 +90,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
 
       if (data.success && data.invite_link) {
         setUserJoinedCount(prev => prev + 1);
+        setRecentlyJoinedLeagues(prev => [...prev, leagueId]);
         window.open(data.invite_link, '_blank');
       } else {
         setErrorMessage(data.message || 'Could not claim roster spot. Please try again.');
@@ -407,7 +384,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                           const isFull = openSpots === 0;
                           const hasNoEntriesLeft = ticketsAvailable === 0;
                           
-                          const isJoinedLocal = joinedDummyLeagues.includes(league.id);
+                          const isJoinedLocal = recentlyJoinedLeagues.includes(league.id);
 
                           return (
                             <div key={league.id} className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md relative overflow-hidden group">
