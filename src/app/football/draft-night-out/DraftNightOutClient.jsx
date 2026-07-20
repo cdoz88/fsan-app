@@ -23,9 +23,7 @@ function SuccessToast({ setActiveTab, loadDnoPool, isAuthed }) {
       // 2. Instantly wipe the ?checkout=success parameter from the browser so it never gets stuck
       window.history.replaceState(null, '', window.location.pathname + '#online');
       
-      // Removed auto-hide timer - Toast will stay until user clicks 'X'
-
-      // 3. Webhook takes a moment to process. Fetch updated ticket counts at 3s and 7s marks.
+      // Webhook takes a moment to process. Fetch updated ticket counts at 3s and 7s marks.
       setTimeout(() => {
          if (isAuthed) loadDnoPool();
       }, 3000);
@@ -74,6 +72,11 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   const [isProcessingEntry, setIsProcessingEntry] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   
+  // 🚀 LIVE LEADERBOARD OVERRIDES
+  // Client-side states to overwrite stale pre-rendered data with live plugin data
+  const [liveLeaderboard, setLiveLeaderboard] = useState(initialLeaderboard || { teams: [] });
+  const [liveSeasonLabel, setLiveSeasonLabel] = useState("2025-2026 SEASON");
+
   // Confirmation Popup State
   const [confirmingLeague, setConfirmingLeague] = useState(null);
 
@@ -91,7 +94,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
 
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
-    // Use replaceState to ensure query strings are stripped when navigating tabs manually
     window.history.replaceState(null, '', window.location.pathname + `#${tabId}`);
   };
 
@@ -110,7 +112,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   // Wrapped in useCallback so we can pass it securely to the SuccessToast
   const loadDnoPool = useCallback(async () => {
     try {
-      // 🚀 Added cache-busting timestamp and no-store so Next.js doesn't serve old ticket counts
       const res = await fetch(`/api/scl?type=dno_pool&t=${Date.now()}`, { cache: 'no-store' });
       if (!res.ok) throw new Error("Could not reach DNO matrix");
       const data = await res.json();
@@ -125,13 +126,32 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     }
   }, []);
 
+  // Fetch completely fresh live leaderboard data directly from WordPress to clear stale data
+  const loadLiveLeaderboard = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/scl?action=dno_get_leaderboard_data&t=${Date.now()}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error("Could not fetch leaderboard action");
+      const json = await res.json();
+      
+      if (json.success && json.data) {
+        setLiveLeaderboard(json.data);
+        if (json.data.season_label) {
+          setLiveSeasonLabel(json.data.season_label.toUpperCase());
+        }
+      }
+    } catch (err) {
+      console.warn("Failed loading live initialization data arrays: ", err);
+    }
+  }, []);
+
   useEffect(() => {
+    loadLiveLeaderboard();
     if (isAuthed) {
       loadDnoPool();
     } else {
       setLoadingLeagues(false);
     }
-  }, [isAuthed, loadDnoPool]);
+  }, [isAuthed, loadDnoPool, loadLiveLeaderboard]);
 
   const handleClaimSpot = async (leagueId) => {
     setIsProcessingEntry(leagueId);
@@ -149,6 +169,8 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
         setUserJoinedCount(prev => prev + 1);
         setRecentlyJoinedLeagues(prev => [...prev, leagueId]);
         window.open(data.invite_link, '_blank');
+        // Refresh live data so newly claimed spots instantly lock in numbers
+        loadLiveLeaderboard();
       } else {
         setErrorMessage(data.message || 'Could not claim roster spot. Please try again.');
       }
@@ -165,8 +187,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Updated to use the Stripe test product ID
-        body: JSON.stringify({ priceId: 'price_1Tv8ANBaSOn1la2fsYurqR32' })
+        body: JSON.stringify({ priceId: 'price_1Tv8VeBaSOn1la2fIytAwZZ7' })
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
@@ -189,7 +210,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     <>
       <Header activeSport="Football" />
       
-      {/* 🚀 Render the success toast safely wrapped in Suspense */}
+      {/* Render the success toast safely wrapped in Suspense */}
       <Suspense fallback={null}>
         <SuccessToast setActiveTab={setActiveTab} loadDnoPool={loadDnoPool} isAuthed={isAuthed} />
       </Suspense>
@@ -500,7 +521,11 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
               {/* LEADERBOARD TAB */}
               {activeTab === 'leaderboard' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <NapkinLeaderboard initialLeaderboard={initialLeaderboard} />
+                  {/* 🚀 FIXED: We now pass our custom client-side override states straight to the leaderboard renderer */}
+                  <NapkinLeaderboard 
+                    initialLeaderboard={liveLeaderboard} 
+                    overrideSeasonLabel={liveSeasonLabel}
+                  />
                 </div>
               )}
 
