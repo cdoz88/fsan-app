@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
@@ -12,6 +13,9 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   const isAuthed = status === 'authenticated';
   const isProPlus = session?.user?.tier === 'pro-plus';
   
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
   // DNO Live Sync States
   const [leagues, setLeagues] = useState([]);
   const [loadingLeagues, setLoadingLeagues] = useState(true);
@@ -22,6 +26,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   
   // Confirmation Popup State
   const [confirmingLeague, setConfirmingLeague] = useState(null);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   // State to visually flip the button to "Go to League" for leagues joined this session
   const [recentlyJoinedLeagues, setRecentlyJoinedLeagues] = useState([]);
@@ -34,6 +39,18 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   const activeTabStyle = "bg-gradient-to-r from-[#1b75bb] to-[#0d4a7a] text-white shadow-[0_0_15px_rgba(27,117,187,0.5)] border border-[#1b75bb]";
   const inactiveTabStyle = "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 border border-transparent";
   const dnoGradientBtn = "bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] hover:from-[#155d96] hover:via-[#a10912] hover:to-[#d9901c] text-white shadow-lg transition-transform hover:-translate-y-0.5 border border-transparent";
+
+  // Check for Stripe success redirect
+  useEffect(() => {
+    if (searchParams?.get('checkout') === 'success') {
+      setShowSuccessToast(true);
+      // Clean up the URL to prevent the toast from showing again on refresh
+      router.replace('/football/draft-night-out', { scroll: false });
+      
+      // Auto-hide the toast after 8 seconds so they have time to read the disclaimer
+      setTimeout(() => setShowSuccessToast(false), 8000);
+    }
+  }, [searchParams, router]);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -131,6 +148,29 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     <>
       <Header activeSport="Football" />
       
+      {/* 🚀 SUCCESS TOAST FOR STRIPE PURCHASES */}
+      {showSuccessToast && (
+        <div className="fixed top-24 right-4 z-[100] max-w-md w-full animate-in slide-in-from-top-4 fade-in duration-300">
+          <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-5 rounded-xl shadow-2xl flex items-start gap-4 border border-emerald-500/30">
+            <CheckCircle2 size={24} className="text-emerald-200 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h4 className="font-black uppercase tracking-widest text-sm mb-1">Payment Successful!</h4>
+              <p className="text-sm text-emerald-100 leading-relaxed">
+                Your extra draft ticket has been added to your account.
+              </p>
+              <div className="mt-3 bg-teal-900/40 p-3 rounded-lg border border-teal-500/30">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-50 leading-snug">
+                  Please Note: This ticket must be used for the current season and will not be usable for the next season.
+                </p>
+              </div>
+            </div>
+            <button onClick={() => setShowSuccessToast(false)} className="text-emerald-200 hover:text-white shrink-0">
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* CONFIRMATION MODAL */}
       {confirmingLeague && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
