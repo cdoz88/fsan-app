@@ -32,8 +32,9 @@ export async function POST(req) {
       ],
       mode: 'payment', // Changed to 'payment' since this is a one-time ticket, not a subscription
       allow_promotion_codes: true, 
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/football/draft-night-out?checkout=success`, // Send them right back to the lobby
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/football/draft-night-out?checkout=canceled`,
+      // 🚀 CHANGED: Hardcoded to force redirect back to your live domain
+      success_url: `https://fsan.com/football/draft-night-out?checkout=success`, 
+      cancel_url: `https://fsan.com/football/draft-night-out?checkout=canceled`,
       customer_email: session.user.email,
       client_reference_id: String(session.user.id), 
       metadata: {
