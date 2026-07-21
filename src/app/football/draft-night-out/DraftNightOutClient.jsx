@@ -185,7 +185,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // 🚀 CRITICAL UPDATE: Replace 'YOUR_LIVE_PRICE_ID_HERE' with your real Live Stripe Product ID
         body: JSON.stringify({ priceId: 'price_1Tv8ANBaSOn1la2fsYurqR32' }) 
       });
       const data = await res.json();
@@ -613,7 +612,14 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                              <li className="flex gap-3 items-start"><span className="text-[#f5a623] font-black text-lg leading-none mt-1">»</span> <span className="pt-0.5">League winner advances to the Playoff Challenge</span></li>
                            </ul>
                         </div>
-
+                     </div>
+                     
+                     {/* SPECIALTY LEAGUES SECTION */}
+                     <div className="mt-6 bg-[#111] rounded-2xl p-6 border border-gray-800 shadow-inner">
+                       <h3 className="text-lg font-black uppercase tracking-widest text-gray-300 mb-3 border-b border-gray-800 pb-3">Specialty Leagues</h3>
+                       <p className="text-sm text-gray-400 font-medium leading-relaxed">
+                         Leagues featuring specialty scoring or alternative formats (such as Dynasty or Superflex) are not included on the global Draft Night Out leaderboard due to point variances. However, the winners of these leagues are still fully eligible to advance and compete in the Playoff Challenge!
+                       </p>
                      </div>
                   </section>
                 </div>

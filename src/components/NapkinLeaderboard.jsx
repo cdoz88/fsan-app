@@ -64,7 +64,7 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
     }
   }, [initialLeaderboard, currentWeek]);
 
-  // Initial mount fetch to populate arrays (Using the correct DNO endpoints!)
+  // Initial mount fetch to populate arrays
   useEffect(() => {
     if (availableWeeks.length > 0) return;
     const fetchMeta = async () => {
@@ -85,7 +85,6 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
     setLoading(true); setCurrentWeek(week);
     if (week === 'overall') { setActiveTeams(overallTeams); setLoading(false); return; }
     try {
-      // Pointed to correct DNO action with cache busting
       const res = await fetch(`/api/scl?action=dno_get_weekly_data&week=${week}&t=${Date.now()}`);
       const result = await res.json();
       if (result.success && result.data?.teams) setActiveTeams(result.data.teams);
@@ -97,7 +96,6 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
     if (!team) return;
     setSelectedTeam(team); setModalLoading(true); setModalData(null);
     try {
-      // Pointed to correct DNO action with cache busting
       const res = await fetch(`/api/scl?action=dno_get_user_details&user_id=${team.ownerId}&league_id=${team.leagueId}&t=${Date.now()}`);
       const json = await res.json();
       if (json.success) setModalData(json.data);
@@ -202,6 +200,12 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="px-6 py-4 border-t border-gray-800 bg-[#0a0a0a]">
+         <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider text-center">
+           * Note: Specialty leagues (Dynasty, Superflex, etc.) are excluded from the global leaderboard due to scoring variances, but winners remain fully eligible for the Playoff Challenge.
+         </p>
       </div>
 
       {activeHistoryAward && (
