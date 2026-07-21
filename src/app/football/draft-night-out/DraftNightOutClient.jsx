@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
-import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trophy, Shield, Users, Coins, UserCheck, BookOpen, Handshake, Mail, Medal, Gift, ListOrdered, Clock, LogOut, X } from 'lucide-react';
+import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trophy, Shield, Users, Coins, UserCheck, BookOpen, Handshake, Mail, Medal, Gift, ListOrdered, Clock, LogOut, X, Youtube, Star } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 // 🚀 ISOLATED SUCCESS TOAST COMPONENT
@@ -78,6 +78,9 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
 
   // Confirmation Popup State
   const [confirmingLeague, setConfirmingLeague] = useState(null);
+  
+  // Raffle Modal State
+  const [showRaffleModal, setShowRaffleModal] = useState(false);
 
   // State to visually flip the button to "Go to League" for leagues joined this session
   const [recentlyJoinedLeagues, setRecentlyJoinedLeagues] = useState([]);
@@ -108,7 +111,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  // Wrapped in useCallback so we can pass it securely to the SuccessToast
   const loadDnoPool = useCallback(async () => {
     try {
       const res = await fetch(`/api/scl?type=dno_pool&t=${Date.now()}`, { cache: 'no-store' });
@@ -125,7 +127,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     }
   }, []);
 
-  // Fetch completely fresh live leaderboard data directly from WordPress to clear stale data
   const loadLiveLeaderboard = useCallback(async () => {
     try {
       const res = await fetch(`/api/scl?action=dno_get_leaderboard_data&t=${Date.now()}`, { cache: 'no-store' });
@@ -196,7 +197,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
 
   const ticketsAvailable = Math.max(0, allottedEntries - userJoinedCount);
 
-  // Sort leagues so open ones appear first
   const sortedLeagues = [...leagues].sort((a, b) => {
     const isFullA = a.filled_spots >= a.total_spots;
     const isFullB = b.filled_spots >= b.total_spots;
@@ -208,10 +208,219 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     <>
       <Header activeSport="Football" />
       
-      {/* Render the success toast safely wrapped in Suspense */}
       <Suspense fallback={null}>
         <SuccessToast setActiveTab={setActiveTab} loadDnoPool={loadDnoPool} isAuthed={isAuthed} />
       </Suspense>
+
+      {/* RAFFLE MODAL POPUP */}
+      {showRaffleModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+           <div className="bg-[#151515] border border-gray-800 rounded-3xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative">
+              <button 
+                onClick={() => setShowRaffleModal(false)} 
+                className="absolute top-4 right-4 p-2 bg-gray-900 border border-gray-800 rounded-full text-gray-400 hover:text-white hover:bg-gray-800 transition-colors z-20"
+              >
+                <X size={20} />
+              </button>
+
+              <div className="p-6 md:p-8 border-b border-gray-800 bg-[#111] shrink-0 sticky top-0 z-10">
+                 <h2 className="text-2xl md:text-3xl font-black italic text-white uppercase tracking-tighter flex items-center gap-3">
+                   <Ticket className="text-[#f5a623]" size={32} />
+                   2026 Draft Night Out Drawings
+                 </h2>
+                 <p className="text-sm text-gray-400 mt-2 leading-relaxed max-w-3xl">
+                   Drawing tickets are available for purchase or for free through the promos below. Each item will have its own cup for tickets, so put all your tickets towards one item or spread them across all prizes!
+                 </p>
+              </div>
+
+              <div className="p-6 md:p-8 overflow-y-auto scrollbar-hide flex-1">
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    {/* LEFT COLUMN: WAYS TO EARN TICKETS */}
+                    <div className="flex flex-col gap-6">
+                       <h3 className="text-xl font-black uppercase tracking-wider text-white border-b border-gray-800 pb-2">Earn Free Tickets</h3>
+                       
+                       {/* FSAN PROMO */}
+                       <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
+                          <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm mb-3">Fantasy Sports Advice Network</h4>
+                          <div className="space-y-4">
+                             <div className="flex gap-3 items-start">
+                               <div className="bg-[#111] border border-gray-700 rounded-lg px-2 py-1 text-xs font-black text-[#f5a623] shrink-0 mt-0.5">5 Tix</div>
+                               <div>
+                                 <p className="text-sm text-gray-300 font-medium">Use promo code <strong className="text-white">DNO1</strong> to get a FSAN Pro+ Membership for $1.</p>
+                                 <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1 font-bold">*Required for entry into the grand prize drawing</p>
+                               </div>
+                             </div>
+                             <div className="flex gap-3 items-start">
+                               <div className="bg-[#111] border border-gray-700 rounded-lg px-2 py-1 text-xs font-black text-[#f5a623] shrink-0 mt-0.5">2 Tix</div>
+                               <div>
+                                 <p className="text-sm text-gray-300 font-medium mb-2">Subscribe to all FSAN YouTube Channels:</p>
+                                 <div className="grid grid-cols-2 gap-2">
+                                   <a href="https://www.youtube.com/@FSANHQ" target="_blank" className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"><Youtube size={14}/> HQ</a>
+                                   <a href="https://www.youtube.com/@FSANFootball" target="_blank" className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"><Youtube size={14}/> Football</a>
+                                   <a href="https://www.youtube.com/@FSANBasketball" target="_blank" className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"><Youtube size={14}/> Basketball</a>
+                                   <a href="https://www.youtube.com/@FSANBaseball" target="_blank" className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"><Youtube size={14}/> Baseball</a>
+                                   <a href="https://www.youtube.com/@FSANRacing" target="_blank" className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"><Youtube size={14}/> Racing</a>
+                                   <a href="https://www.youtube.com/@FSANGolf" target="_blank" className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"><Youtube size={14}/> Golf</a>
+                                 </div>
+                               </div>
+                             </div>
+                          </div>
+                       </div>
+
+                       {/* IN-BETWEEN MEDIA PROMO */}
+                       <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
+                          <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm mb-3">In-Between Media</h4>
+                          <div className="flex gap-3 items-start">
+                             <div className="bg-[#111] border border-gray-700 rounded-lg px-2 py-1 text-xs font-black text-[#f5a623] shrink-0 mt-0.5">1 Tix</div>
+                             <div>
+                               <p className="text-sm text-gray-300 font-medium mb-2">Subscribe to both IBT YouTube Channels:</p>
+                               <div className="flex flex-col gap-2">
+                                 <a href="https://www.youtube.com/@IBT_Media" target="_blank" className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"><Youtube size={14}/> IBT Channel</a>
+                                 <a href="https://www.youtube.com/@IBT-Entertainment" target="_blank" className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"><Youtube size={14}/> IBT Entertainment</a>
+                               </div>
+                             </div>
+                          </div>
+                       </div>
+
+                       {/* FANTASY SIX PACK */}
+                       <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
+                          <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm mb-2">Fantasy Six Pack</h4>
+                          <p className="text-sm text-gray-300 font-medium mb-3">Use promo code <strong className="text-white">F6PDNO26</strong> to get 20% off membership at <a href="https://fantasysixpack.net/" target="_blank" className="text-[#1b75bb] hover:underline">fantasysixpack.net</a></p>
+                          <div className="flex flex-wrap gap-2">
+                            <span className="bg-[#111] border border-gray-700 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-300"><strong className="text-[#f5a623]">2 Tix:</strong> 1 Month</span>
+                            <span className="bg-[#111] border border-gray-700 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-300"><strong className="text-[#f5a623]">4 Tix:</strong> 3 Months</span>
+                            <span className="bg-[#111] border border-gray-700 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-300"><strong className="text-[#f5a623]">6 Tix:</strong> 6 Months</span>
+                          </div>
+                       </div>
+                       
+                       {/* SPORTSBOOKS / APPS */}
+                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-gray-800 shadow-inner">
+                             <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-xs mb-2">FastDraft Fantasy</h4>
+                             <div className="flex gap-2 items-start mb-2">
+                               <div className="bg-[#111] border border-gray-700 rounded-lg px-1.5 py-0.5 text-[10px] font-black text-[#f5a623] shrink-0 mt-0.5">2 Tix</div>
+                               <p className="text-xs text-gray-300 leading-snug">Download & use promo code <strong className="text-white">IBT</strong> for a 100% deposit match up to $50 at <a href="https://fastdraft.app/" target="_blank" className="text-[#1b75bb] hover:underline">fastdraft.app</a></p>
+                             </div>
+                             <p className="text-[9px] text-gray-500 leading-tight uppercase font-bold">*Min $5 Deposit. Legal in AL, AK, AR, AZ, CA, CO, DC, FL, GA, IL, KS, KY, MA, MD, MN, MO, NC, NH, ND, NJ, NM, OH, OK, OR, PA, RI, SC, SD, TN, UT, WI, WV, WY</p>
+                          </div>
+                          <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-gray-800 shadow-inner">
+                             <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-xs mb-2">Wanna Parlay</h4>
+                             <div className="flex gap-2 items-start mb-2">
+                               <div className="bg-[#111] border border-gray-700 rounded-lg px-1.5 py-0.5 text-[10px] font-black text-[#f5a623] shrink-0 mt-0.5">2 Tix</div>
+                               <p className="text-xs text-gray-300 leading-snug">Download & use promo code <strong className="text-white">IBT</strong> for a 100% deposit match up to $250 at <a href="https://wannaparlay.com/" target="_blank" className="text-[#1b75bb] hover:underline">wannaparlay.com</a></p>
+                             </div>
+                             <p className="text-[9px] text-gray-500 leading-tight uppercase font-bold">*Min $5 Deposit. Legal in AK, AR, CA, FL, GA, IL, KS, KY, MN, NE, NM, ND, OK, OR, RI, SC, SD, TX, UT, WV, WI, WY</p>
+                          </div>
+                       </div>
+
+                       {/* OTHER SPONSORS */}
+                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-gray-800 shadow-inner">
+                             <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-xs mb-2">Sellout Crowds</h4>
+                             <div className="flex gap-2 items-start">
+                               <div className="bg-[#111] border border-gray-700 rounded-lg px-1.5 py-0.5 text-[10px] font-black text-[#f5a623] shrink-0 mt-0.5">2 Tix</div>
+                               <p className="text-xs text-gray-300 leading-snug">Join the community for free at <a href="https://www.selloutcrowds.com/crowd/ffan" target="_blank" className="text-[#1b75bb] hover:underline">selloutcrowds.com/crowd/ffan</a></p>
+                             </div>
+                          </div>
+                          <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-gray-800 shadow-inner">
+                             <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-xs mb-2">BlueChip Fantasy</h4>
+                             <p className="text-xs text-gray-400 font-bold mb-1">Sponsored by BlueChip Fantasy Football</p>
+                             <p className="text-xs text-gray-300 leading-snug mb-1">College Fantasy Football, Devy & Campus-to-Canton (C2C)</p>
+                             <a href="https://playbluechip.com/" target="_blank" className="text-[11px] font-black uppercase text-[#1b75bb] hover:underline flex items-center gap-1"><ExternalLink size={12}/> Download App</a>
+                          </div>
+                       </div>
+
+                    </div>
+
+                    {/* RIGHT COLUMN: PRICING & PRIZES */}
+                    <div className="flex flex-col gap-8">
+                       
+                       <div className="bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] p-[2px] rounded-2xl shadow-lg">
+                          <div className="bg-[#151515] p-6 rounded-[14px] flex flex-col items-center text-center h-full">
+                             <h3 className="text-xl font-black uppercase tracking-wider text-white mb-2">Buy Tickets</h3>
+                             <p className="text-sm text-gray-400 mb-6">Skip the promos and buy tickets directly at the event!</p>
+                             <div className="grid grid-cols-2 gap-4 w-full">
+                               <div className="bg-[#111] border border-gray-800 rounded-xl p-3"><div className="text-[#f5a623] font-black text-lg">1 Ticket</div><div className="text-white font-bold">$5</div></div>
+                               <div className="bg-[#111] border border-gray-800 rounded-xl p-3"><div className="text-[#f5a623] font-black text-lg">3 Tickets</div><div className="text-white font-bold">$10</div></div>
+                               <div className="bg-[#111] border border-gray-800 rounded-xl p-3"><div className="text-[#f5a623] font-black text-lg">7 Tickets</div><div className="text-white font-bold">$20</div></div>
+                               <div className="bg-[#111] border border-gray-800 rounded-xl p-3"><div className="text-[#f5a623] font-black text-lg">17 Tickets</div><div className="text-white font-bold">$40</div></div>
+                             </div>
+                          </div>
+                       </div>
+
+                       <div>
+                          <h3 className="text-xl font-black uppercase tracking-wider text-white border-b border-gray-800 pb-2 mb-4">The Prize Vault</h3>
+                          <ul className="space-y-3">
+                             <li className="flex items-start gap-3 bg-[#111] p-3 rounded-xl border border-gray-800">
+                               <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                               <span className="text-sm font-bold text-gray-200">Autographed <strong className="text-white">Kayvon Thibodeaux</strong> New York Giants Jersey</span>
+                             </li>
+                             <li className="flex items-start gap-3 bg-[#111] p-3 rounded-xl border border-gray-800">
+                               <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                               <span className="text-sm font-bold text-gray-200">Autographed <strong className="text-white">Josh Hines-Allen</strong> Jacksonville Jaguars Jersey</span>
+                             </li>
+                             <li className="flex items-start gap-3 bg-[#111] p-3 rounded-xl border border-gray-800">
+                               <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                               <span className="text-sm font-bold text-gray-200">Autographed <strong className="text-white">Andre Reed</strong> Buffalo Bills Jersey</span>
+                             </li>
+                             <li className="flex items-start gap-3 bg-[#111] p-3 rounded-xl border border-gray-800">
+                               <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                               <span className="text-sm font-bold text-gray-200">Autographed <strong className="text-white">Vince Young</strong> Texas Longhorns Jersey</span>
+                             </li>
+                             <li className="flex items-start gap-3 bg-[#111] p-3 rounded-xl border border-gray-800">
+                               <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                               <span className="text-sm font-bold text-gray-200">Autographed <strong className="text-white">Tyreek Hill</strong> Miami Dolphins Jersey</span>
+                             </li>
+                             <li className="flex items-start gap-3 bg-[#111] p-3 rounded-xl border border-gray-800">
+                               <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                               <span className="text-sm font-bold text-gray-200">Autographed <strong className="text-white">Troy Franklin</strong> Denver Broncos Jersey</span>
+                             </li>
+                             <li className="flex items-start gap-3 bg-[#111] p-3 rounded-xl border border-gray-800">
+                               <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                               <span className="text-sm font-bold text-gray-200">Autographed <strong className="text-white">Amari Cooper</strong> Cleveland Browns Jersey</span>
+                             </li>
+                             <li className="flex items-start gap-3 bg-[#111] p-3 rounded-xl border border-gray-800">
+                               <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                               <span className="text-sm font-bold text-gray-200">Autographed <strong className="text-white">Damar Hamlin</strong> Buffalo Bills Jersey</span>
+                             </li>
+                             <li className="flex items-start gap-3 bg-[#111] p-3 rounded-xl border border-gray-800">
+                               <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                               <span className="text-sm font-bold text-gray-200">Autographed <strong className="text-white">Rico Dowdle</strong> Dallas Cowboys Jersey</span>
+                             </li>
+                             <li className="flex items-start gap-3 bg-[#111] p-3 rounded-xl border border-gray-800">
+                               <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                               <span className="text-sm font-bold text-gray-200">Autographed <strong className="text-white">Treylon Burks</strong> Tennessee Titans Jersey</span>
+                             </li>
+                             <li className="flex items-start gap-3 bg-[#111] p-3 rounded-xl border border-gray-800">
+                               <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                               <span className="text-sm font-bold text-gray-200">Autographed <strong className="text-white">Ben Skowronek</strong> Los Angeles Rams Jersey</span>
+                             </li>
+                             <li className="flex items-start gap-3 bg-[#111] p-3 rounded-xl border border-gray-800">
+                               <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                               <span className="text-sm font-bold text-gray-200">Autographed <strong className="text-white">Antonio Gibson</strong> Washington Commanders Jersey</span>
+                             </li>
+                             <li className="flex items-start gap-3 bg-[#111] p-3 rounded-xl border border-gray-800">
+                               <Gift size={16} className="text-green-500 shrink-0 mt-0.5" />
+                               <span className="text-sm font-bold text-gray-200">Draft Night Out Shirt (Black)</span>
+                             </li>
+                             <li className="flex items-start gap-3 bg-[#111] p-3 rounded-xl border border-gray-800">
+                               <Gift size={16} className="text-green-500 shrink-0 mt-0.5" />
+                               <span className="text-sm font-bold text-gray-200">Draft Night Out Shirt (Green)</span>
+                             </li>
+                             <li className="flex items-start gap-3 bg-[#111] p-3 rounded-xl border border-gray-800">
+                               <Ticket size={16} className="text-blue-500 shrink-0 mt-0.5" />
+                               <span className="text-sm font-bold text-gray-200">Entry Into Draft Night Out Online (2)</span>
+                             </li>
+                          </ul>
+                       </div>
+
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
 
       {/* CONFIRMATION MODAL */}
       {confirmingLeague && (
@@ -368,12 +577,15 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                           </div>
                       </div>
                       
-                      <div className="mt-auto relative z-10">
+                      <div className="mt-auto relative z-10 flex flex-col gap-3">
                         <a href="https://in-betweenmedia.com/product/draft-night-out-2026-tickets/" target="_blank" rel="noopener noreferrer" className="w-full inline-block relative group p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5">
                           <div className="bg-[#1a1a1a] group-hover:bg-[#222] transition-colors rounded-[10px] px-6 py-3.5 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">
                             Get Canton Tickets <ExternalLink size={16} />
                           </div>
                         </a>
+                        <button onClick={() => setShowRaffleModal(true)} className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px] bg-[#111] hover:bg-gray-800 text-gray-300 hover:text-white text-xs font-black uppercase tracking-widest border border-gray-800 transition-colors">
+                           <Ticket size={16} className="text-[#f5a623]" /> View Raffle Prizes & Promos
+                        </button>
                       </div>
                     </div>
                   </div>
