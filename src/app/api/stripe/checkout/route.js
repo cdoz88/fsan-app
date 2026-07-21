@@ -21,6 +21,25 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Price ID is required' }, { status: 400 });
     }
 
+    // 🚀 DYNAMIC CHECKOUT ROUTING
+    // Identify if the user is buying a DNO ticket (Live or Test ID)
+    const dnoPriceIds = ['price_1Tv8ANBaSOn1la2fsYurqR32', 'price_1Tv8VeBaSOn1la2fIytAwZZ7'];
+    const isDnoTicket = dnoPriceIds.includes(priceId);
+
+    // Set checkout parameters based on product type
+    const checkoutMode = isDnoTicket ? 'payment' : 'subscription';
+    const purchaseType = isDnoTicket ? 'dno_extra_ticket' : 'subscription';
+    
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://fsan.com';
+    
+    const successUrl = isDnoTicket 
+      ? `${baseUrl}/football/draft-night-out?checkout=success`
+      : `${baseUrl}/account?checkout=success`;
+      
+    const cancelUrl = isDnoTicket
+      ? `${baseUrl}/football/draft-night-out?checkout=canceled`
+      : `${baseUrl}/subscribe?checkout=canceled`;
+
     // Create a Stripe Checkout Session
     const stripeSession = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -30,16 +49,15 @@ export async function POST(req) {
           quantity: 1,
         },
       ],
-      mode: 'payment', // Changed to 'payment' since this is a one-time ticket, not a subscription
+      mode: checkoutMode, 
       allow_promotion_codes: true, 
-      // 🚀 The BASE_URL dynamically ensures they return to the exact domain they started on
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/football/draft-night-out?checkout=success`, 
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/football/draft-night-out?checkout=canceled`,
+      success_url: successUrl, 
+      cancel_url: cancelUrl,
       customer_email: session.user.email,
       client_reference_id: String(session.user.id), 
       metadata: {
         wpUserId: String(session.user.id), 
-        purchaseType: 'dno_extra_ticket'
+        purchaseType: purchaseType
       }
     });
 
