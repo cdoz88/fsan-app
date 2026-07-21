@@ -282,7 +282,10 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                              <div className="flex flex-col gap-6">
                                 {/* FSAN PROMO */}
                                 <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
-                                   <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm mb-3">Fantasy Sports Advice Network</h4>
+                                   <div className="flex items-center gap-3 mb-4">
+                                     <img src="https://admin.fsan.com/wp-content/uploads/2025/05/App-Icons-Border.webp" alt="FSAN Logo" className="w-7 h-7 rounded-lg shadow-sm" />
+                                     <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm">Fantasy Sports Advice Network</h4>
+                                   </div>
                                    <div className="space-y-4">
                                       <div className="flex gap-3 items-start">
                                         <div className="bg-[#111] border border-gray-700 rounded-lg px-2 py-1 text-xs font-black text-[#f5a623] shrink-0 mt-0.5">5 Tix</div>
@@ -308,23 +311,12 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                                    </div>
                                 </div>
                                 
-                                {/* FANTASY SIX PACK */}
-                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
-                                   <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm mb-2">Fantasy Six Pack</h4>
-                                   <p className="text-sm text-gray-300 font-medium mb-3">Use promo code <strong className="text-white">F6PDNO26</strong> to get 20% off membership at <a href="https://fantasysixpack.net/" target="_blank" className="text-[#1b75bb] hover:underline">fantasysixpack.net</a></p>
-                                   <div className="flex flex-wrap gap-2">
-                                     <span className="bg-[#111] border border-gray-700 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-300"><strong className="text-[#f5a623]">2 Tix:</strong> 1 Month</span>
-                                     <span className="bg-[#111] border border-gray-700 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-300"><strong className="text-[#f5a623]">4 Tix:</strong> 3 Months</span>
-                                     <span className="bg-[#111] border border-gray-700 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-300"><strong className="text-[#f5a623]">6 Tix:</strong> 6 Months</span>
-                                   </div>
-                                </div>
-                             </div>
-
-                             {/* RIGHT COLUMN: Promos */}
-                             <div className="flex flex-col gap-6">
                                 {/* IN-BETWEEN MEDIA PROMO */}
                                 <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
-                                   <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm mb-3">In-Between Media</h4>
+                                   <div className="flex items-center gap-3 mb-4">
+                                     <img src="https://pbs.twimg.com/profile_images/1932082445278400512/MFL7TT8y_400x400.jpg" alt="In-Between Media Logo" className="w-7 h-7 rounded-lg shadow-sm" />
+                                     <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm">In-Between Media</h4>
+                                   </div>
                                    <div className="flex gap-3 items-start">
                                       <div className="bg-[#111] border border-gray-700 rounded-lg px-2 py-1 text-xs font-black text-[#f5a623] shrink-0 mt-0.5">1 Tix</div>
                                       <div>
@@ -336,42 +328,71 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                                       </div>
                                    </div>
                                 </div>
+
+                                {/* SELLOUT CROWDS */}
+                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
+                                   <div className="flex items-center gap-3 mb-4">
+                                     <img src="https://admin.beasellout.com/wp-content/uploads/2025/04/Icon.webp" alt="Sellout Crowds Logo" className="w-7 h-7 rounded-lg shadow-sm bg-white" />
+                                     <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm">Sellout Crowds</h4>
+                                   </div>
+                                   <div className="flex gap-2 items-start">
+                                     <div className="bg-[#111] border border-gray-700 rounded-lg px-2 py-1 text-xs font-black text-[#f5a623] shrink-0 mt-0.5">2 Tix</div>
+                                     <p className="text-sm text-gray-300 leading-snug">Join the community for free at <a href="https://www.selloutcrowds.com/crowd/ffan" target="_blank" className="text-[#1b75bb] hover:underline">selloutcrowds.com/crowd/ffan</a></p>
+                                   </div>
+                                </div>
+                             </div>
+
+                             {/* RIGHT COLUMN: Promos */}
+                             <div className="flex flex-col gap-6">
+                                {/* FANTASY SIX PACK */}
+                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
+                                   <div className="flex items-center gap-3 mb-3">
+                                     <img src="https://fantasysixpack.net/wp-content/uploads/2023/08/F6P_Square-optimized.jpg" alt="Fantasy Six Pack Logo" className="w-7 h-7 rounded-lg shadow-sm" />
+                                     <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm">Fantasy Six Pack</h4>
+                                   </div>
+                                   <p className="text-sm text-gray-300 font-medium mb-3">Use promo code <strong className="text-white">F6PDNO26</strong> to get 20% off membership at <a href="https://fantasysixpack.net/" target="_blank" className="text-[#1b75bb] hover:underline">fantasysixpack.net</a></p>
+                                   <div className="flex flex-wrap gap-2">
+                                     <span className="bg-[#111] border border-gray-700 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-300"><strong className="text-[#f5a623]">2 Tix:</strong> 1 Month</span>
+                                     <span className="bg-[#111] border border-gray-700 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-300"><strong className="text-[#f5a623]">4 Tix:</strong> 3 Months</span>
+                                     <span className="bg-[#111] border border-gray-700 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-300"><strong className="text-[#f5a623]">6 Tix:</strong> 6 Months</span>
+                                   </div>
+                                </div>
                                 
                                 {/* FASTDRAFT */}
-                                <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-gray-800 shadow-inner">
-                                   <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-xs mb-2">FastDraft Fantasy</h4>
+                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
+                                   <div className="flex items-center gap-3 mb-4">
+                                     <img src="https://play-lh.googleusercontent.com/StS9Sjf6QrFGmgqlJ_IIH1c-cIviRMa2PqrZEAcWbxPYjoKGjdAnDEHtBe49NAEvtwjwKgRUquKGraKYEPKg=w240-h480-rw" alt="FastDraft Fantasy Logo" className="w-7 h-7 rounded-lg shadow-sm" />
+                                     <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm">FastDraft Fantasy</h4>
+                                   </div>
                                    <div className="flex gap-2 items-start mb-2">
-                                     <div className="bg-[#111] border border-gray-700 rounded-lg px-1.5 py-0.5 text-[10px] font-black text-[#f5a623] shrink-0 mt-0.5">2 Tix</div>
-                                     <p className="text-xs text-gray-300 leading-snug">Download & use promo code <strong className="text-white">IBT</strong> for a 100% deposit match up to $50 at <a href="https://fastdraft.app/" target="_blank" className="text-[#1b75bb] hover:underline">fastdraft.app</a></p>
+                                     <div className="bg-[#111] border border-gray-700 rounded-lg px-2 py-1 text-xs font-black text-[#f5a623] shrink-0 mt-0.5">2 Tix</div>
+                                     <p className="text-sm text-gray-300 leading-snug">Download & use promo code <strong className="text-white">IBT</strong> for a 100% deposit match up to $50 at <a href="https://fastdraft.app/" target="_blank" className="text-[#1b75bb] hover:underline">fastdraft.app</a></p>
                                    </div>
                                    <p className="text-[9px] text-gray-500 leading-tight uppercase font-bold">*Min $5 Deposit. Legal in AL, AK, AR, AZ, CA, CO, DC, FL, GA, IL, KS, KY, MA, MD, MN, MO, NC, NH, ND, NJ, NM, OH, OK, OR, PA, RI, SC, SD, TN, UT, WI, WV, WY</p>
                                 </div>
                                 
                                 {/* WANNA PARLAY */}
-                                <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-gray-800 shadow-inner">
-                                   <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-xs mb-2">Wanna Parlay</h4>
+                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
+                                   <div className="flex items-center gap-3 mb-4">
+                                     <img src="https://play-lh.googleusercontent.com/JcpdG8Ipl2oCGFDa7KuyTQ-7E3EVAZJ4-evx6va-bZ9ziXYISLSlvYaaAErOYNTtUqPzGqrMGFD7U5m7O6aE" alt="Wanna Parlay Logo" className="w-7 h-7 rounded-lg shadow-sm" />
+                                     <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm">Wanna Parlay</h4>
+                                   </div>
                                    <div className="flex gap-2 items-start mb-2">
-                                     <div className="bg-[#111] border border-gray-700 rounded-lg px-1.5 py-0.5 text-[10px] font-black text-[#f5a623] shrink-0 mt-0.5">2 Tix</div>
-                                     <p className="text-xs text-gray-300 leading-snug">Download & use promo code <strong className="text-white">IBT</strong> for a 100% deposit match up to $250 at <a href="https://wannaparlay.com/" target="_blank" className="text-[#1b75bb] hover:underline">wannaparlay.com</a></p>
+                                     <div className="bg-[#111] border border-gray-700 rounded-lg px-2 py-1 text-xs font-black text-[#f5a623] shrink-0 mt-0.5">2 Tix</div>
+                                     <p className="text-sm text-gray-300 leading-snug">Download & use promo code <strong className="text-white">IBT</strong> for a 100% deposit match up to $250 at <a href="https://wannaparlay.com/" target="_blank" className="text-[#1b75bb] hover:underline">wannaparlay.com</a></p>
                                    </div>
                                    <p className="text-[9px] text-gray-500 leading-tight uppercase font-bold">*Min $5 Deposit. Legal in AK, AR, CA, FL, GA, IL, KS, KY, MN, NE, NM, ND, OK, OR, RI, SC, SD, TX, UT, WV, WI, WY</p>
                                 </div>
 
-                                {/* SELLOUT CROWDS / BLUECHIP */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                   <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-gray-800 shadow-inner">
-                                      <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-xs mb-2">Sellout Crowds</h4>
-                                      <div className="flex gap-2 items-start">
-                                        <div className="bg-[#111] border border-gray-700 rounded-lg px-1.5 py-0.5 text-[10px] font-black text-[#f5a623] shrink-0 mt-0.5">2 Tix</div>
-                                        <p className="text-[11px] text-gray-300 leading-snug">Join the community for free at <a href="https://www.selloutcrowds.com/crowd/ffan" target="_blank" className="text-[#1b75bb] hover:underline">selloutcrowds.com/crowd/ffan</a></p>
-                                      </div>
+                                {/* BLUECHIP */}
+                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
+                                   <div className="flex items-center gap-3 mb-4">
+                                     <img src="https://media.licdn.com/dms/image/v2/D560BAQF1mF_kTUja6A/company-logo_200_200/B56ZpQf6WEJYAI-/0/1762287134397?e=2147483647&v=beta&t=fcj7XdzFLiV1wP-nhKdLRPeLVfynlp-Q0fFrZ0TF46E" alt="BlueChip Fantasy Logo" className="w-7 h-7 rounded-lg shadow-sm" />
+                                     <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm">BlueChip Fantasy</h4>
                                    </div>
-                                   <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-gray-800 shadow-inner">
-                                      <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-xs mb-2">BlueChip Fantasy</h4>
-                                      <p className="text-[11px] text-gray-400 font-bold mb-1">Sponsored by BlueChip Fantasy</p>
-                                      <p className="text-[10px] text-gray-300 leading-snug mb-1">CFF, Devy & C2C</p>
-                                      <a href="https://playbluechip.com/" target="_blank" className="text-[10px] font-black uppercase text-[#1b75bb] hover:underline flex items-center gap-1 mt-2"><ExternalLink size={12}/> Download App</a>
-                                   </div>
+                                   <p className="text-xs text-gray-400 font-bold mb-1">Sponsored by BlueChip Fantasy</p>
+                                   <p className="text-sm text-gray-300 leading-snug mb-1">CFF, Devy & C2C</p>
+                                   <a href="https://playbluechip.com/" target="_blank" className="text-xs font-black uppercase text-[#1b75bb] hover:underline flex items-center gap-1 mt-2"><ExternalLink size={14}/> Download App</a>
                                 </div>
 
                              </div>
