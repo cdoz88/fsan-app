@@ -5,8 +5,16 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
-import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trophy, Shield, Users, Coins, UserCheck, BookOpen, Handshake, Mail, Medal, Gift, ListOrdered, Clock, LogOut, X, Youtube, Star } from 'lucide-react';
+import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trophy, Shield, Users, Coins, UserCheck, BookOpen, Handshake, Mail, Medal, Gift, ListOrdered, Clock, LogOut, X, Star } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+
+// 🚀 CUSTOM YOUTUBE ICON (Lucide removed brand icons)
+const Youtube = ({ size = 24, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M2.5 7.1C2.6 5.8 3.8 4.8 5 4.7 7.3 4.5 12 4.5 12 4.5s4.7 0 7 .2c1.2.1 2.4 1.1 2.5 2.4.2 1.6.2 3.8.2 4.9 0 1.1 0 3.3-.2 4.9-.1 1.3-1.3 2.3-2.5 2.4-2.3.2-7 .2-7 .2s-4.7 0-7-.2c-1.2-.1-2.4-1.1-2.5-2.4-.2-1.6-.2-3.8-.2-4.9 0-1.1 0-3.3.2-4.9z" />
+    <path d="m10 15 5-3-5-3v6z" />
+  </svg>
+);
 
 // 🚀 ISOLATED SUCCESS TOAST COMPONENT
 function SuccessToast({ setActiveTab, loadDnoPool, isAuthed }) {
@@ -88,11 +96,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   // Tab State & Styling
   const validTabs = ['live', 'online', 'leaderboard', 'prizes', 'rules', 'sponsors'];
   const [activeTab, setActiveTab] = useState('live');
-
-  // BRAND COLORS: Blue #1b75bb, Red #c30b16, Orange #f5a623
-  const activeTabStyle = "bg-gradient-to-r from-[#1b75bb] to-[#0d4a7a] text-white shadow-[0_0_15px_rgba(27,117,187,0.5)] border border-[#1b75bb]";
-  const inactiveTabStyle = "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 border border-transparent";
-  const dnoGradientBtn = "bg-gradient-to-r from-[#1b75bb] via-[#c30b16] to-[#f5a623] hover:from-[#155d96] hover:via-[#a10912] hover:to-[#d9901c] text-white shadow-lg transition-transform hover:-translate-y-0.5 border border-transparent";
 
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
