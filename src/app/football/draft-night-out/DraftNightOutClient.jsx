@@ -237,16 +237,16 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                  </p>
                  
                  {/* MODAL TAB SWITCHER */}
-                 <div className="mt-6 flex flex-wrap items-center gap-2 bg-[#1a1a1a] p-1.5 rounded-xl border border-gray-800 w-fit">
+                 <div className="mt-6 flex w-full sm:w-fit items-center gap-2 bg-[#1a1a1a] p-1.5 rounded-xl border border-gray-800">
                     <button
                        onClick={() => setRaffleTab('tickets')}
-                       className={`px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-2 ${raffleTab === 'tickets' ? 'bg-[#111] border border-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300 border border-transparent'}`}
+                       className={`flex-1 sm:flex-none justify-center px-2 sm:px-5 py-2.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-1.5 sm:gap-2 ${raffleTab === 'tickets' ? 'bg-[#111] border border-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300 border border-transparent'}`}
                     >
                        <Ticket size={16} /> Get Tickets
                     </button>
                     <button
                        onClick={() => setRaffleTab('prizes')}
-                       className={`px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-2 ${raffleTab === 'prizes' ? 'bg-[#111] border border-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300 border border-transparent'}`}
+                       className={`flex-1 sm:flex-none justify-center px-2 sm:px-5 py-2.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-1.5 sm:gap-2 ${raffleTab === 'prizes' ? 'bg-[#111] border border-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300 border border-transparent'}`}
                     >
                        <Gift size={16} /> Prize Vault
                     </button>
