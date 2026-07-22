@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
-import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trophy, Shield, Users, Coins, UserCheck, BookOpen, Handshake, Mail, Medal, Gift, ListOrdered, Clock, LogOut, X, Star } from 'lucide-react';
+import { Ticket, MonitorSmartphone, MapPin, Calendar, Lock, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trophy, Shield, Users, Coins, UserCheck, BookOpen, Handshake, Mail, Medal, Gift, ListOrdered, Clock, LogOut, X, Star, Shirt } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 // 🚀 CUSTOM YOUTUBE ICON (Lucide removed brand icons)
@@ -293,9 +293,9 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                                         <div className="w-full">
                                           <p className="text-sm text-gray-300 font-medium mb-1">Get a FSAN Pro+ Membership for $1 with code <strong className="text-white">DNO1</strong>.</p>
                                           <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-3 font-bold">*Required for entry into the grand prize drawing</p>
-                                          <Link href="/subscribe" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors">
+                                          <a href="/subscribe" target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors">
                                             Upgrade to Pro+
-                                          </Link>
+                                          </a>
                                         </div>
                                       </div>
                                       <div className="flex gap-3 items-start">
@@ -303,12 +303,12 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                                         <div className="w-full">
                                           <p className="text-sm text-gray-300 font-medium mb-3">Subscribe to all FSAN YouTube Channels:</p>
                                           <div className="grid grid-cols-2 gap-2">
-                                            <a href="https://www.youtube.com/@FSANHQ" target="_blank" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> HQ</a>
-                                            <a href="https://www.youtube.com/@FSANFootball" target="_blank" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> Football</a>
-                                            <a href="https://www.youtube.com/@FSANBasketball" target="_blank" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> Basketball</a>
-                                            <a href="https://www.youtube.com/@FSANBaseball" target="_blank" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> Baseball</a>
-                                            <a href="https://www.youtube.com/@FSANRacing" target="_blank" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> Racing</a>
-                                            <a href="https://www.youtube.com/@FSANGolf" target="_blank" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> Golf</a>
+                                            <a href="https://www.youtube.com/@FSANHQ" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> HQ</a>
+                                            <a href="https://www.youtube.com/@FSANFootball" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> Football</a>
+                                            <a href="https://www.youtube.com/@FSANBasketball" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> Basketball</a>
+                                            <a href="https://www.youtube.com/@FSANBaseball" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> Baseball</a>
+                                            <a href="https://www.youtube.com/@FSANRacing" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> Racing</a>
+                                            <a href="https://www.youtube.com/@FSANGolf" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> Golf</a>
                                           </div>
                                         </div>
                                       </div>
@@ -326,8 +326,8 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                                       <div className="w-full">
                                         <p className="text-sm text-gray-300 font-medium mb-3">Subscribe to both IBT YouTube Channels:</p>
                                         <div className="flex flex-col gap-2">
-                                          <a href="https://www.youtube.com/@IBT_Media" target="_blank" className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={16}/> IBT Channel</a>
-                                          <a href="https://www.youtube.com/@IBT-Entertainment" target="_blank" className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={16}/> IBT Entertainment</a>
+                                          <a href="https://www.youtube.com/@IBT_Media" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={16}/> IBT Channel</a>
+                                          <a href="https://www.youtube.com/@IBT-Entertainment" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={16}/> IBT Entertainment</a>
                                         </div>
                                       </div>
                                    </div>
@@ -341,9 +341,9 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                                    </div>
                                    <div className="flex gap-3 items-start mb-4 flex-1">
                                      <div className="bg-[#111] border border-gray-700 rounded-lg px-2 py-1 text-xs font-black text-[#f5a623] shrink-0 mt-0.5">2 Tix</div>
-                                     <p className="text-sm text-gray-300 leading-relaxed">Join the Sellout Crowds community for free to earn tickets.</p>
+                                     <p className="text-sm text-gray-300 leading-relaxed">Join our Sellout Crowds community for free to earn tickets.</p>
                                    </div>
-                                   <a href="https://www.selloutcrowds.com/crowd/ffan" target="_blank" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors mt-auto">
+                                   <a href="https://www.selloutcrowds.com/crowd/dno" target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors mt-auto">
                                       <ExternalLink size={14}/> Join Community
                                    </a>
                                 </div>
@@ -365,7 +365,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                                        <span className="bg-[#111] border border-gray-700 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-300"><strong className="text-[#f5a623]">6 Tix:</strong> 6 Months</span>
                                      </div>
                                    </div>
-                                   <a href="https://fantasysixpack.net/" target="_blank" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors mt-auto">
+                                   <a href="https://fantasysixpack.net/" target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors mt-auto">
                                       <ExternalLink size={14}/> Visit Website
                                    </a>
                                 </div>
@@ -383,7 +383,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                                        <p className="text-[9px] text-gray-500 leading-tight uppercase font-bold">*Min $5 Deposit. Legal in AL, AK, AR, AZ, CA, CO, DC, FL, GA, IL, KS, KY, MA, MD, MN, MO, NC, NH, ND, NJ, NM, OH, OK, OR, PA, RI, SC, SD, TN, UT, WI, WV, WY</p>
                                      </div>
                                    </div>
-                                   <a href="https://fastdraft.app/" target="_blank" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors mt-auto">
+                                   <a href="https://fastdraft.app/" target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors mt-auto">
                                       <ExternalLink size={14}/> Download FastDraft
                                    </a>
                                 </div>
@@ -401,7 +401,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                                        <p className="text-[9px] text-gray-500 leading-tight uppercase font-bold">*Min $5 Deposit. Legal in AK, AR, CA, FL, GA, IL, KS, KY, MN, NE, NM, ND, OK, OR, RI, SC, SD, TX, UT, WV, WI, WY</p>
                                      </div>
                                    </div>
-                                   <a href="https://wannaparlay.com/" target="_blank" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors mt-auto">
+                                   <a href="https://wannaparlay.com/" target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors mt-auto">
                                       <ExternalLink size={14}/> Get App
                                    </a>
                                 </div>
@@ -416,7 +416,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                                      <p className="text-xs text-gray-400 font-bold mb-1">Sponsored by BlueChip Fantasy Football</p>
                                      <p className="text-sm text-gray-300 leading-snug">College Fantasy Football, Devy & Campus-to-Canton (C2C)</p>
                                    </div>
-                                   <a href="https://playbluechip.com/" target="_blank" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors mt-auto">
+                                   <a href="https://playbluechip.com/" target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors mt-auto">
                                       <ExternalLink size={14}/> Download App
                                    </a>
                                 </div>
@@ -434,59 +434,59 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                        <h3 className="text-xl font-black uppercase tracking-wider text-white border-b border-gray-800 pb-2">The Prize Vault</h3>
                        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                           <li className="flex items-start gap-3 bg-[#111] p-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors shadow-inner">
-                            <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
-                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Kayvon Thibodeaux</strong> NYG Jersey</span>
+                            <Shirt size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Andre Reed</strong> (Buffalo Bills) Jersey</span>
                           </li>
                           <li className="flex items-start gap-3 bg-[#111] p-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors shadow-inner">
-                            <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
-                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Josh Hines-Allen</strong> JAX Jersey</span>
+                            <Shirt size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Josh Hines-Allen</strong> (Jacksonville Jaguars) Jersey</span>
                           </li>
                           <li className="flex items-start gap-3 bg-[#111] p-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors shadow-inner">
-                            <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
-                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Andre Reed</strong> BUF Jersey</span>
+                            <Shirt size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Tyreek Hill</strong> (Miami Dolphins) Jersey</span>
                           </li>
                           <li className="flex items-start gap-3 bg-[#111] p-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors shadow-inner">
-                            <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
-                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Vince Young</strong> TEX Jersey</span>
+                            <Shirt size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Troy Franklin</strong> (Denver Broncos) Jersey</span>
                           </li>
                           <li className="flex items-start gap-3 bg-[#111] p-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors shadow-inner">
-                            <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
-                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Tyreek Hill</strong> MIA Jersey</span>
+                            <Shirt size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Hollywood Brown</strong> (Kansas City Chiefs) Jersey</span>
                           </li>
                           <li className="flex items-start gap-3 bg-[#111] p-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors shadow-inner">
-                            <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
-                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Troy Franklin</strong> DEN Jersey</span>
+                            <Shirt size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Amari Cooper</strong> (Cleveland Browns) Jersey</span>
                           </li>
                           <li className="flex items-start gap-3 bg-[#111] p-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors shadow-inner">
-                            <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
-                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Amari Cooper</strong> CLE Jersey</span>
+                            <Shirt size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Rico Dowdle</strong> (Dallas Cowboys) Jersey</span>
                           </li>
                           <li className="flex items-start gap-3 bg-[#111] p-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors shadow-inner">
-                            <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
-                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Damar Hamlin</strong> BUF Jersey</span>
+                            <Shirt size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Damar Hamlin</strong> (Buffalo Bills) Jersey</span>
                           </li>
                           <li className="flex items-start gap-3 bg-[#111] p-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors shadow-inner">
-                            <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
-                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Rico Dowdle</strong> DAL Jersey</span>
+                            <Shirt size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Christian Kirk</strong> (Jacksonville Jaguars) Jersey</span>
                           </li>
                           <li className="flex items-start gap-3 bg-[#111] p-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors shadow-inner">
-                            <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
-                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Treylon Burks</strong> TEN Jersey</span>
+                            <Shirt size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Antonio Gibson</strong> (Washington Commanders) Jersey</span>
                           </li>
                           <li className="flex items-start gap-3 bg-[#111] p-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors shadow-inner">
-                            <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
-                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Ben Skowronek</strong> LAR Jersey</span>
+                            <Shirt size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Ben Skowronek</strong> (Los Angeles Rams) Jersey</span>
                           </li>
                           <li className="flex items-start gap-3 bg-[#111] p-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors shadow-inner">
-                            <Star size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
-                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Antonio Gibson</strong> WAS Jersey</span>
+                            <Shirt size={16} className="text-[#f5a623] shrink-0 mt-0.5" />
+                            <span className="text-sm font-medium text-gray-300 leading-snug">Autographed <strong className="text-white">Treylon Burks</strong> (Tennessee Titans) Jersey</span>
                           </li>
                           <li className="flex items-start gap-3 bg-[#111] p-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors shadow-inner">
-                            <Gift size={16} className="text-green-500 shrink-0 mt-0.5" />
+                            <Star size={16} className="text-green-500 shrink-0 mt-0.5" />
                             <span className="text-sm font-medium text-gray-300 leading-snug">Draft Night Out Shirt <strong className="text-white">(Black)</strong></span>
                           </li>
                           <li className="flex items-start gap-3 bg-[#111] p-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors shadow-inner">
-                            <Gift size={16} className="text-green-500 shrink-0 mt-0.5" />
+                            <Star size={16} className="text-green-500 shrink-0 mt-0.5" />
                             <span className="text-sm font-medium text-gray-300 leading-snug">Draft Night Out Shirt <strong className="text-white">(Green)</strong></span>
                           </li>
                           <li className="flex items-start gap-3 bg-[#111] p-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors shadow-inner">
