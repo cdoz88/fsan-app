@@ -280,31 +280,35 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                              {/* LEFT COLUMN: Promos */}
                              <div className="flex flex-col gap-6">
+                                
                                 {/* FSAN PROMO */}
-                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
-                                   <div className="flex items-center gap-3 mb-4">
+                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner flex flex-col h-full">
+                                   <div className="flex items-center gap-3 mb-5">
                                      <img src="https://admin.fsan.com/wp-content/uploads/2025/05/App-Icons-Border.webp" alt="FSAN Logo" className="w-7 h-7 rounded-lg shadow-sm" />
-                                     <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm">Fantasy Sports Advice Network</h4>
+                                     <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm leading-tight">Fantasy Sports<br className="hidden lg:block"/> Advice Network</h4>
                                    </div>
-                                   <div className="space-y-4">
+                                   <div className="space-y-6 flex-1">
                                       <div className="flex gap-3 items-start">
                                         <div className="bg-[#111] border border-gray-700 rounded-lg px-2 py-1 text-xs font-black text-[#f5a623] shrink-0 mt-0.5">5 Tix</div>
-                                        <div>
-                                          <p className="text-sm text-gray-300 font-medium">Use promo code <strong className="text-white">DNO1</strong> to get a FSAN Pro+ Membership for $1.</p>
-                                          <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1 font-bold">*Required for entry into the grand prize drawing</p>
+                                        <div className="w-full">
+                                          <p className="text-sm text-gray-300 font-medium mb-1">Get a FSAN Pro+ Membership for $1 with code <strong className="text-white">DNO1</strong>.</p>
+                                          <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-3 font-bold">*Required for entry into the grand prize drawing</p>
+                                          <Link href="/subscribe" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors">
+                                            Upgrade to Pro+
+                                          </Link>
                                         </div>
                                       </div>
                                       <div className="flex gap-3 items-start">
                                         <div className="bg-[#111] border border-gray-700 rounded-lg px-2 py-1 text-xs font-black text-[#f5a623] shrink-0 mt-0.5">2 Tix</div>
-                                        <div>
-                                          <p className="text-sm text-gray-300 font-medium mb-2">Subscribe to all FSAN YouTube Channels:</p>
+                                        <div className="w-full">
+                                          <p className="text-sm text-gray-300 font-medium mb-3">Subscribe to all FSAN YouTube Channels:</p>
                                           <div className="grid grid-cols-2 gap-2">
-                                            <a href="https://www.youtube.com/@FSANHQ" target="_blank" className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"><Youtube size={14}/> HQ</a>
-                                            <a href="https://www.youtube.com/@FSANFootball" target="_blank" className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"><Youtube size={14}/> Football</a>
-                                            <a href="https://www.youtube.com/@FSANBasketball" target="_blank" className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"><Youtube size={14}/> Basketball</a>
-                                            <a href="https://www.youtube.com/@FSANBaseball" target="_blank" className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"><Youtube size={14}/> Baseball</a>
-                                            <a href="https://www.youtube.com/@FSANRacing" target="_blank" className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"><Youtube size={14}/> Racing</a>
-                                            <a href="https://www.youtube.com/@FSANGolf" target="_blank" className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"><Youtube size={14}/> Golf</a>
+                                            <a href="https://www.youtube.com/@FSANHQ" target="_blank" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> HQ</a>
+                                            <a href="https://www.youtube.com/@FSANFootball" target="_blank" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> Football</a>
+                                            <a href="https://www.youtube.com/@FSANBasketball" target="_blank" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> Basketball</a>
+                                            <a href="https://www.youtube.com/@FSANBaseball" target="_blank" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> Baseball</a>
+                                            <a href="https://www.youtube.com/@FSANRacing" target="_blank" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> Racing</a>
+                                            <a href="https://www.youtube.com/@FSANGolf" target="_blank" className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={14}/> Golf</a>
                                           </div>
                                         </div>
                                       </div>
@@ -312,87 +316,109 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                                 </div>
                                 
                                 {/* IN-BETWEEN MEDIA PROMO */}
-                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
+                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner flex flex-col h-full">
                                    <div className="flex items-center gap-3 mb-4">
                                      <img src="https://pbs.twimg.com/profile_images/1932082445278400512/MFL7TT8y_400x400.jpg" alt="In-Between Media Logo" className="w-7 h-7 rounded-lg shadow-sm" />
                                      <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm">In-Between Media</h4>
                                    </div>
-                                   <div className="flex gap-3 items-start">
+                                   <div className="flex gap-3 items-start flex-1">
                                       <div className="bg-[#111] border border-gray-700 rounded-lg px-2 py-1 text-xs font-black text-[#f5a623] shrink-0 mt-0.5">1 Tix</div>
-                                      <div>
-                                        <p className="text-sm text-gray-300 font-medium mb-2">Subscribe to both IBT YouTube Channels:</p>
+                                      <div className="w-full">
+                                        <p className="text-sm text-gray-300 font-medium mb-3">Subscribe to both IBT YouTube Channels:</p>
                                         <div className="flex flex-col gap-2">
-                                          <a href="https://www.youtube.com/@IBT_Media" target="_blank" className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"><Youtube size={14}/> IBT Channel</a>
-                                          <a href="https://www.youtube.com/@IBT-Entertainment" target="_blank" className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"><Youtube size={14}/> IBT Entertainment</a>
+                                          <a href="https://www.youtube.com/@IBT_Media" target="_blank" className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={16}/> IBT Channel</a>
+                                          <a href="https://www.youtube.com/@IBT-Entertainment" target="_blank" className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[#111] border border-gray-800 hover:border-red-500/50 hover:bg-red-500/10 text-xs font-bold text-gray-400 hover:text-red-400 transition-all"><Youtube size={16}/> IBT Entertainment</a>
                                         </div>
                                       </div>
                                    </div>
                                 </div>
 
                                 {/* SELLOUT CROWDS */}
-                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
+                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner flex flex-col h-full">
                                    <div className="flex items-center gap-3 mb-4">
                                      <img src="https://admin.beasellout.com/wp-content/uploads/2025/04/Icon.webp" alt="Sellout Crowds Logo" className="w-7 h-7 rounded-lg shadow-sm bg-white" />
                                      <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm">Sellout Crowds</h4>
                                    </div>
-                                   <div className="flex gap-2 items-start">
+                                   <div className="flex gap-3 items-start mb-4 flex-1">
                                      <div className="bg-[#111] border border-gray-700 rounded-lg px-2 py-1 text-xs font-black text-[#f5a623] shrink-0 mt-0.5">2 Tix</div>
-                                     <p className="text-sm text-gray-300 leading-snug">Join the community for free at <a href="https://www.selloutcrowds.com/crowd/ffan" target="_blank" className="text-[#1b75bb] hover:underline">selloutcrowds.com/crowd/ffan</a></p>
+                                     <p className="text-sm text-gray-300 leading-relaxed">Join the Sellout Crowds community for free to earn tickets.</p>
                                    </div>
+                                   <a href="https://www.selloutcrowds.com/crowd/ffan" target="_blank" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors mt-auto">
+                                      <ExternalLink size={14}/> Join Community
+                                   </a>
                                 </div>
                              </div>
 
                              {/* RIGHT COLUMN: Promos */}
                              <div className="flex flex-col gap-6">
                                 {/* FANTASY SIX PACK */}
-                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
-                                   <div className="flex items-center gap-3 mb-3">
+                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner flex flex-col h-full">
+                                   <div className="flex items-center gap-3 mb-4">
                                      <img src="https://fantasysixpack.net/wp-content/uploads/2023/08/F6P_Square-optimized.jpg" alt="Fantasy Six Pack Logo" className="w-7 h-7 rounded-lg shadow-sm" />
                                      <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm">Fantasy Six Pack</h4>
                                    </div>
-                                   <p className="text-sm text-gray-300 font-medium mb-3">Use promo code <strong className="text-white">F6PDNO26</strong> to get 20% off membership at <a href="https://fantasysixpack.net/" target="_blank" className="text-[#1b75bb] hover:underline">fantasysixpack.net</a></p>
-                                   <div className="flex flex-wrap gap-2">
-                                     <span className="bg-[#111] border border-gray-700 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-300"><strong className="text-[#f5a623]">2 Tix:</strong> 1 Month</span>
-                                     <span className="bg-[#111] border border-gray-700 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-300"><strong className="text-[#f5a623]">4 Tix:</strong> 3 Months</span>
-                                     <span className="bg-[#111] border border-gray-700 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-300"><strong className="text-[#f5a623]">6 Tix:</strong> 6 Months</span>
+                                   <div className="flex-1 mb-4">
+                                     <p className="text-sm text-gray-300 font-medium mb-3">Use promo code <strong className="text-white">F6PDNO26</strong> to get 20% off membership.</p>
+                                     <div className="flex flex-wrap gap-2">
+                                       <span className="bg-[#111] border border-gray-700 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-300"><strong className="text-[#f5a623]">2 Tix:</strong> 1 Month</span>
+                                       <span className="bg-[#111] border border-gray-700 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-300"><strong className="text-[#f5a623]">4 Tix:</strong> 3 Months</span>
+                                       <span className="bg-[#111] border border-gray-700 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-300"><strong className="text-[#f5a623]">6 Tix:</strong> 6 Months</span>
+                                     </div>
                                    </div>
+                                   <a href="https://fantasysixpack.net/" target="_blank" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors mt-auto">
+                                      <ExternalLink size={14}/> Visit Website
+                                   </a>
                                 </div>
                                 
                                 {/* FASTDRAFT */}
-                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
+                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner flex flex-col h-full">
                                    <div className="flex items-center gap-3 mb-4">
                                      <img src="https://play-lh.googleusercontent.com/StS9Sjf6QrFGmgqlJ_IIH1c-cIviRMa2PqrZEAcWbxPYjoKGjdAnDEHtBe49NAEvtwjwKgRUquKGraKYEPKg=w240-h480-rw" alt="FastDraft Fantasy Logo" className="w-7 h-7 rounded-lg shadow-sm" />
                                      <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm">FastDraft Fantasy</h4>
                                    </div>
-                                   <div className="flex gap-2 items-start mb-2">
+                                   <div className="flex gap-3 items-start mb-3 flex-1">
                                      <div className="bg-[#111] border border-gray-700 rounded-lg px-2 py-1 text-xs font-black text-[#f5a623] shrink-0 mt-0.5">2 Tix</div>
-                                     <p className="text-sm text-gray-300 leading-snug">Download & use promo code <strong className="text-white">IBT</strong> for a 100% deposit match up to $50 at <a href="https://fastdraft.app/" target="_blank" className="text-[#1b75bb] hover:underline">fastdraft.app</a></p>
+                                     <div>
+                                       <p className="text-sm text-gray-300 leading-relaxed mb-2">100% first-time deposit match up to $50. Use promo code <strong className="text-white">IBT</strong>.</p>
+                                       <p className="text-[9px] text-gray-500 leading-tight uppercase font-bold">*Min $5 Deposit. Legal in AL, AK, AR, AZ, CA, CO, DC, FL, GA, IL, KS, KY, MA, MD, MN, MO, NC, NH, ND, NJ, NM, OH, OK, OR, PA, RI, SC, SD, TN, UT, WI, WV, WY</p>
+                                     </div>
                                    </div>
-                                   <p className="text-[9px] text-gray-500 leading-tight uppercase font-bold">*Min $5 Deposit. Legal in AL, AK, AR, AZ, CA, CO, DC, FL, GA, IL, KS, KY, MA, MD, MN, MO, NC, NH, ND, NJ, NM, OH, OK, OR, PA, RI, SC, SD, TN, UT, WI, WV, WY</p>
+                                   <a href="https://fastdraft.app/" target="_blank" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors mt-auto">
+                                      <ExternalLink size={14}/> Download FastDraft
+                                   </a>
                                 </div>
                                 
                                 {/* WANNA PARLAY */}
-                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
+                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner flex flex-col h-full">
                                    <div className="flex items-center gap-3 mb-4">
                                      <img src="https://play-lh.googleusercontent.com/JcpdG8Ipl2oCGFDa7KuyTQ-7E3EVAZJ4-evx6va-bZ9ziXYISLSlvYaaAErOYNTtUqPzGqrMGFD7U5m7O6aE" alt="Wanna Parlay Logo" className="w-7 h-7 rounded-lg shadow-sm" />
                                      <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm">Wanna Parlay</h4>
                                    </div>
-                                   <div className="flex gap-2 items-start mb-2">
+                                   <div className="flex gap-3 items-start mb-3 flex-1">
                                      <div className="bg-[#111] border border-gray-700 rounded-lg px-2 py-1 text-xs font-black text-[#f5a623] shrink-0 mt-0.5">2 Tix</div>
-                                     <p className="text-sm text-gray-300 leading-snug">Download & use promo code <strong className="text-white">IBT</strong> for a 100% deposit match up to $250 at <a href="https://wannaparlay.com/" target="_blank" className="text-[#1b75bb] hover:underline">wannaparlay.com</a></p>
+                                     <div>
+                                       <p className="text-sm text-gray-300 leading-relaxed mb-2">100% first-time deposit match up to $250. Use promo code <strong className="text-white">IBT</strong>.</p>
+                                       <p className="text-[9px] text-gray-500 leading-tight uppercase font-bold">*Min $5 Deposit. Legal in AK, AR, CA, FL, GA, IL, KS, KY, MN, NE, NM, ND, OK, OR, RI, SC, SD, TX, UT, WV, WI, WY</p>
+                                     </div>
                                    </div>
-                                   <p className="text-[9px] text-gray-500 leading-tight uppercase font-bold">*Min $5 Deposit. Legal in AK, AR, CA, FL, GA, IL, KS, KY, MN, NE, NM, ND, OK, OR, RI, SC, SD, TX, UT, WV, WI, WY</p>
+                                   <a href="https://wannaparlay.com/" target="_blank" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors mt-auto">
+                                      <ExternalLink size={14}/> Get App
+                                   </a>
                                 </div>
 
                                 {/* BLUECHIP */}
-                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner">
+                                <div className="bg-[#1a1a1a] rounded-2xl p-5 border border-gray-800 shadow-inner flex flex-col h-full">
                                    <div className="flex items-center gap-3 mb-4">
                                      <img src="https://media.licdn.com/dms/image/v2/D560BAQF1mF_kTUja6A/company-logo_200_200/B56ZpQf6WEJYAI-/0/1762287134397?e=2147483647&v=beta&t=fcj7XdzFLiV1wP-nhKdLRPeLVfynlp-Q0fFrZ0TF46E" alt="BlueChip Fantasy Logo" className="w-7 h-7 rounded-lg shadow-sm" />
                                      <h4 className="font-black text-[#1b75bb] uppercase tracking-widest text-sm">BlueChip Fantasy</h4>
                                    </div>
-                                   <p className="text-xs text-gray-400 font-bold mb-1">Sponsored by BlueChip Fantasy</p>
-                                   <p className="text-sm text-gray-300 leading-snug mb-1">CFF, Devy & C2C</p>
-                                   <a href="https://playbluechip.com/" target="_blank" className="text-xs font-black uppercase text-[#1b75bb] hover:underline flex items-center gap-1 mt-2"><ExternalLink size={14}/> Download App</a>
+                                   <div className="flex-1 mb-4">
+                                     <p className="text-xs text-gray-400 font-bold mb-1">Sponsored by BlueChip Fantasy Football</p>
+                                     <p className="text-sm text-gray-300 leading-snug">College Fantasy Football, Devy & Campus-to-Canton (C2C)</p>
+                                   </div>
+                                   <a href="https://playbluechip.com/" target="_blank" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors mt-auto">
+                                      <ExternalLink size={14}/> Download App
+                                   </a>
                                 </div>
 
                              </div>
@@ -636,8 +662,8 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                             Get Canton Tickets <ExternalLink size={16} />
                           </div>
                         </a>
-                        <button onClick={() => setShowRaffleModal(true)} className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px] bg-[#111] hover:bg-gray-800 text-gray-300 hover:text-white text-xs font-black uppercase tracking-widest border border-gray-800 transition-colors">
-                           <Ticket size={16} className="text-[#f5a623]" /> View Raffle Prizes & Promos
+                        <button onClick={() => setShowRaffleModal(true)} className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px] bg-[#111] hover:bg-[#1a1a1a] text-gray-200 hover:text-white text-xs font-black uppercase tracking-widest border border-[#f5a623]/60 hover:border-[#f5a623] shadow-[0_0_10px_rgba(245,166,35,0.05)] transition-all">
+                           <Ticket size={16} className="text-[#1b75bb]" /> View Raffle Prizes & Promos
                         </button>
                       </div>
                     </div>
