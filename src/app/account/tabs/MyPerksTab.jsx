@@ -160,9 +160,9 @@ export default function MyPerksTab({ userTier }) {
                   <div className="w-12 h-12 bg-gray-800 text-gray-400 border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0"><Ticket size={20} /></div>
                   <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Draft Night Out</h3>
                 </div>
-                <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">Join us at one of our live locations for the ultimate draft party, or draft remotely from home against other members of the FSAN community.</p>
+                <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">Join an online league and compete to win your league, enter the playoff challenge, and win the grand prize!</p>
                 {userTier === 'pro-plus' ? (
-                    <Link href="/football/draft-night-out" className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-white font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">Submit Your Entry <ChevronRight size={14} /></Link>
+                    <Link href="/football/draft-night-out#online" className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-white font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">JOIN A LEAGUE <ChevronRight size={14} /></Link>
                 ) : (
                     <button onClick={() => router.push('/subscribe')} className="w-full mt-auto bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 font-bold uppercase tracking-widest py-3 px-6 rounded-xl text-xs relative z-10 shadow-inner transition-colors flex items-center justify-center gap-2"><Lock size={14} /> Pro+ Required</button>
                 )}
