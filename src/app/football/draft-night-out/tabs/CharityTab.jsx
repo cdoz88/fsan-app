@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HeartHandshake, ExternalLink, Users, DollarSign, Loader2 } from 'lucide-react';
+import { HeartHandshake, ExternalLink, Users, DollarSign, Loader2, Lock, Unlock } from 'lucide-react';
 
 export default function CharityTab() {
   const [charityData, setCharityData] = useState(null);
@@ -18,6 +18,13 @@ export default function CharityTab() {
       .finally(() => setIsLoading(false));
   }, []);
 
+  const goals = charityData?.goals || [];
+  const raised = charityData?.total_raised || 0;
+  
+  // Calculate maximum goal dynamically from the backend data
+  const maxGoal = goals.length > 0 ? Math.max(...goals.map(g => parseFloat(g.amount))) : 5000;
+  const progressPercent = Math.min(100, (raised / maxGoal) * 100);
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
       <div className="flex items-center gap-6 mb-8">
@@ -25,18 +32,79 @@ export default function CharityTab() {
           <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
       </div>
 
-      <div className="bg-[#1b75bb]/10 border border-[#1b75bb]/30 rounded-xl p-4 mb-6 flex items-start gap-3">
-        <HeartHandshake size={20} className="text-[#f5a623] shrink-0 mt-0.5" />
-        <div>
-          <h5 className="text-xs font-black text-[#1b75bb] uppercase tracking-widest mb-1">Playing for a Purpose</h5>
-          <p className="text-sm text-gray-300 leading-relaxed">
-            Draft Night Out isn't just about winning a championship—it's about giving back. A portion of every online draft entry will be directly donated to Mission 22 to support Veterans and their families.
-          </p>
-        </div>
-      </div>
+      {/* CHARITY PROGRESS FOOTBALL FIELD */}
+      {goals.length > 0 && (
+          <div className="bg-[#111] border border-gray-800 rounded-3xl p-6 md:p-10 shadow-xl mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
+              <div>
+                <h3 className="text-2xl font-black italic text-white uppercase tracking-tighter">Grand Prize Fundraiser</h3>
+                <p className="text-sm text-gray-400 mt-1">Help us reach our goals! Every target hit adds a new item to the regular season overall grand prize package.</p>
+              </div>
+              <div className="text-right shrink-0 bg-[#1a1a1a] px-4 py-2 rounded-xl border border-gray-700 w-full md:w-auto flex justify-between md:flex-col items-center md:items-end">
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest md:mb-0.5">Current Progress</p>
+                <p className="text-xl font-black text-[#f5a623]">{progressPercent.toFixed(1)}%</p>
+              </div>
+            </div>
+
+            {/* Football Field */}
+            <div className="relative w-full h-24 md:h-32 bg-green-700 rounded-xl border-4 border-white shadow-2xl overflow-hidden flex mb-8">
+                {/* Field Hashmarks Background */}
+                <div className="absolute inset-0 w-full opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(10% - 2px), white calc(10% - 2px), white 10%)' }}></div>
+                
+                {/* Progress Bar Fill */}
+                <div 
+                    className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#1b75bb] to-[#1b75bb]/80 transition-all duration-1000 ease-out z-10 border-r-4 border-white shadow-[10px_0_20px_rgba(27,117,187,0.5)]" 
+                    style={{ width: `${progressPercent}%` }}
+                ></div>
+
+                {/* Goal Line Markers (Generated dynamically from your WP settings!) */}
+                {goals.map((goal, idx) => {
+                    const leftPercent = (goal.amount / maxGoal) * 100;
+                    const isEndzone = idx === goals.length - 1;
+                    
+                    if (isEndzone) {
+                        return (
+                            <div key={idx} className="absolute right-0 top-0 bottom-0 w-[15%] md:w-[12%] bg-[#f5a623] border-l-4 border-white z-0 flex items-center justify-center shadow-inner">
+                               <span className="text-black font-black text-xs md:text-lg tracking-widest uppercase opacity-90 -rotate-90 md:rotate-0">Endzone</span>
+                            </div>
+                        )
+                    }
+
+                    return (
+                        <div 
+                            key={idx} 
+                            className="absolute top-0 bottom-0 border-l-2 border-white/60 z-20 flex flex-col justify-between py-1"
+                            style={{ left: `${leftPercent}%` }}
+                        >
+                            <span className="text-white font-black text-[8px] md:text-[10px] -translate-x-1/2 mt-1 bg-green-900/50 px-1 rounded">${goal.amount}</span>
+                            <span className="text-white font-black text-[8px] md:text-[10px] -translate-x-1/2 mb-1 bg-green-900/50 px-1 rounded">${goal.amount}</span>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Prize Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              {goals.map((goal, idx) => {
+                  const isUnlocked = raised >= goal.amount;
+                  return (
+                      <div key={idx} className={`p-4 rounded-xl border flex flex-col items-center text-center transition-all ${isUnlocked ? 'bg-[#1b75bb]/10 border-[#1b75bb] shadow-[0_0_15px_rgba(27,117,187,0.2)]' : 'bg-[#151515] border-gray-800 opacity-60'}`}>
+                         <div className="mb-2">
+                           {isUnlocked ? <Unlock size={24} className="text-[#f5a623]" /> : <Lock size={24} className="text-gray-600" />}
+                         </div>
+                         <h5 className={`font-black text-[11px] uppercase tracking-widest mb-1 leading-tight ${isUnlocked ? 'text-white' : 'text-gray-500'}`}>{goal.name}</h5>
+                         <span className={`text-[10px] font-bold ${isUnlocked ? 'text-emerald-500' : 'text-gray-600'}`}>
+                           {isUnlocked ? 'UNLOCKED' : `Unlocks at $${goal.amount}`}
+                         </span>
+                      </div>
+                  )
+              })}
+            </div>
+          </div>
+      )}
 
       {/* LIVE COUNTER STATS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
          <div className="bg-[#111] border border-gray-800 rounded-2xl p-6 flex items-center justify-between shadow-inner">
             <div>
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Total Online Players</p>
@@ -60,6 +128,16 @@ export default function CharityTab() {
               <DollarSign size={20} className="text-emerald-500" />
             </div>
          </div>
+      </div>
+
+      <div className="bg-[#1b75bb]/10 border border-[#1b75bb]/30 rounded-xl p-4 mb-8 flex items-start gap-3">
+        <HeartHandshake size={20} className="text-[#f5a623] shrink-0 mt-0.5" />
+        <div>
+          <h5 className="text-xs font-black text-[#1b75bb] uppercase tracking-widest mb-1">Playing for a Purpose</h5>
+          <p className="text-sm text-gray-300 leading-relaxed">
+            Draft Night Out isn't just about winning a championship—it's about giving back. A portion of every online draft entry will be directly donated to Mission 22 to support Veterans and their families.
+          </p>
+        </div>
       </div>
       
       {/* MISSION 22 BLURB */}
