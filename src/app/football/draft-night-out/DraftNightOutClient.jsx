@@ -174,8 +174,8 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
             </div>
 
             <div className="max-w-5xl mx-auto">
-              {/* TAB SWITCHER */}
-              <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 py-2 mb-10 bg-[#151515] p-2 rounded-2xl border border-gray-800/50 w-fit mx-auto shadow-inner animate-in fade-in duration-500 delay-100">
+              {/* TAB SWITCHER - HORIZONTALLY SCROLLABLE */}
+              <div className="flex items-center justify-start lg:justify-center gap-2 md:gap-4 py-2 px-2 md:px-4 mb-10 bg-[#151515] rounded-2xl border border-gray-800/50 w-full lg:w-fit mx-auto shadow-inner animate-in fade-in duration-500 delay-100 overflow-x-auto scrollbar-hide">
                 {[
                   { id: 'drafts', icon: MonitorSmartphone, label: 'Drafts' },
                   { id: 'leaderboard', icon: ListOrdered, label: 'Leaderboard' },
@@ -186,11 +186,11 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                 ].map(tab => {
                   const Icon = tab.icon;
                   return activeTab === tab.id ? (
-                    <button key={tab.id} onClick={() => handleTabClick(tab.id)} className="relative p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_15px_rgba(27,117,187,0.3)] transition-all">
-                      <div className="bg-[#151515] rounded-[10px] px-5 py-3 flex items-center gap-2 text-white font-black uppercase tracking-widest text-xs"><Icon size={16} /> {tab.label}</div>
+                    <button key={tab.id} onClick={() => handleTabClick(tab.id)} className="relative p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_15px_rgba(27,117,187,0.3)] transition-all shrink-0">
+                      <div className="bg-[#151515] rounded-[10px] px-5 py-3 flex items-center gap-2 text-white font-black uppercase tracking-widest text-xs whitespace-nowrap"><Icon size={16} /> {tab.label}</div>
                     </button>
                   ) : (
-                    <button key={tab.id} onClick={() => handleTabClick(tab.id)} className="px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 border border-transparent"><Icon size={16} /> {tab.label}</button>
+                    <button key={tab.id} onClick={() => handleTabClick(tab.id)} className="px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 border border-transparent shrink-0 whitespace-nowrap"><Icon size={16} /> {tab.label}</button>
                   );
                 })}
               </div>
