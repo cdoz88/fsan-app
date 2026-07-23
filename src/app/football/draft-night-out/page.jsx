@@ -5,6 +5,28 @@ import DraftNightOutClient from './DraftNightOutClient';
 export const metadata = {
   title: 'Draft Night Out | FSAN',
   description: 'Join us live in Canton, Ohio for the ultimate draft party at the Fantasy Football Expo, or draft from home in our online divisions!',
+  openGraph: {
+    title: 'Draft Night Out | FSAN',
+    description: 'Join us live in Canton, Ohio for the ultimate draft party at the Fantasy Football Expo, or draft from home in our online divisions!',
+    url: 'https://fsan.com/football/draft-night-out',
+    siteName: 'Fantasy Football Advice Network',
+    images: [
+      {
+        url: 'https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_With-Background.webp',
+        width: 1200,
+        height: 630,
+        alt: 'Draft Night Out by FSAN',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Draft Night Out | FSAN',
+    description: 'Join us live in Canton, Ohio for the ultimate draft party at the Fantasy Football Expo, or draft from home in our online divisions!',
+    images: ['https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_With-Background.webp'],
+  },
 };
 
 export default async function DraftNightOutPage() {
