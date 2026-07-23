@@ -49,11 +49,14 @@ export default function CharityTab() {
             {/* Football Field */}
             <div className="relative w-full h-28 md:h-36 bg-green-700 rounded-xl border-4 border-white shadow-2xl overflow-hidden flex mb-8">
                 
-                {/* Field Major Lines Background */}
-                <div className="absolute inset-0 w-full opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(10% - 2px), white calc(10% - 2px), white 10%)' }}></div>
-                
-                {/* Top Hashmarks */}
-                <div className="absolute top-0 left-0 w-full h-2 md:h-3 opacity-80" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(2% - 2px), white calc(2% - 2px), white 2%)' }}></div>
+                {/* Integrated Field Markings Wrapper */}
+                <div className="absolute inset-0 opacity-40 pointer-events-none z-0">
+                    {/* Field Major Lines Background */}
+                    <div className="absolute inset-0 w-full" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(10% - 2px), white calc(10% - 2px), white 10%)' }}></div>
+                    
+                    {/* Top Hashmarks */}
+                    <div className="absolute top-0 left-0 w-full h-3 md:h-4" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(2% - 2px), white calc(2% - 2px), white 2%)' }}></div>
+                </div>
                 
                 {/* Progress Bar Fill */}
                 <div 
@@ -74,13 +77,16 @@ export default function CharityTab() {
                         )
                     }
 
+                    // Determine alignment to prevent edge cutoffs
+                    const labelAlignClass = leftPercent < 8 ? 'translate-x-0 ml-1' : leftPercent > 80 ? '-translate-x-full mr-1' : '-translate-x-1/2';
+
                     return (
                         <div 
                             key={idx} 
                             className="absolute top-0 bottom-0 border-l-4 border-white/60 z-20 flex flex-col justify-end pb-3 md:pb-4"
                             style={{ left: `${leftPercent}%` }}
                         >
-                            <span className="text-white font-black text-sm md:text-2xl -translate-x-1/2 tracking-tighter drop-shadow-md bg-green-700 px-1 md:px-2 rounded-sm">${goal.amount}</span>
+                            <span className={`text-white font-black text-sm md:text-2xl tracking-tighter bg-green-700 px-1 md:px-2 rounded-sm ${labelAlignClass}`}>${goal.amount}</span>
                         </div>
                     );
                 })}
