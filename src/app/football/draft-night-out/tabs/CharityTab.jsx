@@ -25,8 +25,18 @@ export default function CharityTab() {
           <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
       </div>
 
+      <div className="bg-[#1b75bb]/10 border border-[#1b75bb]/30 rounded-xl p-4 mb-6 flex items-start gap-3">
+        <HeartHandshake size={20} className="text-[#f5a623] shrink-0 mt-0.5" />
+        <div>
+          <h5 className="text-xs font-black text-[#1b75bb] uppercase tracking-widest mb-1">Playing for a Purpose</h5>
+          <p className="text-sm text-gray-300 leading-relaxed">
+            Draft Night Out isn't just about winning a championship—it's about giving back. A portion of every online draft entry will be directly donated to Mission 22 to support Veterans and their families.
+          </p>
+        </div>
+      </div>
+
       {/* LIVE COUNTER STATS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
          <div className="bg-[#111] border border-gray-800 rounded-2xl p-6 flex items-center justify-between shadow-inner">
             <div>
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Total Online Players</p>
@@ -51,16 +61,6 @@ export default function CharityTab() {
             </div>
          </div>
       </div>
-
-      <div className="bg-[#1b75bb]/10 border border-[#1b75bb]/30 rounded-xl p-4 mb-8 flex items-start gap-3">
-        <HeartHandshake size={20} className="text-[#f5a623] shrink-0 mt-0.5" />
-        <div>
-          <h5 className="text-xs font-black text-[#1b75bb] uppercase tracking-widest mb-1">Playing for a Purpose</h5>
-          <p className="text-sm text-gray-300 leading-relaxed">
-            Draft Night Out isn't just about winning a championship—it's about giving back. A portion of every online draft entry will be directly donated to Mission 22 to support Veterans and their families.
-          </p>
-        </div>
-      </div>
       
       {/* MISSION 22 BLURB */}
       <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] rounded-3xl p-8 md:p-10 border border-gray-800 shadow-xl relative overflow-hidden">
@@ -69,8 +69,8 @@ export default function CharityTab() {
          <div className="flex flex-col md:flex-row items-center md:items-start gap-8 relative z-10">
            {/* Left Col: Logo & Action */}
            <div className="w-full md:w-1/3 flex flex-col items-center md:items-start text-center md:text-left shrink-0">
-             <div className="bg-white p-6 rounded-2xl w-full max-w-[240px] flex items-center justify-center shadow-lg mb-6">
-                <img src="https://admin.fsan.com/wp-content/uploads/2026/04/Mission-22-Logo.webp" alt="Mission 22 Logo" className="w-full h-auto" />
+             <div className="w-full max-w-[240px] flex items-center justify-center mb-6">
+                <img src="https://admin.fsan.com/wp-content/uploads/2026/04/Mission-22-Logo.webp" alt="Mission 22 Logo" className="w-full h-auto drop-shadow-md" />
              </div>
              <a href="https://mission22.com/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#111] border border-gray-700 text-gray-300 hover:text-white hover:border-[#1b75bb] font-black uppercase tracking-widest text-xs transition-colors w-full md:w-auto shadow-md hover:-translate-y-0.5">
                 Visit Mission 22 <ExternalLink size={14}/>
