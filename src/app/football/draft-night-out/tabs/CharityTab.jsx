@@ -46,50 +46,49 @@ export default function CharityTab() {
               </div>
             </div>
 
-            {/* Football Field */}
-            <div className="relative w-full h-28 md:h-36 bg-green-700 rounded-xl border-4 border-white shadow-2xl overflow-hidden flex mb-8">
+            {/* Football Field Layout */}
+            <div className="relative w-full h-28 md:h-36 bg-green-700 rounded-xl border-4 border-white shadow-2xl flex mb-8 overflow-hidden">
                 
-                {/* Integrated Field Markings Wrapper */}
-                <div className="absolute inset-0 opacity-40 pointer-events-none z-0">
-                    {/* Field Major Lines Background */}
-                    <div className="absolute inset-0 w-full" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(10% - 2px), white calc(10% - 2px), white 10%)' }}></div>
-                    
-                    {/* Top Hashmarks */}
-                    <div className="absolute top-0 left-0 w-full h-3 md:h-4" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(2% - 2px), white calc(2% - 2px), white 2%)' }}></div>
-                </div>
-                
-                {/* Progress Bar Fill */}
-                <div 
-                    className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#1b75bb]/90 to-[#1b75bb]/70 transition-all duration-1000 ease-out z-10 border-r-4 border-white shadow-[10px_0_20px_rgba(27,117,187,0.5)]" 
-                    style={{ width: `${progressPercent}%` }}
-                ></div>
+                {/* 1. Left Buffer Zone (prevents the $100 label from clipping the left edge) */}
+                <div className="w-8 md:w-12 shrink-0 z-20"></div>
 
-                {/* Goal Line Markers */}
-                {goals.map((goal, idx) => {
-                    const leftPercent = (goal.amount / maxGoal) * 100;
-                    const isEndzone = idx === goals.length - 1;
+                {/* 2. Playing Field (0% to 100%) */}
+                <div className="flex-1 relative">
                     
-                    if (isEndzone) {
+                    {/* Integrated Field Markings */}
+                    <div className="absolute inset-0 opacity-40 pointer-events-none z-0">
+                        {/* Major Lines */}
+                        <div className="absolute inset-0 w-full" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(10% - 2px), white calc(10% - 2px), white 10%)' }}></div>
+                        {/* Top Hashmarks */}
+                        <div className="absolute top-0 left-0 w-full h-3 md:h-4" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(2% - 2px), white calc(2% - 2px), white 2%)' }}></div>
+                    </div>
+                    
+                    {/* Progress Bar Fill */}
+                    <div 
+                        className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#1b75bb]/90 to-[#1b75bb]/70 transition-all duration-1000 ease-out z-10 border-r-4 border-white shadow-[10px_0_20px_rgba(27,117,187,0.5)]" 
+                        style={{ width: `${progressPercent}%` }}
+                    ></div>
+
+                    {/* Goal Line Markers */}
+                    {goals.map((goal, idx) => {
+                        const isEndzone = idx === goals.length - 1;
+                        if (isEndzone) return null; // Endzone is handled in the next layout block
+
+                        const leftPercent = (goal.amount / maxGoal) * 100;
                         return (
-                            <div key={idx} className="absolute right-0 top-0 bottom-0 w-[15%] md:w-[12%] bg-[#f5a623] border-l-4 border-white z-30 flex items-center justify-center shadow-inner">
-                               <span className="text-black font-black text-xs md:text-lg tracking-widest uppercase opacity-90 -rotate-90 md:rotate-0 drop-shadow-sm">Endzone</span>
+                            <div 
+                                key={idx} 
+                                className="absolute top-0 bottom-0 border-l-4 border-white/60 z-20 flex flex-col justify-end pb-3 md:pb-4"
+                                style={{ left: `${leftPercent}%` }}
+                            >
+                                <span className="text-white font-black text-sm md:text-2xl -translate-x-1/2 tracking-tighter bg-green-700 px-1 md:px-2 rounded-sm">${goal.amount}</span>
                             </div>
-                        )
-                    }
+                        );
+                    })}
+                </div>
 
-                    // Determine alignment to prevent edge cutoffs
-                    const labelAlignClass = leftPercent < 8 ? 'translate-x-0 ml-1' : leftPercent > 80 ? '-translate-x-full mr-1' : '-translate-x-1/2';
-
-                    return (
-                        <div 
-                            key={idx} 
-                            className="absolute top-0 bottom-0 border-l-4 border-white/60 z-20 flex flex-col justify-end pb-3 md:pb-4"
-                            style={{ left: `${leftPercent}%` }}
-                        >
-                            <span className={`text-white font-black text-sm md:text-2xl tracking-tighter bg-green-700 px-1 md:px-2 rounded-sm ${labelAlignClass}`}>${goal.amount}</span>
-                        </div>
-                    );
-                })}
+                {/* 3. Right Endzone */}
+                <div className="w-[15%] md:w-[12%] bg-[#f5a623] border-l-4 border-white z-30 shrink-0"></div>
             </div>
 
             {/* Prize Grid */}
