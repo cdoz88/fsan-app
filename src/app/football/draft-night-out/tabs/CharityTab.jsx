@@ -126,8 +126,19 @@ export default function CharityTab() {
                     })}
                 </div>
 
-                {/* Right Endzone - Shrunk and Text Removed */}
-                <div className="w-[10%] md:w-[8%] bg-[#f5a623] border-l-4 border-white z-30 shrink-0 shadow-inner"></div>
+                {/* Right Endzone */}
+                <div className="w-[12%] md:w-[10%] bg-[#f5a623] border-l-4 border-white z-30 shrink-0 shadow-inner flex items-center justify-center">
+                   {goals.length > 0 && (
+                      <span className="text-black font-black text-sm md:text-xl tracking-tighter -rotate-90 md:rotate-0 opacity-90 drop-shadow-sm">
+                         ${goals[goals.length - 1].amount}
+                      </span>
+                   )}
+                </div>
+            </div>
+
+            {/* Prize Grid Header */}
+            <div className="mb-4 border-b border-gray-800 pb-2">
+               <h4 className="text-xs md:text-sm font-black text-white uppercase tracking-widest">Unlocked Grand Prize Package</h4>
             </div>
 
             {/* Prize Grid */}
