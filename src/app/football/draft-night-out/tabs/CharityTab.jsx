@@ -21,12 +21,39 @@ export default function CharityTab() {
   const goals = charityData?.goals || [];
   const raised = charityData?.total_raised || 0;
   
-  // Calculate maximum goal dynamically from the backend data
+  // Calculate maximum goal for the textual percentage
   const maxGoal = goals.length > 0 ? Math.max(...goals.map(g => parseFloat(g.amount))) : 5000;
-  const progressPercent = Math.min(100, (raised / maxGoal) * 100);
+  const mathematicalPercent = Math.min(100, (raised / maxGoal) * 100);
+
+  // Calculate NON-LINEAR visual progress based on even segment spacing
+  let visualProgress = 0;
+  const numSegments = goals.length;
+  
+  if (numSegments > 0) {
+    const segmentWidth = 100 / numSegments;
+    let prevAmount = 0;
+    let prevVisual = 0;
+    
+    for (let i = 0; i < numSegments; i++) {
+      const goalAmount = parseFloat(goals[i].amount);
+      if (raised >= goalAmount) {
+        visualProgress = (i + 1) * segmentWidth;
+        prevAmount = goalAmount;
+        prevVisual = visualProgress;
+      } else {
+        // It falls within this segment. Calculate how far along it is.
+        const segmentRaised = raised - prevAmount;
+        const segmentTotal = goalAmount - prevAmount;
+        const segmentPct = segmentRaised / segmentTotal;
+        visualProgress = prevVisual + (segmentPct * segmentWidth);
+        break;
+      }
+    }
+    if (raised >= maxGoal) visualProgress = 100;
+  }
   
   // Only show the right border of the progress bar if it is actively in the field of play
-  const showProgressBorder = progressPercent > 0 && progressPercent < 100;
+  const showProgressBorder = visualProgress > 0 && visualProgress < 100;
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
@@ -45,7 +72,7 @@ export default function CharityTab() {
               </div>
               <div className="text-right shrink-0 bg-[#1a1a1a] px-4 py-2 rounded-xl border border-gray-700 w-full md:w-auto flex justify-between md:flex-col items-center md:items-end">
                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest md:mb-0.5">Current Progress</p>
-                <p className="text-xl font-black text-[#f5a623]">{progressPercent.toFixed(1)}%</p>
+                <p className="text-xl font-black text-[#f5a623]">{mathematicalPercent.toFixed(1)}%</p>
               </div>
             </div>
 
@@ -55,30 +82,39 @@ export default function CharityTab() {
                 {/* Playing Field (0% to 100%) */}
                 <div className="flex-1 relative">
                     
-                    {/* Integrated Field Markings */}
-                    <div className="absolute inset-0 opacity-40 pointer-events-none z-0">
-                        {/* Major Lines */}
-                        <div className="absolute inset-0 w-full" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(10% - 2px), white calc(10% - 2px), white 10%)' }}></div>
-                        {/* Top Hashmarks Only */}
-                        <div className="absolute top-0 left-0 w-full h-3 md:h-4" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(2% - 2px), white calc(2% - 2px), white 2%)' }}></div>
+                    {/* Generative Hash Marks (4 short lines per segment) */}
+                    <div className="absolute inset-0 opacity-60 pointer-events-none z-0">
+                        {Array.from({ length: numSegments * 5 }).map((_, i) => {
+                            if (i === 0) return null; // No hash at 0
+                            if (i % 5 === 0) return null; // Skip where major lines go
+                            return (
+                                <div 
+                                    key={`hash-${i}`} 
+                                    className="absolute top-0 w-0.5 h-3 md:h-4 bg-white" 
+                                    style={{ left: `${(i / (numSegments * 5)) * 100}%` }}
+                                ></div>
+                            );
+                        })}
                     </div>
                     
                     {/* Progress Bar Fill */}
                     <div 
                         className={`absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#1b75bb]/90 to-[#1b75bb]/70 transition-all duration-1000 ease-out z-10 shadow-[10px_0_20px_rgba(27,117,187,0.5)] ${showProgressBorder ? 'border-r-4 border-white' : ''}`} 
-                        style={{ width: `${progressPercent}%` }}
+                        style={{ width: `${visualProgress}%` }}
                     ></div>
 
-                    {/* Goal Line Markers */}
+                    {/* Evenly Spaced Goal Line Markers */}
                     {goals.map((goal, idx) => {
-                        const isEndzone = idx === goals.length - 1;
+                        const isEndzone = idx === numSegments - 1;
                         if (isEndzone) return null; // Endzone handles the 100% mark
 
-                        const leftPercent = (goal.amount / maxGoal) * 100;
+                        const segmentWidth = 100 / numSegments;
+                        const leftPercent = (idx + 1) * segmentWidth;
+                        
                         return (
                             <div 
-                                key={idx} 
-                                className="absolute top-0 bottom-0 border-l-4 border-white/60 z-20 flex flex-col justify-end pb-3 md:pb-4"
+                                key={`goal-${idx}`} 
+                                className="absolute top-0 bottom-0 border-l-4 border-white/80 z-20 flex flex-col justify-end pb-3 md:pb-4"
                                 style={{ left: `${leftPercent}%` }}
                             >
                                 {/* Solid green background breaks the line cleanly, no shadows, perfectly centered */}
@@ -90,8 +126,8 @@ export default function CharityTab() {
                     })}
                 </div>
 
-                {/* Right Endzone */}
-                <div className="w-[15%] md:w-[12%] bg-[#f5a623] border-l-4 border-white z-30 shrink-0"></div>
+                {/* Right Endzone - Shrunk and Text Removed */}
+                <div className="w-[10%] md:w-[8%] bg-[#f5a623] border-l-4 border-white z-30 shrink-0 shadow-inner"></div>
             </div>
 
             {/* Prize Grid */}
