@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { MonitorSmartphone, MapPin, SlidersHorizontal, Ticket, Lock, Loader2, Coins, ExternalLink, Calendar, Clock } from 'lucide-react';
+import { MonitorSmartphone, MapPin, SlidersHorizontal, Ticket, Lock, Loader2, Coins, ExternalLink, Calendar, Clock, ChevronDown } from 'lucide-react';
 
 export default function DraftsTab({
   draftView, setDraftView, isProPlus, ticketsAvailable, handlePurchaseExtraEntry, errorMessage, loadingLeagues, leagues, sortedLeagues, recentlyJoinedLeagues, setConfirmingLeague, setShowRaffleModal
@@ -46,29 +46,37 @@ export default function DraftsTab({
                 <span className="text-xs font-black uppercase tracking-widest mr-2 text-white">Filters</span>
               </div>
               
-              <select 
-                value={statusFilter} 
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-[#1a1a1a] px-3 py-2.5 rounded-lg border border-gray-700 text-xs font-bold text-gray-300 outline-none focus:border-[#1b75bb] shrink-0"
-              >
-                <option value="all">Status: All</option>
-                <option value="open">Status: Open</option>
-                <option value="filled">Status: Filled</option>
-              </select>
+              {/* STYLED DROPDOWN: STATUS */}
+              <div className="relative shrink-0 w-full sm:w-auto">
+                <select 
+                  value={statusFilter} 
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="appearance-none w-full sm:w-40 bg-[#1a1a1a] pl-4 pr-10 py-2.5 rounded-lg border border-gray-700 text-xs font-bold text-gray-300 outline-none focus:border-[#1b75bb] transition-colors cursor-pointer"
+                >
+                  <option value="all">Status: All</option>
+                  <option value="open">Status: Open</option>
+                  <option value="filled">Status: Filled</option>
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+              </div>
 
-              <select 
-                value={styleFilter} 
-                onChange={(e) => setStyleFilter(e.target.value)}
-                className="bg-[#1a1a1a] px-3 py-2.5 rounded-lg border border-gray-700 text-xs font-bold text-gray-300 outline-none focus:border-[#1b75bb] shrink-0"
-              >
-                <option value="all">Style: All</option>
-                <option value="fast">Style: Live / Fast</option>
-                <option value="slow">Style: Slow Draft</option>
-              </select>
+              {/* STYLED DROPDOWN: STYLE */}
+              <div className="relative shrink-0 w-full sm:w-auto">
+                <select 
+                  value={styleFilter} 
+                  onChange={(e) => setStyleFilter(e.target.value)}
+                  className="appearance-none w-full sm:w-44 bg-[#1a1a1a] pl-4 pr-10 py-2.5 rounded-lg border border-gray-700 text-xs font-bold text-gray-300 outline-none focus:border-[#1b75bb] transition-colors cursor-pointer"
+                >
+                  <option value="all">Style: All</option>
+                  <option value="fast">Style: Live / Fast</option>
+                  <option value="slow">Style: Slow Draft</option>
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+              </div>
 
               <button 
                 onClick={() => setMyLeaguesOnly(!myLeaguesOnly)}
-                className={`px-4 py-2.5 rounded-lg border text-xs font-bold shrink-0 transition-colors ${myLeaguesOnly ? 'bg-[#1b75bb]/20 border-[#1b75bb] text-[#1b75bb]' : 'bg-[#1a1a1a] border-gray-700 text-gray-300 hover:border-gray-500'}`}
+                className={`px-5 py-2.5 rounded-lg border text-xs font-bold shrink-0 transition-colors w-full sm:w-auto ${myLeaguesOnly ? 'bg-[#1b75bb]/20 border-[#1b75bb] text-[#1b75bb]' : 'bg-[#1a1a1a] border-gray-700 text-gray-300 hover:border-gray-500'}`}
               >
                 My Leagues
               </button>
@@ -132,9 +140,16 @@ export default function DraftsTab({
                   const hasNoEntriesLeft = ticketsAvailable === 0;
                   const isJoinedLocal = recentlyJoinedLeagues.includes(league.id);
 
-                  // Safe Date/Time Formatting
-                  const formattedDate = league.draft_date ? new Date(`${league.draft_date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD';
-                  const formattedTime = league.draft_hour ? `${league.draft_hour}:${league.draft_minute || '00'} ${league.draft_ampm || 'PM'} ET` : '';
+                  // Safe Date/Time Formatting with Fallback
+                  const formattedDate = league.draft_date ? new Date(`${league.draft_date}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD';
+                  
+                  let formattedTime = '';
+                  if (league.draft_hour && league.draft_hour !== '') {
+                      formattedTime = `${league.draft_hour}:${league.draft_minute || '00'} ${league.draft_ampm || 'PM'} ET`;
+                  } else if (league.draft_time) {
+                      formattedTime = league.draft_time; 
+                  }
+
                   const styleLabel = league.draft_style === 'slow' ? 'Slow Draft' : 'Live / Fast';
                   const styleIcon = league.draft_style === 'slow' ? '🐢' : '⚡️';
 
