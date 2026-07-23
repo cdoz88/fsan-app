@@ -55,9 +55,6 @@ export default function CharityTab() {
                 {/* Top Hashmarks */}
                 <div className="absolute top-0 left-0 w-full h-2 md:h-3 opacity-80" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(2% - 2px), white calc(2% - 2px), white 2%)' }}></div>
                 
-                {/* Bottom Hashmarks */}
-                <div className="absolute bottom-0 left-0 w-full h-2 md:h-3 opacity-80" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(2% - 2px), white calc(2% - 2px), white 2%)' }}></div>
-                
                 {/* Progress Bar Fill */}
                 <div 
                     className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#1b75bb]/90 to-[#1b75bb]/70 transition-all duration-1000 ease-out z-10 border-r-4 border-white shadow-[10px_0_20px_rgba(27,117,187,0.5)]" 
@@ -83,7 +80,7 @@ export default function CharityTab() {
                             className="absolute top-0 bottom-0 border-l-4 border-white/60 z-20 flex flex-col justify-end pb-3 md:pb-4"
                             style={{ left: `${leftPercent}%` }}
                         >
-                            <span className="text-white font-black text-sm md:text-2xl -translate-x-1/2 tracking-tighter drop-shadow-md">${goal.amount}</span>
+                            <span className="text-white font-black text-sm md:text-2xl -translate-x-1/2 tracking-tighter drop-shadow-md bg-green-700 px-1 md:px-2 rounded-sm">${goal.amount}</span>
                         </div>
                     );
                 })}
@@ -125,7 +122,7 @@ export default function CharityTab() {
 
          <div className="bg-gradient-to-br from-emerald-900/20 to-[#111] border border-emerald-900/50 rounded-2xl p-6 flex items-center justify-between shadow-inner">
             <div>
-              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Total Cash Raised</p>
+              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Total Raised</p>
               <div className="text-3xl font-black text-emerald-500">
                 {isLoading ? <Loader2 size={24} className="animate-spin text-emerald-900 mt-1" /> : `$${(charityData?.total_raised || 0).toFixed(2)}`}
               </div>
