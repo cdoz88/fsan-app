@@ -24,6 +24,9 @@ export default function CharityTab() {
   // Calculate maximum goal dynamically from the backend data
   const maxGoal = goals.length > 0 ? Math.max(...goals.map(g => parseFloat(g.amount))) : 5000;
   const progressPercent = Math.min(100, (raised / maxGoal) * 100);
+  
+  // Only show the right border of the progress bar if it is actively in the field of play
+  const showProgressBorder = progressPercent > 0 && progressPercent < 100;
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
@@ -49,39 +52,40 @@ export default function CharityTab() {
             {/* Football Field Layout */}
             <div className="relative w-full h-28 md:h-36 bg-green-700 rounded-xl border-4 border-white shadow-2xl flex mb-8 overflow-hidden">
                 
-                {/* 1. Left Buffer Zone (prevents the $100 label from clipping the left edge) */}
-                <div className="w-8 md:w-12 shrink-0 z-20"></div>
+                {/* 1. Left Buffer Zone (prevents the first label from hitting the left edge) */}
+                <div className="w-8 md:w-10 shrink-0 z-20"></div>
 
                 {/* 2. Playing Field (0% to 100%) */}
-                <div className="flex-1 relative">
+                <div className="flex-1 relative border-l-4 border-white">
                     
                     {/* Integrated Field Markings */}
                     <div className="absolute inset-0 opacity-40 pointer-events-none z-0">
                         {/* Major Lines */}
                         <div className="absolute inset-0 w-full" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(10% - 2px), white calc(10% - 2px), white 10%)' }}></div>
-                        {/* Top Hashmarks */}
+                        {/* Top Hashmarks Only */}
                         <div className="absolute top-0 left-0 w-full h-3 md:h-4" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(2% - 2px), white calc(2% - 2px), white 2%)' }}></div>
                     </div>
                     
                     {/* Progress Bar Fill */}
                     <div 
-                        className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#1b75bb]/90 to-[#1b75bb]/70 transition-all duration-1000 ease-out z-10 border-r-4 border-white shadow-[10px_0_20px_rgba(27,117,187,0.5)]" 
+                        className={`absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#1b75bb]/90 to-[#1b75bb]/70 transition-all duration-1000 ease-out z-10 shadow-[10px_0_20px_rgba(27,117,187,0.5)] ${showProgressBorder ? 'border-r-4 border-white' : ''}`} 
                         style={{ width: `${progressPercent}%` }}
                     ></div>
 
                     {/* Goal Line Markers */}
                     {goals.map((goal, idx) => {
                         const isEndzone = idx === goals.length - 1;
-                        if (isEndzone) return null; // Endzone is handled in the next layout block
+                        if (isEndzone) return null; // Endzone handles the 100% mark
 
                         const leftPercent = (goal.amount / maxGoal) * 100;
                         return (
                             <div 
                                 key={idx} 
-                                className="absolute top-0 bottom-0 border-l-4 border-white/60 z-20 flex flex-col justify-end pb-3 md:pb-4"
+                                className="absolute top-0 bottom-0 border-l-2 border-white/60 z-20 flex flex-col justify-end pb-3 md:pb-4"
                                 style={{ left: `${leftPercent}%` }}
                             >
-                                <span className="text-white font-black text-sm md:text-2xl -translate-x-1/2 tracking-tighter bg-green-700 px-1 md:px-2 rounded-sm">${goal.amount}</span>
+                                {/* Solid green background breaks the line cleanly */}
+                                <span className="text-white font-black text-sm md:text-2xl -translate-x-1/2 tracking-tighter bg-green-700 px-1 md:px-2 rounded-sm drop-shadow-sm">${goal.amount}</span>
                             </div>
                         );
                     })}
