@@ -38,7 +38,7 @@ export default function CharityTab() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
               <div>
                 <h3 className="text-2xl font-black italic text-white uppercase tracking-tighter">Grand Prize Fundraiser</h3>
-                <p className="text-sm text-gray-400 mt-1">Help us reach our goals! Every target hit adds a new item to the regular season overall grand prize package.</p>
+                <p className="text-sm text-gray-400 mt-1">Help us reach our goals! Every target hit adds a new item to the Playoff Challenge grand prize package!</p>
               </div>
               <div className="text-right shrink-0 bg-[#1a1a1a] px-4 py-2 rounded-xl border border-gray-700 w-full md:w-auto flex justify-between md:flex-col items-center md:items-end">
                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest md:mb-0.5">Current Progress</p>
@@ -47,25 +47,32 @@ export default function CharityTab() {
             </div>
 
             {/* Football Field */}
-            <div className="relative w-full h-24 md:h-32 bg-green-700 rounded-xl border-4 border-white shadow-2xl overflow-hidden flex mb-8">
-                {/* Field Hashmarks Background */}
+            <div className="relative w-full h-28 md:h-36 bg-green-700 rounded-xl border-4 border-white shadow-2xl overflow-hidden flex mb-8">
+                
+                {/* Field Major Lines Background */}
                 <div className="absolute inset-0 w-full opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(10% - 2px), white calc(10% - 2px), white 10%)' }}></div>
+                
+                {/* Top Hashmarks */}
+                <div className="absolute top-0 left-0 w-full h-2 md:h-3 opacity-80" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(2% - 2px), white calc(2% - 2px), white 2%)' }}></div>
+                
+                {/* Bottom Hashmarks */}
+                <div className="absolute bottom-0 left-0 w-full h-2 md:h-3 opacity-80" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent calc(2% - 2px), white calc(2% - 2px), white 2%)' }}></div>
                 
                 {/* Progress Bar Fill */}
                 <div 
-                    className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#1b75bb] to-[#1b75bb]/80 transition-all duration-1000 ease-out z-10 border-r-4 border-white shadow-[10px_0_20px_rgba(27,117,187,0.5)]" 
+                    className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#1b75bb]/90 to-[#1b75bb]/70 transition-all duration-1000 ease-out z-10 border-r-4 border-white shadow-[10px_0_20px_rgba(27,117,187,0.5)]" 
                     style={{ width: `${progressPercent}%` }}
                 ></div>
 
-                {/* Goal Line Markers (Generated dynamically from your WP settings!) */}
+                {/* Goal Line Markers */}
                 {goals.map((goal, idx) => {
                     const leftPercent = (goal.amount / maxGoal) * 100;
                     const isEndzone = idx === goals.length - 1;
                     
                     if (isEndzone) {
                         return (
-                            <div key={idx} className="absolute right-0 top-0 bottom-0 w-[15%] md:w-[12%] bg-[#f5a623] border-l-4 border-white z-0 flex items-center justify-center shadow-inner">
-                               <span className="text-black font-black text-xs md:text-lg tracking-widest uppercase opacity-90 -rotate-90 md:rotate-0">Endzone</span>
+                            <div key={idx} className="absolute right-0 top-0 bottom-0 w-[15%] md:w-[12%] bg-[#f5a623] border-l-4 border-white z-30 flex items-center justify-center shadow-inner">
+                               <span className="text-black font-black text-xs md:text-lg tracking-widest uppercase opacity-90 -rotate-90 md:rotate-0 drop-shadow-sm">Endzone</span>
                             </div>
                         )
                     }
@@ -73,11 +80,10 @@ export default function CharityTab() {
                     return (
                         <div 
                             key={idx} 
-                            className="absolute top-0 bottom-0 border-l-2 border-white/60 z-20 flex flex-col justify-between py-1"
+                            className="absolute top-0 bottom-0 border-l-4 border-white/60 z-20 flex flex-col justify-end pb-3 md:pb-4"
                             style={{ left: `${leftPercent}%` }}
                         >
-                            <span className="text-white font-black text-[8px] md:text-[10px] -translate-x-1/2 mt-1 bg-green-900/50 px-1 rounded">${goal.amount}</span>
-                            <span className="text-white font-black text-[8px] md:text-[10px] -translate-x-1/2 mb-1 bg-green-900/50 px-1 rounded">${goal.amount}</span>
+                            <span className="text-white font-black text-sm md:text-2xl -translate-x-1/2 tracking-tighter drop-shadow-md">${goal.amount}</span>
                         </div>
                     );
                 })}
