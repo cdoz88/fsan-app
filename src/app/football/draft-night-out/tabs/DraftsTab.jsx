@@ -1,10 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { MonitorSmartphone, MapPin, SlidersHorizontal, Ticket, Lock, Loader2, Coins, ExternalLink, Calendar, Clock } from 'lucide-react';
 
 export default function DraftsTab({
   draftView, setDraftView, isProPlus, ticketsAvailable, handlePurchaseExtraEntry, errorMessage, loadingLeagues, leagues, sortedLeagues, recentlyJoinedLeagues, setConfirmingLeague, setShowRaffleModal
 }) {
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [styleFilter, setStyleFilter] = useState('all');
+  const [myLeaguesOnly, setMyLeaguesOnly] = useState(false);
+
+  // Apply filters to the sorted leagues array
+  const filteredLeagues = sortedLeagues.filter(league => {
+    const openSpots = Math.max(0, league.total_spots - league.filled_spots);
+    const isFull = openSpots === 0;
+    const isJoinedLocal = recentlyJoinedLeagues.includes(league.id);
+
+    if (statusFilter === 'open' && isFull) return false;
+    if (statusFilter === 'filled' && !isFull) return false;
+    if (styleFilter !== 'all' && league.draft_style !== styleFilter) return false;
+    if (myLeaguesOnly && !isJoinedLocal) return false;
+
+    return true;
+  });
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
       <div className="flex justify-center mb-8">
@@ -20,12 +38,40 @@ export default function DraftsTab({
 
       {draftView === 'online' && (
         <div className="animate-in fade-in duration-300">
-          <div className="hidden sm:flex items-center gap-3 mb-6 bg-[#111] p-3 rounded-xl border border-gray-800 text-gray-500 opacity-50 cursor-not-allowed shadow-inner">
-              <SlidersHorizontal size={16} className="text-gray-600" />
-              <span className="text-xs font-bold uppercase tracking-widest mr-2 text-gray-400">Filters (Coming Soon)</span>
-              <div className="bg-[#1a1a1a] px-4 py-2 rounded-lg border border-gray-700 text-xs font-bold">Status: All</div>
-              <div className="bg-[#1a1a1a] px-4 py-2 rounded-lg border border-gray-700 text-xs font-bold">Style: All</div>
-              <div className="bg-[#1a1a1a] px-4 py-2 rounded-lg border border-gray-700 text-xs font-bold">My Leagues</div>
+          
+          {/* FUNCTIONAL FILTER BAR */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6 bg-[#111] p-3 rounded-xl border border-gray-800 shadow-inner overflow-x-auto scrollbar-hide">
+              <div className="flex items-center gap-2 shrink-0 ml-1">
+                <SlidersHorizontal size={16} className="text-[#f5a623]" />
+                <span className="text-xs font-black uppercase tracking-widest mr-2 text-white">Filters</span>
+              </div>
+              
+              <select 
+                value={statusFilter} 
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="bg-[#1a1a1a] px-3 py-2.5 rounded-lg border border-gray-700 text-xs font-bold text-gray-300 outline-none focus:border-[#1b75bb] shrink-0"
+              >
+                <option value="all">Status: All</option>
+                <option value="open">Status: Open</option>
+                <option value="filled">Status: Filled</option>
+              </select>
+
+              <select 
+                value={styleFilter} 
+                onChange={(e) => setStyleFilter(e.target.value)}
+                className="bg-[#1a1a1a] px-3 py-2.5 rounded-lg border border-gray-700 text-xs font-bold text-gray-300 outline-none focus:border-[#1b75bb] shrink-0"
+              >
+                <option value="all">Style: All</option>
+                <option value="fast">Style: Live / Fast</option>
+                <option value="slow">Style: Slow Draft</option>
+              </select>
+
+              <button 
+                onClick={() => setMyLeaguesOnly(!myLeaguesOnly)}
+                className={`px-4 py-2.5 rounded-lg border text-xs font-bold shrink-0 transition-colors ${myLeaguesOnly ? 'bg-[#1b75bb]/20 border-[#1b75bb] text-[#1b75bb]' : 'bg-[#1a1a1a] border-gray-700 text-gray-300 hover:border-gray-500'}`}
+              >
+                My Leagues
+              </button>
           </div>
 
           <div className="mb-8 p-[2px] rounded-2xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(27,117,187,0.15)]">
@@ -76,21 +122,42 @@ export default function DraftsTab({
               <div className="w-full flex flex-col items-center justify-center py-20 text-gray-500 gap-3"><Loader2 size={32} className="animate-spin text-[#1b75bb]" /><span className="text-xs font-bold uppercase tracking-widest">Querying Sleeper API Matrix...</span></div>
             ) : leagues.length === 0 ? (
               <div className="w-full bg-[#151515] rounded-2xl p-12 text-center border border-gray-800 text-gray-500 text-sm font-bold uppercase tracking-widest">No active divisions found in database. Check back soon!</div>
+            ) : filteredLeagues.length === 0 ? (
+              <div className="w-full bg-[#151515] rounded-2xl p-12 text-center border border-gray-800 text-gray-500 text-sm font-bold uppercase tracking-widest">No leagues match your current filters.</div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {sortedLeagues.map((league) => {
+                {filteredLeagues.map((league) => {
                   const openSpots = Math.max(0, league.total_spots - league.filled_spots);
                   const isFull = openSpots === 0;
                   const hasNoEntriesLeft = ticketsAvailable === 0;
                   const isJoinedLocal = recentlyJoinedLeagues.includes(league.id);
 
+                  // Safe Date/Time Formatting
+                  const formattedDate = league.draft_date ? new Date(`${league.draft_date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD';
+                  const formattedTime = league.draft_hour ? `${league.draft_hour}:${league.draft_minute || '00'} ${league.draft_ampm || 'PM'} ET` : '';
+                  const styleLabel = league.draft_style === 'slow' ? 'Slow Draft' : 'Live / Fast';
+                  const styleIcon = league.draft_style === 'slow' ? '🐢' : '⚡️';
+
                   return (
                     <div key={league.id} className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md relative overflow-hidden group">
                       <div className="flex-1 min-w-0 flex flex-col justify-center">
-                        <h4 className="text-lg font-black text-white uppercase tracking-wide italic mb-1 line-clamp-1">{league.name}</h4>
+                        <h4 className="text-lg font-black text-white uppercase tracking-wide italic mb-2 line-clamp-1">{league.name}</h4>
+                        
+                        {/* Draft Details Badges */}
+                        <div className="flex flex-wrap items-center gap-2 mb-3">
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-[#111] px-2 py-1 rounded border border-gray-800 shadow-inner">
+                            <Calendar size={12} className="text-[#1b75bb]" />
+                            <span>{formattedDate}{formattedTime ? ` @ ${formattedTime}` : ''}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-[#111] px-2 py-1 rounded border border-gray-800 shadow-inner">
+                            <span className="text-[12px] leading-none">{styleIcon}</span>
+                            <span>{styleLabel}</span>
+                          </div>
+                        </div>
+
                         <span className={`text-xs font-black uppercase tracking-wider ${isFull && !isJoinedLocal ? 'text-gray-500' : 'text-green-500'}`}>{league.filled_spots} / {league.total_spots} Teams Filled</span>
                       </div>
-                      <div className="shrink-0 w-full sm:w-auto">
+                      <div className="shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
                         {isJoinedLocal ? (
                           <a href="https://sleeper.com" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-green-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-green-900/50 transition-colors flex items-center justify-center gap-2"><ExternalLink size={14} /> Go to League</a>
                         ) : isFull ? (
