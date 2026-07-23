@@ -24,11 +24,17 @@ export async function GET(request) {
       }
 
       // Hide secure invite links from the initial pool payload to prevent scraping
+      // 🚀 FIX: Added the new draft details so they are no longer stripped out!
       const sanitizedLeagues = wpData.data.leagues.map(l => ({
         id: l.id,
         name: l.name,
         total_spots: l.total_spots || 12,
-        filled_spots: l.filled_spots || 0
+        filled_spots: l.filled_spots || 0,
+        draft_date: l.draft_date || '',
+        draft_hour: l.draft_hour || '',
+        draft_minute: l.draft_minute || '',
+        draft_ampm: l.draft_ampm || 'PM',
+        draft_style: l.draft_style || 'fast'
       }));
 
       // 🚀 FIX: Read the LIVE ticket count directly from the WordPress database response instead of the stale session
