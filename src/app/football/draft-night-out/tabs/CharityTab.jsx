@@ -51,12 +51,9 @@ export default function CharityTab() {
 
             {/* Football Field Layout */}
             <div className="relative w-full h-28 md:h-36 bg-green-700 rounded-xl border-4 border-white shadow-2xl flex mb-8 overflow-hidden">
-                
-                {/* 1. Left Buffer Zone (prevents the first label from hitting the left edge) */}
-                <div className="w-8 md:w-10 shrink-0 z-20"></div>
 
-                {/* 2. Playing Field (0% to 100%) */}
-                <div className="flex-1 relative border-l-4 border-white">
+                {/* Playing Field (0% to 100%) */}
+                <div className="flex-1 relative">
                     
                     {/* Integrated Field Markings */}
                     <div className="absolute inset-0 opacity-40 pointer-events-none z-0">
@@ -81,17 +78,19 @@ export default function CharityTab() {
                         return (
                             <div 
                                 key={idx} 
-                                className="absolute top-0 bottom-0 border-l-2 border-white/60 z-20 flex flex-col justify-end pb-3 md:pb-4"
+                                className="absolute top-0 bottom-0 border-l-4 border-white/60 z-20 flex flex-col justify-end pb-3 md:pb-4"
                                 style={{ left: `${leftPercent}%` }}
                             >
-                                {/* Solid green background breaks the line cleanly */}
-                                <span className="text-white font-black text-sm md:text-2xl -translate-x-1/2 tracking-tighter bg-green-700 px-1 md:px-2 rounded-sm drop-shadow-sm">${goal.amount}</span>
+                                {/* Solid green background breaks the line cleanly, no shadows, perfectly centered */}
+                                <span className="text-white font-black text-sm md:text-2xl -translate-x-1/2 tracking-tighter bg-green-700 px-1 md:px-2 rounded-sm">
+                                  ${goal.amount}
+                                </span>
                             </div>
                         );
                     })}
                 </div>
 
-                {/* 3. Right Endzone */}
+                {/* Right Endzone */}
                 <div className="w-[15%] md:w-[12%] bg-[#f5a623] border-l-4 border-white z-30 shrink-0"></div>
             </div>
 
