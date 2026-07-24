@@ -62,35 +62,45 @@ export default function CharityTab() {
           <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
       </div>
 
+      <div className="bg-[#1b75bb]/10 border border-[#1b75bb]/30 rounded-xl p-4 mb-8 flex items-start gap-3 shadow-md">
+        <HeartHandshake size={20} className="text-[#f5a623] shrink-0 mt-0.5" />
+        <div>
+          <h5 className="text-xs font-black text-[#1b75bb] uppercase tracking-widest mb-1">Playing for a Purpose</h5>
+          <p className="text-sm text-gray-300 leading-relaxed">
+            Draft Night Out isn't just about winning a championship—it's about giving back. A portion of every online draft entry will be directly donated to Mission 22 to support Veterans and their families.
+          </p>
+        </div>
+      </div>
+
       {/* CHARITY PROGRESS FOOTBALL FIELD */}
       {goals.length > 0 && (
-          <div className="bg-[#111] border border-gray-800 rounded-3xl p-6 md:p-10 shadow-xl mb-8">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
+          <div className="bg-gradient-to-b from-[#151515] to-[#111] border border-gray-800 rounded-3xl p-6 md:p-10 shadow-2xl mb-8 relative overflow-hidden">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4 relative z-10">
               <div>
-                <h3 className="text-2xl font-black italic text-white uppercase tracking-tighter">Grand Prize Fundraiser</h3>
+                <h3 className="text-2xl font-black italic text-white uppercase tracking-tighter drop-shadow-sm">Grand Prize Fundraiser</h3>
                 <p className="text-sm text-gray-400 mt-1">Help us reach our goals! Every target hit adds a new item to the Playoff Challenge grand prize package!</p>
               </div>
-              <div className="text-right shrink-0 bg-[#1a1a1a] px-4 py-2 rounded-xl border border-gray-700 w-full md:w-auto flex justify-between md:flex-col items-center md:items-end">
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest md:mb-0.5">Current Progress</p>
-                <p className="text-xl font-black text-[#f5a623]">{mathematicalPercent.toFixed(1)}%</p>
+              <div className="text-right shrink-0 bg-[#1a1a1a] px-5 py-3 rounded-xl border border-gray-700 w-full md:w-auto flex justify-between md:flex-col items-center md:items-end shadow-inner">
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest md:mb-1">Current Progress</p>
+                <p className="text-xl md:text-2xl font-black text-[#f5a623] drop-shadow-md">{mathematicalPercent.toFixed(1)}%</p>
               </div>
             </div>
 
             {/* Football Field Layout */}
-            <div className="relative w-full h-28 md:h-36 bg-green-700 rounded-xl border-4 border-white shadow-2xl flex mb-8 overflow-hidden">
+            <div className="relative w-full h-28 md:h-36 bg-gradient-to-b from-green-600 to-green-900 rounded-xl border-2 border-white/20 shadow-[0_10px_30px_rgba(22,101,52,0.4)] flex mb-8 overflow-hidden ring-4 ring-green-900/30">
 
                 {/* Playing Field (0% to 100%) */}
                 <div className="flex-1 relative">
                     
                     {/* Generative Hash Marks (4 short lines per segment) */}
-                    <div className="absolute inset-0 opacity-60 pointer-events-none z-0">
+                    <div className="absolute inset-0 opacity-40 pointer-events-none z-0">
                         {Array.from({ length: numSegments * 5 }).map((_, i) => {
                             if (i === 0) return null; // No hash at 0
                             if (i % 5 === 0) return null; // Skip where major lines go
                             return (
                                 <div 
                                     key={`hash-${i}`} 
-                                    className="absolute top-0 w-0.5 h-3 md:h-4 bg-white" 
+                                    className="absolute top-0 w-0.5 h-3 md:h-4 bg-white shadow-[0_0_5px_rgba(255,255,255,0.5)]" 
                                     style={{ left: `${(i / (numSegments * 5)) * 100}%` }}
                                 ></div>
                             );
@@ -99,7 +109,7 @@ export default function CharityTab() {
                     
                     {/* Progress Bar Fill */}
                     <div 
-                        className={`absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#1b75bb]/90 to-[#1b75bb]/70 transition-all duration-1000 ease-out z-10 shadow-[10px_0_20px_rgba(27,117,187,0.5)] ${showProgressBorder ? 'border-r-4 border-white' : ''}`} 
+                        className={`absolute left-0 top-0 bottom-0 bg-gradient-to-r from-blue-600 to-sky-400 transition-all duration-1000 ease-out z-10 shadow-[8px_0_25px_rgba(56,189,248,0.5)] ${showProgressBorder ? 'border-r-2 border-white/80' : ''}`} 
                         style={{ width: `${visualProgress}%` }}
                     ></div>
 
@@ -114,11 +124,11 @@ export default function CharityTab() {
                         return (
                             <div 
                                 key={`goal-${idx}`} 
-                                className="absolute top-0 bottom-0 border-l-4 border-white/80 z-20 flex flex-col justify-end pb-3 md:pb-4"
+                                className="absolute top-0 bottom-0 border-l-[3px] border-white/30 z-20 flex flex-col justify-end pb-3 md:pb-4"
                                 style={{ left: `${leftPercent}%` }}
                             >
-                                {/* Solid green background breaks the line cleanly, no shadows, perfectly centered */}
-                                <span className="text-white font-black text-sm md:text-2xl -translate-x-1/2 tracking-tighter bg-green-700 px-1 md:px-2 rounded-sm">
+                                {/* Frosted glass pill background breaks the line cleanly and dynamically */}
+                                <span className="text-white font-black text-sm md:text-2xl -translate-x-1/2 tracking-tighter bg-green-900/80 backdrop-blur-sm px-2 md:px-3 py-0.5 rounded border border-white/10 shadow-lg drop-shadow-md">
                                   ${goal.amount}
                                 </span>
                             </div>
@@ -126,10 +136,11 @@ export default function CharityTab() {
                     })}
                 </div>
 
-                {/* Right Endzone */}
-                <div className="w-[12%] md:w-[10%] bg-[#f5a623] border-l-4 border-white z-30 shrink-0 shadow-inner flex items-center justify-center">
+                {/* Right Endzone - Modern Gradient */}
+                <div className="w-[12%] md:w-[10%] bg-gradient-to-b from-amber-400 to-orange-600 border-l border-white/40 z-30 shrink-0 shadow-inner flex items-center justify-center relative overflow-hidden">
+                   <div className="absolute inset-0 bg-black/5 mix-blend-overlay"></div>
                    {goals.length > 0 && (
-                      <span className="text-black font-black text-sm md:text-xl tracking-tighter -rotate-90 md:rotate-0 opacity-90 drop-shadow-sm">
+                      <span className="text-white font-black text-sm md:text-xl tracking-tighter -rotate-90 md:rotate-0 drop-shadow-md relative z-10">
                          ${goals[goals.length - 1].amount}
                       </span>
                    )}
@@ -137,8 +148,8 @@ export default function CharityTab() {
             </div>
 
             {/* Prize Grid Header */}
-            <div className="mb-4 border-b border-gray-800 pb-2">
-               <h4 className="text-xs md:text-sm font-black text-white uppercase tracking-widest">Unlocked Grand Prize Package</h4>
+            <div className="mb-4 border-b border-gray-800 pb-3">
+               <h4 className="text-xs md:text-sm font-black text-gray-300 uppercase tracking-widest">Unlocked Grand Prize Package</h4>
             </div>
 
             {/* Prize Grid */}
@@ -146,12 +157,12 @@ export default function CharityTab() {
               {goals.map((goal, idx) => {
                   const isUnlocked = raised >= goal.amount;
                   return (
-                      <div key={idx} className={`p-4 rounded-xl border flex flex-col items-center text-center transition-all ${isUnlocked ? 'bg-[#1b75bb]/10 border-[#1b75bb] shadow-[0_0_15px_rgba(27,117,187,0.2)]' : 'bg-[#151515] border-gray-800 opacity-60'}`}>
-                         <div className="mb-2">
-                           {isUnlocked ? <Unlock size={24} className="text-[#f5a623]" /> : <Lock size={24} className="text-gray-600" />}
+                      <div key={idx} className={`p-4 rounded-xl border flex flex-col items-center text-center transition-all ${isUnlocked ? 'bg-gradient-to-br from-[#1b75bb]/20 to-[#1b75bb]/5 border-[#1b75bb]/50 shadow-[0_0_20px_rgba(27,117,187,0.15)]' : 'bg-[#111] border-gray-800/80 opacity-70 hover:opacity-100'}`}>
+                         <div className="mb-3">
+                           {isUnlocked ? <Unlock size={24} className="text-[#f5a623] drop-shadow-md" /> : <Lock size={24} className="text-gray-600" />}
                          </div>
-                         <h5 className={`font-black text-[11px] uppercase tracking-widest mb-1 leading-tight ${isUnlocked ? 'text-white' : 'text-gray-500'}`}>{goal.name}</h5>
-                         <span className={`text-[10px] font-bold ${isUnlocked ? 'text-emerald-500' : 'text-gray-600'}`}>
+                         <h5 className={`font-black text-[11px] uppercase tracking-widest mb-1 leading-snug ${isUnlocked ? 'text-white' : 'text-gray-500'}`}>{goal.name}</h5>
+                         <span className={`text-[10px] font-bold ${isUnlocked ? 'text-emerald-400 drop-shadow-sm' : 'text-gray-600'}`}>
                            {isUnlocked ? 'UNLOCKED' : `Unlocks at $${goal.amount}`}
                          </span>
                       </div>
@@ -162,40 +173,30 @@ export default function CharityTab() {
       )}
 
       {/* LIVE COUNTER STATS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-         <div className="bg-[#111] border border-gray-800 rounded-2xl p-6 flex items-center justify-between shadow-inner">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+         <div className="bg-gradient-to-br from-[#151515] to-[#111] border border-gray-800 rounded-2xl p-6 flex items-center justify-between shadow-lg">
             <div>
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Total Online Players</p>
-              <div className="text-3xl font-black text-white">
+              <div className="text-3xl font-black text-white drop-shadow-sm">
                 {isLoading ? <Loader2 size={24} className="animate-spin text-gray-600 mt-1" /> : charityData?.total_players || 0}
               </div>
             </div>
-            <div className="w-12 h-12 bg-gray-900 border border-gray-800 rounded-full flex items-center justify-center shrink-0">
-              <Users size={20} className="text-gray-400" />
+            <div className="w-12 h-12 bg-[#1a1a1a] border border-gray-700 rounded-full flex items-center justify-center shrink-0 shadow-inner">
+              <Users size={20} className="text-[#1b75bb]" />
             </div>
          </div>
 
-         <div className="bg-gradient-to-br from-emerald-900/20 to-[#111] border border-emerald-900/50 rounded-2xl p-6 flex items-center justify-between shadow-inner">
+         <div className="bg-gradient-to-br from-emerald-900/20 to-[#111] border border-emerald-900/50 rounded-2xl p-6 flex items-center justify-between shadow-lg">
             <div>
               <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Total Raised</p>
-              <div className="text-3xl font-black text-emerald-500">
+              <div className="text-3xl font-black text-emerald-500 drop-shadow-sm">
                 {isLoading ? <Loader2 size={24} className="animate-spin text-emerald-900 mt-1" /> : `$${(charityData?.total_raised || 0).toFixed(2)}`}
               </div>
             </div>
-            <div className="w-12 h-12 bg-emerald-900/30 border border-emerald-500/30 rounded-full flex items-center justify-center shrink-0">
-              <DollarSign size={20} className="text-emerald-500" />
+            <div className="w-12 h-12 bg-emerald-900/30 border border-emerald-500/30 rounded-full flex items-center justify-center shrink-0 shadow-inner">
+              <DollarSign size={20} className="text-emerald-400" />
             </div>
          </div>
-      </div>
-
-      <div className="bg-[#1b75bb]/10 border border-[#1b75bb]/30 rounded-xl p-4 mb-8 flex items-start gap-3">
-        <HeartHandshake size={20} className="text-[#f5a623] shrink-0 mt-0.5" />
-        <div>
-          <h5 className="text-xs font-black text-[#1b75bb] uppercase tracking-widest mb-1">Playing for a Purpose</h5>
-          <p className="text-sm text-gray-300 leading-relaxed">
-            Draft Night Out isn't just about winning a championship—it's about giving back. A portion of every online draft entry will be directly donated to Mission 22 to support Veterans and their families.
-          </p>
-        </div>
       </div>
       
       {/* MISSION 22 BLURB */}
