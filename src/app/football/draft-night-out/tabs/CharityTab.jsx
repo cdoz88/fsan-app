@@ -124,11 +124,13 @@ export default function CharityTab() {
                         return (
                             <div 
                                 key={`goal-${idx}`} 
-                                className="absolute top-0 bottom-0 border-l-[3px] border-white/30 z-20 flex flex-col justify-end pb-3 md:pb-4"
+                                className="absolute top-0 bottom-0 z-20 flex flex-col items-center pb-3 md:pb-4 -translate-x-1/2"
                                 style={{ left: `${leftPercent}%` }}
                             >
-                                {/* Frosted glass pill background breaks the line cleanly and dynamically */}
-                                <span className="text-white font-black text-sm md:text-2xl -translate-x-1/2 tracking-tighter bg-green-900/80 backdrop-blur-sm px-2 md:px-3 py-0.5 rounded border border-white/10 shadow-lg drop-shadow-md">
+                                {/* Yard line stretches from the top and stops exactly above the text */}
+                                <div className="w-[3px] bg-white/30 flex-1 mb-1 md:mb-2"></div>
+                                {/* Painted number sits transparently on the field gradient */}
+                                <span className="text-white font-black text-sm md:text-2xl tracking-tighter leading-none opacity-95">
                                   ${goal.amount}
                                 </span>
                             </div>
