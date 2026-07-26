@@ -34,11 +34,28 @@ export async function GET(request) {
         draft_style: l.draft_style || 'fast'
       }));
 
+      // 🚀 FIX: Fetch LIVE roster counts directly from Sleeper to ensure it's never out of sync!
+      const liveLeagues = await Promise.all(sanitizedLeagues.map(async (league) => {
+        try {
+          // Check Sleeper API for the exact number of users currently in this league
+          const slpRes = await fetch(`https://api.sleeper.app/v1/league/${league.id}/users`, { 
+            next: { revalidate: 30 } // Cache for 30 seconds to prevent Sleeper rate-limiting
+          });
+          if (slpRes.ok) {
+            const users = await slpRes.json();
+            league.filled_spots = users.length; // Override stale WP data with LIVE Sleeper data
+          }
+        } catch (e) {
+          console.warn(`Could not sync live user count for ${league.id}`);
+        }
+        return league;
+      }));
+
       const userJoinedCount = wpData.data.user_joined_count || 0;
       const allottedEntries = wpData.data.allotted_entries || 1; 
 
       return NextResponse.json({
-        leagues: sanitizedLeagues,
+        leagues: liveLeagues, // Pass the Sleeper-updated leagues to the frontend
         user_joined_count: userJoinedCount,
         allotted_entries: allottedEntries
       });
@@ -68,7 +85,7 @@ export async function POST(request) {
   try {
     const url = new URL(request.url);
     
-    // 🚀 SECURE GATE: Handle claiming a draft slot
+    // SECURE GATE: Handle claiming a draft slot
     if (url.searchParams.get('action') === 'claim-spot') {
       const { leagueId } = await request.json();
       
@@ -97,7 +114,7 @@ export async function POST(request) {
         return NextResponse.json({ success: false, message: 'This draft room is full!' }, { status: 400 });
       }
 
-      // 🚀 UPDATE USER LEDGER IN WORDPRESS
+      // UPDATE USER LEDGER IN WORDPRESS
       const ledgerFormData = new FormData();
       ledgerFormData.append('action', 'dno_log_user_entry');
       ledgerFormData.append('user_id', session.user.id);
