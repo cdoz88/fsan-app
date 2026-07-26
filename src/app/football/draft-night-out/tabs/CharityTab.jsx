@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HeartHandshake, ExternalLink, Users, DollarSign, Loader2, Lock, Unlock } from 'lucide-react';
+import { HeartHandshake, ExternalLink, Users, DollarSign, Loader2, Lock, Unlock, Plus } from 'lucide-react';
 
 export default function CharityTab() {
   const [charityData, setCharityData] = useState(null);
@@ -155,18 +155,27 @@ export default function CharityTab() {
             </div>
 
             {/* Prize Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 relative">
               {goals.map((goal, idx) => {
                   const isUnlocked = raised >= goal.amount;
                   return (
-                      <div key={idx} className={`p-4 rounded-xl border flex flex-col items-center text-center transition-all ${isUnlocked ? 'bg-gradient-to-br from-[#1b75bb]/20 to-[#1b75bb]/5 border-[#1b75bb]/50 shadow-[0_0_20px_rgba(27,117,187,0.15)]' : 'bg-[#111] border-gray-800/80 opacity-70 hover:opacity-100'}`}>
-                         <div className="mb-3">
-                           {isUnlocked ? <Unlock size={24} className="text-[#f5a623] drop-shadow-md" /> : <Lock size={24} className="text-gray-600" />}
-                         </div>
-                         <h5 className={`font-black text-[11px] uppercase tracking-widest mb-1 leading-snug ${isUnlocked ? 'text-white' : 'text-gray-500'}`}>{goal.name}</h5>
-                         <span className={`text-[10px] font-bold ${isUnlocked ? 'text-emerald-400 drop-shadow-sm' : 'text-gray-600'}`}>
-                           {isUnlocked ? 'UNLOCKED' : `Unlocks at $${goal.amount}`}
-                         </span>
+                      <div key={idx} className="relative w-full h-full">
+                          <div className={`h-full p-4 rounded-xl border flex flex-col items-center text-center transition-all ${isUnlocked ? 'bg-gradient-to-br from-[#1b75bb]/20 to-[#1b75bb]/5 border-[#1b75bb]/50 shadow-[0_0_20px_rgba(27,117,187,0.15)]' : 'bg-[#111] border-gray-800/80 opacity-70 hover:opacity-100'}`}>
+                             <div className="mb-3">
+                               {isUnlocked ? <Unlock size={24} className="text-[#f5a623] drop-shadow-md" /> : <Lock size={24} className="text-gray-600" />}
+                             </div>
+                             <h5 className={`font-black text-[11px] uppercase tracking-widest mb-1 leading-snug ${isUnlocked ? 'text-white' : 'text-gray-500'}`}>{goal.name}</h5>
+                             <span className={`text-[10px] font-bold ${isUnlocked ? 'text-emerald-400 drop-shadow-sm' : 'text-gray-600'}`}>
+                               {isUnlocked ? 'UNLOCKED' : `Unlocks at $${goal.amount}`}
+                             </span>
+                          </div>
+                          
+                          {/* Plus Icon Connector */}
+                          {idx < goals.length - 1 && (
+                              <div className="hidden md:flex absolute top-1/2 right-0 translate-x-[calc(50%+6px)] -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-[#1a1a1a] border border-gray-700 items-center justify-center shadow-md">
+                                  <Plus size={14} className="text-gray-400" />
+                              </div>
+                          )}
                       </div>
                   )
               })}
