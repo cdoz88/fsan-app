@@ -7,7 +7,6 @@ export async function GET(request) {
   const type = searchParams.get('type');
   const session = await getServerSession(authOptions);
 
-  // Gated: Force authentication to fetch open DNO leagues pool
   if (!session) {
     return NextResponse.json({ success: false, message: 'Authentication required' }, { status: 401 });
   }
@@ -19,7 +18,7 @@ export async function GET(request) {
       const wpData = await res.json();
 
       if (!wpData.success || !wpData.data) {
-        return NextResponse.json({ leagues: [], user_joined_count: 0, allotted_entries: 1 });
+        return NextResponse.json({ leagues: [], user_joined_count: 0, allotted_entries: 1, joined_leagues: [] });
       }
 
       const sanitizedLeagues = wpData.data.leagues.map(l => ({
@@ -34,16 +33,15 @@ export async function GET(request) {
         draft_style: l.draft_style || 'fast'
       }));
 
-      // 🚀 FIX: Fetch LIVE roster counts directly from Sleeper to ensure it's never out of sync!
+      // Fetch LIVE roster counts directly from Sleeper to ensure it's never out of sync!
       const liveLeagues = await Promise.all(sanitizedLeagues.map(async (league) => {
         try {
-          // Check Sleeper API for the exact number of users currently in this league
           const slpRes = await fetch(`https://api.sleeper.app/v1/league/${league.id}/users`, { 
-            next: { revalidate: 30 } // Cache for 30 seconds to prevent Sleeper rate-limiting
+            next: { revalidate: 30 } 
           });
           if (slpRes.ok) {
             const users = await slpRes.json();
-            league.filled_spots = users.length; // Override stale WP data with LIVE Sleeper data
+            league.filled_spots = users.length;
           }
         } catch (e) {
           console.warn(`Could not sync live user count for ${league.id}`);
@@ -53,15 +51,18 @@ export async function GET(request) {
 
       const userJoinedCount = wpData.data.user_joined_count || 0;
       const allottedEntries = wpData.data.allotted_entries || 1; 
+      
+      // 🚀 Include the persistent array of joined league IDs 
+      const joinedLeagues = wpData.data.joined_leagues || [];
 
       return NextResponse.json({
-        leagues: liveLeagues, // Pass the Sleeper-updated leagues to the frontend
+        leagues: liveLeagues,
         user_joined_count: userJoinedCount,
-        allotted_entries: allottedEntries
+        allotted_entries: allottedEntries,
+        joined_leagues: joinedLeagues 
       });
     }
 
-    // Fallback for previous leaderboard scripts
     const action = searchParams.get('action');
     if (!action) return NextResponse.json({ success: false, message: 'Action or type required' }, { status: 400 });
 
@@ -85,7 +86,6 @@ export async function POST(request) {
   try {
     const url = new URL(request.url);
     
-    // SECURE GATE: Handle claiming a draft slot
     if (url.searchParams.get('action') === 'claim-spot') {
       const { leagueId } = await request.json();
       
@@ -100,7 +100,6 @@ export async function POST(request) {
       const userJoinedCount = wpData.data.user_joined_count || 0;
       const allottedEntries = wpData.data.allotted_entries || 1;
 
-      // Restrict access if user ledger is exhausted
       if (userJoinedCount >= allottedEntries) {
         return NextResponse.json({ success: false, message: 'No available entries remaining. Purchase an additional entry token to continue!' }, { status: 403 });
       }
@@ -118,7 +117,8 @@ export async function POST(request) {
       const ledgerFormData = new FormData();
       ledgerFormData.append('action', 'dno_log_user_entry');
       ledgerFormData.append('user_id', session.user.id);
-      ledgerFormData.append('secret', 'fsan_super_secret_webhook_key_2026'); // Matches your WP webhook key
+      ledgerFormData.append('league_id', leagueId); // 🚀 Send the exact league ID to track it
+      ledgerFormData.append('secret', 'fsan_super_secret_webhook_key_2026'); 
 
       try {
         const ledgerRes = await fetch('https://admin.fsan.com/wp-admin/admin-ajax.php', {
@@ -138,7 +138,6 @@ export async function POST(request) {
       return NextResponse.json({ success: true, invite_link: targetedLeague.invite_link });
     }
 
-    // Generic fallback proxy for previous leaderboard operations
     const formData = await request.formData();
     const wpUrl = `https://admin.fsan.com/wp-admin/admin-ajax.php`;
 

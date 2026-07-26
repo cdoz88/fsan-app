@@ -32,6 +32,8 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
 
   const [confirmingLeague, setConfirmingLeague] = useState(null);
   const [showRaffleModal, setShowRaffleModal] = useState(false);
+  
+  // 🚀 Now acts as the permanent state for all leagues a user is in
   const [recentlyJoinedLeagues, setRecentlyJoinedLeagues] = useState([]);
 
   // Top-Level Navigation State
@@ -64,6 +66,9 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
       setLeagues(data.leagues || []);
       setUserJoinedCount(data.user_joined_count || 0);
       setAllottedEntries(data.allotted_entries || 1);
+      
+      // 🚀 Hydrate the frontend with the permanent list of leagues this user is in
+      setRecentlyJoinedLeagues(data.joined_leagues || []);
     } catch (err) { console.warn("Failed syncing live DNO array: ", err); } 
     finally { setLoadingLeagues(false); }
   }, []);
@@ -89,7 +94,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     setIsProcessingEntry(leagueId);
     setErrorMessage('');
     try {
-      // 🚀 FIX: Updated to use the correct API query parameter format to hit your route.js file!
       const res = await fetch('/api/scl?action=claim-spot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
