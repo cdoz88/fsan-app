@@ -89,7 +89,8 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     setIsProcessingEntry(leagueId);
     setErrorMessage('');
     try {
-      const res = await fetch('/api/scl/claim-spot', {
+      // 🚀 FIX: Updated to use the correct API query parameter format to hit your route.js file!
+      const res = await fetch('/api/scl?action=claim-spot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leagueId })

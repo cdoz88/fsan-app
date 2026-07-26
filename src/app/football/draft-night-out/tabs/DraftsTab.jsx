@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { MonitorSmartphone, MapPin, SlidersHorizontal, Ticket, Lock, Loader2, Coins, ExternalLink, Calendar, Clock, ChevronDown } from 'lucide-react';
+import { MonitorSmartphone, MapPin, SlidersHorizontal, Ticket, Lock, Loader2, Coins, ExternalLink, Calendar, Clock, ChevronDown, AlertCircle } from 'lucide-react';
 
 // Custom Dropdown Component to override native OS styling
 const CustomDropdown = ({ value, options, onChange, minWidth = "sm:w-40" }) => {

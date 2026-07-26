@@ -14,7 +14,6 @@ export async function GET(request) {
 
   try {
     if (type === 'dno_pool') {
-      // 🚀 FIX: Append the user_id to the WP URL so WordPress knows whose live tickets to fetch!
       const wpUrl = `https://admin.fsan.com/wp-admin/admin-ajax.php?action=dno_get_leagues_pool&user_id=${session.user.id}&t=${Date.now()}`;
       const res = await fetch(wpUrl, { cache: 'no-store' });
       const wpData = await res.json();
@@ -23,8 +22,6 @@ export async function GET(request) {
         return NextResponse.json({ leagues: [], user_joined_count: 0, allotted_entries: 1 });
       }
 
-      // Hide secure invite links from the initial pool payload to prevent scraping
-      // 🚀 FIX: Added the new draft details so they are no longer stripped out!
       const sanitizedLeagues = wpData.data.leagues.map(l => ({
         id: l.id,
         name: l.name,
@@ -37,7 +34,6 @@ export async function GET(request) {
         draft_style: l.draft_style || 'fast'
       }));
 
-      // 🚀 FIX: Read the LIVE ticket count directly from the WordPress database response instead of the stale session
       const userJoinedCount = wpData.data.user_joined_count || 0;
       const allottedEntries = wpData.data.allotted_entries || 1; 
 
@@ -73,10 +69,9 @@ export async function POST(request) {
     const url = new URL(request.url);
     
     // 🚀 SECURE GATE: Handle claiming a draft slot
-    if (url.pathname.endsWith('/claim-spot')) {
+    if (url.searchParams.get('action') === 'claim-spot') {
       const { leagueId } = await request.json();
       
-      // Securely fetch original raw league options stack AND the user's live ticket count
       const wpUrl = `https://admin.fsan.com/wp-admin/admin-ajax.php?action=dno_get_leagues_pool&user_id=${session.user.id}&t=${Date.now()}`;
       const wpRes = await fetch(wpUrl, { cache: 'no-store' });
       const wpData = await wpRes.json();
@@ -85,7 +80,6 @@ export async function POST(request) {
         return NextResponse.json({ success: false, message: 'DNO configurations unavailable.' }, { status: 500 });
       }
 
-      // 🚀 FIX: Use LIVE ticket counts for the gate validation
       const userJoinedCount = wpData.data.user_joined_count || 0;
       const allottedEntries = wpData.data.allotted_entries || 1;
 
@@ -99,13 +93,30 @@ export async function POST(request) {
         return NextResponse.json({ success: false, message: 'Targeted draft room invite url link missing or invalid.' }, { status: 404 });
       }
 
-      // Check room full threshold locally
       if (targetedLeague.filled_spots >= targetedLeague.total_spots) {
         return NextResponse.json({ success: false, message: 'This draft room is full!' }, { status: 400 });
       }
 
-      // UPDATE USER LEDGER HERE (Increment user's dno_joined_count in your database using an SQL or ORM update statement)
-      // e.g., await db.user.update({ where: { id: session.user.id }, data: { dno_joined_count: userJoinedCount + 1 } });
+      // 🚀 UPDATE USER LEDGER IN WORDPRESS
+      const ledgerFormData = new FormData();
+      ledgerFormData.append('action', 'dno_log_user_entry');
+      ledgerFormData.append('user_id', session.user.id);
+      ledgerFormData.append('secret', 'fsan_super_secret_webhook_key_2026'); // Matches your WP webhook key
+
+      try {
+        const ledgerRes = await fetch('https://admin.fsan.com/wp-admin/admin-ajax.php', {
+            method: 'POST',
+            body: ledgerFormData
+        });
+        const ledgerData = await ledgerRes.json();
+        
+        if (!ledgerData.success) {
+            throw new Error('WP ledger sync rejected');
+        }
+      } catch (e) {
+        console.error("Failed to deduct ticket in WP:", e);
+        return NextResponse.json({ success: false, message: 'Database sync failed while reserving spot. Roster claim aborted.' }, { status: 500 });
+      }
 
       return NextResponse.json({ success: true, invite_link: targetedLeague.invite_link });
     }
