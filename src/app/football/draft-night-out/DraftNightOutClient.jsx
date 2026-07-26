@@ -1,216 +1,250 @@
-"use client";
-import React, { useState, useEffect, Suspense, useCallback } from 'react';
-import Header from '../../../components/Header';
-import Sidebar from '../../../components/Sidebar';
-import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
-import { useSession } from 'next-auth/react';
-import { MonitorSmartphone, Trophy, BookOpen, Handshake, HeartHandshake, ListOrdered, Loader2, AlertCircle, X } from 'lucide-react';
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { MonitorSmartphone, MapPin, SlidersHorizontal, Ticket, Lock, Loader2, Coins, ExternalLink, Calendar, Clock, ChevronDown, AlertCircle } from 'lucide-react';
 
-// Import our newly refactored child components and tabs
-import SuccessToast from './components/SuccessToast';
-import RaffleModal from './components/RaffleModal';
-import DraftsTab from './tabs/DraftsTab';
-import CharityTab from './tabs/CharityTab';
-import PrizesTab from './tabs/PrizesTab';
-import RulesTab from './tabs/RulesTab';
-import SponsorsTab from './tabs/SponsorsTab';
+// Custom Dropdown Component to override native OS styling
+const CustomDropdown = ({ value, options, onChange, minWidth = "sm:w-40" }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedOption = options.find(opt => opt.value === value);
 
-export default function DraftNightOutClient({ proToolsMenu, connectMenu, initialLeaderboard }) {
-  const { data: session, status } = useSession();
-  const isAuthed = status === 'authenticated';
-  const isProPlus = session?.user?.tier === 'pro-plus';
-  
-  const [leagues, setLeagues] = useState([]);
-  const [loadingLeagues, setLoadingLeagues] = useState(true);
-  const [userJoinedCount, setUserJoinedCount] = useState(0);
-  const [allottedEntries, setAllottedEntries] = useState(1);
-  const [isProcessingEntry, setIsProcessingEntry] = useState(null);
-  const [errorMessage, setErrorMessage] = useState('');
-  
-  const [liveLeaderboard, setLiveLeaderboard] = useState(initialLeaderboard || { teams: [] });
-  const [liveSeasonLabel, setLiveSeasonLabel] = useState("2025-2026 SEASON");
-
-  const [confirmingLeague, setConfirmingLeague] = useState(null);
-  const [showRaffleModal, setShowRaffleModal] = useState(false);
-  
-  // 🚀 Now acts as the permanent state for all leagues a user is in
-  const [recentlyJoinedLeagues, setRecentlyJoinedLeagues] = useState([]);
-
-  // Top-Level Navigation State
-  const validTabs = ['drafts', 'leaderboard', 'charity', 'prizes', 'rules', 'sponsors'];
-  const [activeTab, setActiveTab] = useState('drafts');
-  
-  // Drafts Sub-navigation State
-  const [draftView, setDraftView] = useState('online');
-
-  const handleTabClick = (tabId) => {
-    setActiveTab(tabId);
-    window.history.replaceState(null, '', window.location.pathname + `#${tabId}`);
-  };
-
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (validTabs.includes(hash)) setActiveTab(hash);
-    };
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
-  const loadDnoPool = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/scl?type=dno_pool&t=${Date.now()}`, { cache: 'no-store' });
-      if (!res.ok) throw new Error("Could not reach DNO matrix");
-      const data = await res.json();
-      setLeagues(data.leagues || []);
-      setUserJoinedCount(data.user_joined_count || 0);
-      setAllottedEntries(data.allotted_entries || 1);
+  return (
+    <div className={`relative shrink-0 w-full ${minWidth} z-20`}>
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between w-full bg-[#1a1a1a] px-4 py-2.5 rounded-lg border border-gray-700 text-xs font-bold text-gray-300 cursor-pointer hover:border-[#1b75bb] transition-colors"
+      >
+        <span>{selectedOption ? selectedOption.label : ''}</span>
+        <ChevronDown size={14} className={`text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </div>
       
-      // 🚀 Hydrate the frontend with the permanent list of leagues this user is in
-      setRecentlyJoinedLeagues(data.joined_leagues || []);
-    } catch (err) { console.warn("Failed syncing live DNO array: ", err); } 
-    finally { setLoadingLeagues(false); }
-  }, []);
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setIsOpen(false)}></div>
+          <div className="absolute top-full left-0 mt-2 w-full bg-[#151515] border border-gray-700 rounded-lg shadow-xl z-40 overflow-hidden">
+            {options.map(opt => (
+              <div 
+                key={opt.value}
+                onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                className={`px-4 py-3 text-xs font-bold cursor-pointer transition-colors ${value === opt.value ? 'bg-[#1b75bb]/20 text-[#1b75bb]' : 'text-gray-300 hover:bg-gray-800'}`}
+              >
+                {opt.label}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
-  const loadLiveLeaderboard = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/scl?action=dno_get_leaderboard_data&t=${Date.now()}`, { cache: 'no-store' });
-      if (!res.ok) throw new Error("Could not fetch leaderboard action");
-      const json = await res.json();
-      if (json.success && json.data) {
-        setLiveLeaderboard(json.data);
-        if (json.data.season_label) setLiveSeasonLabel(json.data.season_label.toUpperCase());
-      }
-    } catch (err) { console.warn("Failed loading live initialization data arrays: ", err); }
-  }, []);
+export default function DraftsTab({
+  draftView, setDraftView, isProPlus, ticketsAvailable, handlePurchaseExtraEntry, errorMessage, loadingLeagues, leagues, sortedLeagues, recentlyJoinedLeagues, setConfirmingLeague, setShowRaffleModal
+}) {
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [styleFilter, setStyleFilter] = useState('all');
+  const [myLeaguesOnly, setMyLeaguesOnly] = useState(false);
 
-  useEffect(() => {
-    loadLiveLeaderboard();
-    if (isAuthed) loadDnoPool(); else setLoadingLeagues(false);
-  }, [isAuthed, loadDnoPool, loadLiveLeaderboard]);
+  // Apply filters to the sorted leagues array
+  const filteredLeagues = sortedLeagues.filter(league => {
+    const openSpots = Math.max(0, league.total_spots - league.filled_spots);
+    const isFull = openSpots === 0;
+    const isJoinedLocal = recentlyJoinedLeagues.includes(league.id);
 
-  const handleClaimSpot = async (leagueId) => {
-    setIsProcessingEntry(leagueId);
-    setErrorMessage('');
-    try {
-      const res = await fetch('/api/scl?action=claim-spot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leagueId })
-      });
-      const data = await res.json();
-      if (data.success && data.invite_link) {
-        setUserJoinedCount(prev => prev + 1);
-        setRecentlyJoinedLeagues(prev => [...prev, leagueId]);
-        window.open(data.invite_link, '_blank');
-        loadLiveLeaderboard();
-      } else { setErrorMessage(data.message || 'Could not claim roster spot. Please try again.'); }
-    } catch (err) { setErrorMessage('Network error processing registration.'); } 
-    finally { setIsProcessingEntry(null); setConfirmingLeague(null); }
-  };
+    if (statusFilter === 'open' && isFull) return false;
+    if (statusFilter === 'filled' && !isFull) return false;
+    if (styleFilter !== 'all' && league.draft_style !== styleFilter) return false;
+    if (myLeaguesOnly && !isJoinedLocal) return false;
 
-  const handlePurchaseExtraEntry = async () => {
-    try {
-      const res = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId: 'price_1Tv8ANBaSOn1la2fsYurqR32' }) 
-      });
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-    } catch (e) { setErrorMessage('Could not initiate additional entry purchase window.'); }
-  };
-
-  const ticketsAvailable = Math.max(0, allottedEntries - userJoinedCount);
-  const sortedLeagues = [...leagues].sort((a, b) => {
-    const isFullA = a.filled_spots >= a.total_spots;
-    const isFullB = b.filled_spots >= b.total_spots;
-    if (isFullA === isFullB) return 0;
-    return isFullA ? 1 : -1;
+    return true;
   });
 
   return (
-    <>
-      <Header activeSport="Football" />
-      <Suspense fallback={null}><SuccessToast setActiveTab={setActiveTab} setDraftView={setDraftView} loadDnoPool={loadDnoPool} isAuthed={isAuthed} /></Suspense>
-      {showRaffleModal && <RaffleModal setShowRaffleModal={setShowRaffleModal} />}
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
+      <div className="flex justify-center mb-8">
+         <div className="bg-[#111] p-1.5 rounded-2xl border border-gray-800 flex shadow-inner w-full sm:w-auto">
+            <button onClick={() => setDraftView('online')} className={`flex-1 sm:flex-none justify-center px-4 sm:px-6 py-2.5 rounded-xl text-[11px] sm:text-sm font-black uppercase tracking-widest transition-all flex items-center gap-2 ${draftView === 'online' ? 'bg-[#1b75bb] text-white shadow-md' : 'text-gray-500 hover:text-gray-300'}`}>
+               <MonitorSmartphone size={16} /> Online Divisions
+            </button>
+            <button onClick={() => setDraftView('live')} className={`flex-1 sm:flex-none justify-center px-4 sm:px-6 py-2.5 rounded-xl text-[11px] sm:text-sm font-black uppercase tracking-widest transition-all flex items-center gap-2 ${draftView === 'live' ? 'bg-[#1b75bb] text-white shadow-md' : 'text-gray-500 hover:text-gray-300'}`}>
+               <MapPin size={16} /> Live Events
+            </button>
+         </div>
+      </div>
 
-      {/* CONFIRMATION MODAL */}
-      {confirmingLeague && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-[#151515] border border-gray-800 rounded-3xl max-w-md w-full shadow-2xl relative flex flex-col">
-            <button onClick={() => setConfirmingLeague(null)} disabled={isProcessingEntry !== null} className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-[#111] hover:bg-gray-800 border border-gray-700 text-gray-400 hover:text-white transition-colors z-10"><X size={18} /></button>
-            <div className="p-6 md:p-8 text-center pt-12">
-              <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight italic mb-3">Ready to Draft?</h3>
-              <p className="text-gray-300 text-sm leading-relaxed mb-6">You are about to use <strong className="text-white">1 draft ticket</strong> to claim a team in:</p>
-              <div className="mb-6 text-center"><span className="text-xl md:text-2xl font-black text-white uppercase tracking-wider">{confirmingLeague.name}</span></div>
-            </div>
-            <div className="px-6 md:px-8 pb-3">
-              <button onClick={() => handleClaimSpot(confirmingLeague.id)} disabled={isProcessingEntry !== null} className="w-full relative group p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5">
-                <div className="bg-[#151515] group-hover:bg-[#1a1a1a] transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center gap-2 w-full h-full">
-                  {isProcessingEntry === confirmingLeague.id ? <Loader2 size={16} className="animate-spin text-white" /> : <span className="font-black uppercase tracking-widest text-xs text-white">Join and Draft</span>}
-                </div>
+      {draftView === 'online' && (
+        <div className="animate-in fade-in duration-300">
+          
+          {/* FUNCTIONAL FILTER BAR */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6 bg-[#111] p-3 rounded-xl border border-gray-800 shadow-inner">
+              <div className="flex items-center gap-2 shrink-0 ml-1">
+                <SlidersHorizontal size={16} className="text-[#f5a623]" />
+                <span className="text-xs font-black uppercase tracking-widest mr-2 text-white">Filters</span>
+              </div>
+              
+              <CustomDropdown 
+                value={statusFilter}
+                onChange={setStatusFilter}
+                minWidth="sm:w-40"
+                options={[
+                  { label: 'Status: All', value: 'all' },
+                  { label: 'Status: Open', value: 'open' },
+                  { label: 'Status: Filled', value: 'filled' }
+                ]}
+              />
+
+              <CustomDropdown 
+                value={styleFilter}
+                onChange={setStyleFilter}
+                minWidth="sm:w-44"
+                options={[
+                  { label: 'Style: All', value: 'all' },
+                  { label: 'Style: Live / Fast', value: 'fast' },
+                  { label: 'Style: Slow Draft', value: 'slow' }
+                ]}
+              />
+
+              <button 
+                onClick={() => setMyLeaguesOnly(!myLeaguesOnly)}
+                className={`px-5 py-2.5 rounded-lg border text-xs font-bold shrink-0 transition-colors w-full sm:w-auto ${myLeaguesOnly ? 'bg-[#1b75bb]/20 border-[#1b75bb] text-[#1b75bb]' : 'bg-[#1a1a1a] border-gray-700 text-gray-300 hover:border-[#1b75bb]'}`}
+              >
+                My Leagues
               </button>
+          </div>
+
+          <div className="mb-8 p-[2px] rounded-2xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(27,117,187,0.15)] relative z-10">
+            <div className="flex flex-col sm:flex-row items-center justify-between bg-[#151515] p-5 px-6 rounded-[14px] gap-4 w-full h-full">
+              {isProPlus ? (
+                <>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-[#1b75bb]/20 flex items-center justify-center shrink-0 border border-[#1b75bb]/30"><Ticket size={20} className="text-[#1b75bb]" /></div>
+                    <h3 className="text-white text-lg md:text-xl font-black uppercase tracking-wide italic text-center sm:text-left">
+                      You have <span className="text-[#f5a623]">{ticketsAvailable}</span> online draft ticket{ticketsAvailable !== 1 ? 's' : ''} available
+                    </h3>
+                  </div>
+                  <button onClick={handlePurchaseExtraEntry} className="shrink-0 w-full sm:w-auto bg-teal-600 hover:bg-teal-500 transition-colors text-white text-xs font-black uppercase tracking-widest px-6 py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:-translate-y-0.5">
+                    <Ticket size={16} /> Buy More Tickets
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shrink-0 border border-gray-700"><Lock size={20} className="text-gray-400" /></div>
+                    <h3 className="text-white text-lg md:text-xl font-black uppercase tracking-wide italic text-center sm:text-left">A Pro+ account is required to enter Draft Night Out</h3>
+                  </div>
+                  <Link href="/subscribe" className="shrink-0 w-full sm:w-auto bg-[#1b75bb] hover:bg-[#155d96] transition-colors text-white text-xs font-black uppercase tracking-widest px-8 py-3.5 rounded-xl shadow-lg hover:-translate-y-0.5 flex items-center justify-center gap-2">Upgrade</Link>
+                </>
+              )}
             </div>
-            <div className="px-6 md:px-8 pb-6 md:pb-8 pt-3">
-              <div className="flex items-start gap-3 bg-[#111] border border-gray-800 p-4 rounded-xl"><AlertCircle size={16} className="text-gray-500 shrink-0 mt-0.5" /><p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-relaxed">Please note: This action is final. Entry tickets cannot be refunded or transferred once you have joined a draft room.</p></div>
+          </div>
+
+          {errorMessage && (
+            <div className="mb-6 bg-red-900/20 border border-red-500/30 rounded-xl p-4 flex items-center gap-3 text-red-400 text-xs font-bold uppercase tracking-wider shadow-md relative z-10">
+              <AlertCircle size={16} /> {errorMessage}
             </div>
+          )}
+
+          <div className="relative w-full min-h-[300px] z-0">
+            {!isProPlus && (
+                <div className="absolute inset-0 z-20 rounded-2xl bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center border border-gray-800 shadow-2xl">
+                    <Lock size={40} className="text-[#1b75bb] mb-4" />
+                    <h4 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider mb-2">Pro+ Required</h4>
+                    <p className="text-sm text-gray-300 mb-6 max-w-[280px] leading-relaxed">Upgrade to Pro+ to browse and claim your live Sleeper roster slots.</p>
+                    <Link href="/subscribe" className="relative group p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-lg transition-transform hover:-translate-y-0.5 inline-block">
+                      <div className="bg-black group-hover:bg-gray-900 transition-colors rounded-[10px] px-8 py-3.5 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-sm">Upgrade to Pro+</div>
+                    </Link>
+                </div>
+            )}
+
+            {loadingLeagues ? (
+              <div className="w-full flex flex-col items-center justify-center py-20 text-gray-500 gap-3"><Loader2 size={32} className="animate-spin text-[#1b75bb]" /><span className="text-xs font-bold uppercase tracking-widest">Querying Sleeper API Matrix...</span></div>
+            ) : leagues.length === 0 ? (
+              <div className="w-full bg-[#151515] rounded-2xl p-12 text-center border border-gray-800 text-gray-500 text-sm font-bold uppercase tracking-widest">No active divisions found in database. Check back soon!</div>
+            ) : filteredLeagues.length === 0 ? (
+              <div className="w-full bg-[#151515] rounded-2xl p-12 text-center border border-gray-800 text-gray-500 text-sm font-bold uppercase tracking-widest">No leagues match your current filters.</div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 relative z-0">
+                {filteredLeagues.map((league) => {
+                  const openSpots = Math.max(0, league.total_spots - league.filled_spots);
+                  const isFull = openSpots === 0;
+                  const hasNoEntriesLeft = ticketsAvailable === 0;
+                  const isJoinedLocal = recentlyJoinedLeagues.includes(league.id);
+
+                  // Safe Date/Time Formatting with Fallback
+                  const formattedDate = league.draft_date ? new Date(`${league.draft_date}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD';
+                  
+                  let formattedTime = '';
+                  if (league.draft_hour && league.draft_hour !== '') {
+                      formattedTime = `${league.draft_hour}:${league.draft_minute || '00'} ${league.draft_ampm || 'PM'} ET`;
+                  } else if (league.draft_time) {
+                      formattedTime = league.draft_time; 
+                  }
+
+                  const styleLabel = league.draft_style === 'slow' ? 'Slow Draft' : 'Live / Fast';
+                  const styleIcon = league.draft_style === 'slow' ? '🐢' : '⚡️';
+
+                  return (
+                    <div key={league.id} className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md relative overflow-hidden group">
+                      <div className="flex-1 min-w-0 flex flex-col justify-center">
+                        <h4 className="text-lg font-black text-white uppercase tracking-wide italic mb-2 line-clamp-1">{league.name}</h4>
+                        
+                        {/* Draft Details Badges */}
+                        <div className="flex flex-wrap items-center gap-2 mb-3">
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-[#111] px-2 py-1 rounded border border-gray-800 shadow-inner">
+                            <Calendar size={12} className="text-[#1b75bb]" />
+                            <span>{formattedDate}{formattedTime ? ` @ ${formattedTime}` : ''}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-[#111] px-2 py-1 rounded border border-gray-800 shadow-inner">
+                            <span className="text-[12px] leading-none">{styleIcon}</span>
+                            <span>{styleLabel}</span>
+                          </div>
+                        </div>
+
+                        <span className={`text-xs font-black uppercase tracking-wider ${isFull && !isJoinedLocal ? 'text-gray-500' : 'text-green-500'}`}>{league.filled_spots} / {league.total_spots} Teams Filled</span>
+                      </div>
+                      <div className="shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
+                        {isJoinedLocal ? (
+                          <a href="https://sleeper.com" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-green-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-green-900/50 transition-colors flex items-center justify-center gap-2"><ExternalLink size={14} /> Go to League</a>
+                        ) : isFull ? (
+                          <button disabled className="w-full sm:w-auto px-6 bg-gray-800 text-gray-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-gray-700 cursor-not-allowed">League Full</button>
+                        ) : hasNoEntriesLeft ? (
+                          <button onClick={handlePurchaseExtraEntry} className="w-full sm:w-auto relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-lg transition-transform hover:-translate-y-0.5"><div className="bg-[#1a1a1a] group-hover:bg-[#222] transition-colors rounded-[10px] px-6 py-3 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs"><Coins size={14} className="text-teal-400" /> Buy Ticket</div></button>
+                        ) : (
+                          <button onClick={() => setConfirmingLeague(league)} className="w-full sm:w-auto relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-md transition-transform hover:-translate-y-0.5"><div className="bg-[#1a1a1a] group-hover:bg-[#222] transition-colors rounded-[10px] px-6 py-3 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">Join League</div></button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      <div className="max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10 flex flex-col lg:flex-row gap-8 w-full pb-24 relative z-10">
-        <Sidebar activeSport="Football" proToolsMenu={proToolsMenu} connectMenu={connectMenu} />
-        
-        <div className="flex-1 w-full min-w-0 pt-6">
-          <main className="w-full animate-in fade-in duration-500">
-            {/* HERO BANNER */}
-            <div className="relative w-full h-[260px] md:h-[300px] flex items-end overflow-hidden rounded-2xl mb-10 shadow-2xl bg-[#0a0a0a]">
-              <div className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-60" style={{ backgroundImage: `url('https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Background.webp')` }} />
-              <img src="https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp" alt="Draft Night Out Logo" className="absolute -right-10 md:right-4 top-1/2 -translate-y-1/2 w-[280px] md:w-[380px] h-auto object-contain opacity-20 md:opacity-40 z-0 pointer-events-none mix-blend-plus-lighter drop-shadow-2xl" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent z-0" />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#121212]/90 via-[#121212]/50 to-transparent z-0 md:w-2/3" />
-              <div className="relative z-10 w-full flex flex-col items-start justify-end h-full px-6 md:px-10 pb-8">
-                <span className="inline-block py-1 px-3 rounded-full bg-[#1b75bb]/20 border border-[#1b75bb]/30 text-[#f5a623] font-bold text-[10px] uppercase tracking-widest mb-3 backdrop-blur-sm">The Biggest Fantasy Hang of the Year</span>
-                <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-2">Draft Night Out</h1>
-                <p className="text-gray-300 font-medium md:text-lg leading-relaxed drop-shadow-md max-w-2xl">Secure your seat at one of our live Draft Night Out events, or build your championship roster from home in our exclusive online divisions. Dominate your league to win incredible prizes and compete for the ultimate Playoff Challenge championship!</p>
+      {draftView === 'live' && (
+        <div className="animate-in fade-in duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-[#1a1a1a] rounded-3xl border border-gray-800 p-6 flex flex-col relative overflow-hidden group shadow-lg">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#1b75bb]/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+              <div className="flex items-center gap-4 w-full mb-6 relative z-10">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#1b75bb] to-[#0a4b7d] flex items-center justify-center shrink-0 shadow-lg"><MapPin className="text-white" size={28} /></div>
+                <div><h3 className="text-2xl font-black text-white uppercase tracking-wide leading-tight italic">Canton, OH</h3><p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Fantasy Football Expo</p></div>
+              </div>
+              <p className="text-sm text-gray-300 leading-relaxed mb-6 relative z-10">Secure your spot to draft in person. You will be able to select your specific division (named after NFL legends) during checkout.</p>
+              <div className="bg-[#111] rounded-2xl border border-gray-800 p-4 mb-6 grid grid-cols-2 gap-4 relative z-10">
+                  <div><div className="flex items-center gap-2 mb-1"><Calendar size={14} className="text-[#f5a623]"/><span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Date</span></div><p className="text-xs text-gray-200">July 25, 2026</p></div>
+                  <div><div className="flex items-center gap-2 mb-1"><Clock size={14} className="text-[#f5a623]"/><span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Time</span></div><p className="text-xs text-gray-200">12pm - 4pm ET</p></div>
+                  <div className="col-span-2 border-t border-gray-800 pt-3 mt-1"><div className="flex items-center gap-2 mb-1"><MapPin size={14} className="text-[#f5a623]"/><span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Where</span></div><p className="text-[11px] text-gray-400 leading-snug">Jerzee's Sports Grille<br/>5260 Dressler Rd NW, Canton, OH 44718</p></div>
+              </div>
+              <div className="mt-auto relative z-10 flex flex-col gap-3">
+                <a href="https://in-betweenmedia.com/product/draft-night-out-2026-tickets/" target="_blank" rel="noopener noreferrer" className="w-full inline-block relative group p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5"><div className="bg-[#1a1a1a] group-hover:bg-[#222] transition-colors rounded-[10px] px-6 py-3.5 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">Get Canton Tickets <ExternalLink size={16} /></div></a>
+                <button onClick={() => setShowRaffleModal(true)} className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px] bg-[#111] hover:bg-[#1a1a1a] text-gray-200 hover:text-white text-xs font-black uppercase tracking-widest border border-[#f5a623]/60 hover:border-[#f5a623] shadow-[0_0_10px_rgba(245,166,35,0.05)] transition-all"><Ticket size={16} className="text-[#1b75bb]" /> View Raffle Prizes & Promos</button>
               </div>
             </div>
-
-            <div className="max-w-5xl mx-auto">
-              {/* TAB SWITCHER - HORIZONTALLY SCROLLABLE */}
-              <div className="flex items-center justify-start lg:justify-center gap-2 md:gap-4 py-2 px-2 md:px-4 mb-10 bg-[#151515] rounded-2xl border border-gray-800/50 w-full lg:w-fit mx-auto shadow-inner animate-in fade-in duration-500 delay-100 overflow-x-auto scrollbar-hide">
-                {[
-                  { id: 'drafts', icon: MonitorSmartphone, label: 'Drafts' },
-                  { id: 'leaderboard', icon: ListOrdered, label: 'Leaderboard' },
-                  { id: 'charity', icon: HeartHandshake, label: 'Charity' },
-                  { id: 'prizes', icon: Trophy, label: 'Prizes' },
-                  { id: 'rules', icon: BookOpen, label: 'Rules' },
-                  { id: 'sponsors', icon: Handshake, label: 'Sponsor' }
-                ].map(tab => {
-                  const Icon = tab.icon;
-                  return activeTab === tab.id ? (
-                    <button key={tab.id} onClick={() => handleTabClick(tab.id)} className="relative p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_15px_rgba(27,117,187,0.3)] transition-all shrink-0">
-                      <div className="bg-[#151515] rounded-[10px] px-5 py-3 flex items-center gap-2 text-white font-black uppercase tracking-widest text-xs whitespace-nowrap"><Icon size={16} /> {tab.label}</div>
-                    </button>
-                  ) : (
-                    <button key={tab.id} onClick={() => handleTabClick(tab.id)} className="px-5 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 border border-transparent shrink-0 whitespace-nowrap"><Icon size={16} /> {tab.label}</button>
-                  );
-                })}
-              </div>
-
-              {activeTab === 'drafts' && <DraftsTab draftView={draftView} setDraftView={setDraftView} isProPlus={isProPlus} ticketsAvailable={ticketsAvailable} handlePurchaseExtraEntry={handlePurchaseExtraEntry} errorMessage={errorMessage} loadingLeagues={loadingLeagues} leagues={leagues} sortedLeagues={sortedLeagues} recentlyJoinedLeagues={recentlyJoinedLeagues} setConfirmingLeague={setConfirmingLeague} setShowRaffleModal={setShowRaffleModal} />}
-              {activeTab === 'leaderboard' && <div className="animate-in fade-in slide-in-from-bottom-4 duration-500"><NapkinLeaderboard initialLeaderboard={liveLeaderboard} overrideSeasonLabel={liveSeasonLabel} /></div>}
-              {activeTab === 'charity' && <CharityTab />}
-              {activeTab === 'prizes' && <PrizesTab />}
-              {activeTab === 'rules' && <RulesTab />}
-              {activeTab === 'sponsors' && <SponsorsTab />}
-
-            </div>
-          </main>
+          </div>
+          <div className="mt-8 bg-[#1b75bb]/10 border border-[#1b75bb]/30 rounded-xl p-4 flex items-start gap-3"><Ticket size={20} className="text-[#f5a623] shrink-0 mt-0.5" /><div><h5 className="text-xs font-black text-[#1b75bb] uppercase tracking-widest mb-1">Live Event Note</h5><p className="text-sm text-gray-400 leading-relaxed">These are private events featuring exclusive raffles and giveaways! All attendees must have a ticket (Draft or "Just To Hang" covers available).</p></div></div>
         </div>
-      </div>
-    </>
+      )}
+    </div>
   );
 }
