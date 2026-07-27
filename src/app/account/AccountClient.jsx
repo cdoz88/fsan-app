@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { User, CreditCard, ShieldAlert, Gift, LogOut, ChevronRight, Link as LinkIcon } from 'lucide-react';
@@ -11,12 +11,22 @@ import SubscriptionTab from './tabs/SubscriptionTab';
 import MyPerksTab from './tabs/MyPerksTab';
 
 export default function AccountClient() {
-  const { data: session, status } = useSession();
+  // 🚀 FIX: Extracted `update` to trigger manual token refreshes
+  const { data: session, status, update } = useSession();
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState('Profile');
   const [userTier, setUserTier] = useState('free');
   const [isAdmin, setIsAdmin] = useState(false); 
+  const hasSyncedSession = useRef(false);
+
+  // 🚀 FIX: Silently tell NextAuth to check WordPress for upgrades whenever they visit their account page
+  useEffect(() => {
+    if (status === 'authenticated' && !hasSyncedSession.current) {
+      hasSyncedSession.current = true;
+      update(); 
+    }
+  }, [status, update]);
 
   useEffect(() => {
     const handleHashChange = () => {

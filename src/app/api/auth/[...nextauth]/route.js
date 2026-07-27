@@ -81,7 +81,8 @@ export const authOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    // 🚀 FIX: Intercept "update" triggers and fetch fresh roles from WordPress
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.wpToken = user.token;
         token.wpUserId = user.id; 
@@ -90,6 +91,50 @@ export const authOptions = {
         token.roles = user.roles;
         token.sleeperId = user.sleeperId;
       }
+
+      if (trigger === "update") {
+        try {
+          const query = `
+            query GetUserFreshRoles($id: ID!) {
+              user(id: $id, idType: DATABASE_ID) {
+                roles {
+                  nodes {
+                    name
+                  }
+                }
+              }
+            }
+          `;
+          
+          const res = await fetch('https://admin.fsan.com/graphql', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              query,
+              variables: { id: token.wpUserId }
+            }),
+            cache: 'no-store'
+          });
+          
+          const json = await res.json();
+          if (json?.data?.user?.roles) {
+            const freshRoles = json.data.user.roles.nodes?.map(r => r.name.toLowerCase().replace(/&#043;/g, '+')) || [];
+            
+            let freshTier = 'free';
+            if (freshRoles.some(r => r.includes('pro+') || r.includes('pro plus') || r.includes('pro_plus') || r.includes('pro-plus') || r.includes('author') || r.includes('administrator') || r.includes('editor'))) {
+              freshTier = 'pro-plus';
+            } else if (freshRoles.some(r => r.includes('pro') || r.includes('pro member') || r.includes('fsan_pro'))) {
+              freshTier = 'pro';
+            }
+            
+            token.roles = freshRoles;
+            token.tier = freshTier;
+          }
+        } catch (err) {
+          console.error("Failed to refresh user session from WP:", err);
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
