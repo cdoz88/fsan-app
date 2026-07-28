@@ -18,7 +18,13 @@ import SponsorsTab from './tabs/SponsorsTab';
 export default function DraftNightOutClient({ proToolsMenu, connectMenu, initialLeaderboard }) {
   const { data: session, status } = useSession();
   const isAuthed = status === 'authenticated';
-  const isProPlus = session?.user?.tier === 'pro-plus';
+  
+  // 🚀 FIX: Mirror the robust authorization failsafes from the Account page
+  const roles = session?.user?.roles || [];
+  const isStaff = roles.some(r => r.includes('administrator') || r.includes('editor') || r.includes('author'));
+  const rawTier = session?.user?.tier || 'free';
+  const normalizedTier = rawTier.replace('_', '-');
+  const isProPlus = isStaff || normalizedTier === 'pro-plus';
   
   const [leagues, setLeagues] = useState([]);
   const [loadingLeagues, setLoadingLeagues] = useState(true);
@@ -33,7 +39,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   const [confirmingLeague, setConfirmingLeague] = useState(null);
   const [showRaffleModal, setShowRaffleModal] = useState(false);
   
-  // 🚀 Now acts as the permanent state for all leagues a user is in
+  // Now acts as the permanent state for all leagues a user is in
   const [recentlyJoinedLeagues, setRecentlyJoinedLeagues] = useState([]);
 
   // Top-Level Navigation State
@@ -67,7 +73,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
       setUserJoinedCount(data.user_joined_count || 0);
       setAllottedEntries(data.allotted_entries || 1);
       
-      // 🚀 Hydrate the frontend with the permanent list of leagues this user is in
+      // Hydrate the frontend with the permanent list of leagues this user is in
       setRecentlyJoinedLeagues(data.joined_leagues || []);
     } catch (err) { console.warn("Failed syncing live DNO array: ", err); } 
     finally { setLoadingLeagues(false); }
