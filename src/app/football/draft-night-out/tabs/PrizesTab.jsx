@@ -23,7 +23,7 @@ export default function PrizesTab() {
            <div className="absolute top-0 right-0 w-32 h-32 bg-[#1b75bb]/10 blur-2xl rounded-full"></div>
            <Trophy className="text-yellow-500 mb-4 relative z-10" size={40} />
            <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2 relative z-10">Playoff Challenge Champion</h4>
-           <p className="text-sm text-gray-300 leading-relaxed relative z-10">Playstation 5, Madden 2026, and championship ring from <strong className="text-white">TrophySmack</strong>!</p>
+           <p className="text-sm text-gray-300 leading-relaxed relative z-10">Playstation 5, Madden 2027, and championship ring from <strong className="text-white">TrophySmack</strong>!</p>
          </div>
       </div>
       <div className="bg-gradient-to-br from-[#0a1220] to-[#111] rounded-3xl border border-[#1b75bb]/30 p-8 md:p-12 mb-12 shadow-[0_0_40px_rgba(27,117,187,0.1)] relative overflow-hidden flex flex-col md:flex-row items-center gap-8 md:gap-12">
