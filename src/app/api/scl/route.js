@@ -33,11 +33,11 @@ export async function GET(request) {
         draft_style: l.draft_style || 'fast'
       }));
 
-      // Fetch LIVE roster counts directly from Sleeper to ensure it's never out of sync!
+      // 🚀 FIX: Changed to 'no-store' and added a timestamp to bust Sleeper's CDN cache!
       const liveLeagues = await Promise.all(sanitizedLeagues.map(async (league) => {
         try {
-          const slpRes = await fetch(`https://api.sleeper.app/v1/league/${league.id}/users`, { 
-            next: { revalidate: 30 } 
+          const slpRes = await fetch(`https://api.sleeper.app/v1/league/${league.id}/users?t=${Date.now()}`, { 
+            cache: 'no-store' 
           });
           if (slpRes.ok) {
             const users = await slpRes.json();
@@ -52,7 +52,6 @@ export async function GET(request) {
       const userJoinedCount = wpData.data.user_joined_count || 0;
       const allottedEntries = wpData.data.allotted_entries || 1; 
       
-      // 🚀 Include the persistent array of joined league IDs 
       const joinedLeagues = wpData.data.joined_leagues || [];
 
       return NextResponse.json({
@@ -109,7 +108,19 @@ export async function POST(request) {
         return NextResponse.json({ success: false, message: 'Targeted draft room invite url link missing or invalid.' }, { status: 404 });
       }
 
-      if (targetedLeague.filled_spots >= targetedLeague.total_spots) {
+      // Check real-time Sleeper capacity right before allowing them to claim
+      let currentSleeperCount = targetedLeague.filled_spots;
+      try {
+        const slpRes = await fetch(`https://api.sleeper.app/v1/league/${leagueId}/users?t=${Date.now()}`, { cache: 'no-store' });
+        if (slpRes.ok) {
+           const users = await slpRes.json();
+           currentSleeperCount = users.length;
+        }
+      } catch (e) {
+         console.warn("Failed pre-join capacity check on Sleeper");
+      }
+
+      if (currentSleeperCount >= targetedLeague.total_spots) {
         return NextResponse.json({ success: false, message: 'This draft room is full!' }, { status: 400 });
       }
 
@@ -117,7 +128,7 @@ export async function POST(request) {
       const ledgerFormData = new FormData();
       ledgerFormData.append('action', 'dno_log_user_entry');
       ledgerFormData.append('user_id', session.user.id);
-      ledgerFormData.append('league_id', leagueId); // 🚀 Send the exact league ID to track it
+      ledgerFormData.append('league_id', leagueId);
       ledgerFormData.append('secret', 'fsan_super_secret_webhook_key_2026'); 
 
       try {
