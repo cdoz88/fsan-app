@@ -7,18 +7,18 @@ export async function GET(request) {
   const type = searchParams.get('type');
   const session = await getServerSession(authOptions);
 
-  if (!session) {
-    return NextResponse.json({ success: false, message: 'Authentication required' }, { status: 401 });
-  }
-
   try {
     if (type === 'dno_pool') {
-      const wpUrl = `https://admin.fsan.com/wp-admin/admin-ajax.php?action=dno_get_leagues_pool&user_id=${session.user.id}&t=${Date.now()}`;
+      // Fetch specifically for the logged-in user, or generically for a guest
+      const wpUrl = session?.user?.id
+        ? `https://admin.fsan.com/wp-admin/admin-ajax.php?action=dno_get_leagues_pool&user_id=${session.user.id}&t=${Date.now()}`
+        : `https://admin.fsan.com/wp-admin/admin-ajax.php?action=dno_get_leagues_pool&t=${Date.now()}`;
+        
       const res = await fetch(wpUrl, { cache: 'no-store' });
       const wpData = await res.json();
 
       if (!wpData.success || !wpData.data) {
-        return NextResponse.json({ leagues: [], user_joined_count: 0, allotted_entries: 1, joined_leagues: [] });
+        return NextResponse.json({ leagues: [], user_joined_count: 0, allotted_entries: 0, joined_leagues: [] });
       }
 
       const sanitizedLeagues = wpData.data.leagues.map(l => ({
@@ -33,25 +33,25 @@ export async function GET(request) {
         draft_style: l.draft_style || 'fast'
       }));
 
-      // 🚀 FIX: Changed to 'no-store' and added a timestamp to bust Sleeper's CDN cache!
+      // 🚀 FIX: Switched to Sleeper's /rosters endpoint to count actual claimed teams, not just chat participants!
       const liveLeagues = await Promise.all(sanitizedLeagues.map(async (league) => {
         try {
-          const slpRes = await fetch(`https://api.sleeper.app/v1/league/${league.id}/users?t=${Date.now()}`, { 
+          const slpRes = await fetch(`https://api.sleeper.app/v1/league/${league.id}/rosters?t=${Date.now()}`, { 
             cache: 'no-store' 
           });
           if (slpRes.ok) {
-            const users = await slpRes.json();
-            league.filled_spots = users.length;
+            const rosters = await slpRes.json();
+            // Only count rosters that have an active owner assigned
+            league.filled_spots = rosters.filter(r => r.owner_id && r.owner_id !== '').length;
           }
         } catch (e) {
-          console.warn(`Could not sync live user count for ${league.id}`);
+          console.warn(`Could not sync live roster count for ${league.id}`);
         }
         return league;
       }));
 
       const userJoinedCount = wpData.data.user_joined_count || 0;
-      const allottedEntries = wpData.data.allotted_entries || 1; 
-      
+      const allottedEntries = wpData.data.allotted_entries || 0; 
       const joinedLeagues = wpData.data.joined_leagues || [];
 
       return NextResponse.json({
@@ -78,6 +78,8 @@ export async function GET(request) {
 
 export async function POST(request) {
   const session = await getServerSession(authOptions);
+  
+  // 🚀 Security Check: Ensure POST actions are strictly gated for logged-in users only
   if (!session) {
     return NextResponse.json({ success: false, message: 'Authentication required' }, { status: 401 });
   }
@@ -108,13 +110,13 @@ export async function POST(request) {
         return NextResponse.json({ success: false, message: 'Targeted draft room invite url link missing or invalid.' }, { status: 404 });
       }
 
-      // Check real-time Sleeper capacity right before allowing them to claim
+      // Check real-time Sleeper capacity right before allowing them to claim (Checking /rosters)
       let currentSleeperCount = targetedLeague.filled_spots;
       try {
-        const slpRes = await fetch(`https://api.sleeper.app/v1/league/${leagueId}/users?t=${Date.now()}`, { cache: 'no-store' });
+        const slpRes = await fetch(`https://api.sleeper.app/v1/league/${leagueId}/rosters?t=${Date.now()}`, { cache: 'no-store' });
         if (slpRes.ok) {
-           const users = await slpRes.json();
-           currentSleeperCount = users.length;
+           const rosters = await slpRes.json();
+           currentSleeperCount = rosters.filter(r => r.owner_id && r.owner_id !== '').length;
         }
       } catch (e) {
          console.warn("Failed pre-join capacity check on Sleeper");
@@ -124,7 +126,6 @@ export async function POST(request) {
         return NextResponse.json({ success: false, message: 'This draft room is full!' }, { status: 400 });
       }
 
-      // UPDATE USER LEDGER IN WORDPRESS
       const ledgerFormData = new FormData();
       ledgerFormData.append('action', 'dno_log_user_entry');
       ledgerFormData.append('user_id', session.user.id);

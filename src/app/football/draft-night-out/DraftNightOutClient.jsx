@@ -6,7 +6,6 @@ import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
 import { useSession } from 'next-auth/react';
 import { MonitorSmartphone, Trophy, BookOpen, Handshake, HeartHandshake, ListOrdered, Loader2, AlertCircle, X } from 'lucide-react';
 
-// Import our newly refactored child components and tabs
 import SuccessToast from './components/SuccessToast';
 import RaffleModal from './components/RaffleModal';
 import DraftsTab from './tabs/DraftsTab';
@@ -19,7 +18,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   const { data: session, status } = useSession();
   const isAuthed = status === 'authenticated';
   
-  // 🚀 FIX: Mirror the robust authorization failsafes from the Account page
   const roles = session?.user?.roles || [];
   const isStaff = roles.some(r => r.includes('administrator') || r.includes('editor') || r.includes('author'));
   const rawTier = session?.user?.tier || 'free';
@@ -29,7 +27,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   const [leagues, setLeagues] = useState([]);
   const [loadingLeagues, setLoadingLeagues] = useState(true);
   const [userJoinedCount, setUserJoinedCount] = useState(0);
-  const [allottedEntries, setAllottedEntries] = useState(1);
+  const [allottedEntries, setAllottedEntries] = useState(0);
   const [isProcessingEntry, setIsProcessingEntry] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   
@@ -39,14 +37,11 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   const [confirmingLeague, setConfirmingLeague] = useState(null);
   const [showRaffleModal, setShowRaffleModal] = useState(false);
   
-  // Now acts as the permanent state for all leagues a user is in
   const [recentlyJoinedLeagues, setRecentlyJoinedLeagues] = useState([]);
 
-  // Top-Level Navigation State
   const validTabs = ['drafts', 'leaderboard', 'charity', 'prizes', 'rules', 'sponsors'];
   const [activeTab, setActiveTab] = useState('drafts');
   
-  // Drafts Sub-navigation State
   const [draftView, setDraftView] = useState('online');
 
   const handleTabClick = (tabId) => {
@@ -71,9 +66,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
       const data = await res.json();
       setLeagues(data.leagues || []);
       setUserJoinedCount(data.user_joined_count || 0);
-      setAllottedEntries(data.allotted_entries || 1);
-      
-      // Hydrate the frontend with the permanent list of leagues this user is in
+      setAllottedEntries(data.allotted_entries || 0);
       setRecentlyJoinedLeagues(data.joined_leagues || []);
     } catch (err) { console.warn("Failed syncing live DNO array: ", err); } 
     finally { setLoadingLeagues(false); }
@@ -91,10 +84,11 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     } catch (err) { console.warn("Failed loading live initialization data arrays: ", err); }
   }, []);
 
+  // 🚀 FIX: Removed the authentication condition. Now guests fetch leagues too!
   useEffect(() => {
     loadLiveLeaderboard();
-    if (isAuthed) loadDnoPool(); else setLoadingLeagues(false);
-  }, [isAuthed, loadDnoPool, loadLiveLeaderboard]);
+    loadDnoPool();
+  }, [loadDnoPool, loadLiveLeaderboard]);
 
   const handleClaimSpot = async (leagueId) => {
     setIsProcessingEntry(leagueId);
@@ -142,7 +136,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
       <Suspense fallback={null}><SuccessToast setActiveTab={setActiveTab} setDraftView={setDraftView} loadDnoPool={loadDnoPool} isAuthed={isAuthed} /></Suspense>
       {showRaffleModal && <RaffleModal setShowRaffleModal={setShowRaffleModal} />}
 
-      {/* CONFIRMATION MODAL */}
       {confirmingLeague && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-[#151515] border border-gray-800 rounded-3xl max-w-md w-full shadow-2xl relative flex flex-col">
@@ -171,7 +164,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
         
         <div className="flex-1 w-full min-w-0 pt-6">
           <main className="w-full animate-in fade-in duration-500">
-            {/* HERO BANNER */}
             <div className="relative w-full h-[260px] md:h-[300px] flex items-end overflow-hidden rounded-2xl mb-10 shadow-2xl bg-[#0a0a0a]">
               <div className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-60" style={{ backgroundImage: `url('https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Background.webp')` }} />
               <img src="https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp" alt="Draft Night Out Logo" className="absolute -right-10 md:right-4 top-1/2 -translate-y-1/2 w-[280px] md:w-[380px] h-auto object-contain opacity-20 md:opacity-40 z-0 pointer-events-none mix-blend-plus-lighter drop-shadow-2xl" />
@@ -185,7 +177,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
             </div>
 
             <div className="max-w-5xl mx-auto">
-              {/* TAB SWITCHER - HORIZONTALLY SCROLLABLE */}
               <div className="flex items-center justify-start lg:justify-center gap-2 md:gap-4 py-2 px-2 md:px-4 mb-10 bg-[#151515] rounded-2xl border border-gray-800/50 w-full lg:w-fit mx-auto shadow-inner animate-in fade-in duration-500 delay-100 overflow-x-auto scrollbar-hide">
                 {[
                   { id: 'drafts', icon: MonitorSmartphone, label: 'Drafts' },

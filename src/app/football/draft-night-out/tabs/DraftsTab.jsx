@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { MonitorSmartphone, MapPin, SlidersHorizontal, Ticket, Lock, Loader2, Coins, ExternalLink, Calendar, Clock, ChevronDown, AlertCircle } from 'lucide-react';
 
-// Custom Dropdown Component to override native OS styling
 const CustomDropdown = ({ value, options, onChange, minWidth = "sm:w-40" }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectedOption = options.find(opt => opt.value === value);
@@ -45,7 +44,6 @@ export default function DraftsTab({
   const [styleFilter, setStyleFilter] = useState('all');
   const [myLeaguesOnly, setMyLeaguesOnly] = useState(false);
 
-  // Apply filters to the sorted leagues array
   const filteredLeagues = sortedLeagues.filter(league => {
     const openSpots = Math.max(0, league.total_spots - league.filled_spots);
     const isFull = openSpots === 0;
@@ -75,7 +73,6 @@ export default function DraftsTab({
       {draftView === 'online' && (
         <div className="animate-in fade-in duration-300">
           
-          {/* FUNCTIONAL FILTER BAR */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6 bg-[#111] p-3 rounded-xl border border-gray-800 shadow-inner">
               <div className="flex items-center gap-2 shrink-0 ml-1">
                 <SlidersHorizontal size={16} className="text-[#f5a623]" />
@@ -145,17 +142,6 @@ export default function DraftsTab({
           )}
 
           <div className="relative w-full min-h-[300px] z-0">
-            {!isProPlus && (
-                <div className="absolute inset-0 z-20 rounded-2xl bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center border border-gray-800 shadow-2xl">
-                    <Lock size={40} className="text-[#1b75bb] mb-4" />
-                    <h4 className="text-xl md:text-2xl font-black text-white uppercase tracking-wider mb-2">Pro+ Required</h4>
-                    <p className="text-sm text-gray-300 mb-6 max-w-[280px] leading-relaxed">Upgrade to Pro+ to browse and claim your live Sleeper roster slots.</p>
-                    <Link href="/subscribe" className="relative group p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-lg transition-transform hover:-translate-y-0.5 inline-block">
-                      <div className="bg-black group-hover:bg-gray-900 transition-colors rounded-[10px] px-8 py-3.5 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-sm">Upgrade to Pro+</div>
-                    </Link>
-                </div>
-            )}
-
             {loadingLeagues ? (
               <div className="w-full flex flex-col items-center justify-center py-20 text-gray-500 gap-3"><Loader2 size={32} className="animate-spin text-[#1b75bb]" /><span className="text-xs font-bold uppercase tracking-widest">Querying Sleeper API Matrix...</span></div>
             ) : leagues.length === 0 ? (
@@ -170,7 +156,6 @@ export default function DraftsTab({
                   const hasNoEntriesLeft = ticketsAvailable === 0;
                   const isJoinedLocal = recentlyJoinedLeagues.includes(league.id);
 
-                  // Safe Date/Time Formatting with Fallback
                   const formattedDate = league.draft_date ? new Date(`${league.draft_date}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD';
                   
                   let formattedTime = '';
@@ -188,7 +173,6 @@ export default function DraftsTab({
                       <div className="flex-1 min-w-0 flex flex-col justify-center">
                         <h4 className="text-lg font-black text-white uppercase tracking-wide italic mb-2 line-clamp-1">{league.name}</h4>
                         
-                        {/* Draft Details Badges */}
                         <div className="flex flex-wrap items-center gap-2 mb-3">
                           <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-[#111] px-2 py-1 rounded border border-gray-800 shadow-inner">
                             <Calendar size={12} className="text-[#1b75bb]" />
@@ -203,7 +187,12 @@ export default function DraftsTab({
                         <span className={`text-xs font-black uppercase tracking-wider ${isFull && !isJoinedLocal ? 'text-gray-500' : 'text-green-500'}`}>{league.filled_spots} / {league.total_spots} Teams Filled</span>
                       </div>
                       <div className="shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
-                        {isJoinedLocal ? (
+                        {/* 🚀 FIX: Display a subtle badge for non-subscribers instead of the Join buttons */}
+                        {!isProPlus ? (
+                           <div className="flex items-center justify-center gap-2 text-gray-500 text-[10px] font-black uppercase tracking-widest bg-[#111] px-4 py-3 rounded-xl border border-gray-800 shadow-inner">
+                             <Lock size={12} /> Pro+ Exclusive
+                           </div>
+                        ) : isJoinedLocal ? (
                           <a href="https://sleeper.com" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-green-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-green-900/50 transition-colors flex items-center justify-center gap-2"><ExternalLink size={14} /> Go to League</a>
                         ) : isFull ? (
                           <button disabled className="w-full sm:w-auto px-6 bg-gray-800 text-gray-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-gray-700 cursor-not-allowed">League Full</button>
