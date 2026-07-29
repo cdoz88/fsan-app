@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import html2canvas from 'html2canvas';
@@ -17,24 +17,23 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
   const [rosterPlayers, setRosterPlayers] = useState([]);
   const [generating, setGenerating] = useState(false);
   
-  // 🚀 NEW: State to hold your site's internal player database
+  // Internal player database synced from your Next.js backend
   const [playerDB, setPlayerDB] = useState({});
 
   const graphicRef = useRef(null);
 
-  // 🚀 NEW: Fetch your existing internal player data on component mount!
+  // 🚀 Fetch internal player data on mount to map Sleeper IDs to real names
   useEffect(() => {
     const fetchInternalPlayerData = async () => {
       try {
-        // Adjust this endpoint to wherever your Trade Calculator/Rankings gets its player list!
         const res = await fetch('/api/dynasty-players'); 
         if (res.ok) {
           const data = await res.json();
-          // Convert array to a lookup dictionary keyed by Sleeper ID for instant O(1) lookups
           const dbMap = {};
           data.forEach(player => {
+             // Store as strings to ensure perfect mapping
              if (player.sleeper_id) {
-               dbMap[player.sleeper_id] = player;
+               dbMap[String(player.sleeper_id)] = player;
              }
           });
           setPlayerDB(dbMap);
@@ -56,12 +55,10 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
     setRosterPlayers([]);
 
     try {
-      // 1. Get User ID from Username
       const userRes = await fetch(`https://api.sleeper.app/v1/user/${username}`);
       if (!userRes.ok) throw new Error('Could not find that Sleeper username.');
       const userData = await userRes.json();
       
-      // 2. Get 2026 NFL Leagues for User
       const leaguesRes = await fetch(`https://api.sleeper.app/v1/user/${userData.user_id}/leagues/nfl/2026`);
       if (!leaguesRes.ok) throw new Error('Could not fetch leagues.');
       const leaguesData = await leaguesRes.json();
@@ -106,8 +103,14 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
         teamName: me?.metadata?.team_name || prev.username
       }));
 
-      const validPlayers = myRoster.players.filter(id => id !== '0');
-      setRosterPlayers(validPlayers.slice(0, 15)); 
+      // 🚀 FIX: Pull strictly from the STARTERS array, not the entire roster
+      const starters = myRoster.starters ? myRoster.starters.filter(id => id !== '0') : [];
+      
+      if (starters.length === 0) {
+          throw new Error('No starting lineup set for this roster yet.');
+      }
+      
+      setRosterPlayers(starters);
 
     } catch (err) {
       setError(err.message);
@@ -123,39 +126,38 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
     try {
       const canvas = await html2canvas(graphicRef.current, {
         useCORS: true,
+        allowTaint: true, // 🚀 FIX: Force bypass browser security blocks for external images
         scale: 2, 
-        backgroundColor: '#0a0a0a'
+        backgroundColor: '#09090b' // zinc-950
       });
       
-      const image = canvas.toDataURL('image/jpeg', 1.0);
+      const image = canvas.toDataURL('image/jpeg', 0.9);
       const link = document.createElement('a');
-      link.download = `${teamData.teamName.replace(/\s+/g, '-')}-Roster-2026.jpg`;
+      link.download = `${teamData.teamName.replace(/\s+/g, '-')}-Starting-Lineup.jpg`;
       link.href = image;
       link.click();
     } catch (err) {
       console.error("Error generating image:", err);
-      setError("Failed to generate the image. Please try again.");
+      setError("Failed to generate the image. Ensure your browser allows image downloads.");
     } finally {
       setGenerating(false);
     }
   };
 
-  // Position color coding helper
-  const getPositionColor = (position, index) => {
-    if (position === 'QB') return 'bg-red-500'; 
-    if (position === 'RB') return 'bg-emerald-500'; 
-    if (position === 'WR') return 'bg-[#1b75bb]'; 
-    if (position === 'TE') return 'bg-[#f5a623]'; 
-    if (position === 'DEF') return 'bg-sky-400';
-    if (position === 'K') return 'bg-purple-500';
-    
-    // Fallbacks if position is unknown
-    if (index === 0) return 'bg-red-500'; 
-    if (index > 0 && index <= 3) return 'bg-emerald-500'; 
-    if (index > 3 && index <= 7) return 'bg-[#1b75bb]'; 
-    if (index > 7 && index <= 9) return 'bg-[#f5a623]'; 
-    return 'bg-gray-500'; 
+  // 🚀 Cinematic Card Styling Logic
+  const getCardStyle = (position) => {
+    switch (position) {
+      case 'QB': return { border: 'border-cyan-500/60 shadow-[0_0_20px_rgba(6,182,212,0.15)]', gradient: 'from-cyan-950/40 to-black', text: 'text-cyan-400' };
+      case 'RB': return { border: 'border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]', gradient: 'from-emerald-950/40 to-black', text: 'text-emerald-400' };
+      case 'WR': return { border: 'border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.15)]', gradient: 'from-amber-900/40 to-black', text: 'text-amber-400' };
+      case 'TE': return { border: 'border-fuchsia-500/60 shadow-[0_0_20px_rgba(217,70,239,0.15)]', gradient: 'from-fuchsia-900/40 to-black', text: 'text-fuchsia-400' };
+      default: return { border: 'border-slate-300/60 shadow-[0_0_20px_rgba(203,213,225,0.15)]', gradient: 'from-slate-700/40 to-black', text: 'text-slate-300' };
+    }
   };
+
+  // Image Helper Functions
+  const getESPNHeadshot = (espnId) => `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${espnId}.png&w=350&h=254`;
+  const getESPNTeamLogo = (team) => `https://a.espncdn.com/i/teamlogos/nfl/500/${team}.png`;
 
   return (
     <>
@@ -222,88 +224,132 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
           {rosterPlayers.length > 0 && teamData && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               
+              {/* EXPORTABLE GRAPHIC CONTAINER (1600x900 16:9 Aspect Ratio) */}
               <div className="w-full overflow-x-auto pb-6 custom-scrollbar">
                   <div 
                     ref={graphicRef}
-                    className="relative w-[1200px] h-[630px] bg-[#0a0a0a] border-2 border-gray-800 overflow-hidden flex flex-col p-10 shrink-0"
+                    className="relative w-[1600px] min-h-[900px] bg-zinc-950 border border-zinc-800 overflow-hidden flex flex-col shrink-0"
                   >
-                    <div className="absolute inset-0 z-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
-                       <img src="https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp" alt="Watermark" className="w-[800px] h-auto object-contain" crossOrigin="anonymous" />
+                    {/* Cinematic Background */}
+                    <div className="absolute inset-0 z-0 opacity-20 mix-blend-luminosity bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1577223625816-7546f13df25d?q=80&w=2000&auto=format&fit=crop')" }} />
+                    <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-transparent" />
+                    <div className="absolute inset-0 z-0 bg-gradient-to-r from-blue-900/10 to-zinc-950/30 pointer-events-none" />
+
+                    {/* Header Banner */}
+                    <div className="relative z-10 p-8 flex items-center justify-between border-b border-zinc-800/50 bg-black/40 backdrop-blur-md">
+                      <div className="flex items-center gap-6">
+                         <img src="https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png" alt="NFL" className="w-16 h-16 opacity-90" crossOrigin="anonymous" />
+                         <div>
+                          <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic drop-shadow-md">
+                            {teamData.teamName}
+                          </h2>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="text-[#f5a623] font-bold uppercase tracking-widest text-sm">{teamData.leagueName}</span>
+                            <span className="text-zinc-600 font-bold">•</span>
+                            <span className="text-zinc-400 font-bold uppercase tracking-widest text-sm">2026 Starting Lineup</span>
+                          </div>
+                         </div>
+                      </div>
+
+                      {/* FSAN Branding Right Side */}
+                      <div className="flex items-center gap-4">
+                         <div className="text-right">
+                            <h4 className="text-[#1b75bb] font-black italic text-2xl uppercase tracking-tighter drop-shadow-md">
+                               <span className="text-white">FSAN</span> NETWORK
+                            </h4>
+                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Fantasy Football Advice</p>
+                         </div>
+                         <img src="https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp" alt="FSAN" className="w-16 h-auto opacity-80" crossOrigin="anonymous" />
+                      </div>
                     </div>
 
-                    <div className="absolute top-8 right-10 z-20 opacity-80">
-                       <h4 className="text-[#1b75bb] font-black italic text-xl uppercase tracking-tighter flex items-center gap-2">
-                         <span className="text-white">FSAN</span> NETWORK
-                       </h4>
-                    </div>
+                    {/* Cinematic Roster Grid */}
+                    <div className="relative z-10 p-10 flex-1 flex flex-col justify-center">
+                       {/* Auto-scales columns based on whether it's a 9 or 10 man starting lineup */}
+                       <div className={`grid gap-6 ${rosterPlayers.length <= 9 ? 'grid-cols-3' : 'grid-cols-5'}`}>
+                          {rosterPlayers.map((playerId, idx) => {
+                            const isDefense = playerId.length < 4; 
+                            const internalPlayer = playerDB[String(playerId)]; 
+                            
+                            // Map Player Info
+                            let firstName = "";
+                            let lastName = "";
+                            let position = "DEF";
+                            let team = playerId.toLowerCase();
 
-                    <div className="relative z-10 mb-10 mt-2">
-                       <h2 className="text-6xl font-black italic text-white uppercase tracking-tighter mb-2 drop-shadow-lg">
-                         {teamData.teamName}
-                       </h2>
-                       <div className="flex items-center gap-3">
-                         <span className="text-[#f5a623] font-bold uppercase tracking-widest text-lg">{teamData.leagueName}</span>
-                         <span className="text-gray-500 font-bold">•</span>
-                         <span className="text-gray-400 font-bold uppercase tracking-widest text-lg">2026 Roster</span>
-                       </div>
-                    </div>
+                            if (isDefense) {
+                               firstName = playerId;
+                               lastName = "DEFENSE";
+                            } else if (internalPlayer) {
+                               const nameParts = internalPlayer.name ? internalPlayer.name.split(' ') : [`Player`, `${playerId}`];
+                               firstName = nameParts[0];
+                               lastName = nameParts.slice(1).join(' ');
+                               position = internalPlayer.position || 'UNK';
+                               team = internalPlayer.team ? internalPlayer.team.toLowerCase() : 'fa';
+                            } else {
+                               firstName = "Player";
+                               lastName = playerId;
+                               position = "FLEX";
+                            }
 
-                    <div className="relative z-10 grid grid-cols-3 gap-x-6 gap-y-4 flex-1">
-                       {rosterPlayers.map((playerId, idx) => {
-                         const isDefense = playerId.length < 4; 
-                         const internalPlayer = playerDB[playerId]; // Lookup player in your database
-                         
-                         // Determine Player Details
-                         const playerName = isDefense ? `${playerId} DEF` : (internalPlayer ? `${internalPlayer.first_name} ${internalPlayer.last_name}` : `Player ${playerId}`);
-                         const position = isDefense ? 'DEF' : (internalPlayer?.position || 'UNK');
-                         const team = isDefense ? playerId : (internalPlayer?.team || 'FA');
-                         const accentColor = getPositionColor(position, idx);
+                            const cardStyle = getCardStyle(position);
 
-                         // Use internal images if available, otherwise fallback to Sleeper CDN
-                         const imageUrl = internalPlayer?.image_url 
-                            ? internalPlayer.image_url 
-                            : (isDefense 
-                                ? `https://sleepercdn.com/images/team_logos/nfl/${playerId.toLowerCase()}.png`
-                                : `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`);
+                            // Resolve High-Res Images
+                            let playerImage = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                            if (isDefense) {
+                               playerImage = getESPNTeamLogo(team);
+                            } else if (internalPlayer?.espn_id) {
+                               playerImage = getESPNHeadshot(internalPlayer.espn_id);
+                            } else if (internalPlayer?.sleeper_id) {
+                               playerImage = `https://sleepercdn.com/content/nfl/players/thumb/${internalPlayer.sleeper_id}.jpg`;
+                            }
 
-                         return (
-                           <div key={`${playerId}-${idx}`} className="bg-[#151515] border border-gray-800 rounded-xl h-[84px] flex relative overflow-hidden shadow-md">
-                             <div className={`w-2 h-full ${accentColor}`}></div>
-                             
-                             <div className="w-[84px] h-[84px] bg-[#1a1a1a] flex items-end justify-center shrink-0 border-r border-gray-800 overflow-hidden">
-                               <img 
-                                 src={imageUrl} 
-                                 alt={playerName} 
-                                 className={isDefense ? "w-12 h-12 object-contain mb-4" : "w-full h-auto object-cover"}
-                                 crossOrigin="anonymous" 
-                                 onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
-                               />
-                             </div>
-
-                             {/* 🚀 Render mapped names, positions, and teams! */}
-                             <div className="flex-1 p-3 flex flex-col justify-center">
-                                <h3 className="text-white font-black text-[15px] uppercase tracking-wide truncate">{playerName}</h3>
-                                <div className="flex items-center gap-1.5 mt-0.5">
-                                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{position}</span>
-                                  {!isDefense && <span className="text-[10px] font-bold text-gray-600">|</span>}
-                                  {!isDefense && <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{team}</span>}
+                            return (
+                              <div key={`${playerId}-${idx}`} className={`relative w-full h-[320px] rounded-[24px] flex flex-col justify-end bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden group`}>
+                                
+                                {/* Top Left Position Badge */}
+                                <div className="absolute top-4 left-4 z-40">
+                                   <span className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded text-[11px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">
+                                      {position}
+                                   </span>
                                 </div>
-                             </div>
-                             
-                             <div className={`absolute bottom-0 right-0 w-1/3 h-1.5 ${accentColor} rounded-tl-md`}></div>
-                           </div>
-                         );
-                       })}
-                    </div>
 
-                    <div className="absolute bottom-6 left-0 right-0 flex justify-center z-10">
-                       <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                         Generated securely via <strong className="text-white">Fantasy Football Advice Network</strong>
-                       </p>
+                                {/* Background Team Logo Watermark */}
+                                <div className="absolute inset-x-0 top-0 z-0 flex items-start justify-center opacity-[0.25] overflow-hidden pointer-events-none">
+                                   <img src={getESPNTeamLogo(team)} className="w-[130%] max-w-none h-auto object-contain -translate-y-6 mix-blend-screen" crossOrigin="anonymous" alt="Team Logo Background" />
+                                </div>
+
+                                {/* Player Image */}
+                                <div className="absolute inset-0 bottom-20 flex items-end justify-center z-10 overflow-hidden pointer-events-none">
+                                   <img 
+                                      src={playerImage} 
+                                      className={isDefense ? "w-[60%] h-auto object-contain mb-8 drop-shadow-2xl" : "w-[140%] max-w-none object-cover object-bottom translate-y-4 brightness-110 drop-shadow-2xl filter contrast-125"} 
+                                      crossOrigin="anonymous" 
+                                      alt="Player Image" 
+                                      onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
+                                   />
+                                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+                                </div>
+
+                                {/* Typography Footer */}
+                                <div className="relative z-20 px-4 pb-4 pt-12 mt-auto flex flex-col items-center text-center">
+                                   <div className={`text-[12px] font-bold tracking-widest uppercase leading-tight mb-0.5 ${cardStyle.text}`}>
+                                      {firstName}
+                                   </div>
+                                   <div className="text-2xl font-black text-white tracking-tight leading-none truncate w-full">
+                                      {lastName}
+                                   </div>
+                                </div>
+
+                              </div>
+                            );
+                          })}
+                       </div>
                     </div>
                   </div>
               </div>
 
+              {/* ACTION BUTTON */}
               <div className="flex justify-start">
                 <button 
                   onClick={downloadGraphic}
