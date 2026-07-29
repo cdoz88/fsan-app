@@ -14,7 +14,8 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
   const [selectedLeague, setSelectedLeague] = useState('');
   
   const [teamData, setTeamData] = useState(null);
-  const [rosterPlayers, setRosterPlayers] = useState([]);
+  const [starters, setStarters] = useState([]);
+  const [bench, setBench] = useState([]);
   const [generating, setGenerating] = useState(false);
   
   const [playerDB, setPlayerDB] = useState({});
@@ -64,7 +65,8 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
     setError('');
     setLeagues([]);
     setTeamData(null);
-    setRosterPlayers([]);
+    setStarters([]);
+    setBench([]);
 
     try {
       const userRes = await fetch(`https://api.sleeper.app/v1/user/${username}`);
@@ -91,7 +93,8 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
   const handleLeagueSelect = async (leagueId) => {
     setSelectedLeague(leagueId);
     if (!leagueId) {
-      setRosterPlayers([]);
+      setStarters([]);
+      setBench([]);
       return;
     }
 
@@ -115,20 +118,17 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
         teamName: me?.metadata?.team_name || prev.username
       }));
 
-      // Pull entire roster (Starters + Bench), filter out empty spots, and order with starters first
+      // Separate Starters and Bench
       const allPlayers = myRoster.players ? myRoster.players.filter(id => id !== '0') : [];
-      const starters = myRoster.starters ? myRoster.starters.filter(id => id !== '0') : [];
-      const bench = allPlayers.filter(id => !starters.includes(id));
+      const starterIds = myRoster.starters ? myRoster.starters.filter(id => id !== '0') : [];
+      const benchIds = allPlayers.filter(id => !starterIds.includes(id));
       
-      const orderedRoster = [...starters, ...bench];
-      
-      if (orderedRoster.length === 0) {
-          throw new Error('No players found on this roster.');
+      if (starterIds.length === 0) {
+          throw new Error('No starting lineup set for this roster yet.');
       }
       
-      // Limit to 16 players to fit perfectly into a 4x4 grid
-      setRosterPlayers(orderedRoster.slice(0, 16));
-
+      setStarters(starterIds.slice(0, 9)); // Up to 9 starters for 3x3 grid
+      setBench(benchIds.slice(0, 8)); // Up to 8 bench players for 2x4 list
     } catch (err) {
       setError(err.message);
     } finally {
@@ -155,7 +155,7 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
       link.click();
     } catch (err) {
       console.error("Error generating image:", err);
-      setError("Failed to generate the image. Ensure your browser allows image downloads and WP CORS is configured.");
+      setError("Failed to generate image. Make sure images exist in public/images folder.");
     } finally {
       setGenerating(false);
     }
@@ -163,18 +163,17 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
 
   const getCardStyle = (position) => {
     switch (position) {
-      case 'QB': return { border: 'border-cyan-500/60 shadow-[0_0_20px_rgba(6,182,212,0.15)]', gradient: 'from-cyan-950/40 to-black', text: 'text-cyan-400' };
-      case 'RB': return { border: 'border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]', gradient: 'from-emerald-950/40 to-black', text: 'text-emerald-400' };
-      case 'WR': return { border: 'border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.15)]', gradient: 'from-amber-900/40 to-black', text: 'text-amber-400' };
-      case 'TE': return { border: 'border-fuchsia-500/60 shadow-[0_0_20px_rgba(217,70,239,0.15)]', gradient: 'from-fuchsia-900/40 to-black', text: 'text-fuchsia-400' };
-      case 'K': return { border: 'border-purple-500/60 shadow-[0_0_20px_rgba(168,85,247,0.15)]', gradient: 'from-purple-950/40 to-black', text: 'text-purple-400' };
-      case 'DEF': return { border: 'border-slate-300/60 shadow-[0_0_20px_rgba(203,213,225,0.15)]', gradient: 'from-slate-700/40 to-black', text: 'text-slate-300' };
-      default: return { border: 'border-zinc-500/60 shadow-[0_0_20px_rgba(113,113,122,0.15)]', gradient: 'from-zinc-800/40 to-black', text: 'text-zinc-300' };
+      case 'QB': return { border: 'border-cyan-500/60 shadow-[0_0_20px_rgba(6,182,212,0.15)]', gradient: 'from-cyan-950/40 to-black', text: 'text-cyan-400', bg: 'bg-cyan-500' };
+      case 'RB': return { border: 'border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]', gradient: 'from-emerald-950/40 to-black', text: 'text-emerald-400', bg: 'bg-emerald-500' };
+      case 'WR': return { border: 'border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.15)]', gradient: 'from-amber-900/40 to-black', text: 'text-amber-400', bg: 'bg-amber-500' };
+      case 'TE': return { border: 'border-fuchsia-500/60 shadow-[0_0_20px_rgba(217,70,239,0.15)]', gradient: 'from-fuchsia-900/40 to-black', text: 'text-fuchsia-400', bg: 'bg-fuchsia-500' };
+      case 'K': return { border: 'border-purple-500/60 shadow-[0_0_20px_rgba(168,85,247,0.15)]', gradient: 'from-purple-950/40 to-black', text: 'text-purple-400', bg: 'bg-purple-500' };
+      case 'DEF': return { border: 'border-slate-300/60 shadow-[0_0_20px_rgba(203,213,225,0.15)]', gradient: 'from-slate-700/40 to-black', text: 'text-slate-300', bg: 'bg-slate-400' };
+      default: return { border: 'border-zinc-500/60 shadow-[0_0_20px_rgba(113,113,122,0.15)]', gradient: 'from-zinc-800/40 to-black', text: 'text-zinc-300', bg: 'bg-zinc-600' };
     }
   };
 
   const getESPNHeadshot = (espnId) => `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${espnId}.png&w=350&h=254`;
-  const getESPNTeamLogo = (team) => `https://a.espncdn.com/i/teamlogos/nfl/500/${team}.png`;
 
   return (
     <>
@@ -239,24 +238,24 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
             )}
           </div>
 
-          {rosterPlayers.length > 0 && teamData && (
+          {starters.length > 0 && teamData && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               
-              {/* EXPORTABLE GRAPHIC CONTAINER (1080x1350 IG Portrait Square) */}
+              {/* EXPORTABLE GRAPHIC CONTAINER (1080x1350 Instagram Portrait) */}
               <div className="w-full overflow-x-auto pb-6 custom-scrollbar">
                   <div 
                     ref={graphicRef}
                     className="relative w-[1080px] h-[1350px] bg-zinc-950 border border-zinc-800 overflow-hidden flex flex-col shrink-0"
                   >
-                    {/* Cinematic Background */}
-                    <div className="absolute inset-0 z-0 opacity-20 mix-blend-luminosity bg-cover bg-center" style={{ backgroundImage: "url('https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Background.webp')" }} />
+                    {/* Cinematic Background via local /images/ folder */}
+                    <div className="absolute inset-0 z-0 opacity-40 mix-blend-luminosity bg-cover bg-center" style={{ backgroundImage: "url('/images/DNO-Background.webp')" }} />
                     <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
                     <div className="absolute inset-0 z-0 bg-gradient-to-r from-blue-900/10 to-zinc-950/30 pointer-events-none" />
 
                     {/* Header Banner */}
-                    <div className="relative z-10 p-8 flex items-center justify-between border-b border-zinc-800/50 bg-black/60 backdrop-blur-md h-[160px] shrink-0">
+                    <div className="relative z-10 p-8 flex items-center justify-between border-b border-zinc-800/50 bg-black/60 backdrop-blur-md h-[140px] shrink-0">
                       <div className="flex items-center gap-6">
-                         <img src="https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp" alt="DNO" className="h-16 w-auto object-contain drop-shadow-lg" />
+                         <img src="/images/DNO-Logo_Logo.webp" alt="DNO" className="h-16 w-auto object-contain drop-shadow-lg" />
                          <div>
                           <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic drop-shadow-md">
                             {teamData.teamName}
@@ -264,93 +263,172 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                           <div className="flex items-center gap-3 mt-1">
                             <span className="text-[#f5a623] font-bold uppercase tracking-widest text-sm">{teamData.leagueName}</span>
                             <span className="text-zinc-600 font-bold">•</span>
-                            <span className="text-zinc-400 font-bold uppercase tracking-widest text-sm">2026 Full Roster</span>
+                            <span className="text-zinc-400 font-bold uppercase tracking-widest text-sm">2026 Roster</span>
                           </div>
                          </div>
                       </div>
                     </div>
 
-                    {/* Cinematic Roster Grid (4 Columns) */}
-                    <div className="relative z-10 p-8 flex-1 flex flex-col justify-center">
-                       <div className="grid gap-4 md:gap-5 grid-cols-4">
-                          {rosterPlayers.map((playerId, idx) => {
-                            const isDefense = playerId.length < 4; 
-                            const dbPlayer = playerDB[playerId]; 
-                            
-                            let firstName = "Unknown";
-                            let lastName = "Player";
-                            let position = "BN";
-                            let team = "fa";
+                    {/* Main Content Area */}
+                    <div className="relative z-10 p-6 flex-1 flex flex-col justify-between">
+                       
+                       {/* 1. STARTING LINEUP (Cinematic Cards) */}
+                       <div>
+                         <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-3 px-1 flex items-center gap-2">
+                           <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Starting Lineup
+                         </h3>
+                         <div className="grid gap-4 grid-cols-3">
+                            {starters.map((playerId, idx) => {
+                              const isDefense = playerId.length < 4; 
+                              const dbPlayer = playerDB[playerId]; 
+                              
+                              let firstName = "Unknown";
+                              let lastName = "Player";
+                              let position = "FLEX";
+                              let team = "fa";
 
-                            if (isDefense) {
-                               firstName = playerId;
-                               lastName = "DEFENSE";
-                               position = "DEF";
-                               team = playerId.toLowerCase();
-                            } else if (dbPlayer) {
-                               firstName = dbPlayer.first_name || "";
-                               lastName = dbPlayer.last_name || "";
-                               position = dbPlayer.position || "UNK";
-                               team = dbPlayer.team ? dbPlayer.team.toLowerCase() : "fa";
-                            }
+                              if (isDefense) {
+                                 firstName = playerId;
+                                 lastName = "DEFENSE";
+                                 position = "DEF";
+                                 team = playerId.toLowerCase();
+                              } else if (dbPlayer) {
+                                 firstName = dbPlayer.first_name || "";
+                                 lastName = dbPlayer.last_name || "";
+                                 position = dbPlayer.position || "UNK";
+                                 team = dbPlayer.team ? dbPlayer.team.toLowerCase() : "fa";
+                              }
 
-                            const cardStyle = getCardStyle(position);
+                              const cardStyle = getCardStyle(position);
 
-                            // Resolve Images (Prefer High Res ESPN if available)
-                            let playerImage = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
-                            if (isDefense) {
-                               playerImage = `https://sleepercdn.com/images/team_logos/nfl/${playerId.toLowerCase()}.png`;
-                            } else if (dbPlayer?.espn_id) {
-                               playerImage = getESPNHeadshot(dbPlayer.espn_id);
-                            } else {
-                               playerImage = `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
-                            }
-                            
-                            const teamLogo = `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
+                              let playerImage = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                              if (isDefense) {
+                                 playerImage = `https://sleepercdn.com/images/team_logos/nfl/${playerId.toLowerCase()}.png`;
+                              } else if (dbPlayer?.espn_id) {
+                                 playerImage = getESPNHeadshot(dbPlayer.espn_id);
+                              } else {
+                                 playerImage = `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
+                              }
+                              
+                              const teamLogo = `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
 
-                            return (
-                              <div key={`${playerId}-${idx}`} className={`relative w-full h-[260px] rounded-[24px] flex flex-col justify-end bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden group shadow-xl`}>
-                                
-                                {/* Top Left Position Badge */}
-                                <div className="absolute top-4 left-4 z-40">
-                                   <span className="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded text-[11px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">
-                                      {position}
-                                   </span>
+                              return (
+                                <div key={`starter-${playerId}-${idx}`} className={`relative w-full h-[250px] rounded-[20px] flex flex-col justify-end bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden group shadow-xl`}>
+                                  
+                                  <div className="absolute top-3 left-3 z-40">
+                                     <span className="bg-black/80 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">
+                                        {position}
+                                     </span>
+                                  </div>
+
+                                  <div className="absolute inset-x-0 top-0 z-0 flex items-start justify-center opacity-[0.25] overflow-hidden pointer-events-none">
+                                     <img src={teamLogo} className="w-[120%] max-w-none h-auto object-contain -translate-y-4 mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
+                                  </div>
+
+                                  {/* Headshot aligned and scaled to remove top empty space */}
+                                  <div className="absolute inset-x-0 bottom-0 top-2 flex items-end justify-center z-10 pointer-events-none overflow-hidden">
+                                     <img 
+                                        src={playerImage} 
+                                        className={isDefense ? "max-w-[70%] max-h-[75%] object-contain drop-shadow-2xl origin-bottom mb-6" : "w-[160%] max-w-none object-cover object-bottom drop-shadow-2xl filter contrast-125 brightness-110 origin-bottom scale-125 translate-y-3"} 
+                                        crossOrigin="anonymous" 
+                                        alt="" 
+                                        onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
+                                     />
+                                  </div>
+
+                                  <div className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-black via-black/85 to-transparent z-10 pointer-events-none" />
+
+                                  <div className="relative z-20 px-3 pb-4 pt-2 mt-auto flex flex-col items-center text-center bg-transparent">
+                                     <div className={`text-[10px] font-bold tracking-widest uppercase leading-tight mb-0.5 ${cardStyle.text} drop-shadow-md`}>
+                                        {firstName}
+                                     </div>
+                                     <div className="text-2xl font-black text-white tracking-tight leading-none truncate w-full drop-shadow-lg">
+                                        {lastName}
+                                     </div>
+                                  </div>
+
                                 </div>
-
-                                {/* Background Team Logo Watermark */}
-                                <div className="absolute inset-x-0 top-0 z-0 flex items-start justify-center opacity-[0.25] overflow-hidden pointer-events-none">
-                                   <img src={teamLogo} className="w-[120%] max-w-none h-auto object-contain -translate-y-6 mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
-                                </div>
-
-                                {/* Player Image Container (Zoomed in for less blank space) */}
-                                <div className="absolute inset-x-0 bottom-0 top-6 flex items-end justify-center z-10 pointer-events-none overflow-hidden">
-                                   <img 
-                                      src={playerImage} 
-                                      className={isDefense ? "max-w-[70%] max-h-[80%] object-contain drop-shadow-2xl origin-bottom mb-8" : "w-[150%] max-w-none object-cover object-bottom drop-shadow-2xl filter contrast-125 brightness-110 origin-bottom scale-[1.15] translate-y-2"} 
-                                      crossOrigin="anonymous" 
-                                      alt="" 
-                                      onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
-                                   />
-                                </div>
-
-                                {/* Black fade overlaying the bottom half of the image */}
-                                <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black via-black/90 to-transparent z-10 pointer-events-none" />
-
-                                {/* Typography Footer */}
-                                <div className="relative z-20 px-3 pb-5 pt-4 mt-auto flex flex-col items-center text-center bg-transparent">
-                                   <div className={`text-[10px] font-bold tracking-widest uppercase leading-tight mb-0.5 ${cardStyle.text} drop-shadow-md`}>
-                                      {firstName}
-                                   </div>
-                                   <div className="text-2xl font-black text-white tracking-tight leading-none truncate w-full drop-shadow-lg">
-                                      {lastName}
-                                   </div>
-                                </div>
-
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
+                         </div>
                        </div>
+
+                       {/* 2. BENCH PLAYERS (Simpler horizontal list strips based on your reference image) */}
+                       {bench.length > 0 && (
+                         <div className="mt-4">
+                           <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-3 px-1 flex items-center gap-2">
+                             <span className="w-2 h-2 rounded-full bg-zinc-600"></span> Bench
+                           </h3>
+                           <div className="grid grid-cols-2 gap-2.5">
+                              {bench.map((playerId, idx) => {
+                                const isDefense = playerId.length < 4; 
+                                const dbPlayer = playerDB[playerId]; 
+                                
+                                let firstName = "Unknown";
+                                let lastName = "Player";
+                                let position = "BN";
+                                let team = "fa";
+
+                                if (isDefense) {
+                                   firstName = playerId;
+                                   lastName = "DEFENSE";
+                                   position = "DEF";
+                                   team = playerId.toLowerCase();
+                                } else if (dbPlayer) {
+                                   firstName = dbPlayer.first_name || "";
+                                   lastName = dbPlayer.last_name || "";
+                                   position = dbPlayer.position || "BN";
+                                   team = dbPlayer.team ? dbPlayer.team.toLowerCase() : "fa";
+                                }
+
+                                const cardStyle = getCardStyle(position);
+
+                                let playerImage = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                                if (isDefense) {
+                                   playerImage = `https://sleepercdn.com/images/team_logos/nfl/${playerId.toLowerCase()}.png`;
+                                } else if (dbPlayer?.espn_id) {
+                                   playerImage = getESPNHeadshot(dbPlayer.espn_id);
+                                } else {
+                                   playerImage = `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
+                                }
+
+                                const teamLogo = `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
+
+                                return (
+                                  <div key={`bench-${playerId}-${idx}`} className="bg-zinc-900/90 border border-zinc-800 rounded-xl h-[52px] flex items-center overflow-hidden relative shadow-md">
+                                     {/* Left Colored Badge Strip */}
+                                     <div className={`w-12 h-full ${cardStyle.bg} flex items-center justify-center font-black text-black text-xs shrink-0 tracking-wider`}>
+                                        {position}
+                                     </div>
+
+                                     {/* Headshot / Thumbnail */}
+                                     <div className="w-10 h-10 mx-2 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center justify-center overflow-hidden shrink-0 relative">
+                                        <img 
+                                          src={playerImage} 
+                                          alt="" 
+                                          className={isDefense ? "w-6 h-6 object-contain" : "w-full h-full object-cover object-top scale-110 translate-y-1"}
+                                          crossOrigin="anonymous" 
+                                          onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
+                                        />
+                                     </div>
+
+                                     {/* Team Logo */}
+                                     <img src={teamLogo} className="w-5 h-5 object-contain mr-2 opacity-80 shrink-0" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
+
+                                     {/* Player Name */}
+                                     <div className="flex-1 min-w-0 pr-3">
+                                        <div className="text-white font-black text-sm uppercase truncate leading-none">
+                                           <span className="font-medium text-zinc-400 mr-1">{firstName.charAt(0)}.</span>
+                                           {lastName}
+                                        </div>
+                                     </div>
+                                  </div>
+                                );
+                              })}
+                           </div>
+                         </div>
+                       )}
+
                     </div>
                   </div>
               </div>
