@@ -249,14 +249,14 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                     className="relative w-[1080px] h-[1350px] bg-zinc-950 border border-zinc-800 overflow-hidden flex flex-col shrink-0"
                   >
                     {/* Cinematic Background */}
-                    <div className="absolute inset-0 z-0 opacity-20 mix-blend-luminosity bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1577223625816-7546f13df25d?q=80&w=2000&auto=format&fit=crop')" }} crossOrigin="anonymous" />
-                    <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-transparent" />
+                    <div className="absolute inset-0 z-0 opacity-40 mix-blend-luminosity bg-cover bg-center" style={{ backgroundImage: "url('https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Background.webp')" }} crossOrigin="anonymous" />
+                    <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
                     <div className="absolute inset-0 z-0 bg-gradient-to-r from-blue-900/10 to-zinc-950/30 pointer-events-none" />
 
                     {/* Header Banner */}
-                    <div className="relative z-10 p-8 flex items-center justify-between border-b border-zinc-800/50 bg-black/40 backdrop-blur-md h-[180px] shrink-0">
+                    <div className="relative z-10 p-8 flex items-center justify-between border-b border-zinc-800/50 bg-black/60 backdrop-blur-md h-[160px] shrink-0">
                       <div className="flex items-center gap-6">
-                         <img src="https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png" alt="NFL" className="w-16 h-16 opacity-90" crossOrigin="anonymous" />
+                         <img src="https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp" alt="DNO" className="h-16 w-auto object-contain drop-shadow-lg" crossOrigin="anonymous" />
                          <div>
                           <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic drop-shadow-md">
                             {teamData.teamName}
@@ -267,17 +267,6 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                             <span className="text-zinc-400 font-bold uppercase tracking-widest text-sm">Starting Lineup</span>
                           </div>
                          </div>
-                      </div>
-
-                      {/* FSAN Branding Right Side */}
-                      <div className="flex items-center gap-4">
-                         <div className="text-right">
-                            <h4 className="text-[#1b75bb] font-black italic text-2xl uppercase tracking-tighter drop-shadow-md">
-                               <span className="text-white">FSAN</span> NETWORK
-                            </h4>
-                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Fantasy Football Advice</p>
-                         </div>
-                         <img src="https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp" alt="FSAN" className="w-16 h-auto opacity-80" crossOrigin="anonymous" />
                       </div>
                     </div>
 
@@ -307,7 +296,7 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
 
                             const cardStyle = getCardStyle(position);
 
-                            // Resolve Images (Prefer High Res ESPN if available via your DB)
+                            // Resolve Images (Prefer High Res ESPN if available)
                             let playerImage = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
                             if (isDefense) {
                                playerImage = `https://sleepercdn.com/images/team_logos/nfl/${playerId.toLowerCase()}.png`;
@@ -320,14 +309,14 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                             const teamLogo = `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
                             
                             // Adjust card height dynamically based on roster size to ensure perfect fit
-                            const cardHeight = rosterPlayers.length <= 9 ? 'h-[320px]' : 'h-[240px]';
+                            const cardHeight = rosterPlayers.length <= 9 ? 'h-[340px]' : 'h-[260px]';
 
                             return (
                               <div key={`${playerId}-${idx}`} className={`relative w-full ${cardHeight} rounded-[24px] flex flex-col justify-end bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden group shadow-xl`}>
                                 
                                 {/* Top Left Position Badge */}
                                 <div className="absolute top-4 left-4 z-40">
-                                   <span className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded text-[11px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">
+                                   <span className="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded text-[11px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">
                                       {position}
                                    </span>
                                 </div>
@@ -337,21 +326,22 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                                    <img src={teamLogo} className="w-[120%] max-w-none h-auto object-contain -translate-y-6 mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
                                 </div>
 
-                                {/* 🚀 FIX: PERFECTLY ALIGNED IMAGE CONTAINER */}
-                                <div className="absolute inset-x-0 bottom-[80px] top-12 flex items-end justify-center z-10 pointer-events-none">
+                                {/* 🚀 FIX: PERFECTLY ALIGNED IMAGE CONTAINER (Anchored to the absolute bottom) */}
+                                <div className="absolute inset-x-0 bottom-0 top-8 flex items-end justify-center z-10 pointer-events-none overflow-hidden">
                                    <img 
                                       src={playerImage} 
-                                      className={isDefense ? "max-w-[70%] max-h-full object-contain drop-shadow-2xl origin-bottom mb-4" : "max-w-[140%] max-h-[120%] w-auto object-contain object-bottom drop-shadow-2xl filter contrast-125 brightness-110 origin-bottom"} 
+                                      className={isDefense ? "max-w-[70%] max-h-[80%] object-contain drop-shadow-2xl origin-bottom mb-12" : "w-[130%] max-w-none object-cover object-bottom drop-shadow-2xl filter contrast-125 brightness-110 origin-bottom"} 
                                       crossOrigin="anonymous" 
                                       alt="" 
                                       onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
                                    />
                                 </div>
 
-                                <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black via-black/80 to-transparent z-10" />
+                                {/* 🚀 NEW: Black fade overlaying the bottom half of the image */}
+                                <div className="absolute inset-x-0 bottom-0 h-[50%] bg-gradient-to-t from-black via-black/80 to-transparent z-10 pointer-events-none" />
 
-                                {/* Typography Footer */}
-                                <div className="relative z-20 px-4 pb-5 pt-8 mt-auto flex flex-col items-center text-center bg-transparent">
+                                {/* Typography Footer (Now sits over the fade to condense vertical height) */}
+                                <div className="relative z-20 px-4 pb-6 pt-4 mt-auto flex flex-col items-center text-center bg-transparent">
                                    <div className={`text-[12px] font-bold tracking-widest uppercase leading-tight mb-0.5 ${cardStyle.text} drop-shadow-md`}>
                                       {firstName}
                                    </div>
@@ -365,13 +355,6 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                           })}
                        </div>
                     </div>
-
-                    <div className="absolute bottom-6 left-0 right-0 flex justify-center z-20">
-                       <p className="text-sm font-bold text-zinc-500 uppercase tracking-widest">
-                         Generated securely via <strong className="text-white">Fantasy Football Advice Network</strong>
-                       </p>
-                    </div>
-
                   </div>
               </div>
 
