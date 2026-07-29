@@ -17,19 +17,16 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
   const [rosterPlayers, setRosterPlayers] = useState([]);
   const [generating, setGenerating] = useState(false);
   
-  // Master database mapping
   const [playerDB, setPlayerDB] = useState({});
   const [dbLoading, setDbLoading] = useState(true);
 
   const graphicRef = useRef(null);
 
-  // 🚀 HYBRID FETCH: Pull your custom DB first, fallback to Sleeper master list to prevent missing IDs
   useEffect(() => {
     const loadPlayerDatabases = async () => {
       try {
         let customMap = {};
         
-        // 1. Fetch your existing API
         try {
           const res = await fetch('/api/dynasty-players');
           const data = await res.json();
@@ -40,11 +37,9 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
           }
         } catch(e) { console.warn("Custom DB fetch failed", e); }
 
-        // 2. Fetch Sleeper Master List
         const slpRes = await fetch('https://api.sleeper.app/v1/players/nfl');
         const slpData = await slpRes.json();
         
-        // Merge them together (Your custom data overrides Sleeper defaults)
         const mergedDB = { ...slpData };
         Object.keys(customMap).forEach(key => {
            if (mergedDB[key]) {
@@ -120,13 +115,19 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
         teamName: me?.metadata?.team_name || prev.username
       }));
 
+      // Pull entire roster (Starters + Bench), filter out empty spots, and order with starters first
+      const allPlayers = myRoster.players ? myRoster.players.filter(id => id !== '0') : [];
       const starters = myRoster.starters ? myRoster.starters.filter(id => id !== '0') : [];
+      const bench = allPlayers.filter(id => !starters.includes(id));
       
-      if (starters.length === 0) {
-          throw new Error('No starting lineup set for this roster yet.');
+      const orderedRoster = [...starters, ...bench];
+      
+      if (orderedRoster.length === 0) {
+          throw new Error('No players found on this roster.');
       }
       
-      setRosterPlayers(starters);
+      // Limit to 16 players to fit perfectly into a 4x4 grid
+      setRosterPlayers(orderedRoster.slice(0, 16));
 
     } catch (err) {
       setError(err.message);
@@ -149,18 +150,17 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
       
       const image = canvas.toDataURL('image/jpeg', 0.9);
       const link = document.createElement('a');
-      link.download = `${teamData.teamName.replace(/\s+/g, '-')}-Starting-Lineup.jpg`;
+      link.download = `${teamData.teamName.replace(/\s+/g, '-')}-Roster-2026.jpg`;
       link.href = image;
       link.click();
     } catch (err) {
       console.error("Error generating image:", err);
-      setError("Failed to generate the image. Ensure your browser allows image downloads.");
+      setError("Failed to generate the image. Ensure your browser allows image downloads and WP CORS is configured.");
     } finally {
       setGenerating(false);
     }
   };
 
-  // 🚀 Playoff Challenge Cinematic Styling
   const getCardStyle = (position) => {
     switch (position) {
       case 'QB': return { border: 'border-cyan-500/60 shadow-[0_0_20px_rgba(6,182,212,0.15)]', gradient: 'from-cyan-950/40 to-black', text: 'text-cyan-400' };
@@ -242,21 +242,21 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
           {rosterPlayers.length > 0 && teamData && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               
-              {/* 🚀 EXPORTABLE GRAPHIC CONTAINER (1080x1350 IG Portrait Square) */}
+              {/* EXPORTABLE GRAPHIC CONTAINER (1080x1350 IG Portrait Square) */}
               <div className="w-full overflow-x-auto pb-6 custom-scrollbar">
                   <div 
                     ref={graphicRef}
                     className="relative w-[1080px] h-[1350px] bg-zinc-950 border border-zinc-800 overflow-hidden flex flex-col shrink-0"
                   >
                     {/* Cinematic Background */}
-                    <div className="absolute inset-0 z-0 opacity-40 mix-blend-luminosity bg-cover bg-center" style={{ backgroundImage: "url('https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Background.webp')" }} crossOrigin="anonymous" />
+                    <div className="absolute inset-0 z-0 opacity-20 mix-blend-luminosity bg-cover bg-center" style={{ backgroundImage: "url('https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Background.webp')" }} />
                     <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
                     <div className="absolute inset-0 z-0 bg-gradient-to-r from-blue-900/10 to-zinc-950/30 pointer-events-none" />
 
                     {/* Header Banner */}
                     <div className="relative z-10 p-8 flex items-center justify-between border-b border-zinc-800/50 bg-black/60 backdrop-blur-md h-[160px] shrink-0">
                       <div className="flex items-center gap-6">
-                         <img src="https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp" alt="DNO" className="h-16 w-auto object-contain drop-shadow-lg" crossOrigin="anonymous" />
+                         <img src="https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp" alt="DNO" className="h-16 w-auto object-contain drop-shadow-lg" />
                          <div>
                           <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic drop-shadow-md">
                             {teamData.teamName}
@@ -264,22 +264,22 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                           <div className="flex items-center gap-3 mt-1">
                             <span className="text-[#f5a623] font-bold uppercase tracking-widest text-sm">{teamData.leagueName}</span>
                             <span className="text-zinc-600 font-bold">•</span>
-                            <span className="text-zinc-400 font-bold uppercase tracking-widest text-sm">Starting Lineup</span>
+                            <span className="text-zinc-400 font-bold uppercase tracking-widest text-sm">2026 Full Roster</span>
                           </div>
                          </div>
                       </div>
                     </div>
 
-                    {/* Cinematic Roster Grid */}
+                    {/* Cinematic Roster Grid (4 Columns) */}
                     <div className="relative z-10 p-8 flex-1 flex flex-col justify-center">
-                       <div className={`grid gap-6 ${rosterPlayers.length <= 9 ? 'grid-cols-3' : 'grid-cols-3'}`}>
+                       <div className="grid gap-4 md:gap-5 grid-cols-4">
                           {rosterPlayers.map((playerId, idx) => {
                             const isDefense = playerId.length < 4; 
                             const dbPlayer = playerDB[playerId]; 
                             
                             let firstName = "Unknown";
                             let lastName = "Player";
-                            let position = "FLEX";
+                            let position = "BN";
                             let team = "fa";
 
                             if (isDefense) {
@@ -307,12 +307,9 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                             }
                             
                             const teamLogo = `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
-                            
-                            // Adjust card height dynamically based on roster size to ensure perfect fit
-                            const cardHeight = rosterPlayers.length <= 9 ? 'h-[340px]' : 'h-[260px]';
 
                             return (
-                              <div key={`${playerId}-${idx}`} className={`relative w-full ${cardHeight} rounded-[24px] flex flex-col justify-end bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden group shadow-xl`}>
+                              <div key={`${playerId}-${idx}`} className={`relative w-full h-[260px] rounded-[24px] flex flex-col justify-end bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden group shadow-xl`}>
                                 
                                 {/* Top Left Position Badge */}
                                 <div className="absolute top-4 left-4 z-40">
@@ -326,26 +323,26 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                                    <img src={teamLogo} className="w-[120%] max-w-none h-auto object-contain -translate-y-6 mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
                                 </div>
 
-                                {/* 🚀 FIX: PERFECTLY ALIGNED IMAGE CONTAINER (Anchored to the absolute bottom) */}
-                                <div className="absolute inset-x-0 bottom-0 top-8 flex items-end justify-center z-10 pointer-events-none overflow-hidden">
+                                {/* Player Image Container (Zoomed in for less blank space) */}
+                                <div className="absolute inset-x-0 bottom-0 top-6 flex items-end justify-center z-10 pointer-events-none overflow-hidden">
                                    <img 
                                       src={playerImage} 
-                                      className={isDefense ? "max-w-[70%] max-h-[80%] object-contain drop-shadow-2xl origin-bottom mb-12" : "w-[130%] max-w-none object-cover object-bottom drop-shadow-2xl filter contrast-125 brightness-110 origin-bottom"} 
+                                      className={isDefense ? "max-w-[70%] max-h-[80%] object-contain drop-shadow-2xl origin-bottom mb-8" : "w-[150%] max-w-none object-cover object-bottom drop-shadow-2xl filter contrast-125 brightness-110 origin-bottom scale-[1.15] translate-y-2"} 
                                       crossOrigin="anonymous" 
                                       alt="" 
                                       onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
                                    />
                                 </div>
 
-                                {/* 🚀 NEW: Black fade overlaying the bottom half of the image */}
-                                <div className="absolute inset-x-0 bottom-0 h-[50%] bg-gradient-to-t from-black via-black/80 to-transparent z-10 pointer-events-none" />
+                                {/* Black fade overlaying the bottom half of the image */}
+                                <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black via-black/90 to-transparent z-10 pointer-events-none" />
 
-                                {/* Typography Footer (Now sits over the fade to condense vertical height) */}
-                                <div className="relative z-20 px-4 pb-6 pt-4 mt-auto flex flex-col items-center text-center bg-transparent">
-                                   <div className={`text-[12px] font-bold tracking-widest uppercase leading-tight mb-0.5 ${cardStyle.text} drop-shadow-md`}>
+                                {/* Typography Footer */}
+                                <div className="relative z-20 px-3 pb-5 pt-4 mt-auto flex flex-col items-center text-center bg-transparent">
+                                   <div className={`text-[10px] font-bold tracking-widest uppercase leading-tight mb-0.5 ${cardStyle.text} drop-shadow-md`}>
                                       {firstName}
                                    </div>
-                                   <div className="text-3xl font-black text-white tracking-tight leading-none truncate w-full drop-shadow-lg">
+                                   <div className="text-2xl font-black text-white tracking-tight leading-none truncate w-full drop-shadow-lg">
                                       {lastName}
                                    </div>
                                 </div>
