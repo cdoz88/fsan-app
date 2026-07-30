@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
-import { Search, Image as ImageIcon, Loader2, Download, AlertCircle } from 'lucide-react';
+import { Search, Loader2, Download, AlertCircle } from 'lucide-react';
 
 export default function GraphicTab() {
   const [username, setUsername] = useState('');
@@ -28,12 +28,11 @@ export default function GraphicTab() {
   const dnoBgUrl = `${baseUrl}/images/DNO-Background.webp`;
   const dnoLogoUrl = `${baseUrl}/images/DNO-Logo_Logo.webp`;
 
-  // 🚀 FIXED SCALING: Calculate available width and shrink the container footprint dynamically
+  // Scale the graphic dynamically to fit on the screen without horizontal scrolling
   useEffect(() => {
     const updateScale = () => {
       if (wrapperRef.current) {
         const parentWidth = wrapperRef.current.clientWidth;
-        // Calculate the scale needed to fit 1080px into the parent container
         setScale(Math.min(1, parentWidth / 1080));
       }
     };
@@ -83,6 +82,7 @@ export default function GraphicTab() {
     setLoading(true);
     setError('');
     setLeagues([]);
+    setSelectedLeague('');
     setTeamData(null);
     setStarters([]);
     setBench([]);
@@ -206,16 +206,13 @@ export default function GraphicTab() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
       
-      <div className="flex items-center gap-4 mb-8">
-         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1b75bb] to-sky-600 flex items-center justify-center shadow-lg shrink-0">
-           <ImageIcon size={24} className="text-white" />
-         </div>
-         <div>
-           <h2 className="text-2xl font-black italic text-white uppercase tracking-tighter">Social Roster Graphic</h2>
-           <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Generate & Share Your DNO Squad</p>
-         </div>
+      {/* Intro / Header (Blue icon removed) */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-black italic text-white uppercase tracking-tighter">Social Roster Graphic</h2>
+        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Generate & Share Your DNO Squad</p>
       </div>
 
+      {/* Inputs */}
       <div className="bg-[#111] border border-gray-800 rounded-2xl p-6 mb-8 shadow-xl max-w-3xl">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
@@ -245,19 +242,30 @@ export default function GraphicTab() {
           </div>
         )}
 
+        {/* 🚀 Single-click League Buttons (Replaced Dropdown) */}
         {leagues.length > 0 && (
           <div className="mt-6 animate-in fade-in duration-300">
-            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Select Your DNO Division</label>
-            <select 
-              value={selectedLeague}
-              onChange={(e) => handleLeagueSelect(e.target.value)}
-              className="w-full bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-3.5 px-4 focus:outline-none focus:border-[#1b75bb] font-bold text-sm appearance-none"
-            >
-              <option value="">-- Choose a DNO Division --</option>
-              {leagues.map(l => (
-                <option key={l.league_id} value={l.league_id}>{l.name}</option>
-              ))}
-            </select>
+            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Select Your DNO Division</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {leagues.map(l => {
+                const isSelected = selectedLeague === l.league_id;
+                return (
+                  <button
+                    key={l.league_id}
+                    type="button"
+                    onClick={() => handleLeagueSelect(l.league_id)}
+                    className={`px-5 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-left border transition-all flex items-center justify-between ${
+                      isSelected
+                        ? 'bg-[#1b75bb] border-[#1b75bb] text-white shadow-lg shadow-[#1b75bb]/20'
+                        : 'bg-[#1a1a1a] border-gray-700 text-gray-300 hover:border-[#1b75bb] hover:text-white'
+                    }`}
+                  >
+                    <span className="line-clamp-1">{l.name}</span>
+                    {isSelected && <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded font-bold uppercase tracking-wider shrink-0 ml-2">Active</span>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
@@ -265,22 +273,18 @@ export default function GraphicTab() {
       {starters.length > 0 && teamData && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           
-          {/* 🚀 FIXED HORIZONTAL SCROLL: The outer div acts as a bounding box that shrinks its physical footprint */}
           <div className="w-full" ref={wrapperRef}>
               
               <div 
                 className="bg-black border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden mx-auto mb-8"
                 style={{ width: `${1080 * scale}px`, height: `${1350 * scale}px` }}
               >
-                  {/* The actual 1080x1350 canvas that scales down visually */}
                   <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: '1080px', height: '1350px' }}>
                     
                     <div ref={graphicRef} className="w-[1080px] h-[1350px] bg-zinc-950 overflow-hidden flex flex-col shrink-0 relative">
                       
-                      {/* Base Graphic Background Layer */}
                       <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-zinc-900/40" />
 
-                      {/* 🚀 FIXED HEADER & BACKGROUND: Placed background image specifically in the header without blur/luminosity blends */}
                       <div className="relative z-10 flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950 h-[140px] shrink-0 overflow-hidden">
                         <img src={dnoBgUrl} className="absolute inset-0 w-full h-full object-cover opacity-60 z-0" crossOrigin="anonymous" alt="Background" />
                         <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-950/90 via-zinc-950/70 to-transparent" />
@@ -300,17 +304,14 @@ export default function GraphicTab() {
                         </div>
                       </div>
 
-                      {/* Main Content Area */}
                       <div className="relative z-10 px-8 py-6 flex-1 flex flex-col justify-start">
                          
                          {/* STARTING LINEUP */}
                          <div className="mb-0">
-                           {/* 🚀 FIXED LABEL POSITION: Added mb-6 so it stays well above the QB's popped head */}
                            <h3 className="text-xs font-black uppercase tracking-widest text-emerald-500 mb-6 px-1 flex items-center gap-2 drop-shadow-md relative z-20">
                              <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span> Starting Lineup
                            </h3>
                            
-                           {/* 🚀 REDUCED GAPS: Tightened vertical gap to keep roster from bleeding out of bottom */}
                            <div className="grid gap-x-5 gap-y-8 grid-cols-3">
                               {starters.map((playerId, idx) => {
                                 const isDefense = playerId.length < 4; 
@@ -346,25 +347,21 @@ export default function GraphicTab() {
                                 
                                 const teamLogo = `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
 
-                                // 🚀 FIXED CARD HEIGHT: Slightly shorter card to fit 1350px bounds
                                 return (
                                   <div key={`starter-${playerId}-${idx}`} className="relative w-full h-[215px] flex flex-col justify-end group shadow-xl">
                                     
-                                    {/* Container A: The Background Card (Overflow Hidden to crop logo) */}
                                     <div className={`absolute inset-0 rounded-[20px] bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden`}>
                                        <div className="absolute inset-x-0 top-0 z-0 flex items-start justify-center opacity-[0.25] pointer-events-none">
                                           <img src={teamLogo} className="w-[120%] max-w-none h-auto object-contain -translate-y-4 mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
                                        </div>
                                     </div>
 
-                                    {/* Top Left Position Badge */}
                                     <div className="absolute top-3 left-3 z-40">
                                        <span className="bg-black/80 backdrop-blur-md px-2.5 py-1 rounded text-[11px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">
                                           {position}
                                        </span>
                                     </div>
 
-                                    {/* Container B: Player Image (OUTSIDE overflow hidden, anchored to bottom, scales up to 130% height!) */}
                                     <div className="absolute inset-x-0 bottom-0 flex items-end justify-center z-10 pointer-events-none h-[130%]">
                                        <img 
                                           src={playerImage} 
@@ -375,10 +372,8 @@ export default function GraphicTab() {
                                        />
                                     </div>
 
-                                    {/* Gradient Fade overlaying the player's torso, anchored to bottom */}
                                     <div className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black via-black/90 to-transparent z-20 rounded-b-[20px] pointer-events-none" />
 
-                                    {/* Typography Footer */}
                                     <div className="relative z-30 px-3 pb-3 pt-2 mt-auto flex flex-col items-center text-center bg-transparent pointer-events-none">
                                        <div className={`text-[11px] font-bold tracking-widest uppercase leading-tight mb-0.5 ${cardStyle.text} drop-shadow-md`}>
                                           {firstName}
@@ -400,7 +395,6 @@ export default function GraphicTab() {
                              <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4 px-1 flex items-center gap-2 drop-shadow-md">
                                <span className="w-2 h-2 rounded-full bg-zinc-600"></span> Bench
                              </h3>
-                             {/* 🚀 REDUCED GAPS: Tightened grid gaps to fit all players */}
                              <div className="grid grid-cols-2 gap-3">
                                 {bench.map((playerId, idx) => {
                                   const isDefense = playerId.length < 4; 
@@ -436,7 +430,6 @@ export default function GraphicTab() {
 
                                   const teamLogo = `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
 
-                                  // 🚀 FIXED BENCH HEIGHT: Slightly shorter (56px) to ensure everything fits inside 1350px
                                   return (
                                     <div key={`bench-${playerId}-${idx}`} className={`relative w-full h-[56px] rounded-[16px] flex items-center overflow-hidden bg-zinc-950 border border-zinc-800 shadow-md`}>
                                        
@@ -452,15 +445,15 @@ export default function GraphicTab() {
                                           <img 
                                             src={playerImage} 
                                             alt="" 
-                                            className={isDefense ? "w-6 h-6 object-contain" : "w-full h-full object-cover object-top scale-110 translate-y-1"}
+                                            className={isDefense ? "w-7 h-7 object-contain" : "w-full h-full object-cover object-top scale-110 translate-y-1"}
                                             crossOrigin="anonymous" 
                                             onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
                                           />
                                        </div>
 
                                        <div className="flex-1 min-w-0 pl-4 pr-3 flex items-baseline z-20">
-                                          <span className="font-black text-zinc-500 mr-2 uppercase text-[14px] tracking-wide">{firstName.charAt(0)}.</span>
-                                          <span className="text-white font-black text-[18px] uppercase truncate tracking-wide">{lastName}</span>
+                                          <span className="font-black text-zinc-500 mr-2 uppercase text-[15px] tracking-wide">{firstName.charAt(0)}.</span>
+                                          <span className="text-white font-black text-[19px] uppercase truncate tracking-wide">{lastName}</span>
                                        </div>
                                     </div>
                                   );
