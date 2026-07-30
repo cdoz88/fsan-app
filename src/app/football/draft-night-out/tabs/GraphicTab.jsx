@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
-import { Search, Image as ImageIcon, Loader2, Download, AlertCircle } from 'lucide-react';
+import { Search, Loader2, Download, AlertCircle } from 'lucide-react';
 
 export default function GraphicTab() {
   const [username, setUsername] = useState('');
@@ -14,7 +14,7 @@ export default function GraphicTab() {
   const [teamData, setTeamData] = useState(null);
   const [starters, setStarters] = useState([]);
   const [bench, setBench] = useState([]);
-  const [draftPicks, setDraftPicks] = useState({}); // Stores draft pick data for each player
+  const [draftPicks, setDraftPicks] = useState({}); 
   const [generating, setGenerating] = useState(false);
   
   const [playerDB, setPlayerDB] = useState({});
@@ -148,35 +148,35 @@ export default function GraphicTab() {
         teamName: me?.metadata?.team_name || prev.username
       }));
 
-      // 🚀 FETCH DRAFT PICKS & CALCULATE POSITIONAL RANKS
+      // 🚀 FIXED: Fetch the exact draft_id attached to the active league to prevent pulling supplemental/rookie drafts
       let pickMap = {};
       try {
-        const draftsRes = await fetch(`https://api.sleeper.app/v1/league/${leagueId}/drafts`);
-        const drafts = await draftsRes.json();
-        if (drafts && drafts.length > 0) {
-          const draftId = drafts[0].draft_id;
+        const draftId = activeLeague.draft_id;
+        if (draftId) {
           const picksRes = await fetch(`https://api.sleeper.app/v1/draft/${draftId}/picks`);
-          const picks = await picksRes.json();
+          if (picksRes.ok) {
+            const picks = await picksRes.json();
+            const posCounts = {};
 
-          const posCounts = {};
+            picks.forEach(p => {
+              if (p.player_id) {
+                const pos = p.metadata?.position || playerDB[p.player_id]?.position || 'FLEX';
+                posCounts[pos] = (posCounts[pos] || 0) + 1;
+                
+                const slotFormatted = p.draft_slot < 10 ? `0${p.draft_slot}` : `${p.draft_slot}`;
+                const formattedPick = `${p.round}.${slotFormatted}`;
+                const posRank = `${pos}${posCounts[pos]}`;
 
-          picks.forEach(p => {
-            if (p.player_id) {
-              const pos = p.metadata?.position || playerDB[p.player_id]?.position || 'FLEX';
-              posCounts[pos] = (posCounts[pos] || 0) + 1;
-              
-              const slotFormatted = p.draft_slot < 10 ? `0${p.draft_slot}` : `${p.draft_slot}`;
-              const formattedPick = `${p.round}.${slotFormatted}`;
-              const posRank = `${pos}${posCounts[pos]}`;
-
-              pickMap[p.player_id] = {
-                round: p.round,
-                slot: p.draft_slot,
-                formatted: formattedPick,
-                posRank: posRank
-              };
-            }
-          });
+                // Force String mapping to prevent Sleeper ID mismatches
+                pickMap[String(p.player_id)] = {
+                  round: p.round,
+                  slot: p.draft_slot,
+                  formatted: formattedPick,
+                  posRank: posRank
+                };
+              }
+            });
+          }
         }
       } catch (e) {
         console.warn("Could not fetch draft pick data:", e);
@@ -227,13 +227,13 @@ export default function GraphicTab() {
 
   const getCardStyle = (position) => {
     switch (position) {
-      case 'QB': return { border: 'border-cyan-500/60 shadow-[0_0_20px_rgba(6,182,212,0.15)]', gradient: 'from-cyan-950/40 to-black', text: 'text-cyan-400' };
-      case 'RB': return { border: 'border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]', gradient: 'from-emerald-950/40 to-black', text: 'text-emerald-500' };
-      case 'WR': return { border: 'border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.15)]', gradient: 'from-amber-900/40 to-black', text: 'text-amber-500' };
-      case 'TE': return { border: 'border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.15)]', gradient: 'from-red-950/40 to-black', text: 'text-red-500' };
-      case 'K': return { border: 'border-purple-500/60 shadow-[0_0_20px_rgba(168,85,247,0.15)]', gradient: 'from-purple-950/40 to-black', text: 'text-purple-400' };
-      case 'DEF': return { border: 'border-slate-300/60 shadow-[0_0_20px_rgba(203,213,225,0.15)]', gradient: 'from-slate700/40 to-black', text: 'text-slate-300' };
-      default: return { border: 'border-zinc-500/60 shadow-[0_0_20px_rgba(113,113,122,0.15)]', gradient: 'from-zinc-800/40 to-black', text: 'text-zinc-400' };
+      case 'QB': return { border: 'border-cyan-500/60 shadow-[0_0_20px_rgba(6,182,212,0.15)]', gradient: 'from-cyan-950/40 to-black', text: 'text-cyan-400', bg: 'bg-cyan-500' };
+      case 'RB': return { border: 'border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]', gradient: 'from-emerald-950/40 to-black', text: 'text-emerald-400', bg: 'bg-emerald-500' };
+      case 'WR': return { border: 'border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.15)]', gradient: 'from-amber-900/40 to-black', text: 'text-amber-400', bg: 'bg-amber-500' };
+      case 'TE': return { border: 'border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.15)]', gradient: 'from-red-950/40 to-black', text: 'text-red-400', bg: 'bg-red-600' };
+      case 'K': return { border: 'border-purple-500/60 shadow-[0_0_20px_rgba(168,85,247,0.15)]', gradient: 'from-purple-950/40 to-black', text: 'text-purple-400', bg: 'bg-purple-500' };
+      case 'DEF': return { border: 'border-slate-300/60 shadow-[0_0_20px_rgba(203,213,225,0.15)]', gradient: 'from-slate-700/40 to-black', text: 'text-slate-300', bg: 'bg-slate-400' };
+      default: return { border: 'border-zinc-500/60 shadow-[0_0_20px_rgba(113,113,122,0.15)]', gradient: 'from-zinc-800/40 to-black', text: 'text-zinc-300', bg: 'bg-zinc-600' };
     }
   };
 
@@ -349,7 +349,8 @@ export default function GraphicTab() {
                               {starters.map((playerId, idx) => {
                                 const isDefense = playerId.length < 4; 
                                 const dbPlayer = playerDB[playerId]; 
-                                const pickInfo = draftPicks[playerId];
+                                // 🚀 FIXED: Force matching against String representation
+                                const pickInfo = draftPicks[String(playerId)];
                                 
                                 let firstName = "Unknown";
                                 let lastName = "Player";
@@ -397,9 +398,9 @@ export default function GraphicTab() {
                                        </span>
                                     </div>
 
-                                    {/* 🚀 Top Right Draft Pick Badge */}
+                                    {/* 🚀 FIXED: Draft Pick Badge - Changed text to white */}
                                     <div className="absolute top-3 right-3 z-40 flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded border border-zinc-700/50 shadow-md">
-                                       <span className="text-[11px] font-black text-[#f5a623] tracking-widest">
+                                       <span className="text-[11px] font-black text-white tracking-widest">
                                           {pickInfo ? pickInfo.formatted : 'FA'}
                                        </span>
                                        {pickInfo?.posRank && (
@@ -438,7 +439,7 @@ export default function GraphicTab() {
 
                          {/* BENCH PLAYERS */}
                          {bench.length > 0 && (
-                           <div className="mt-8">
+                           <div className="mt-6">
                              <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4 px-1 flex items-center gap-2 drop-shadow-md">
                                <span className="w-2 h-2 rounded-full bg-zinc-600"></span> Bench
                              </h3>
@@ -446,7 +447,8 @@ export default function GraphicTab() {
                                 {bench.map((playerId, idx) => {
                                   const isDefense = playerId.length < 4; 
                                   const dbPlayer = playerDB[playerId]; 
-                                  const pickInfo = draftPicks[playerId];
+                                  // 🚀 FIXED: Force matching against String representation
+                                  const pickInfo = draftPicks[String(playerId)];
                                   
                                   let firstName = "Unknown";
                                   let lastName = "Player";
@@ -504,9 +506,9 @@ export default function GraphicTab() {
                                           <span className="text-white font-black text-[19px] uppercase truncate tracking-wide">{lastName}</span>
                                        </div>
 
-                                       {/* 🚀 Right Draft Pick Badge on Bench Strip */}
+                                       {/* 🚀 FIXED: Draft Pick Badge - Changed text to white */}
                                        <div className="pr-4 z-20 shrink-0 text-right flex flex-col items-end justify-center">
-                                          <span className="text-[12px] font-black text-[#f5a623] tracking-widest leading-none">
+                                          <span className="text-[12px] font-black text-white tracking-widest leading-none">
                                              {pickInfo ? pickInfo.formatted : 'FA'}
                                           </span>
                                           {pickInfo?.posRank && (
