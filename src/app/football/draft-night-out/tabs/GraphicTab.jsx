@@ -21,6 +21,11 @@ export default function GraphicTab() {
 
   const graphicRef = useRef(null);
 
+  // Dynamic Base URL to ensure html2canvas resolves the images perfectly
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const dnoBgUrl = `${baseUrl}/images/DNO-Background.webp`;
+  const dnoLogoUrl = `${baseUrl}/images/DNO-Logo_Logo.webp`;
+
   useEffect(() => {
     const loadPlayerDatabases = async () => {
       try {
@@ -170,14 +175,13 @@ export default function GraphicTab() {
 
   const getCardStyle = (position) => {
     switch (position) {
-      case 'QB': return { border: 'border-cyan-500/60 shadow-[0_0_15px_rgba(6,182,212,0.2)]', gradient: 'from-cyan-950/40 to-black', text: 'text-cyan-400', bg: 'bg-cyan-500' };
-      case 'RB': return { border: 'border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.2)]', gradient: 'from-emerald-950/40 to-black', text: 'text-emerald-400', bg: 'bg-emerald-500' };
-      case 'WR': return { border: 'border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.2)]', gradient: 'from-amber-900/40 to-black', text: 'text-amber-400', bg: 'bg-amber-500' };
-      // 🚀 FIXED: TE is now a deep, bright Red
-      case 'TE': return { border: 'border-red-500/70 shadow-[0_0_15px_rgba(239,68,68,0.25)]', gradient: 'from-red-950/50 to-black', text: 'text-red-400', bg: 'bg-red-600' };
-      case 'K': return { border: 'border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.2)]', gradient: 'from-purple-950/40 to-black', text: 'text-purple-400', bg: 'bg-purple-500' };
-      case 'DEF': return { border: 'border-slate-300/60 shadow-[0_0_15px_rgba(203,213,225,0.2)]', gradient: 'from-slate-700/40 to-black', text: 'text-slate-300', bg: 'bg-slate-400' };
-      default: return { border: 'border-zinc-500/60 shadow-[0_0_15px_rgba(113,113,122,0.2)]', gradient: 'from-zinc-800/40 to-black', text: 'text-zinc-300', bg: 'bg-zinc-600' };
+      case 'QB': return { border: 'border-cyan-500/60 shadow-[0_0_20px_rgba(6,182,212,0.15)]', gradient: 'from-cyan-950/40 to-black', text: 'text-cyan-400' };
+      case 'RB': return { border: 'border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]', gradient: 'from-emerald-950/40 to-black', text: 'text-emerald-400' };
+      case 'WR': return { border: 'border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.15)]', gradient: 'from-amber-900/40 to-black', text: 'text-amber-400' };
+      case 'TE': return { border: 'border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.15)]', gradient: 'from-red-950/40 to-black', text: 'text-red-500' };
+      case 'K': return { border: 'border-purple-500/60 shadow-[0_0_20px_rgba(168,85,247,0.15)]', gradient: 'from-purple-950/40 to-black', text: 'text-purple-400' };
+      case 'DEF': return { border: 'border-slate-300/60 shadow-[0_0_20px_rgba(203,213,225,0.15)]', gradient: 'from-slate-700/40 to-black', text: 'text-slate-300' };
+      default: return { border: 'border-zinc-500/60 shadow-[0_0_20px_rgba(113,113,122,0.15)]', gradient: 'from-zinc-800/40 to-black', text: 'text-zinc-300' };
     }
   };
 
@@ -186,7 +190,6 @@ export default function GraphicTab() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
       
-      {/* Intro / Header */}
       <div className="flex items-center gap-4 mb-8">
          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1b75bb] to-sky-600 flex items-center justify-center shadow-lg shrink-0">
            <ImageIcon size={24} className="text-white" />
@@ -197,7 +200,6 @@ export default function GraphicTab() {
          </div>
       </div>
 
-      {/* Inputs */}
       <div className="bg-[#111] border border-gray-800 rounded-2xl p-6 mb-8 shadow-xl max-w-3xl">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
@@ -244,7 +246,6 @@ export default function GraphicTab() {
         )}
       </div>
 
-      {/* Output Graphic */}
       {starters.length > 0 && teamData && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           
@@ -253,35 +254,36 @@ export default function GraphicTab() {
                 ref={graphicRef}
                 className="relative w-[1080px] h-[1350px] bg-zinc-950 border border-zinc-800 overflow-hidden flex flex-col shrink-0"
               >
-                {/* 🚀 FIXED: Replaced CSS backgroundImage with a solid img tag for html2canvas compatibility */}
-                <img src="/images/DNO-Background.webp" className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-luminosity z-0" alt="Background" />
-                <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
-                <div className="absolute inset-0 z-0 bg-gradient-to-r from-blue-900/10 to-zinc-950/30 pointer-events-none" />
-
-                <div className="relative z-10 p-8 flex items-center justify-between border-b border-zinc-800/50 bg-black/60 backdrop-blur-md h-[140px] shrink-0">
-                  <div className="flex items-center gap-6">
-                     <img src="/images/DNO-Logo_Logo.webp" alt="DNO" className="h-16 w-auto object-contain drop-shadow-lg" />
+                
+                {/* 🚀 Header Banner with Explicit Background Image */}
+                <div className="relative z-10 p-8 flex items-center justify-between border-b border-zinc-800/80 bg-black/60 h-[150px] shrink-0 overflow-hidden shadow-lg">
+                  <img src={dnoBgUrl} className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-luminosity z-0" crossOrigin="anonymous" alt="" />
+                  <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-950/90 via-zinc-950/60 to-transparent" />
+                  
+                  <div className="flex items-center gap-6 relative z-10">
+                     <img src={dnoLogoUrl} alt="DNO" className="h-20 w-auto object-contain drop-shadow-2xl" crossOrigin="anonymous" />
                      <div>
                       <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic drop-shadow-md">
                         {teamData.teamName}
                       </h2>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-[#f5a623] font-bold uppercase tracking-widest text-sm">{teamData.leagueName}</span>
-                        <span className="text-zinc-600 font-bold">•</span>
-                        <span className="text-zinc-400 font-bold uppercase tracking-widest text-sm">Draft Night Out Roster</span>
+                      <div className="flex items-center gap-3 mt-1.5">
+                        <span className="text-[#f5a623] font-bold uppercase tracking-widest text-sm drop-shadow-md">{teamData.leagueName}</span>
+                        <span className="text-zinc-500 font-bold">•</span>
+                        <span className="text-zinc-300 font-bold uppercase tracking-widest text-sm drop-shadow-md">Draft Night Out Roster</span>
                       </div>
                      </div>
                   </div>
                 </div>
 
-                <div className="relative z-10 px-8 py-6 flex-1 flex flex-col justify-start">
+                <div className="relative z-10 px-8 py-8 flex-1 flex flex-col justify-start">
                    
                    {/* STARTING LINEUP */}
-                   <div className="mb-2">
+                   <div className="mb-4">
                      <h3 className="text-xs font-black uppercase tracking-widest text-emerald-500 mb-3 px-1 flex items-center gap-2 drop-shadow-md">
                        <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span> Starting Lineup
                      </h3>
-                     <div className="grid gap-4 grid-cols-3">
+                     
+                     <div className="grid gap-x-5 gap-y-12 grid-cols-3 pt-6">
                         {starters.map((playerId, idx) => {
                           const isDefense = playerId.length < 4; 
                           const dbPlayer = playerDB[playerId]; 
@@ -317,36 +319,39 @@ export default function GraphicTab() {
                           const teamLogo = `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
 
                           return (
-                            <div key={`starter-${playerId}-${idx}`} className={`relative w-full h-[240px] rounded-[20px] flex flex-col justify-end bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden group shadow-xl`}>
+                            <div key={`starter-${playerId}-${idx}`} className="relative w-full h-[210px] flex flex-col justify-end group shadow-xl">
                               
+                              {/* Background Box with Overflow Hidden for the watermark and fade */}
+                              <div className={`absolute inset-0 rounded-[20px] bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden`}>
+                                 <div className="absolute inset-x-0 top-0 z-0 flex items-start justify-center opacity-[0.25] pointer-events-none">
+                                    <img src={teamLogo} className="w-[120%] max-w-none h-auto object-contain -translate-y-4 mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
+                                 </div>
+                                 <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black via-black/90 to-transparent z-10 pointer-events-none" />
+                              </div>
+
+                              {/* Top Left Position Badge */}
                               <div className="absolute top-3 left-3 z-40">
                                  <span className="bg-black/80 backdrop-blur-md px-2.5 py-1 rounded text-[11px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">
                                     {position}
                                  </span>
                               </div>
 
-                              <div className="absolute inset-x-0 top-0 z-0 flex items-start justify-center opacity-[0.25] overflow-hidden pointer-events-none">
-                                 <img src={teamLogo} className="w-[120%] max-w-none h-auto object-contain -translate-y-4 mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
-                              </div>
-
-                              {/* 🚀 FIXED: Image is now perfectly scaled to 90% of the box, anchored to the bottom. No cut-offs! */}
-                              <div className="absolute inset-x-0 bottom-0 top-6 flex items-end justify-center z-10 pointer-events-none overflow-hidden">
+                              {/* 🚀 FIXED: Player Image OUTSIDE the overflow container so the head can pop out of bounds! */}
+                              <div className="absolute inset-x-0 bottom-10 flex items-end justify-center z-10 pointer-events-none h-[130%]">
                                  <img 
                                     src={playerImage} 
-                                    className={isDefense ? "max-w-[70%] max-h-[75%] object-contain drop-shadow-2xl origin-bottom mb-6" : "w-full h-[95%] object-contain object-bottom drop-shadow-2xl filter contrast-110 brightness-110 origin-bottom"} 
+                                    className={isDefense ? "max-w-[70%] max-h-[85%] object-contain drop-shadow-2xl origin-bottom mb-2" : "w-auto h-full object-contain object-bottom drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] filter contrast-110 brightness-110 origin-bottom"} 
                                     crossOrigin="anonymous" 
                                     alt="" 
                                     onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
                                  />
                               </div>
 
-                              <div className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-black via-black/85 to-transparent z-10 pointer-events-none" />
-
-                              <div className="relative z-20 px-3 pb-4 pt-2 mt-auto flex flex-col items-center text-center bg-transparent">
-                                 <div className={`text-[10px] font-bold tracking-widest uppercase leading-tight mb-0.5 ${cardStyle.text} drop-shadow-md`}>
+                              <div className="relative z-20 px-3 pb-3 pt-2 mt-auto flex flex-col items-center text-center bg-transparent">
+                                 <div className={`text-[11px] font-bold tracking-widest uppercase leading-tight mb-0.5 ${cardStyle.text} drop-shadow-md`}>
                                     {firstName}
                                  </div>
-                                 <div className="text-2xl font-black text-white tracking-tight leading-none truncate w-full drop-shadow-lg">
+                                 <div className="text-3xl font-black text-white tracking-tight leading-none truncate w-full drop-shadow-lg">
                                     {lastName}
                                  </div>
                               </div>
@@ -357,9 +362,9 @@ export default function GraphicTab() {
                      </div>
                    </div>
 
-                   {/* 🚀 REBUILT: FANCY BENCH PLAYERS */}
+                   {/* BENCH PLAYERS */}
                    {bench.length > 0 && (
-                     <div className="mt-1">
+                     <div className="mt-4">
                        <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-3 px-1 flex items-center gap-2 drop-shadow-md">
                          <span className="w-2 h-2 rounded-full bg-zinc-600"></span> Bench
                        </h3>
@@ -399,36 +404,33 @@ export default function GraphicTab() {
                             const teamLogo = `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
 
                             return (
-                              <div key={`bench-${playerId}-${idx}`} className={`relative w-full h-[64px] rounded-[16px] flex items-center overflow-hidden bg-zinc-900 border ${cardStyle.border} shadow-lg`}>
+                              <div key={`bench-${playerId}-${idx}`} className={`relative w-full h-[64px] rounded-[16px] flex items-center overflow-hidden bg-zinc-950 border-2 ${cardStyle.border} shadow-lg`}>
                                  
-                                 {/* Faded Background Logo Watermark (Overflowing top/bottom) */}
-                                 <div className="absolute inset-y-0 right-8 flex items-center justify-center z-0 opacity-[0.15] pointer-events-none">
+                                 {/* Faded Background Logo Watermark */}
+                                 <div className="absolute inset-y-0 right-4 flex items-center justify-center z-0 opacity-[0.25] pointer-events-none">
                                     <img src={teamLogo} className="h-[250%] w-auto object-contain mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
                                  </div>
 
-                                 {/* Left Colored Badge Strip */}
-                                 <div className={`w-12 h-full ${cardStyle.bg} flex items-center justify-center font-black text-black text-[11px] shrink-0 tracking-widest z-20`}>
+                                 {/* Position Text (NO background block) */}
+                                 <div className={`w-14 h-full flex items-center justify-center font-black ${cardStyle.text} text-sm shrink-0 tracking-widest z-20`}>
                                     {position}
                                  </div>
 
-                                 {/* Headshot / Thumbnail (Transparent background, sticking out) */}
-                                 <div className="w-14 h-full flex items-end justify-center overflow-hidden shrink-0 relative z-20 ml-1">
+                                 {/* Headshot / Thumbnail */}
+                                 <div className="w-12 h-12 mx-2 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center overflow-hidden shrink-0 relative z-20">
                                     <img 
                                       src={playerImage} 
                                       alt="" 
-                                      className={isDefense ? "w-8 h-8 object-contain mb-2" : "w-[120%] h-[95%] object-contain object-bottom drop-shadow-md"}
+                                      className={isDefense ? "w-7 h-7 object-contain" : "w-full h-full object-cover object-top scale-110 translate-y-1"}
                                       crossOrigin="anonymous" 
                                       onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
                                     />
                                  </div>
 
-                                 {/* Small Team Logo */}
-                                 <img src={teamLogo} className="w-6 h-6 object-contain ml-3 mr-3 opacity-90 shrink-0 z-20 drop-shadow-md" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
-
                                  {/* Player Name */}
-                                 <div className="flex-1 min-w-0 pr-4 flex items-baseline z-20">
-                                    <span className="font-black text-zinc-400 mr-2 uppercase text-sm tracking-wide">{firstName.charAt(0)}.</span>
-                                    <span className="text-white font-black text-lg uppercase truncate tracking-wide">{lastName}</span>
+                                 <div className="flex-1 min-w-0 px-4 flex items-baseline z-20">
+                                    <span className="font-black text-zinc-400 mr-2 uppercase text-[15px] tracking-wide">{firstName.charAt(0)}.</span>
+                                    <span className="text-white font-black text-[19px] uppercase truncate tracking-wide">{lastName}</span>
                                  </div>
                               </div>
                             );
