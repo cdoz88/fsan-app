@@ -1,12 +1,12 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
-// 🚀 FIXED: Swapped to html2canvas-pro to resolve "lab" color function errors
 import html2canvas from 'html2canvas-pro'; 
-import { Search, Loader2, Download, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { Search, Loader2, Download, AlertCircle, CheckCircle, Image as ImageIcon } from 'lucide-react';
 
 export default function GraphicTab() {
   const [username, setUsername] = useState('');
-  const [verifiedUser, setVerifiedUser] = useState(null); // 🚀 NEW: Stores verified Sleeper profile
+  const [verifiedUser, setVerifiedUser] = useState(null); 
+  const [isVerifying, setIsVerifying] = useState(false);
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -77,31 +77,50 @@ export default function GraphicTab() {
     loadPlayerDatabases();
   }, []);
 
-  // 🚀 NEW: Step 1 - Verify Account
-  const handleVerifyAccount = async () => {
-    if (!username.trim()) return;
-    setLoading(true);
-    setError('');
-    setVerifiedUser(null);
-    setLeagues([]);
-    setSelectedLeague('');
-    setTeamData(null);
-    setStarters([]);
-    setBench([]);
+  // 🚀 NEW: Real-time Account Verification (Debounced)
+  useEffect(() => {
+    const verifyAccount = async () => {
+      if (!username.trim()) {
+        setVerifiedUser(null);
+        setError('');
+        setLeagues([]);
+        setSelectedLeague('');
+        setTeamData(null);
+        setStarters([]);
+        setBench([]);
+        return;
+      }
 
-    try {
-      const res = await fetch(`https://api.sleeper.app/v1/user/${username.trim()}`);
-      if (!res.ok) throw new Error("Could not find a Sleeper account with that username.");
-      const data = await res.json();
-      setVerifiedUser(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+      setIsVerifying(true);
+      setError('');
+      
+      try {
+        const res = await fetch(`https://api.sleeper.app/v1/user/${username.trim()}`);
+        if (!res.ok) throw new Error("Could not find a Sleeper account with that username.");
+        const data = await res.json();
+        setVerifiedUser(data);
+        
+        // Reset downstream data when user changes
+        setLeagues([]);
+        setSelectedLeague('');
+        setTeamData(null);
+        setStarters([]);
+        setBench([]);
+      } catch (err) {
+        setVerifiedUser(null);
+        setError(err.message);
+      } finally {
+        setIsVerifying(false);
+      }
+    };
 
-  // 🚀 UPDATED: Step 2 - Fetch Leagues using Verified User ID
+    const delayDebounceFn = setTimeout(() => {
+      verifyAccount();
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [username]);
+
   const fetchSleeperLeagues = async () => {
     if (!verifiedUser) return;
     setLoading(true);
@@ -264,66 +283,55 @@ export default function GraphicTab() {
 
       <div className="bg-[#111] border border-gray-800 rounded-2xl p-6 mb-8 shadow-xl max-w-3xl">
         
-        {/* 🚀 Account Verification UI */}
-        {!verifiedUser ? (
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-              <input 
-                type="text" 
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleVerifyAccount()}
-                placeholder="Enter Sleeper Username..." 
-                disabled={dbLoading}
-                className="w-full bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-[#1b75bb] font-bold text-sm transition-colors disabled:opacity-50"
-              />
-            </div>
-            <button 
-              onClick={handleVerifyAccount}
-              disabled={loading || !username || dbLoading}
-              className="bg-[#f5a623] hover:bg-[#e0961d] disabled:opacity-50 text-[#111] font-black uppercase tracking-widest text-xs px-8 py-3.5 rounded-xl transition-colors shrink-0 flex items-center justify-center"
-            >
-              {loading || dbLoading ? <Loader2 size={16} className="animate-spin" /> : 'Verify Account'}
-            </button>
+        {/* 🚀 Real-Time Verification Input */}
+        <div className="relative">
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+          <input 
+            type="text" 
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Enter Sleeper Username..." 
+            disabled={dbLoading}
+            className="w-full bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-3.5 pl-11 pr-11 focus:outline-none focus:border-[#1b75bb] font-bold text-sm transition-colors disabled:opacity-50"
+          />
+          {isVerifying && <Loader2 size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 animate-spin" />}
+        </div>
+
+        {error && username.length > 0 && !isVerifying && (
+          <div className="mt-4 bg-red-900/20 border border-red-500/30 p-3 rounded-lg flex items-center gap-2 text-red-400 text-xs font-bold uppercase tracking-widest animate-in fade-in">
+            <AlertCircle size={14} /> {error}
           </div>
-        ) : (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-[#1a1a1a] border border-gray-700 animate-in fade-in">
+        )}
+
+        {/* 🚀 Verified Account Block */}
+        {verifiedUser && !isVerifying && (
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-[#111] border border-emerald-900/50 shadow-[0_0_15px_rgba(16,185,129,0.05)] animate-in fade-in">
              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#1b75bb] bg-[#111] shrink-0">
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-emerald-500 bg-[#111] shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
                   {verifiedUser.avatar ? (
                     <img src={`https://sleepercdn.com/avatars/thumbs/${verifiedUser.avatar}`} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-600 bg-black">
+                    <div className="w-full h-full flex items-center justify-center text-emerald-500 bg-black">
                       <ImageIcon size={20} />
                     </div>
                   )}
                 </div>
                 <div>
                    <div className="flex items-center gap-1.5">
-                     <h4 className="text-white font-black text-lg">{verifiedUser.display_name}</h4>
-                     <CheckCircle size={14} className="text-[#1b75bb]" />
+                     <h4 className="text-white font-black text-lg leading-tight">{verifiedUser.display_name}</h4>
+                     <CheckCircle size={14} className="text-emerald-500" />
                    </div>
-                   <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Account Verified</p>
+                   <p className="text-emerald-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Sleeper Synced</p>
                 </div>
              </div>
              
              <div className="flex items-center gap-3">
-               <button onClick={() => { setVerifiedUser(null); setUsername(''); setLeagues([]); }} className="text-gray-400 hover:text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors">
-                  Change User
-               </button>
                {!leagues.length && (
-                 <button onClick={fetchSleeperLeagues} disabled={loading} className="bg-[#1b75bb] hover:bg-[#155d96] text-white px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-2">
-                   {loading ? <Loader2 size={14} className="animate-spin" /> : 'Find My Leagues'}
+                 <button onClick={fetchSleeperLeagues} disabled={loading} className="bg-[#1b75bb] hover:bg-[#155d96] text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-2 shadow-lg">
+                   {loading ? <Loader2 size={14} className="animate-spin" /> : 'Find DNO Leagues'}
                  </button>
                )}
              </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="mt-4 bg-red-900/20 border border-red-500/30 p-3 rounded-lg flex items-center gap-2 text-red-400 text-xs font-bold uppercase tracking-widest">
-            <AlertCircle size={14} /> {error}
           </div>
         )}
 
@@ -359,13 +367,15 @@ export default function GraphicTab() {
           
           <div className="w-full" ref={wrapperRef}>
               
+              {/* 🚀 FIXED HEIGHT: Scaled bounding box lowered from 1350 to 1250 */}
               <div 
                 className="bg-black border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden mx-auto mb-8"
-                style={{ width: `${1080 * scale}px`, height: `${1350 * scale}px` }}
+                style={{ width: `${1080 * scale}px`, height: `${1250 * scale}px` }}
               >
-                  <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: '1080px', height: '1350px' }}>
+                  {/* 🚀 FIXED HEIGHT: Graphic height lowered to 1250 to remove empty bottom space */}
+                  <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: '1080px', height: '1250px' }}>
                     
-                    <div ref={graphicRef} className="w-[1080px] h-[1350px] bg-zinc-950 overflow-hidden flex flex-col shrink-0 relative">
+                    <div ref={graphicRef} className="w-[1080px] h-[1250px] bg-zinc-950 overflow-hidden flex flex-col shrink-0 relative">
                       
                       <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-zinc-900/40" />
 
@@ -388,7 +398,7 @@ export default function GraphicTab() {
                         </div>
                       </div>
 
-                      <div className="relative z-10 px-8 py-6 flex-1 flex flex-col justify-start">
+                      <div className="relative z-10 px-8 py-8 flex-1 flex flex-col justify-start">
                          
                          {/* STARTING LINEUP */}
                          <div className="mb-0">
@@ -489,7 +499,7 @@ export default function GraphicTab() {
 
                          {/* BENCH PLAYERS */}
                          {bench.length > 0 && (
-                           <div className="mt-6">
+                           <div className="mt-8">
                              <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4 px-1 flex items-center gap-2 drop-shadow-md">
                                <span className="w-2 h-2 rounded-full bg-zinc-600"></span> Bench
                              </h3>
