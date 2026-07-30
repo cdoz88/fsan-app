@@ -31,19 +31,23 @@ export default function GraphicTab() {
   const dnoBgUrl = `${baseUrl}/images/DNO-Background.webp`;
   const dnoLogoUrl = `${baseUrl}/images/DNO-Logo_Logo.webp`;
 
-  // 🚀 MATHEMATICALLY FIXED SCALING: Calculates exact parent width with a 2px buffer to prevent pixel bleeding
+  // 🚀 FIXED: Dynamic Scaling calculates true parent available width
   useEffect(() => {
     const updateScale = () => {
-      if (wrapperRef.current) {
-        const parentWidth = wrapperRef.current.clientWidth;
-        setScale(Math.min(1, (parentWidth - 2) / 1080));
+      if (wrapperRef.current && wrapperRef.current.parentElement) {
+        // Query the parent element to get the true available layout width
+        const parentWidth = wrapperRef.current.parentElement.clientWidth;
+        setScale(Math.min(1, parentWidth / 1080));
       }
     };
     updateScale();
     window.addEventListener('resize', updateScale);
-    // Add a slight delay call to handle sidebar transitions adjusting width
-    setTimeout(updateScale, 100);
-    return () => window.removeEventListener('resize', updateScale);
+    // Slight delay catch to ensure sidebars finishing animating don't mess up width
+    const timeout = setTimeout(updateScale, 150);
+    return () => {
+      window.removeEventListener('resize', updateScale);
+      clearTimeout(timeout);
+    };
   }, [starters]);
 
   useEffect(() => {
@@ -333,7 +337,6 @@ export default function GraphicTab() {
         <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Generate & Share Your DNO Squad</p>
       </div>
 
-      {/* 🚀 REMOVED max-w-3xl constraints so it aligns to the left perfectly */}
       <div className="bg-[#111] border border-gray-800 rounded-2xl p-6 mb-8 shadow-xl w-full">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative w-full">
@@ -409,53 +412,53 @@ export default function GraphicTab() {
       </div>
 
       {starters.length > 0 && teamData && teamData.teamName && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full flex flex-col items-start">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full flex flex-col items-start max-w-full">
           
-          {/* 🚀 FIXED: Absolute wrapper calculation removes horizontal scrolling while retaining full visual bounds */}
-          <div className="w-full mb-6 relative" ref={wrapperRef} style={{ height: `${1350 * scale}px` }}>
+          {/* 🚀 FIXED: Robust max-w-full wrapper kills horizontal scroll. Left aligned explicitly. */}
+          <div className="w-full max-w-full overflow-hidden mb-8" ref={wrapperRef}>
               
               <div 
-                className="bg-black border border-zinc-800 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden absolute top-0 left-0"
-                style={{ 
-                  width: `${1080 * scale}px`, 
-                  height: `${1350 * scale}px` 
-                }}
+                className="relative rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 bg-black"
+                style={{ width: `${1080 * scale}px`, height: `${1350 * scale}px` }}
               >
+                  {/* Absolute positioning locks the transform inside the rounded border box */}
                   <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: '1080px', height: '1350px', position: 'absolute', top: 0, left: 0 }}>
                     
                     <div ref={graphicRef} className="w-[1080px] h-[1350px] bg-zinc-950 overflow-hidden flex flex-col relative">
                       
                       <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-zinc-900/40" />
 
-                      <div className="relative z-10 flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950 h-[140px] shrink-0 overflow-hidden">
+                      {/* Header: 150px fixed */}
+                      <div className="relative z-10 flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950 h-[150px] shrink-0 overflow-hidden">
                         <img src={dnoBgUrl} className="absolute inset-0 w-full h-full object-cover opacity-60 z-0" crossOrigin="anonymous" alt="Background" />
                         <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-950/90 via-zinc-950/70 to-transparent" />
                         
-                        <div className="flex items-center gap-6 relative z-10 px-8">
-                           <img src={dnoLogoUrl} alt="DNO" className="h-20 w-auto object-contain drop-shadow-2xl" crossOrigin="anonymous" />
+                        <div className="flex items-center gap-6 relative z-10 px-10">
+                           <img src={dnoLogoUrl} alt="DNO" className="h-24 w-auto object-contain drop-shadow-2xl" crossOrigin="anonymous" />
                            <div>
-                            <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic drop-shadow-md truncate max-w-[700px]">
+                            <h2 className="text-[42px] font-black text-white tracking-tighter uppercase italic drop-shadow-md truncate max-w-[700px] leading-none mb-1">
                               {teamData.teamName}
                             </h2>
-                            <div className="flex items-center gap-3 mt-1.5">
-                              <span className="text-[#f5a623] font-bold uppercase tracking-widest text-sm drop-shadow-md truncate max-w-[400px]">{teamData.leagueName}</span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-[#f5a623] font-bold uppercase tracking-widest text-[15px] drop-shadow-md truncate max-w-[400px]">{teamData.leagueName}</span>
                               <span className="text-zinc-500 font-bold">•</span>
-                              <span className="text-zinc-300 font-bold uppercase tracking-widest text-sm drop-shadow-md">Draft Night Out Roster</span>
+                              <span className="text-zinc-300 font-bold uppercase tracking-widest text-[15px] drop-shadow-md">Draft Night Out Roster</span>
                             </div>
                            </div>
                         </div>
                       </div>
 
-                      <div className="relative z-10 px-8 py-6 flex-1 flex flex-col justify-start">
+                      {/* 🚀 FIXED: Mathematically spaced flexbox inside 1200px remaining space */}
+                      <div className="relative z-10 px-10 pt-8 pb-8 flex-1 flex flex-col justify-between">
                          
                          {/* STARTING LINEUP */}
-                         <div className="mb-0">
-                           <h3 className="text-xs font-black uppercase tracking-widest text-emerald-500 mb-5 px-1 flex items-center gap-2 drop-shadow-md relative z-20">
+                         <div>
+                           <h3 className="text-xs font-black uppercase tracking-widest text-emerald-500 mb-6 px-1 flex items-center gap-2 drop-shadow-md relative z-20">
                              <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span> Starting Lineup
                            </h3>
                            
-                           {/* 🚀 FIXED: Reduced height & gaps mathematically ensuring total height < 1200px */}
-                           <div className="grid gap-x-5 gap-y-6 grid-cols-3">
+                           {/* 🚀 FIXED: Gaps set to 40px (gap-y-10) to support taller images popping out */}
+                           <div className="grid gap-x-5 gap-y-10 grid-cols-3">
                               {starters.map((playerId, idx) => {
                                 const isDefense = playerId.length < 4; 
                                 const dbPlayer = playerDB[playerId]; 
@@ -491,9 +494,9 @@ export default function GraphicTab() {
                                    playerImage = `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
                                 }
                                 
-                                // Card height 220px
+                                // 🚀 FIXED: Taller Card h-[230px] to show shoulders perfectly
                                 return (
-                                  <div key={`starter-${playerId}-${idx}`} className="relative w-full h-[220px] flex flex-col justify-end group shadow-xl">
+                                  <div key={`starter-${playerId}-${idx}`} className="relative w-full h-[230px] flex flex-col justify-end group shadow-xl">
                                     
                                     <div className={`absolute inset-0 rounded-[20px] bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden`}>
                                        {teamLogo && (
@@ -520,7 +523,8 @@ export default function GraphicTab() {
                                        )}
                                     </div>
 
-                                    <div className="absolute inset-x-0 bottom-0 flex items-end justify-center z-10 pointer-events-none h-[130%]">
+                                    {/* 🚀 FIXED: h-[125%] scales image up beautifully and fits inside the gap above it */}
+                                    <div className="absolute inset-x-0 bottom-0 flex items-end justify-center z-10 pointer-events-none h-[125%]">
                                        <img 
                                           src={playerImage} 
                                           className={isDefense ? "max-w-[70%] max-h-[85%] object-contain drop-shadow-2xl origin-bottom mb-2" : "w-auto h-full object-contain object-bottom drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] filter contrast-110 brightness-110 origin-bottom"} 
@@ -533,7 +537,7 @@ export default function GraphicTab() {
                                     <div className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black via-black/90 to-transparent z-20 rounded-b-[20px] pointer-events-none" />
 
                                     <div className="relative z-30 px-3 pb-3 pt-2 mt-auto flex flex-col items-center text-center bg-transparent pointer-events-none w-full min-w-0">
-                                       <div className={`text-[11px] font-bold tracking-widest uppercase leading-tight mb-0.5 ${cardStyle.text} drop-shadow-md`}>
+                                       <div className={`text-[12px] font-bold tracking-widest uppercase leading-tight mb-0.5 ${cardStyle.text} drop-shadow-md`}>
                                           {firstName}
                                        </div>
                                        <div className="text-3xl font-black text-white tracking-tight leading-none truncate w-full drop-shadow-lg">
@@ -549,11 +553,11 @@ export default function GraphicTab() {
 
                          {/* BENCH PLAYERS */}
                          {bench.length > 0 && (
-                           <div className="mt-8">
+                           <div>
                              <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4 px-1 flex items-center gap-2 drop-shadow-md">
                                <span className="w-2 h-2 rounded-full bg-zinc-600"></span> Bench
                              </h3>
-                             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                             <div className="grid grid-cols-2 gap-3">
                                 {bench.map((playerId, idx) => {
                                   const isDefense = playerId.length < 4; 
                                   const dbPlayer = playerDB[playerId]; 
@@ -589,7 +593,7 @@ export default function GraphicTab() {
                                      playerImage = `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
                                   }
 
-                                  // Card height 60px
+                                  // 🚀 FIXED: Bench height optimized to 60px
                                   return (
                                     <div key={`bench-${playerId}-${idx}`} className={`relative w-full h-[60px] rounded-[16px] flex items-center overflow-hidden bg-zinc-950 border border-zinc-800 shadow-md shadow-[0_3px_6px_rgba(0,0,0,0.5)]`}>
                                        
