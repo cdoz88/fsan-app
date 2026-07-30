@@ -33,9 +33,9 @@ export default function GraphicTab() {
 
   useEffect(() => {
     const updateScale = () => {
-      if (wrapperRef.current) {
-        const parentWidth = wrapperRef.current.clientWidth;
-        setScale(Math.min(1, parentWidth / 1080));
+      if (wrapperRef.current && wrapperRef.current.parentElement) {
+        const parentWidth = wrapperRef.current.parentElement.clientWidth;
+        setScale(Math.min(1, (parentWidth - 2) / 1080));
       }
     };
     updateScale();
@@ -51,6 +51,7 @@ export default function GraphicTab() {
     const loadPlayerDatabases = async () => {
       try {
         let customMap = {};
+        
         try {
           const res = await fetch('/api/dynasty-players');
           const data = await res.json();
@@ -78,6 +79,7 @@ export default function GraphicTab() {
         setDbLoading(false);
       }
     };
+    
     loadPlayerDatabases();
   }, []);
 
@@ -100,7 +102,6 @@ export default function GraphicTab() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
 
-  // 🚀 FIXED: Robust Background Rendering that ensures text is locked in place for mobile exports
   useEffect(() => {
     if (starters.length > 0 && teamData && graphicRef.current) {
       setGenerating(true);
@@ -113,10 +114,7 @@ export default function GraphicTab() {
             allowTaint: true,
             scale: 2,
             backgroundColor: '#09090b',
-            logging: false,
-            // Forces clean layout bounds calculation on mobile devices
-            windowWidth: 1080,
-            windowHeight: 1350
+            logging: false
           });
           
           canvas.toBlob((blob) => {
@@ -329,6 +327,214 @@ export default function GraphicTab() {
 
   const getESPNHeadshot = (espnId) => `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${espnId}.png&w=350&h=254`;
 
+  // 🚀 FIXED: Extracted the entire graphic layout into a clean JSX variable.
+  // This allows us to render it ONCE visually (scaled) and ONCE hidden (unscaled) for perfect mobile screenshots.
+  const rosterGraphicContent = (
+    <>
+      <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-zinc-900/40" />
+
+      <div className="relative z-10 flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950 h-[150px] shrink-0 overflow-hidden">
+        <img src={dnoBgUrl} className="absolute inset-0 w-full h-full object-cover opacity-60 z-0" crossOrigin="anonymous" alt="Background" />
+        <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-950/90 via-zinc-950/70 to-transparent" />
+        
+        <div className="flex items-center gap-6 relative z-10 px-10">
+           <img src={dnoLogoUrl} alt="DNO" className="h-24 w-auto object-contain drop-shadow-2xl" crossOrigin="anonymous" />
+           <div>
+            <h2 className="text-[42px] font-black text-white tracking-tighter uppercase italic drop-shadow-md truncate max-w-[700px] leading-none mb-1">
+              {teamData?.teamName}
+            </h2>
+            <div className="flex items-center gap-3">
+              <span className="text-[#f5a623] font-bold uppercase tracking-widest text-[15px] drop-shadow-md truncate max-w-[400px]">{teamData?.leagueName}</span>
+              <span className="text-zinc-500 font-bold">•</span>
+              <span className="text-zinc-300 font-bold uppercase tracking-widest text-[15px] drop-shadow-md">Draft Night Out Roster</span>
+            </div>
+           </div>
+        </div>
+      </div>
+
+      <div className="relative z-10 px-10 pt-8 pb-8 flex-1 flex flex-col justify-between">
+         <div className="mb-0">
+           <h3 className="text-xs font-black uppercase tracking-widest text-emerald-500 mb-6 px-1 flex items-center gap-2 drop-shadow-md relative z-20">
+             <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span> Starting Lineup
+           </h3>
+           
+           <div className="grid gap-x-5 gap-y-10 grid-cols-3">
+              {starters.map((playerId, idx) => {
+                const isDefense = playerId.length < 4; 
+                const dbPlayer = playerDB[playerId]; 
+                const pickInfo = draftPicks[String(playerId)];
+                
+                let firstName = "Unknown";
+                let lastName = "Player";
+                let position = "FLEX";
+                let team = "fa";
+
+                if (isDefense) {
+                   firstName = playerId;
+                   lastName = "DEFENSE";
+                   position = "DEF";
+                   team = playerId.toLowerCase();
+                } else if (dbPlayer) {
+                   firstName = dbPlayer.first_name || "";
+                   lastName = dbPlayer.last_name || "";
+                   position = dbPlayer.position || "UNK";
+                   team = dbPlayer.team ? dbPlayer.team.toLowerCase() : "fa";
+                }
+
+                const cardStyle = getCardStyle(position);
+                const isFA = team === 'fa';
+                const teamLogo = isFA ? null : `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
+
+                let playerImage = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                if (isDefense && !isFA) {
+                   playerImage = `https://sleepercdn.com/images/team_logos/nfl/${playerId.toLowerCase()}.png`;
+                } else if (dbPlayer?.espn_id) {
+                   playerImage = getESPNHeadshot(dbPlayer.espn_id);
+                } else {
+                   playerImage = `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
+                }
+                
+                return (
+                  <div key={`starter-${playerId}-${idx}`} className="relative w-full h-[230px] flex flex-col justify-end group shadow-xl">
+                    <div className={`absolute inset-0 rounded-[20px] bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden`}>
+                       {teamLogo && (
+                         <div className="absolute inset-x-0 top-0 z-0 flex items-start justify-center opacity-[0.25] pointer-events-none">
+                            <img src={teamLogo} className="w-[120%] max-w-none h-auto object-contain -translate-y-4 mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
+                         </div>
+                       )}
+                    </div>
+
+                    <div className="absolute top-3 left-3 z-40">
+                       <span className="bg-black/80 backdrop-blur-md px-2.5 py-1 rounded text-[11px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">
+                          {position}
+                       </span>
+                    </div>
+
+                    <div className="absolute top-3 right-3 z-40 flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded border border-zinc-700/50 shadow-md">
+                       <span className="text-[11px] font-black text-white tracking-widest leading-none mt-[1px]">
+                          {pickInfo ? pickInfo.formatted : 'FA'}
+                       </span>
+                       {pickInfo?.posRank && (
+                          <span className="text-[10px] font-bold text-zinc-400">
+                             • {pickInfo.posRank}
+                          </span>
+                       )}
+                    </div>
+
+                    <div className="absolute inset-x-0 bottom-0 flex items-end justify-center z-10 pointer-events-none h-[125%]">
+                       <img 
+                          src={playerImage} 
+                          className={isDefense ? "max-w-[70%] max-h-[85%] object-contain drop-shadow-2xl origin-bottom mb-2" : "w-auto h-full object-contain object-bottom drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] filter contrast-110 brightness-110 origin-bottom"} 
+                          crossOrigin="anonymous" 
+                          alt="" 
+                          onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
+                       />
+                    </div>
+
+                    <div className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black via-black/90 to-transparent z-20 rounded-b-[20px] pointer-events-none" />
+
+                    <div className="relative z-30 px-3 pb-3 pt-2 mt-auto flex flex-col items-center text-center bg-transparent pointer-events-none w-full min-w-0">
+                       <div className={`text-[12px] font-bold tracking-widest uppercase leading-tight mb-0.5 ${cardStyle.text} drop-shadow-md`}>
+                          {firstName}
+                       </div>
+                       <div className="text-3xl font-black text-white tracking-tight truncate w-full drop-shadow-lg leading-none">
+                          {lastName}
+                       </div>
+                    </div>
+                  </div>
+                );
+              })}
+           </div>
+         </div>
+
+         {bench.length > 0 && (
+           <div>
+             <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4 px-1 flex items-center gap-2 drop-shadow-md">
+               <span className="w-2 h-2 rounded-full bg-zinc-600"></span> Bench
+             </h3>
+             <div className="grid grid-cols-2 gap-3">
+                {bench.map((playerId, idx) => {
+                  const isDefense = playerId.length < 4; 
+                  const dbPlayer = playerDB[playerId]; 
+                  const pickInfo = draftPicks[String(playerId)];
+                  
+                  let firstName = "Unknown";
+                  let lastName = "Player";
+                  let position = "BN";
+                  let team = "fa";
+
+                  if (isDefense) {
+                     firstName = playerId;
+                     lastName = "DEFENSE";
+                     position = "DEF";
+                     team = playerId.toLowerCase();
+                  } else if (dbPlayer) {
+                     firstName = dbPlayer.first_name || "";
+                     lastName = dbPlayer.last_name || "";
+                     position = dbPlayer.position || "BN";
+                     team = dbPlayer.team ? dbPlayer.team.toLowerCase() : "fa";
+                  }
+
+                  const cardStyle = getCardStyle(position);
+                  const isFA = team === 'fa';
+                  const teamLogo = isFA ? null : `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
+
+                  let playerImage = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                  if (isDefense && !isFA) {
+                     playerImage = `https://sleepercdn.com/images/team_logos/nfl/${playerId.toLowerCase()}.png`;
+                  } else if (dbPlayer?.espn_id) {
+                     playerImage = getESPNHeadshot(dbPlayer.espn_id);
+                  } else {
+                     playerImage = `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
+                  }
+
+                  return (
+                    <div key={`bench-${playerId}-${idx}`} className={`relative w-full h-[60px] rounded-[16px] flex items-center overflow-hidden bg-zinc-950 border border-zinc-800 shadow-md shadow-[0_3px_6px_rgba(0,0,0,0.5)]`}>
+                       {teamLogo && (
+                         <div className="absolute inset-y-0 right-8 flex items-center justify-center z-0 opacity-[0.2] pointer-events-none">
+                            <img src={teamLogo} className="h-[250%] w-auto object-contain mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
+                         </div>
+                       )}
+
+                       <div className={`w-14 h-full flex items-center justify-center font-black ${cardStyle.text} text-[13px] shrink-0 tracking-widest z-20 shadow-inner`}>
+                          {position}
+                       </div>
+
+                       <div className="w-10 h-10 mx-1 rounded-full bg-zinc-900 border border-zinc-700/50 flex items-center justify-center overflow-hidden shrink-0 relative z-20 shadow-md">
+                          <img 
+                            src={playerImage} 
+                            alt="" 
+                            className={isDefense ? "w-6 h-6 object-contain" : "w-full h-full object-cover object-top scale-110 translate-y-1"}
+                            crossOrigin="anonymous" 
+                            onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
+                          />
+                       </div>
+
+                       <div className="flex-1 min-w-0 pl-4 pr-2 flex items-baseline z-20 w-full">
+                          <span className="font-black text-zinc-500 mr-2 uppercase text-[15px] tracking-wide shrink-0 leading-none">{firstName.charAt(0)}.</span>
+                          <span className="text-white font-black text-[19px] uppercase truncate tracking-wide flex-1 min-w-0 leading-none">{lastName}</span>
+                       </div>
+
+                       <div className="pr-4 z-20 shrink-0 text-right flex flex-col items-end justify-center h-full">
+                          <span className="text-[12px] font-black text-white tracking-widest leading-none mt-[1px]">
+                             {pickInfo ? pickInfo.formatted : 'FA'}
+                          </span>
+                          {pickInfo?.posRank && (
+                             <span className="text-[9px] font-bold text-zinc-500 uppercase mt-1 leading-none">
+                                {pickInfo.posRank}
+                             </span>
+                          )}
+                       </div>
+                    </div>
+                  );
+                })}
+             </div>
+           </div>
+         )}
+      </div>
+    </>
+  );
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16 overflow-x-hidden w-full">
       
@@ -414,238 +620,24 @@ export default function GraphicTab() {
       {starters.length > 0 && teamData && teamData.teamName && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full flex flex-col items-start max-w-full">
           
+          {/* 🚀 VISIBLE SCALED WRAPPER (For UI Display Only) */}
           <div className="w-full max-w-full overflow-hidden mb-8" ref={wrapperRef}>
-              
               <div 
                 className="relative rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 bg-black"
                 style={{ width: `${1080 * scale}px`, height: `${1350 * scale}px` }}
               >
                   <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: '1080px', height: '1350px', position: 'absolute', top: 0, left: 0 }}>
-                    
-                    {/* 🚀 FIXED: Added explicit inline font-synthesis and text-rendering to lock text layout during mobile canvas render */}
-                    <div 
-                      ref={graphicRef} 
-                      className="w-[1080px] h-[1350px] bg-zinc-950 overflow-hidden flex flex-col relative"
-                      style={{ textRendering: 'geometricPrecision', fontSynthesis: 'none' }}
-                    >
-                      
-                      <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-zinc-900/40" />
-
-                      <div className="relative z-10 flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950 h-[150px] shrink-0 overflow-hidden">
-                        <img src={dnoBgUrl} className="absolute inset-0 w-full h-full object-cover opacity-60 z-0" crossOrigin="anonymous" alt="Background" />
-                        <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-950/90 via-zinc-950/70 to-transparent" />
-                        
-                        <div className="flex items-center gap-6 relative z-10 px-10">
-                           <img src={dnoLogoUrl} alt="DNO" className="h-24 w-auto object-contain drop-shadow-2xl" crossOrigin="anonymous" />
-                           <div>
-                            {/* 🚀 FIXED: Explicit line-height and block display to prevent mobile text squishing */}
-                            <h2 
-                              className="text-[42px] font-black text-white tracking-tighter uppercase italic drop-shadow-md truncate max-w-[700px] m-0 p-0"
-                              style={{ lineHeight: '1.1' }}
-                            >
-                              {teamData.teamName}
-                            </h2>
-                            <div className="flex items-center gap-3 mt-1">
-                              <span className="text-[#f5a623] font-bold uppercase tracking-widest text-[15px] drop-shadow-md truncate max-w-[400px]">{teamData.leagueName}</span>
-                              <span className="text-zinc-500 font-bold">•</span>
-                              <span className="text-zinc-300 font-bold uppercase tracking-widest text-[15px] drop-shadow-md">Draft Night Out Roster</span>
-                            </div>
-                           </div>
-                        </div>
-                      </div>
-
-                      <div className="relative z-10 px-10 pt-8 pb-8 flex-1 flex flex-col justify-between">
-                         
-                         {/* STARTING LINEUP */}
-                         <div>
-                           <h3 className="text-xs font-black uppercase tracking-widest text-emerald-500 mb-6 px-1 flex items-center gap-2 drop-shadow-md relative z-20">
-                             <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span> Starting Lineup
-                           </h3>
-                           
-                           <div className="grid gap-x-5 gap-y-10 grid-cols-3">
-                              {starters.map((playerId, idx) => {
-                                const isDefense = playerId.length < 4; 
-                                const dbPlayer = playerDB[playerId]; 
-                                const pickInfo = draftPicks[String(playerId)];
-                                
-                                let firstName = "Unknown";
-                                let lastName = "Player";
-                                let position = "FLEX";
-                                let team = "fa";
-
-                                if (isDefense) {
-                                   firstName = playerId;
-                                   lastName = "DEFENSE";
-                                   position = "DEF";
-                                   team = playerId.toLowerCase();
-                                } else if (dbPlayer) {
-                                   firstName = dbPlayer.first_name || "";
-                                   lastName = dbPlayer.last_name || "";
-                                   position = dbPlayer.position || "UNK";
-                                   team = dbPlayer.team ? dbPlayer.team.toLowerCase() : "fa";
-                                }
-
-                                const cardStyle = getCardStyle(position);
-                                const isFA = team === 'fa';
-                                const teamLogo = isFA ? null : `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
-
-                                let playerImage = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
-                                if (isDefense && !isFA) {
-                                   playerImage = `https://sleepercdn.com/images/team_logos/nfl/${playerId.toLowerCase()}.png`;
-                                } else if (dbPlayer?.espn_id) {
-                                   playerImage = getESPNHeadshot(dbPlayer.espn_id);
-                                } else {
-                                   playerImage = `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
-                                }
-                                
-                                return (
-                                  <div key={`starter-${playerId}-${idx}`} className="relative w-full h-[230px] flex flex-col justify-end group shadow-xl">
-                                    
-                                    <div className={`absolute inset-0 rounded-[20px] bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden`}>
-                                       {teamLogo && (
-                                         <div className="absolute inset-x-0 top-0 z-0 flex items-start justify-center opacity-[0.25] pointer-events-none">
-                                            <img src={teamLogo} className="w-[120%] max-w-none h-auto object-contain -translate-y-4 mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
-                                         </div>
-                                       )}
-                                    </div>
-
-                                    <div className="absolute top-3 left-3 z-40">
-                                       <span className="bg-black/80 backdrop-blur-md px-2.5 py-1 rounded text-[11px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">
-                                          {position}
-                                       </span>
-                                    </div>
-
-                                    <div className="absolute top-3 right-3 z-40 flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded border border-zinc-700/50 shadow-md">
-                                       <span className="text-[11px] font-black text-white tracking-widest leading-none mt-[1px]">
-                                          {pickInfo ? pickInfo.formatted : 'FA'}
-                                       </span>
-                                       {pickInfo?.posRank && (
-                                          <span className="text-[10px] font-bold text-zinc-400">
-                                             • {pickInfo.posRank}
-                                          </span>
-                                       )}
-                                    </div>
-
-                                    <div className="absolute inset-x-0 bottom-0 flex items-end justify-center z-10 pointer-events-none h-[125%]">
-                                       <img 
-                                          src={playerImage} 
-                                          className={isDefense ? "max-w-[70%] max-h-[85%] object-contain drop-shadow-2xl origin-bottom mb-2" : "w-auto h-full object-contain object-bottom drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] filter contrast-110 brightness-110 origin-bottom"} 
-                                          crossOrigin="anonymous" 
-                                          alt="" 
-                                          onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
-                                       />
-                                    </div>
-
-                                    <div className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black via-black/90 to-transparent z-20 rounded-b-[20px] pointer-events-none" />
-
-                                    <div className="relative z-30 px-3 pb-3 pt-2 mt-auto flex flex-col items-center text-center bg-transparent pointer-events-none w-full min-w-0">
-                                       <div className={`text-[12px] font-bold tracking-widest uppercase leading-tight mb-0.5 ${cardStyle.text} drop-shadow-md`}>
-                                          {firstName}
-                                       </div>
-                                       <div 
-                                          className="text-3xl font-black text-white tracking-tight truncate w-full drop-shadow-lg"
-                                          style={{ lineHeight: '1.1' }}
-                                       >
-                                          {lastName}
-                                       </div>
-                                    </div>
-
-                                  </div>
-                                );
-                              })}
-                           </div>
-                         </div>
-
-                         {/* BENCH PLAYERS */}
-                         {bench.length > 0 && (
-                           <div>
-                             <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4 px-1 flex items-center gap-2 drop-shadow-md">
-                               <span className="w-2 h-2 rounded-full bg-zinc-600"></span> Bench
-                             </h3>
-                             <div className="grid grid-cols-2 gap-3">
-                                {bench.map((playerId, idx) => {
-                                  const isDefense = playerId.length < 4; 
-                                  const dbPlayer = playerDB[playerId]; 
-                                  const pickInfo = draftPicks[String(playerId)];
-                                  
-                                  let firstName = "Unknown";
-                                  let lastName = "Player";
-                                  let position = "BN";
-                                  let team = "fa";
-
-                                  if (isDefense) {
-                                     firstName = playerId;
-                                     lastName = "DEFENSE";
-                                     position = "DEF";
-                                     team = playerId.toLowerCase();
-                                  } else if (dbPlayer) {
-                                     firstName = dbPlayer.first_name || "";
-                                     lastName = dbPlayer.last_name || "";
-                                     position = dbPlayer.position || "BN";
-                                     team = dbPlayer.team ? dbPlayer.team.toLowerCase() : "fa";
-                                  }
-
-                                  const cardStyle = getCardStyle(position);
-                                  const isFA = team === 'fa';
-                                  const teamLogo = isFA ? null : `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
-
-                                  let playerImage = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
-                                  if (isDefense && !isFA) {
-                                     playerImage = `https://sleepercdn.com/images/team_logos/nfl/${playerId.toLowerCase()}.png`;
-                                  } else if (dbPlayer?.espn_id) {
-                                     playerImage = getESPNHeadshot(dbPlayer.espn_id);
-                                  } else {
-                                     playerImage = `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
-                                  }
-
-                                  return (
-                                    <div key={`bench-${playerId}-${idx}`} className={`relative w-full h-[60px] rounded-[16px] flex items-center overflow-hidden bg-zinc-950 border border-zinc-800 shadow-md shadow-[0_3px_6px_rgba(0,0,0,0.5)]`}>
-                                       
-                                       {teamLogo && (
-                                         <div className="absolute inset-y-0 right-8 flex items-center justify-center z-0 opacity-[0.2] pointer-events-none">
-                                            <img src={teamLogo} className="h-[250%] w-auto object-contain mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
-                                         </div>
-                                       )}
-
-                                       <div className={`w-14 h-full flex items-center justify-center font-black ${cardStyle.text} text-[13px] shrink-0 tracking-widest z-20 shadow-inner`}>
-                                          {position}
-                                       </div>
-
-                                       <div className="w-10 h-10 mx-1 rounded-full bg-zinc-900 border border-zinc-700/50 flex items-center justify-center overflow-hidden shrink-0 relative z-20 shadow-md">
-                                          <img 
-                                            src={playerImage} 
-                                            alt="" 
-                                            className={isDefense ? "w-6 h-6 object-contain" : "w-full h-full object-cover object-top scale-110 translate-y-1"}
-                                            crossOrigin="anonymous" 
-                                            onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
-                                          />
-                                       </div>
-
-                                       <div className="flex-1 min-w-0 pl-4 pr-2 flex items-baseline z-20 w-full">
-                                          <span className="font-black text-zinc-500 mr-2 uppercase text-[15px] tracking-wide shrink-0 leading-none">{firstName.charAt(0)}.</span>
-                                          <span className="text-white font-black text-[19px] uppercase truncate tracking-wide flex-1 min-w-0 leading-none">{lastName}</span>
-                                       </div>
-
-                                       <div className="pr-4 z-20 shrink-0 text-right flex flex-col items-end justify-center h-full">
-                                          <span className="text-[12px] font-black text-white tracking-widest leading-none mt-[1px]">
-                                             {pickInfo ? pickInfo.formatted : 'FA'}
-                                          </span>
-                                          {pickInfo?.posRank && (
-                                             <span className="text-[9px] font-bold text-zinc-500 uppercase mt-1 leading-none">
-                                                {pickInfo.posRank}
-                                             </span>
-                                          )}
-                                       </div>
-                                    </div>
-                                  );
-                                })}
-                             </div>
-                           </div>
-                         )}
-
-                      </div>
+                    <div className="w-[1080px] h-[1350px] bg-zinc-950 overflow-hidden flex flex-col relative">
+                      {rosterGraphicContent}
                     </div>
                   </div>
+              </div>
+          </div>
+
+          {/* 🚀 HIDDEN NATIVE WRAPPER (Strictly for html2canvas to capture pixel-perfect fonts safely away from Safari subpixel bugs) */}
+          <div style={{ position: 'fixed', top: '-20000px', left: '-20000px', pointerEvents: 'none' }}>
+              <div ref={graphicRef} className="w-[1080px] h-[1350px] bg-zinc-950 overflow-hidden flex flex-col relative">
+                 {rosterGraphicContent}
               </div>
           </div>
 
