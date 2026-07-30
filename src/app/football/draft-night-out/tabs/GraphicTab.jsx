@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
-import html2canvas from 'html2canvas';
+// 🚀 FIXED: Swapped to the PRO version to fix the "lab" and "oklch" color space crash
+import html2canvas from 'html2canvas-pro';
 import { Search, Loader2, Download, AlertCircle, Share2, Copy, Check } from 'lucide-react';
 
 export default function GraphicTab() {
@@ -77,8 +78,27 @@ export default function GraphicTab() {
     loadPlayerDatabases();
   }, []);
 
+  // 🚀 FIXED: Real-time Validation via Debounce Effect
+  useEffect(() => {
+    if (!username || username.trim().length < 3) {
+       setLeagues([]);
+       setSelectedLeague('');
+       setTeamData(null);
+       setStarters([]);
+       setBench([]);
+       setError('');
+       return;
+    }
+
+    const delayDebounceFn = setTimeout(() => {
+      fetchSleeperLeagues();
+    }, 800);
+
+    return () => clearTimeout(delayDebounceFn);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username]);
+
   const fetchSleeperLeagues = async () => {
-    if (!username) return;
     setLoading(true);
     setError('');
     setLeagues([]);
@@ -227,7 +247,6 @@ export default function GraphicTab() {
     }
   };
 
-  // 🚀 Native Mobile Share / Platform Intent
   const handleShareGraphic = async () => {
     setGenerating(true);
     try {
@@ -238,7 +257,6 @@ export default function GraphicTab() {
         if (!blob) return;
         const file = new File([blob], `${teamData.teamName.replace(/\s+/g, '-')}-DNO-Roster.jpg`, { type: 'image/jpeg' });
         
-        // Use Native Web Share API if supported (iOS / Android / Safari)
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
@@ -246,7 +264,6 @@ export default function GraphicTab() {
             text: `Check out my starting lineup for Draft Night Out 2026! #DraftNightOut #FSAN`,
           });
         } else {
-          // Desktop Fallback: Open X / Twitter Intent window
           const text = encodeURIComponent(`Check out my starting lineup for Draft Night Out 2026! @FSANetwork #DraftNightOut`);
           window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
         }
@@ -258,7 +275,6 @@ export default function GraphicTab() {
     }
   };
 
-  // 🚀 Copy Image directly to Clipboard for desktop pasting
   const handleCopyImage = async () => {
     setGenerating(true);
     try {
@@ -287,13 +303,13 @@ export default function GraphicTab() {
 
   const getCardStyle = (position) => {
     switch (position) {
-      case 'QB': return { border: 'border-cyan-500/60 shadow-[0_0_20px_rgba(6,182,212,0.15)]', gradient: 'from-cyan-950/40 to-black', text: 'text-cyan-400' };
-      case 'RB': return { border: 'border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]', gradient: 'from-emerald-950/40 to-black', text: 'text-emerald-500' };
-      case 'WR': return { border: 'border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.15)]', gradient: 'from-amber-900/40 to-black', text: 'text-amber-500' };
-      case 'TE': return { border: 'border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.15)]', gradient: 'from-red-950/40 to-black', text: 'text-red-500' };
-      case 'K': return { border: 'border-purple-500/60 shadow-[0_0_20px_rgba(168,85,247,0.15)]', gradient: 'from-purple-950/40 to-black', text: 'text-purple-400' };
-      case 'DEF': return { border: 'border-slate-300/60 shadow-[0_0_20px_rgba(203,213,225,0.15)]', gradient: 'from-slate-700/40 to-black', text: 'text-slate-300' };
-      default: return { border: 'border-zinc-500/60 shadow-[0_0_20px_rgba(113,113,122,0.15)]', gradient: 'from-zinc-800/40 to-black', text: 'text-zinc-400' };
+      case 'QB': return { border: 'border-cyan-500/60 shadow-[0_0_20px_rgba(6,182,212,0.15)]', gradient: 'from-cyan-950/40 to-black', text: 'text-cyan-400', bg: 'bg-cyan-500' };
+      case 'RB': return { border: 'border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]', gradient: 'from-emerald-950/40 to-black', text: 'text-emerald-500', bg: 'bg-emerald-500' };
+      case 'WR': return { border: 'border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.15)]', gradient: 'from-amber-900/40 to-black', text: 'text-amber-500', bg: 'bg-amber-500' };
+      case 'TE': return { border: 'border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.15)]', gradient: 'from-red-950/40 to-black', text: 'text-red-500', bg: 'bg-red-600' };
+      case 'K': return { border: 'border-purple-500/60 shadow-[0_0_20px_rgba(168,85,247,0.15)]', gradient: 'from-purple-950/40 to-black', text: 'text-purple-400', bg: 'bg-purple-500' };
+      case 'DEF': return { border: 'border-slate-300/60 shadow-[0_0_20px_rgba(203,213,225,0.15)]', gradient: 'from-slate-700/40 to-black', text: 'text-slate-300', bg: 'bg-slate-400' };
+      default: return { border: 'border-zinc-500/60 shadow-[0_0_20px_rgba(113,113,122,0.15)]', gradient: 'from-zinc-800/40 to-black', text: 'text-zinc-400', bg: 'bg-zinc-600' };
     }
   };
 
@@ -315,19 +331,12 @@ export default function GraphicTab() {
               type="text" 
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && fetchSleeperLeagues()}
               placeholder="Enter Sleeper Username..." 
               disabled={dbLoading}
-              className="w-full bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-[#1b75bb] font-bold text-sm transition-colors disabled:opacity-50"
+              className="w-full bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-3.5 pl-11 pr-12 focus:outline-none focus:border-[#1b75bb] font-bold text-sm transition-colors disabled:opacity-50"
             />
+            {loading && <Loader2 size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 animate-spin" />}
           </div>
-          <button 
-            onClick={fetchSleeperLeagues}
-            disabled={loading || !username || dbLoading}
-            className="bg-[#f5a623] hover:bg-[#e0961d] disabled:opacity-50 text-[#111] font-black uppercase tracking-widest text-xs px-8 py-3.5 rounded-xl transition-colors shrink-0 flex items-center justify-center"
-          >
-            {loading || dbLoading ? <Loader2 size={16} className="animate-spin" /> : 'Find DNO Leagues'}
-          </button>
         </div>
 
         {error && (
@@ -429,25 +438,28 @@ export default function GraphicTab() {
                                 }
 
                                 const cardStyle = getCardStyle(position);
+                                const isFA = team === 'fa';
+                                const teamLogo = isFA ? null : `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
 
                                 let playerImage = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
-                                if (isDefense) {
+                                if (isDefense && !isFA) {
                                    playerImage = `https://sleepercdn.com/images/team_logos/nfl/${playerId.toLowerCase()}.png`;
                                 } else if (dbPlayer?.espn_id) {
                                    playerImage = getESPNHeadshot(dbPlayer.espn_id);
                                 } else {
                                    playerImage = `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
                                 }
-                                
-                                const teamLogo = `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
 
                                 return (
                                   <div key={`starter-${playerId}-${idx}`} className="relative w-full h-[215px] flex flex-col justify-end group shadow-xl">
                                     
                                     <div className={`absolute inset-0 rounded-[20px] bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden`}>
-                                       <div className="absolute inset-x-0 top-0 z-0 flex items-start justify-center opacity-[0.25] pointer-events-none">
-                                          <img src={teamLogo} className="w-[120%] max-w-none h-auto object-contain -translate-y-4 mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
-                                       </div>
+                                       {/* 🚀 FIXED: Skip rendering the team logo completely if it is a FA */}
+                                       {teamLogo && (
+                                         <div className="absolute inset-x-0 top-0 z-0 flex items-start justify-center opacity-[0.25] pointer-events-none">
+                                            <img src={teamLogo} className="w-[120%] max-w-none h-auto object-contain -translate-y-4 mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
+                                         </div>
+                                       )}
                                     </div>
 
                                     <div className="absolute top-3 left-3 z-40">
@@ -524,9 +536,11 @@ export default function GraphicTab() {
                                   }
 
                                   const cardStyle = getCardStyle(position);
+                                  const isFA = team === 'fa';
+                                  const teamLogo = isFA ? null : `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
 
                                   let playerImage = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
-                                  if (isDefense) {
+                                  if (isDefense && !isFA) {
                                      playerImage = `https://sleepercdn.com/images/team_logos/nfl/${playerId.toLowerCase()}.png`;
                                   } else if (dbPlayer?.espn_id) {
                                      playerImage = getESPNHeadshot(dbPlayer.espn_id);
@@ -534,14 +548,15 @@ export default function GraphicTab() {
                                      playerImage = `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
                                   }
 
-                                  const teamLogo = `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
-
                                   return (
                                     <div key={`bench-${playerId}-${idx}`} className={`relative w-full h-[56px] rounded-[16px] flex items-center overflow-hidden bg-zinc-950 border border-zinc-800 shadow-md`}>
                                        
-                                       <div className="absolute inset-y-0 right-8 flex items-center justify-center z-0 opacity-[0.2] pointer-events-none">
-                                          <img src={teamLogo} className="h-[250%] w-auto object-contain mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
-                                       </div>
+                                       {/* 🚀 FIXED: Skip rendering the team logo completely if it is a FA */}
+                                       {teamLogo && (
+                                         <div className="absolute inset-y-0 right-8 flex items-center justify-center z-0 opacity-[0.2] pointer-events-none">
+                                            <img src={teamLogo} className="h-[250%] w-auto object-contain mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
+                                         </div>
+                                       )}
 
                                        <div className={`w-14 h-full flex items-center justify-center font-black ${cardStyle.text} text-[13px] shrink-0 tracking-widest z-20`}>
                                           {position}
@@ -557,7 +572,7 @@ export default function GraphicTab() {
                                           />
                                        </div>
 
-                                       <div className="flex-1 min-w-0 pl-4 pr-3 flex items-baseline z-20">
+                                       <div className="flex-1 min-w-0 pl-4 pr-2 flex items-baseline z-20">
                                           <span className="font-black text-zinc-500 mr-2 uppercase text-[15px] tracking-wide">{firstName.charAt(0)}.</span>
                                           <span className="text-white font-black text-[19px] uppercase truncate tracking-wide">{lastName}</span>
                                        </div>
@@ -585,7 +600,6 @@ export default function GraphicTab() {
               </div>
           </div>
 
-          {/* 🚀 ACTION BUTTONS: Download + Native Social Share + Copy Image */}
           <div className="flex flex-wrap gap-4 justify-start">
             <button 
               onClick={handleShareGraphic}
