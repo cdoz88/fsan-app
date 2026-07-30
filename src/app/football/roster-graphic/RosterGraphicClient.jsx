@@ -69,19 +69,29 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
     setBench([]);
 
     try {
-      const userRes = await fetch(`https://api.sleeper.app/v1/user/${username}`);
+      // 1. Get Sleeper User ID
+      const userRes = await fetch(`https://api.sleeper.app/v1/user/${username.trim()}`);
       if (!userRes.ok) throw new Error('Could not find that Sleeper username.');
       const userData = await userRes.json();
       
+      // 2. Fetch imported DNO Leagues from WordPress Plugin Pool
+      const dnoPoolRes = await fetch(`/api/scl?type=dno_pool&t=${Date.now()}`);
+      const dnoPoolData = await dnoPoolRes.json();
+      const validDnoLeagueIds = new Set((dnoPoolData.leagues || []).map(l => String(l.id)));
+
+      // 3. Get User's 2026 Sleeper Leagues
       const leaguesRes = await fetch(`https://api.sleeper.app/v1/user/${userData.user_id}/leagues/nfl/2026`);
-      if (!leaguesRes.ok) throw new Error('Could not fetch leagues.');
-      const leaguesData = await leaguesRes.json();
+      if (!leaguesRes.ok) throw new Error('Could not fetch Sleeper leagues.');
+      const userLeagues = await leaguesRes.json();
+
+      // 4. CROSS-REFERENCE: Only keep leagues that are in the DNO Pool!
+      const matchingDnoLeagues = userLeagues.filter(l => validDnoLeagueIds.has(String(l.league_id)));
       
-      if (leaguesData.length === 0) {
-        throw new Error('No leagues found for this user in the current season.');
+      if (matchingDnoLeagues.length === 0) {
+        throw new Error('No active Draft Night Out 2026 leagues found for this Sleeper account.');
       }
 
-      setLeagues(leaguesData);
+      setLeagues(matchingDnoLeagues);
       setTeamData({ userId: userData.user_id, username: userData.display_name, avatar: userData.avatar });
     } catch (err) {
       setError(err.message);
@@ -106,7 +116,7 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
       const rosters = await rostersRes.json();
       
       const myRoster = rosters.find(r => r.owner_id === teamData.userId);
-      if (!myRoster) throw new Error('Could not find your roster in this league.');
+      if (!myRoster) throw new Error('Could not find your roster in this DNO division.');
 
       const usersRes = await fetch(`https://api.sleeper.app/v1/league/${leagueId}/users`);
       const users = await usersRes.json();
@@ -149,7 +159,7 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
       
       const image = canvas.toDataURL('image/jpeg', 0.9);
       const link = document.createElement('a');
-      link.download = `${teamData.teamName.replace(/\s+/g, '-')}-Roster-2026.jpg`;
+      link.download = `${teamData.teamName.replace(/\s+/g, '-')}-DNO-Roster.jpg`;
       link.href = image;
       link.click();
     } catch (err) {
@@ -165,7 +175,6 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
       case 'QB': return { border: 'border-cyan-500/60 shadow-[0_0_20px_rgba(6,182,212,0.15)]', gradient: 'from-cyan-950/40 to-black', text: 'text-cyan-400', bg: 'bg-cyan-500' };
       case 'RB': return { border: 'border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]', gradient: 'from-emerald-950/40 to-black', text: 'text-emerald-400', bg: 'bg-emerald-500' };
       case 'WR': return { border: 'border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.15)]', gradient: 'from-amber-900/40 to-black', text: 'text-amber-400', bg: 'bg-amber-500' };
-      // 🚀 Changed TE to Red
       case 'TE': return { border: 'border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.15)]', gradient: 'from-red-950/40 to-black', text: 'text-red-400', bg: 'bg-red-600' };
       case 'K': return { border: 'border-purple-500/60 shadow-[0_0_20px_rgba(168,85,247,0.15)]', gradient: 'from-purple-950/40 to-black', text: 'text-purple-400', bg: 'bg-purple-500' };
       case 'DEF': return { border: 'border-slate-300/60 shadow-[0_0_20px_rgba(203,213,225,0.15)]', gradient: 'from-slate-700/40 to-black', text: 'text-slate-300', bg: 'bg-slate-400' };
@@ -188,7 +197,7 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
              </div>
              <div>
                <h1 className="text-3xl font-black italic text-white uppercase tracking-tighter">Social Roster Graphic</h1>
-               <p className="text-sm text-gray-400 font-bold uppercase tracking-widest mt-1">Generate & Share Your Squad</p>
+               <p className="text-sm text-gray-400 font-bold uppercase tracking-widest mt-1">Generate & Share Your DNO Squad</p>
              </div>
           </div>
 
@@ -211,7 +220,7 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                 disabled={loading || !username || dbLoading}
                 className="bg-[#f5a623] hover:bg-[#e0961d] disabled:opacity-50 text-[#111] font-black uppercase tracking-widest text-xs px-8 py-3.5 rounded-xl transition-colors shrink-0 flex items-center justify-center"
               >
-                {loading || dbLoading ? <Loader2 size={16} className="animate-spin" /> : 'Find Leagues'}
+                {loading || dbLoading ? <Loader2 size={16} className="animate-spin" /> : 'Find DNO Leagues'}
               </button>
             </div>
 
@@ -223,13 +232,13 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
 
             {leagues.length > 0 && (
               <div className="mt-6 animate-in fade-in duration-300">
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Select Your League</label>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Select Your DNO Division</label>
                 <select 
                   value={selectedLeague}
                   onChange={(e) => handleLeagueSelect(e.target.value)}
                   className="w-full bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-3.5 px-4 focus:outline-none focus:border-[#1b75bb] font-bold text-sm appearance-none"
                 >
-                  <option value="">-- Choose a League --</option>
+                  <option value="">-- Choose a DNO Division --</option>
                   {leagues.map(l => (
                     <option key={l.league_id} value={l.league_id}>{l.name}</option>
                   ))}
@@ -241,19 +250,18 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
           {starters.length > 0 && teamData && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               
+              {/* EXPORTABLE GRAPHIC CONTAINER (1080x1350 IG Portrait) */}
               <div className="w-full overflow-x-auto pb-6 custom-scrollbar">
                   <div 
                     ref={graphicRef}
                     className="relative w-[1080px] h-[1350px] bg-zinc-950 border border-zinc-800 overflow-hidden flex flex-col shrink-0"
                   >
-                    {/* 🚀 REMOVED crossOrigin="anonymous" from local assets to prevent CORS blocks */}
                     <div className="absolute inset-0 z-0 opacity-40 mix-blend-luminosity bg-cover bg-center" style={{ backgroundImage: "url('/images/DNO-Background.webp')" }} />
                     <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
                     <div className="absolute inset-0 z-0 bg-gradient-to-r from-blue-900/10 to-zinc-950/30 pointer-events-none" />
 
                     <div className="relative z-10 p-8 flex items-center justify-between border-b border-zinc-800/50 bg-black/60 backdrop-blur-md h-[140px] shrink-0">
                       <div className="flex items-center gap-6">
-                         {/* 🚀 REMOVED crossOrigin="anonymous" from local assets */}
                          <img src="/images/DNO-Logo_Logo.webp" alt="DNO" className="h-16 w-auto object-contain drop-shadow-lg" />
                          <div>
                           <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic drop-shadow-md">
@@ -262,13 +270,12 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                           <div className="flex items-center gap-3 mt-1">
                             <span className="text-[#f5a623] font-bold uppercase tracking-widest text-sm">{teamData.leagueName}</span>
                             <span className="text-zinc-600 font-bold">•</span>
-                            <span className="text-zinc-400 font-bold uppercase tracking-widest text-sm">2026 Roster</span>
+                            <span className="text-zinc-400 font-bold uppercase tracking-widest text-sm">Draft Night Out Roster</span>
                           </div>
                          </div>
                       </div>
                     </div>
 
-                    {/* Main Content Area (Tighter gaps) */}
                     <div className="relative z-10 px-8 py-6 flex-1 flex flex-col justify-start gap-4">
                        
                        {/* STARTING LINEUP */}
@@ -324,7 +331,6 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                                      <img src={teamLogo} className="w-[120%] max-w-none h-auto object-contain -translate-y-4 mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
                                   </div>
 
-                                  {/* 🚀 FIX: Reduced scale and removed translate-y so heads stay fully inside the card */}
                                   <div className="absolute inset-x-0 bottom-0 top-0 flex items-end justify-center z-10 pointer-events-none overflow-hidden">
                                      <img 
                                         src={playerImage} 
@@ -352,7 +358,7 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                          </div>
                        </div>
 
-                       {/* 🚀 BENCH PLAYERS (Fancy Blocks) */}
+                       {/* BENCH PLAYERS */}
                        {bench.length > 0 && (
                          <div className="mt-2">
                            <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-3 px-1 flex items-center gap-2">
@@ -395,12 +401,10 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
 
                                 return (
                                   <div key={`bench-${playerId}-${idx}`} className="bg-zinc-900/90 border border-zinc-800 rounded-2xl h-[60px] flex items-center overflow-hidden relative shadow-md">
-                                     {/* Left Colored Badge Strip */}
                                      <div className={`w-12 h-full ${cardStyle.bg} flex items-center justify-center font-black text-black text-xs shrink-0 tracking-wider`}>
                                         {position}
                                      </div>
 
-                                     {/* Headshot / Thumbnail */}
                                      <div className="w-10 h-10 mx-3 rounded bg-zinc-950 border border-zinc-700/50 flex items-center justify-center overflow-hidden shrink-0 relative">
                                         <img 
                                           src={playerImage} 
@@ -411,10 +415,8 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                                         />
                                      </div>
 
-                                     {/* Team Logo */}
                                      <img src={teamLogo} className="w-6 h-6 object-contain mr-3 opacity-80 shrink-0 drop-shadow-md" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
 
-                                     {/* Player Name */}
                                      <div className="flex-1 min-w-0 pr-4 flex items-center">
                                         <span className="font-bold text-zinc-400 mr-2 uppercase text-sm tracking-wide">{firstName.charAt(0)}.</span>
                                         <span className="text-white font-black text-base uppercase truncate tracking-wide">{lastName}</span>

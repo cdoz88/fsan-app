@@ -4,7 +4,7 @@ import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
 import { useSession } from 'next-auth/react';
-import { MonitorSmartphone, Trophy, BookOpen, Handshake, HeartHandshake, ListOrdered, Loader2, AlertCircle, X } from 'lucide-react';
+import { MonitorSmartphone, Trophy, BookOpen, Handshake, HeartHandshake, ListOrdered, Loader2, AlertCircle, X, Image as ImageIcon } from 'lucide-react';
 
 import SuccessToast from './components/SuccessToast';
 import RaffleModal from './components/RaffleModal';
@@ -13,6 +13,7 @@ import CharityTab from './tabs/CharityTab';
 import PrizesTab from './tabs/PrizesTab';
 import RulesTab from './tabs/RulesTab';
 import SponsorsTab from './tabs/SponsorsTab';
+import GraphicTab from './tabs/GraphicTab';
 
 export default function DraftNightOutClient({ proToolsMenu, connectMenu, initialLeaderboard }) {
   const { data: session, status } = useSession();
@@ -39,7 +40,8 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   
   const [recentlyJoinedLeagues, setRecentlyJoinedLeagues] = useState([]);
 
-  const validTabs = ['drafts', 'leaderboard', 'charity', 'prizes', 'rules', 'sponsors'];
+  // 🚀 Added 'graphic' to valid tabs
+  const validTabs = ['drafts', 'leaderboard', 'graphic', 'charity', 'prizes', 'rules', 'sponsors'];
   const [activeTab, setActiveTab] = useState('drafts');
   
   const [draftView, setDraftView] = useState('online');
@@ -84,7 +86,6 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
     } catch (err) { console.warn("Failed loading live initialization data arrays: ", err); }
   }, []);
 
-  // 🚀 FIX: Removed the authentication condition. Now guests fetch leagues too!
   useEffect(() => {
     loadLiveLeaderboard();
     loadDnoPool();
@@ -181,6 +182,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
                 {[
                   { id: 'drafts', icon: MonitorSmartphone, label: 'Drafts' },
                   { id: 'leaderboard', icon: ListOrdered, label: 'Leaderboard' },
+                  { id: 'graphic', icon: ImageIcon, label: 'Graphic' },
                   { id: 'charity', icon: HeartHandshake, label: 'Charity' },
                   { id: 'prizes', icon: Trophy, label: 'Prizes' },
                   { id: 'rules', icon: BookOpen, label: 'Rules' },
@@ -199,6 +201,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
 
               {activeTab === 'drafts' && <DraftsTab draftView={draftView} setDraftView={setDraftView} isProPlus={isProPlus} ticketsAvailable={ticketsAvailable} handlePurchaseExtraEntry={handlePurchaseExtraEntry} errorMessage={errorMessage} loadingLeagues={loadingLeagues} leagues={leagues} sortedLeagues={sortedLeagues} recentlyJoinedLeagues={recentlyJoinedLeagues} setConfirmingLeague={setConfirmingLeague} setShowRaffleModal={setShowRaffleModal} />}
               {activeTab === 'leaderboard' && <div className="animate-in fade-in slide-in-from-bottom-4 duration-500"><NapkinLeaderboard initialLeaderboard={liveLeaderboard} overrideSeasonLabel={liveSeasonLabel} /></div>}
+              {activeTab === 'graphic' && <GraphicTab />}
               {activeTab === 'charity' && <CharityTab />}
               {activeTab === 'prizes' && <PrizesTab />}
               {activeTab === 'rules' && <RulesTab />}
