@@ -1,8 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
-// 🚀 FIXED: Swapped to the PRO version to fix the "lab" and "oklch" color space crash
 import html2canvas from 'html2canvas-pro';
-import { Search, Loader2, Download, AlertCircle, Share2, Copy, Check } from 'lucide-react';
+import { Search, Loader2, Download, AlertCircle, Share2, Copy, Check, CheckCircle2 } from 'lucide-react';
 
 export default function GraphicTab() {
   const [username, setUsername] = useState('');
@@ -78,7 +77,7 @@ export default function GraphicTab() {
     loadPlayerDatabases();
   }, []);
 
-  // 🚀 FIXED: Real-time Validation via Debounce Effect
+  // Real-time Validation via Debounce Effect
   useEffect(() => {
     if (!username || username.trim().length < 3) {
        setLeagues([]);
@@ -132,7 +131,13 @@ export default function GraphicTab() {
       }
 
       setLeagues(matchingDnoLeagues);
-      setTeamData({ userId: userData.user_id, username: userData.display_name, avatar: userData.avatar });
+      // 🚀 Store Sleeper User Profile Data (Display Name, Username, Avatar)
+      setTeamData({ 
+        userId: userData.user_id, 
+        username: userData.username || userData.display_name, 
+        displayName: userData.display_name, 
+        avatar: userData.avatar 
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -166,7 +171,7 @@ export default function GraphicTab() {
       setTeamData(prev => ({
         ...prev,
         leagueName: activeLeague.name,
-        teamName: me?.metadata?.team_name || prev.username
+        teamName: me?.metadata?.team_name || prev.displayName || prev.username
       }));
 
       let pickMap = {};
@@ -247,22 +252,36 @@ export default function GraphicTab() {
     }
   };
 
+  // 🚀 FIXED: Wrapped navigator.share in a try/catch block so canceling native share releases the button state!
   const handleShareGraphic = async () => {
     setGenerating(true);
     try {
       const canvas = await generateCanvas();
-      if (!canvas) return;
+      if (!canvas) {
+        setGenerating(false);
+        return;
+      }
 
       canvas.toBlob(async (blob) => {
-        if (!blob) return;
+        if (!blob) {
+          setGenerating(false);
+          return;
+        }
         const file = new File([blob], `${teamData.teamName.replace(/\s+/g, '-')}-DNO-Roster.jpg`, { type: 'image/jpeg' });
         
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: `${teamData.teamName} - DNO Roster`,
-            text: `Check out my starting lineup for Draft Night Out 2026! #DraftNightOut #FSAN`,
-          });
+          try {
+            await navigator.share({
+              files: [file],
+              title: `${teamData.teamName} - DNO Roster`,
+              text: `Check out my starting lineup for Draft Night Out 2026! #DraftNightOut #FSAN`,
+            });
+          } catch (shareErr) {
+            // Safely catches AbortError (User Canceled) without locking the UI!
+            if (shareErr.name !== 'AbortError') {
+              console.warn("Share failed:", shareErr);
+            }
+          }
         } else {
           const text = encodeURIComponent(`Check out my starting lineup for Draft Night Out 2026! @FSANetwork #DraftNightOut`);
           window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
@@ -279,10 +298,16 @@ export default function GraphicTab() {
     setGenerating(true);
     try {
       const canvas = await generateCanvas();
-      if (!canvas) return;
+      if (!canvas) {
+        setGenerating(false);
+        return;
+      }
 
       canvas.toBlob(async (blob) => {
-        if (!blob) return;
+        if (!blob) {
+          setGenerating(false);
+          return;
+        }
         try {
           await navigator.clipboard.write([
             new ClipboardItem({ 'image/png': blob })
@@ -345,6 +370,33 @@ export default function GraphicTab() {
           </div>
         )}
 
+        {/* 🚀 RESTORED: Verified Sleeper User Profile Card (Avatar + Display Name + Verified Badge) */}
+        {teamData && !error && (
+          <div className="mt-6 pt-6 border-t border-gray-800/80 flex items-center justify-between animate-in fade-in duration-300">
+             <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-full bg-zinc-800 border-2 border-[#1b75bb] overflow-hidden shrink-0 shadow-md">
+                   <img 
+                     src={teamData.avatar ? `https://sleepercdn.com/avatars/thumbs/${teamData.avatar}` : 'https://sleepercdn.com/images/v2/icons/player_default.webp'} 
+                     alt="" 
+                     className="w-full h-full object-cover"
+                     onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
+                   />
+                </div>
+                <div>
+                   <div className="flex items-center gap-2">
+                      <h4 className="text-white font-black text-sm uppercase tracking-tight">{teamData.displayName || teamData.username}</h4>
+                      <CheckCircle2 size={15} className="text-emerald-400 fill-emerald-400/20" />
+                   </div>
+                   <p className="text-[11px] font-bold text-gray-500 tracking-wider">@{teamData.username}</p>
+                </div>
+             </div>
+             <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1 rounded-full">
+                Sleeper Verified
+             </span>
+          </div>
+        )}
+
+        {/* Single-click League Buttons */}
         {leagues.length > 0 && (
           <div className="mt-6 animate-in fade-in duration-300">
             <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Select Your DNO Division</label>
@@ -454,7 +506,6 @@ export default function GraphicTab() {
                                   <div key={`starter-${playerId}-${idx}`} className="relative w-full h-[215px] flex flex-col justify-end group shadow-xl">
                                     
                                     <div className={`absolute inset-0 rounded-[20px] bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden`}>
-                                       {/* 🚀 FIXED: Skip rendering the team logo completely if it is a FA */}
                                        {teamLogo && (
                                          <div className="absolute inset-x-0 top-0 z-0 flex items-start justify-center opacity-[0.25] pointer-events-none">
                                             <img src={teamLogo} className="w-[120%] max-w-none h-auto object-contain -translate-y-4 mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
@@ -551,7 +602,6 @@ export default function GraphicTab() {
                                   return (
                                     <div key={`bench-${playerId}-${idx}`} className={`relative w-full h-[56px] rounded-[16px] flex items-center overflow-hidden bg-zinc-950 border border-zinc-800 shadow-md`}>
                                        
-                                       {/* 🚀 FIXED: Skip rendering the team logo completely if it is a FA */}
                                        {teamLogo && (
                                          <div className="absolute inset-y-0 right-8 flex items-center justify-center z-0 opacity-[0.2] pointer-events-none">
                                             <img src={teamLogo} className="h-[250%] w-auto object-contain mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
