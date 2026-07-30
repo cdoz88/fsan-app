@@ -72,7 +72,7 @@ export default function GraphicTab() {
       if (!userRes.ok) throw new Error('Could not find that Sleeper username.');
       const userData = await userRes.json();
       
-      // 2. Fetch imported DNO Leagues from WordPress Plugin Pool
+      // 2. Fetch imported DNO Leagues from WordPress Plugin Pool (Online Divisions)
       const dnoPoolRes = await fetch(`/api/scl?type=dno_pool&t=${Date.now()}`);
       const dnoPoolData = await dnoPoolRes.json();
       const validDnoLeagueIds = new Set((dnoPoolData.leagues || []).map(l => String(l.id)));
@@ -82,8 +82,12 @@ export default function GraphicTab() {
       if (!leaguesRes.ok) throw new Error('Could not fetch Sleeper leagues.');
       const userLeagues = await leaguesRes.json();
 
-      // 4. CROSS-REFERENCE: Only keep leagues that are in the DNO Pool!
-      const matchingDnoLeagues = userLeagues.filter(l => validDnoLeagueIds.has(String(l.league_id)));
+      // 4. 🚀 DUAL-FILTER: Keep leagues that are in the Online DNO Pool OR have "DNO" in their name (Live Events)
+      const matchingDnoLeagues = userLeagues.filter(l => {
+        const inWpPool = validDnoLeagueIds.has(String(l.league_id));
+        const hasDnoName = l.name && (l.name.toUpperCase().includes('DNO') || l.name.toUpperCase().includes('DRAFT NIGHT OUT'));
+        return inWpPool || hasDnoName;
+      });
       
       if (matchingDnoLeagues.length === 0) {
         throw new Error('No active Draft Night Out 2026 leagues found for this Sleeper account.');
