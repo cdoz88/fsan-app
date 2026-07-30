@@ -31,18 +31,15 @@ export default function GraphicTab() {
   const dnoBgUrl = `${baseUrl}/images/DNO-Background.webp`;
   const dnoLogoUrl = `${baseUrl}/images/DNO-Logo_Logo.webp`;
 
-  // 🚀 FIXED: Dynamic Scaling calculates true parent available width
   useEffect(() => {
     const updateScale = () => {
-      if (wrapperRef.current && wrapperRef.current.parentElement) {
-        // Query the parent element to get the true available layout width
-        const parentWidth = wrapperRef.current.parentElement.clientWidth;
+      if (wrapperRef.current) {
+        const parentWidth = wrapperRef.current.clientWidth;
         setScale(Math.min(1, parentWidth / 1080));
       }
     };
     updateScale();
     window.addEventListener('resize', updateScale);
-    // Slight delay catch to ensure sidebars finishing animating don't mess up width
     const timeout = setTimeout(updateScale, 150);
     return () => {
       window.removeEventListener('resize', updateScale);
@@ -54,7 +51,6 @@ export default function GraphicTab() {
     const loadPlayerDatabases = async () => {
       try {
         let customMap = {};
-        
         try {
           const res = await fetch('/api/dynasty-players');
           const data = await res.json();
@@ -82,7 +78,6 @@ export default function GraphicTab() {
         setDbLoading(false);
       }
     };
-    
     loadPlayerDatabases();
   }, []);
 
@@ -105,6 +100,7 @@ export default function GraphicTab() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
 
+  // 🚀 FIXED: Robust Background Rendering that ensures text is locked in place for mobile exports
   useEffect(() => {
     if (starters.length > 0 && teamData && graphicRef.current) {
       setGenerating(true);
@@ -116,7 +112,11 @@ export default function GraphicTab() {
             useCORS: true,
             allowTaint: true,
             scale: 2,
-            backgroundColor: '#09090b'
+            backgroundColor: '#09090b',
+            logging: false,
+            // Forces clean layout bounds calculation on mobile devices
+            windowWidth: 1080,
+            windowHeight: 1350
           });
           
           canvas.toBlob((blob) => {
@@ -131,7 +131,7 @@ export default function GraphicTab() {
 
       return () => clearTimeout(timer);
     }
-  }, [starters, bench, teamData, scale]);
+  }, [starters, bench, teamData]);
 
   const fetchSleeperLeagues = async () => {
     setLoading(true);
@@ -414,21 +414,23 @@ export default function GraphicTab() {
       {starters.length > 0 && teamData && teamData.teamName && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full flex flex-col items-start max-w-full">
           
-          {/* 🚀 FIXED: Robust max-w-full wrapper kills horizontal scroll. Left aligned explicitly. */}
           <div className="w-full max-w-full overflow-hidden mb-8" ref={wrapperRef}>
               
               <div 
                 className="relative rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 bg-black"
                 style={{ width: `${1080 * scale}px`, height: `${1350 * scale}px` }}
               >
-                  {/* Absolute positioning locks the transform inside the rounded border box */}
                   <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: '1080px', height: '1350px', position: 'absolute', top: 0, left: 0 }}>
                     
-                    <div ref={graphicRef} className="w-[1080px] h-[1350px] bg-zinc-950 overflow-hidden flex flex-col relative">
+                    {/* 🚀 FIXED: Added explicit inline font-synthesis and text-rendering to lock text layout during mobile canvas render */}
+                    <div 
+                      ref={graphicRef} 
+                      className="w-[1080px] h-[1350px] bg-zinc-950 overflow-hidden flex flex-col relative"
+                      style={{ textRendering: 'geometricPrecision', fontSynthesis: 'none' }}
+                    >
                       
                       <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-zinc-900/40" />
 
-                      {/* Header: 150px fixed */}
                       <div className="relative z-10 flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950 h-[150px] shrink-0 overflow-hidden">
                         <img src={dnoBgUrl} className="absolute inset-0 w-full h-full object-cover opacity-60 z-0" crossOrigin="anonymous" alt="Background" />
                         <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-950/90 via-zinc-950/70 to-transparent" />
@@ -436,10 +438,14 @@ export default function GraphicTab() {
                         <div className="flex items-center gap-6 relative z-10 px-10">
                            <img src={dnoLogoUrl} alt="DNO" className="h-24 w-auto object-contain drop-shadow-2xl" crossOrigin="anonymous" />
                            <div>
-                            <h2 className="text-[42px] font-black text-white tracking-tighter uppercase italic drop-shadow-md truncate max-w-[700px] leading-none mb-1">
+                            {/* 🚀 FIXED: Explicit line-height and block display to prevent mobile text squishing */}
+                            <h2 
+                              className="text-[42px] font-black text-white tracking-tighter uppercase italic drop-shadow-md truncate max-w-[700px] m-0 p-0"
+                              style={{ lineHeight: '1.1' }}
+                            >
                               {teamData.teamName}
                             </h2>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 mt-1">
                               <span className="text-[#f5a623] font-bold uppercase tracking-widest text-[15px] drop-shadow-md truncate max-w-[400px]">{teamData.leagueName}</span>
                               <span className="text-zinc-500 font-bold">•</span>
                               <span className="text-zinc-300 font-bold uppercase tracking-widest text-[15px] drop-shadow-md">Draft Night Out Roster</span>
@@ -448,7 +454,6 @@ export default function GraphicTab() {
                         </div>
                       </div>
 
-                      {/* 🚀 FIXED: Mathematically spaced flexbox inside 1200px remaining space */}
                       <div className="relative z-10 px-10 pt-8 pb-8 flex-1 flex flex-col justify-between">
                          
                          {/* STARTING LINEUP */}
@@ -457,7 +462,6 @@ export default function GraphicTab() {
                              <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span> Starting Lineup
                            </h3>
                            
-                           {/* 🚀 FIXED: Gaps set to 40px (gap-y-10) to support taller images popping out */}
                            <div className="grid gap-x-5 gap-y-10 grid-cols-3">
                               {starters.map((playerId, idx) => {
                                 const isDefense = playerId.length < 4; 
@@ -494,7 +498,6 @@ export default function GraphicTab() {
                                    playerImage = `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
                                 }
                                 
-                                // 🚀 FIXED: Taller Card h-[230px] to show shoulders perfectly
                                 return (
                                   <div key={`starter-${playerId}-${idx}`} className="relative w-full h-[230px] flex flex-col justify-end group shadow-xl">
                                     
@@ -523,7 +526,6 @@ export default function GraphicTab() {
                                        )}
                                     </div>
 
-                                    {/* 🚀 FIXED: h-[125%] scales image up beautifully and fits inside the gap above it */}
                                     <div className="absolute inset-x-0 bottom-0 flex items-end justify-center z-10 pointer-events-none h-[125%]">
                                        <img 
                                           src={playerImage} 
@@ -540,7 +542,10 @@ export default function GraphicTab() {
                                        <div className={`text-[12px] font-bold tracking-widest uppercase leading-tight mb-0.5 ${cardStyle.text} drop-shadow-md`}>
                                           {firstName}
                                        </div>
-                                       <div className="text-3xl font-black text-white tracking-tight leading-none truncate w-full drop-shadow-lg">
+                                       <div 
+                                          className="text-3xl font-black text-white tracking-tight truncate w-full drop-shadow-lg"
+                                          style={{ lineHeight: '1.1' }}
+                                       >
                                           {lastName}
                                        </div>
                                     </div>
@@ -593,7 +598,6 @@ export default function GraphicTab() {
                                      playerImage = `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
                                   }
 
-                                  // 🚀 FIXED: Bench height optimized to 60px
                                   return (
                                     <div key={`bench-${playerId}-${idx}`} className={`relative w-full h-[60px] rounded-[16px] flex items-center overflow-hidden bg-zinc-950 border border-zinc-800 shadow-md shadow-[0_3px_6px_rgba(0,0,0,0.5)]`}>
                                        
