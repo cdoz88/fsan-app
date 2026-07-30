@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
+// Uses 'html2canvas-pro' to fix okclh/lab color space crash
 import html2canvas from 'html2canvas-pro';
 import { Search, Loader2, Download, AlertCircle, Share2, Copy, Check, CheckCircle2 } from 'lucide-react';
 
@@ -29,10 +30,13 @@ export default function GraphicTab() {
   const dnoBgUrl = `${baseUrl}/images/DNO-Background.webp`;
   const dnoLogoUrl = `${baseUrl}/images/DNO-Logo_Logo.webp`;
 
+  // Scale the graphic dynamically to fit on the screen without horizontal scrolling
   useEffect(() => {
     const updateScale = () => {
       if (wrapperRef.current) {
-        const parentWidth = wrapperRef.current.clientWidth;
+        // 🚀 Refined scaling footprint for mobile stability
+        const parentWidth = wrapperRef.current.getBoundingClientRect().width;
+        // 1080 is the fixed width of our graphic canvas
         setScale(Math.min(1, parentWidth / 1080));
       }
     };
@@ -109,8 +113,14 @@ export default function GraphicTab() {
 
     try {
       const userRes = await fetch(`https://api.sleeper.app/v1/user/${username.trim()}`);
-      if (!userRes.ok) throw new Error('Could not find that Sleeper username.');
+      
+      // 🚀 FIXED: Improved Error Mapping. Map flakiness to user-friendly message.
+      if (!userRes.ok) throw new Error('Username not found');
+      
       const userData = await userRes.json();
+      
+      // 🚀 FIXED: Specific validation for raw raw error "Cannot read properties of null (reading 'user_id')"
+      if (!userData || !userData.user_id) throw new Error('Username not found');
       
       const dnoPoolRes = await fetch(`/api/scl?type=dno_pool&t=${Date.now()}`);
       const dnoPoolData = await dnoPoolRes.json();
@@ -131,7 +141,7 @@ export default function GraphicTab() {
       }
 
       setLeagues(matchingDnoLeagues);
-      // 🚀 Store Sleeper User Profile Data (Display Name, Username, Avatar)
+      // Store Sleeper User Profile Data (Display Name, Username, Avatar)
       setTeamData({ 
         userId: userData.user_id, 
         username: userData.username || userData.display_name, 
@@ -139,7 +149,12 @@ export default function GraphicTab() {
         avatar: userData.avatar 
       });
     } catch (err) {
-      setError(err.message);
+      // 🚀 FIXED: Convert generic or JS errors to "Username not found" where appropriate
+      if (err.message.includes('properties of null')) {
+          setError('Username not found');
+      } else {
+          setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -171,6 +186,7 @@ export default function GraphicTab() {
       setTeamData(prev => ({
         ...prev,
         leagueName: activeLeague.name,
+        // Fallback to displayName (Kylefffan) if sleeper metadata team_name is missing
         teamName: me?.metadata?.team_name || prev.displayName || prev.username
       }));
 
@@ -226,6 +242,7 @@ export default function GraphicTab() {
 
   const generateCanvas = async () => {
     if (!graphicRef.current) return null;
+    // Uses html2canvas-pro to support lab/oklch colorspaces during generation
     return await html2canvas(graphicRef.current, {
       useCORS: true,
       allowTaint: true, 
@@ -238,7 +255,10 @@ export default function GraphicTab() {
     setGenerating(true);
     try {
       const canvas = await generateCanvas();
-      if (!canvas) return;
+      if (!canvas) {
+          setGenerating(false);
+          return;
+      }
       const image = canvas.toDataURL('image/jpeg', 0.9);
       const link = document.createElement('a');
       link.download = `${teamData.teamName.replace(/\s+/g, '-')}-DNO-Roster.jpg`;
@@ -252,20 +272,19 @@ export default function GraphicTab() {
     }
   };
 
-  // 🚀 FIXED: Wrapped navigator.share in a try/catch block so canceling native share releases the button state!
   const handleShareGraphic = async () => {
     setGenerating(true);
     try {
       const canvas = await generateCanvas();
       if (!canvas) {
-        setGenerating(false);
-        return;
+          setGenerating(false);
+          return;
       }
 
       canvas.toBlob(async (blob) => {
         if (!blob) {
-          setGenerating(false);
-          return;
+            setGenerating(false);
+            return;
         }
         const file = new File([blob], `${teamData.teamName.replace(/\s+/g, '-')}-DNO-Roster.jpg`, { type: 'image/jpeg' });
         
@@ -277,12 +296,13 @@ export default function GraphicTab() {
               text: `Check out my starting lineup for Draft Night Out 2026! #DraftNightOut #FSAN`,
             });
           } catch (shareErr) {
-            // Safely catches AbortError (User Canceled) without locking the UI!
+            // FIXED: Safely catches AbortError (User Canceled) without locking the UI!
             if (shareErr.name !== 'AbortError') {
               console.warn("Share failed:", shareErr);
             }
           }
         } else {
+          // Fallback to X (Twitter) Web Intent composer
           const text = encodeURIComponent(`Check out my starting lineup for Draft Night Out 2026! @FSANetwork #DraftNightOut`);
           window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
         }
@@ -299,14 +319,14 @@ export default function GraphicTab() {
     try {
       const canvas = await generateCanvas();
       if (!canvas) {
-        setGenerating(false);
-        return;
+          setGenerating(false);
+          return;
       }
 
       canvas.toBlob(async (blob) => {
         if (!blob) {
-          setGenerating(false);
-          return;
+            setGenerating(false);
+            return;
         }
         try {
           await navigator.clipboard.write([
@@ -316,7 +336,7 @@ export default function GraphicTab() {
           setTimeout(() => setCopied(false), 3000);
         } catch (e) {
           console.warn("Clipboard API not supported, downloading instead:", e);
-          downloadGraphic();
+          downloadGraphic(); // Fallback to download
         }
         setGenerating(false);
       }, 'image/png');
@@ -328,20 +348,20 @@ export default function GraphicTab() {
 
   const getCardStyle = (position) => {
     switch (position) {
-      case 'QB': return { border: 'border-cyan-500/60 shadow-[0_0_20px_rgba(6,182,212,0.15)]', gradient: 'from-cyan-950/40 to-black', text: 'text-cyan-400', bg: 'bg-cyan-500' };
-      case 'RB': return { border: 'border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]', gradient: 'from-emerald-950/40 to-black', text: 'text-emerald-500', bg: 'bg-emerald-500' };
-      case 'WR': return { border: 'border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.15)]', gradient: 'from-amber-900/40 to-black', text: 'text-amber-500', bg: 'bg-amber-500' };
-      case 'TE': return { border: 'border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.15)]', gradient: 'from-red-950/40 to-black', text: 'text-red-500', bg: 'bg-red-600' };
-      case 'K': return { border: 'border-purple-500/60 shadow-[0_0_20px_rgba(168,85,247,0.15)]', gradient: 'from-purple-950/40 to-black', text: 'text-purple-400', bg: 'bg-purple-500' };
-      case 'DEF': return { border: 'border-slate-300/60 shadow-[0_0_20px_rgba(203,213,225,0.15)]', gradient: 'from-slate-700/40 to-black', text: 'text-slate-300', bg: 'bg-slate-400' };
-      default: return { border: 'border-zinc-500/60 shadow-[0_0_20px_rgba(113,113,122,0.15)]', gradient: 'from-zinc-800/40 to-black', text: 'text-zinc-400', bg: 'bg-zinc-600' };
+      case 'QB': return { border: 'border-cyan-500/60 shadow-[0_0_20px_rgba(6,182,212,0.15)]', gradient: 'from-cyan-950/40 to-black', text: 'text-cyan-400' };
+      case 'RB': return { border: 'border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]', gradient: 'from-emerald-950/40 to-black', text: 'text-emerald-500' };
+      case 'WR': return { border: 'border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.15)]', gradient: 'from-amber-900/40 to-black', text: 'text-amber-500' };
+      case 'TE': return { border: 'border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.15)]', gradient: 'from-red-950/40 to-black', text: 'text-red-500' };
+      case 'K': return { border: 'border-purple-500/60 shadow-[0_0_20px_rgba(168,85,247,0.15)]', gradient: 'from-purple-950/40 to-black', text: 'text-purple-400' };
+      case 'DEF': return { border: 'border-slate-300/60 shadow-[0_0_20px_rgba(203,213,225,0.15)]', gradient: 'from-slate-700/40 to-black', text: 'text-slate-300' };
+      default: return { border: 'border-zinc-500/60 shadow-[0_0_20px_rgba(113,113,122,0.15)]', gradient: 'from-zinc-800/40 to-black', text: 'text-zinc-400' };
     }
   };
 
   const getESPNHeadshot = (espnId) => `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${espnId}.png&w=350&h=254`;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16 overflow-x-hidden">
       
       <div className="mb-8">
         <h2 className="text-2xl font-black italic text-white uppercase tracking-tighter">Social Roster Graphic</h2>
@@ -350,7 +370,7 @@ export default function GraphicTab() {
 
       <div className="bg-[#111] border border-gray-800 rounded-2xl p-6 mb-8 shadow-xl max-w-3xl">
         <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 relative">
+          <div className="flex-1 relative w-full">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
             <input 
               type="text" 
@@ -370,11 +390,11 @@ export default function GraphicTab() {
           </div>
         )}
 
-        {/* 🚀 RESTORED: Verified Sleeper User Profile Card (Avatar + Display Name + Verified Badge) */}
+        {/* 🚀 RESTORED & MOBILE FIXED: Sleeper User Profile Card (Avatar + Display Name + Verified Badge) */}
         {teamData && !error && (
-          <div className="mt-6 pt-6 border-t border-gray-800/80 flex items-center justify-between animate-in fade-in duration-300">
-             <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-full bg-zinc-800 border-2 border-[#1b75bb] overflow-hidden shrink-0 shadow-md">
+          <div className="mt-6 pt-6 border-t border-gray-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in duration-300">
+             <div className="flex items-center gap-3.5 w-full sm:w-auto">
+                <div className="w-11 h-11 rounded-full bg-zinc-900 border-2 border-[#1b75bb] overflow-hidden shrink-0 shadow-md">
                    <img 
                      src={teamData.avatar ? `https://sleepercdn.com/avatars/thumbs/${teamData.avatar}` : 'https://sleepercdn.com/images/v2/icons/player_default.webp'} 
                      alt="" 
@@ -382,22 +402,22 @@ export default function GraphicTab() {
                      onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
                    />
                 </div>
-                <div>
+                <div className="min-w-0">
                    <div className="flex items-center gap-2">
-                      <h4 className="text-white font-black text-sm uppercase tracking-tight">{teamData.displayName || teamData.username}</h4>
-                      <CheckCircle2 size={15} className="text-emerald-400 fill-emerald-400/20" />
+                      <h4 className="text-white font-black text-sm uppercase tracking-tight truncate">{teamData.displayName || teamData.username}</h4>
+                      <CheckCircle2 size={15} className="text-emerald-400 fill-emerald-400/20 shrink-0" />
                    </div>
                    <p className="text-[11px] font-bold text-gray-500 tracking-wider">@{teamData.username}</p>
                 </div>
              </div>
-             <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1 rounded-full">
+             <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1.5 sm:py-1 rounded-full whitespace-nowrap">
                 Sleeper Verified
              </span>
           </div>
         )}
 
-        {/* Single-click League Buttons */}
-        {leagues.length > 0 && (
+        {/* Single-click League Buttons (Responsive Grid) */}
+        {leagues.length > 0 && !error && (
           <div className="mt-6 animate-in fade-in duration-300">
             <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Select Your DNO Division</label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -424,21 +444,29 @@ export default function GraphicTab() {
         )}
       </div>
 
-      {starters.length > 0 && teamData && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {starters.length > 0 && teamData && teamData.teamName && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-x-hidden w-full">
           
-          <div className="w-full" ref={wrapperRef}>
+          {/* 🚀 FIXED: Robust Mobile Responsiveness. Outer box centers and hides overflow. */}
+          <div className="w-full flex justify-center mb-8 overflow-x-hidden px-1" ref={wrapperRef}>
               
+              {/* FIXED footprint on the screen via aspect-ratio and scaling */}
               <div 
-                className="bg-black border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden mx-auto mb-8"
-                style={{ width: `${1080 * scale}px`, height: `${1350 * scale}px` }}
+                className="bg-black border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden mx-auto transition-transform duration-300 shadow-[0_0_50px_rgba(0,0,0,0.8)]"
+                style={{ 
+                  width: `${1080 * scale}px`, 
+                  aspectRatio: '1080 / 1350' // Guarantees the aspect ratio footprint
+                }}
               >
+                  {/* The actual fixed 1080x1350 canvas that scales down visually */}
                   <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: '1080px', height: '1350px' }}>
                     
                     <div ref={graphicRef} className="w-[1080px] h-[1350px] bg-zinc-950 overflow-hidden flex flex-col shrink-0 relative">
                       
+                      {/* Background Texture Layer */}
                       <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-zinc-900/40" />
 
+                      {/* Header Section */}
                       <div className="relative z-10 flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950 h-[140px] shrink-0 overflow-hidden">
                         <img src={dnoBgUrl} className="absolute inset-0 w-full h-full object-cover opacity-60 z-0" crossOrigin="anonymous" alt="Background" />
                         <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-950/90 via-zinc-950/70 to-transparent" />
@@ -446,11 +474,11 @@ export default function GraphicTab() {
                         <div className="flex items-center gap-6 relative z-10 px-8">
                            <img src={dnoLogoUrl} alt="DNO" className="h-20 w-auto object-contain drop-shadow-2xl" crossOrigin="anonymous" />
                            <div>
-                            <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic drop-shadow-md">
+                            <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic drop-shadow-md truncate max-w-[700px]">
                               {teamData.teamName}
                             </h2>
                             <div className="flex items-center gap-3 mt-1.5">
-                              <span className="text-[#f5a623] font-bold uppercase tracking-widest text-sm drop-shadow-md">{teamData.leagueName}</span>
+                              <span className="text-[#f5a623] font-bold uppercase tracking-widest text-sm drop-shadow-md truncate max-w-[400px]">{teamData.leagueName}</span>
                               <span className="text-zinc-500 font-bold">•</span>
                               <span className="text-zinc-300 font-bold uppercase tracking-widest text-sm drop-shadow-md">Draft Night Out Roster</span>
                             </div>
@@ -458,9 +486,10 @@ export default function GraphicTab() {
                         </div>
                       </div>
 
+                      {/* Main Roster Grid */}
                       <div className="relative z-10 px-8 py-6 flex-1 flex flex-col justify-start">
                          
-                         {/* STARTING LINEUP */}
+                         {/* STARTING LINEUP (Grid must remain grid-cols-3 for grab) */}
                          <div className="mb-0">
                            <h3 className="text-xs font-black uppercase tracking-widest text-emerald-500 mb-6 px-1 flex items-center gap-2 drop-shadow-md relative z-20">
                              <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span> Starting Lineup
@@ -501,10 +530,11 @@ export default function GraphicTab() {
                                 } else {
                                    playerImage = `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
                                 }
-
+                                
                                 return (
                                   <div key={`starter-${playerId}-${idx}`} className="relative w-full h-[215px] flex flex-col justify-end group shadow-xl">
                                     
+                                    {/* Glass Background Card */}
                                     <div className={`absolute inset-0 rounded-[20px] bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden`}>
                                        {teamLogo && (
                                          <div className="absolute inset-x-0 top-0 z-0 flex items-start justify-center opacity-[0.25] pointer-events-none">
@@ -513,14 +543,16 @@ export default function GraphicTab() {
                                        )}
                                     </div>
 
+                                    {/* Top Left Position Badge */}
                                     <div className="absolute top-3 left-3 z-40">
                                        <span className="bg-black/80 backdrop-blur-md px-2.5 py-1 rounded text-[11px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">
                                           {position}
                                        </span>
                                     </div>
 
+                                    {/* Top Right Draft Pick Badge */}
                                     <div className="absolute top-3 right-3 z-40 flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded border border-zinc-700/50 shadow-md">
-                                       <span className="text-[11px] font-black text-white tracking-widest">
+                                       <span className="text-[11px] font-black text-white tracking-widest leading-none mt-[1px]">
                                           {pickInfo ? pickInfo.formatted : 'FA'}
                                        </span>
                                        {pickInfo?.posRank && (
@@ -530,6 +562,7 @@ export default function GraphicTab() {
                                        )}
                                     </div>
 
+                                    {/* Player Headshot Popping Out */}
                                     <div className="absolute inset-x-0 bottom-0 flex items-end justify-center z-10 pointer-events-none h-[130%]">
                                        <img 
                                           src={playerImage} 
@@ -540,9 +573,11 @@ export default function GraphicTab() {
                                        />
                                     </div>
 
+                                    {/* Torso Gradient Fade */}
                                     <div className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black via-black/90 to-transparent z-20 rounded-b-[20px] pointer-events-none" />
 
-                                    <div className="relative z-30 px-3 pb-3 pt-2 mt-auto flex flex-col items-center text-center bg-transparent pointer-events-none">
+                                    {/* Typography Footer */}
+                                    <div className="relative z-30 px-3 pb-3 pt-2 mt-auto flex flex-col items-center text-center bg-transparent pointer-events-none w-full min-w-0">
                                        <div className={`text-[11px] font-bold tracking-widest uppercase leading-tight mb-0.5 ${cardStyle.text} drop-shadow-md`}>
                                           {firstName}
                                        </div>
@@ -557,7 +592,7 @@ export default function GraphicTab() {
                            </div>
                          </div>
 
-                         {/* BENCH PLAYERS */}
+                         {/* BENCH PLAYERS (Grid must remain grid-cols-2) */}
                          {bench.length > 0 && (
                            <div className="mt-6">
                              <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4 px-1 flex items-center gap-2 drop-shadow-md">
@@ -600,7 +635,7 @@ export default function GraphicTab() {
                                   }
 
                                   return (
-                                    <div key={`bench-${playerId}-${idx}`} className={`relative w-full h-[56px] rounded-[16px] flex items-center overflow-hidden bg-zinc-950 border border-zinc-800 shadow-md`}>
+                                    <div key={`bench-${playerId}-${idx}`} className={`relative w-full h-[56px] rounded-[16px] flex items-center overflow-hidden bg-zinc-950 border border-zinc-800 shadow-md shadow-[0_3px_6px_rgba(0,0,0,0.5)]`}>
                                        
                                        {teamLogo && (
                                          <div className="absolute inset-y-0 right-8 flex items-center justify-center z-0 opacity-[0.2] pointer-events-none">
@@ -608,7 +643,7 @@ export default function GraphicTab() {
                                          </div>
                                        )}
 
-                                       <div className={`w-14 h-full flex items-center justify-center font-black ${cardStyle.text} text-[13px] shrink-0 tracking-widest z-20`}>
+                                       <div className={`w-14 h-full flex items-center justify-center font-black ${cardStyle.text} text-[13px] shrink-0 tracking-widest z-20 shadow-inner`}>
                                           {position}
                                        </div>
 
@@ -616,23 +651,23 @@ export default function GraphicTab() {
                                           <img 
                                             src={playerImage} 
                                             alt="" 
-                                            className={isDefense ? "w-7 h-7 object-contain" : "w-full h-full object-cover object-top scale-110 translate-y-1"}
+                                            className={isDefense ? "w-6 h-6 object-contain" : "w-full h-full object-cover object-top scale-110 translate-y-1"}
                                             crossOrigin="anonymous" 
                                             onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
                                           />
                                        </div>
 
-                                       <div className="flex-1 min-w-0 pl-4 pr-2 flex items-baseline z-20">
-                                          <span className="font-black text-zinc-500 mr-2 uppercase text-[15px] tracking-wide">{firstName.charAt(0)}.</span>
-                                          <span className="text-white font-black text-[19px] uppercase truncate tracking-wide">{lastName}</span>
+                                       <div className="flex-1 min-w-0 pl-4 pr-2 flex items-baseline z-20 w-full">
+                                          <span className="font-black text-zinc-500 mr-2 uppercase text-[15px] tracking-wide shrink-0 leading-none">{firstName.charAt(0)}.</span>
+                                          <span className="text-white font-black text-[19px] uppercase truncate tracking-wide flex-1 min-w-0 leading-none">{lastName}</span>
                                        </div>
 
-                                       <div className="pr-4 z-20 shrink-0 text-right flex flex-col items-end justify-center">
-                                          <span className="text-[12px] font-black text-white tracking-widest leading-none">
+                                       <div className="pr-4 z-20 shrink-0 text-right flex flex-col items-end justify-center h-full">
+                                          <span className="text-[12px] font-black text-white tracking-widest leading-none mt-[1px]">
                                              {pickInfo ? pickInfo.formatted : 'FA'}
                                           </span>
                                           {pickInfo?.posRank && (
-                                             <span className="text-[9px] font-bold text-zinc-500 uppercase mt-0.5">
+                                             <span className="text-[9px] font-bold text-zinc-500 uppercase mt-1 leading-none">
                                                 {pickInfo.posRank}
                                              </span>
                                           )}
@@ -650,11 +685,12 @@ export default function GraphicTab() {
               </div>
           </div>
 
-          <div className="flex flex-wrap gap-4 justify-start">
+          {/* ACTION BUTTONS (Download + Social Share) */}
+          <div className="flex flex-wrap gap-4 justify-start max-w-lg mx-auto sm:max-w-none">
             <button 
               onClick={handleShareGraphic}
               disabled={generating}
-              className="bg-[#1b75bb] hover:bg-[#155d96] disabled:opacity-50 text-white font-black uppercase tracking-widest text-sm px-8 py-4 rounded-xl transition-all shadow-lg flex items-center gap-2.5 hover:-translate-y-0.5"
+              className="bg-[#1b75bb] hover:bg-[#155d96] disabled:opacity-50 text-white font-black uppercase tracking-widest text-sm px-8 py-4 rounded-xl transition-all shadow-lg flex items-center gap-2.5 hover:-translate-y-0.5 grow sm:grow-0"
             >
               {generating ? <Loader2 size={18} className="animate-spin" /> : <Share2 size={18} />}
               {generating ? 'Processing Image...' : 'Share Graphic'}
@@ -663,7 +699,7 @@ export default function GraphicTab() {
             <button 
               onClick={handleCopyImage}
               disabled={generating}
-              className="bg-[#1a1a1a] hover:bg-[#252525] border border-gray-700 disabled:opacity-50 text-white font-black uppercase tracking-widest text-sm px-6 py-4 rounded-xl transition-all shadow-lg flex items-center gap-2 hover:-translate-y-0.5"
+              className="bg-[#1a1a1a] hover:bg-[#252525] border border-gray-700 disabled:opacity-50 text-white font-black uppercase tracking-widest text-sm px-6 py-4 rounded-xl transition-all shadow-lg flex items-center gap-2 hover:-translate-y-0.5 grow sm:grow-0"
             >
               {copied ? <Check size={18} className="text-emerald-400" /> : <Copy size={18} />}
               {copied ? 'Image Copied!' : 'Copy Image'}
@@ -672,7 +708,7 @@ export default function GraphicTab() {
             <button 
               onClick={downloadGraphic}
               disabled={generating}
-              className="bg-transparent hover:bg-gray-900 border border-gray-800 disabled:opacity-50 text-gray-300 font-bold uppercase tracking-widest text-sm px-6 py-4 rounded-xl transition-colors flex items-center gap-2"
+              className="bg-transparent hover:bg-gray-900 border border-gray-800 disabled:opacity-50 text-gray-300 font-bold uppercase tracking-widest text-sm px-6 py-4 rounded-xl transition-colors flex items-center gap-2 shrink-0 w-full sm:w-auto"
             >
               {generating ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
               Download
