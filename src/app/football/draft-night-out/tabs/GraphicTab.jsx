@@ -19,6 +19,9 @@ export default function GraphicTab() {
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   
+  // 🚀 ADDED: State to hold the pre-rendered image for instant mobile sharing
+  const [graphicBlob, setGraphicBlob] = useState(null);
+  
   const [playerDB, setPlayerDB] = useState({});
   const [dbLoading, setDbLoading] = useState(true);
 
@@ -101,6 +104,37 @@ export default function GraphicTab() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
 
+  // 🚀 ADDED: Background Pre-Rendering Effect for iOS Safari compatibility
+  useEffect(() => {
+    if (starters.length > 0 && teamData && graphicRef.current) {
+      setGenerating(true);
+      setGraphicBlob(null);
+
+      // Delay ensures all external images (headshots/logos) are fully painted on screen first
+      const timer = setTimeout(async () => {
+        try {
+          const canvas = await html2canvas(graphicRef.current, {
+            useCORS: true,
+            allowTaint: true,
+            scale: 2,
+            backgroundColor: '#09090b'
+          });
+          
+          // Generate a PNG blob (best format for mobile clipboard/sharing)
+          canvas.toBlob((blob) => {
+            setGraphicBlob(blob);
+            setGenerating(false);
+          }, 'image/png');
+        } catch (err) {
+          console.error("Pre-generation failed:", err);
+          setGenerating(false);
+        }
+      }, 1200);
+
+      return () => clearTimeout(timer);
+    }
+  }, [starters, bench, teamData, scale]);
+
   const fetchSleeperLeagues = async () => {
     setLoading(true);
     setError('');
@@ -110,6 +144,7 @@ export default function GraphicTab() {
     setStarters([]);
     setBench([]);
     setDraftPicks({});
+    setGraphicBlob(null);
 
     try {
       const userRes = await fetch(`https://api.sleeper.app/v1/user/${username.trim()}`);
@@ -166,10 +201,12 @@ export default function GraphicTab() {
       setStarters([]);
       setBench([]);
       setDraftPicks({});
+      setGraphicBlob(null);
       return;
     }
 
     setLoading(true);
+    setGraphicBlob(null);
     try {
       const activeLeague = leagues.find(l => l.league_id === leagueId);
       
@@ -240,109 +277,53 @@ export default function GraphicTab() {
     }
   };
 
-  const generateCanvas = async () => {
-    if (!graphicRef.current) return null;
-    // Uses html2canvas-pro to support lab/oklch colorspaces during generation
-    return await html2canvas(graphicRef.current, {
-      useCORS: true,
-      allowTaint: true, 
-      scale: 2, 
-      backgroundColor: '#09090b' 
-    });
-  };
-
-  const downloadGraphic = async () => {
-    setGenerating(true);
-    try {
-      const canvas = await generateCanvas();
-      if (!canvas) {
-          setGenerating(false);
-          return;
-      }
-      const image = canvas.toDataURL('image/jpeg', 0.9);
-      const link = document.createElement('a');
-      link.download = `${teamData.teamName.replace(/\s+/g, '-')}-DNO-Roster.jpg`;
-      link.href = image;
-      link.click();
-    } catch (err) {
-      console.error("Error generating image:", err);
-      setError("Failed to generate image. Please try again.");
-    } finally {
-      setGenerating(false);
-    }
+  // 🚀 FIXED: All handlers are now purely synchronous to satisfy iOS Safari
+  const downloadGraphic = () => {
+    if (!graphicBlob) return;
+    const url = URL.createObjectURL(graphicBlob);
+    const link = document.createElement('a');
+    link.download = `${teamData.teamName.replace(/\s+/g, '-')}-DNO-Roster.png`;
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleShareGraphic = async () => {
-    setGenerating(true);
-    try {
-      const canvas = await generateCanvas();
-      if (!canvas) {
-          setGenerating(false);
-          return;
+    if (!graphicBlob) return;
+    
+    const file = new File([graphicBlob], `${teamData.teamName.replace(/\s+/g, '-')}-DNO-Roster.png`, { type: 'image/png' });
+    
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: `${teamData.teamName} - DNO Roster`,
+          text: `Check out my starting lineup for Draft Night Out 2026! #DraftNightOut #FSAN`,
+        });
+      } catch (shareErr) {
+        // Safely catches AbortError (User Canceled) without locking the UI!
+        if (shareErr.name !== 'AbortError') {
+          console.warn("Share failed:", shareErr);
+        }
       }
-
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-            setGenerating(false);
-            return;
-        }
-        const file = new File([blob], `${teamData.teamName.replace(/\s+/g, '-')}-DNO-Roster.jpg`, { type: 'image/jpeg' });
-        
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: `${teamData.teamName} - DNO Roster`,
-              text: `Check out my starting lineup for Draft Night Out 2026! #DraftNightOut #FSAN`,
-            });
-          } catch (shareErr) {
-            // FIXED: Safely catches AbortError (User Canceled) without locking the UI!
-            if (shareErr.name !== 'AbortError') {
-              console.warn("Share failed:", shareErr);
-            }
-          }
-        } else {
-          // Fallback to X (Twitter) Web Intent composer
-          const text = encodeURIComponent(`Check out my starting lineup for Draft Night Out 2026! @FSANetwork #DraftNightOut`);
-          window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
-        }
-        setGenerating(false);
-      }, 'image/jpeg', 0.9);
-    } catch (err) {
-      console.error("Error sharing graphic:", err);
-      setGenerating(false);
+    } else {
+      // Fallback to X (Twitter) Web Intent composer
+      const text = encodeURIComponent(`Check out my starting lineup for Draft Night Out 2026! @FSANetwork #DraftNightOut`);
+      window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
     }
   };
 
   const handleCopyImage = async () => {
-    setGenerating(true);
+    if (!graphicBlob) return;
     try {
-      const canvas = await generateCanvas();
-      if (!canvas) {
-          setGenerating(false);
-          return;
-      }
-
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-            setGenerating(false);
-            return;
-        }
-        try {
-          await navigator.clipboard.write([
-            new ClipboardItem({ 'image/png': blob })
-          ]);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 3000);
-        } catch (e) {
-          console.warn("Clipboard API not supported, downloading instead:", e);
-          downloadGraphic(); // Fallback to download
-        }
-        setGenerating(false);
-      }, 'image/png');
+      await navigator.clipboard.write([
+        new ClipboardItem({ 'image/png': graphicBlob })
+      ]);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
     } catch (err) {
-      console.error("Clipboard copy failed:", err);
-      setGenerating(false);
+      console.warn("Clipboard API failed (falling back to download):", err);
+      downloadGraphic();
     }
   };
 
@@ -447,7 +428,7 @@ export default function GraphicTab() {
       {starters.length > 0 && teamData && teamData.teamName && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-x-hidden w-full">
           
-          {/* 🚀 FIXED: Robust Mobile Responsiveness. Outer box centers and hides overflow. */}
+          {/* 🚀 Robust Mobile Responsiveness. Outer box centers and hides overflow. */}
           <div className="w-full flex justify-center mb-8 overflow-x-hidden px-1" ref={wrapperRef}>
               
               {/* FIXED footprint on the screen via aspect-ratio and scaling */}
@@ -689,16 +670,16 @@ export default function GraphicTab() {
           <div className="flex flex-wrap gap-4 justify-start max-w-lg mx-auto sm:max-w-none">
             <button 
               onClick={handleShareGraphic}
-              disabled={generating}
+              disabled={generating || !graphicBlob}
               className="bg-[#1b75bb] hover:bg-[#155d96] disabled:opacity-50 text-white font-black uppercase tracking-widest text-sm px-8 py-4 rounded-xl transition-all shadow-lg flex items-center gap-2.5 hover:-translate-y-0.5 grow sm:grow-0"
             >
-              {generating ? <Loader2 size={18} className="animate-spin" /> : <Share2 size={18} />}
-              {generating ? 'Processing Image...' : 'Share Graphic'}
+              {generating || !graphicBlob ? <Loader2 size={18} className="animate-spin" /> : <Share2 size={18} />}
+              {generating || !graphicBlob ? 'Processing Image...' : 'Share Graphic'}
             </button>
 
             <button 
               onClick={handleCopyImage}
-              disabled={generating}
+              disabled={generating || !graphicBlob}
               className="bg-[#1a1a1a] hover:bg-[#252525] border border-gray-700 disabled:opacity-50 text-white font-black uppercase tracking-widest text-sm px-6 py-4 rounded-xl transition-all shadow-lg flex items-center gap-2 hover:-translate-y-0.5 grow sm:grow-0"
             >
               {copied ? <Check size={18} className="text-emerald-400" /> : <Copy size={18} />}
@@ -707,11 +688,11 @@ export default function GraphicTab() {
 
             <button 
               onClick={downloadGraphic}
-              disabled={generating}
-              className="bg-transparent hover:bg-gray-900 border border-gray-800 disabled:opacity-50 text-gray-300 font-bold uppercase tracking-widest text-sm px-6 py-4 rounded-xl transition-colors flex items-center gap-2 shrink-0 w-full sm:w-auto"
+              disabled={generating || !graphicBlob}
+              className="bg-transparent hover:bg-gray-900 border border-gray-800 disabled:opacity-50 text-gray-300 font-bold uppercase tracking-widest text-sm px-6 py-4 rounded-xl transition-colors flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto"
             >
-              {generating ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
-              Download
+              {generating || !graphicBlob ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+              {generating || !graphicBlob ? 'Processing...' : 'Download'}
             </button>
           </div>
 
