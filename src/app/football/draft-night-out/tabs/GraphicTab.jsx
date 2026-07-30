@@ -1,10 +1,13 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
-import html2canvas from 'html2canvas';
-import { Search, Loader2, Download, AlertCircle } from 'lucide-react';
+// 🚀 FIXED: Swapped to html2canvas-pro to resolve "lab" color function errors
+import html2canvas from 'html2canvas-pro'; 
+import { Search, Loader2, Download, AlertCircle, CheckCircle, X } from 'lucide-react';
 
 export default function GraphicTab() {
   const [username, setUsername] = useState('');
+  const [verifiedUser, setVerifiedUser] = useState(null); // 🚀 NEW: Stores verified Sleeper profile
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -44,7 +47,6 @@ export default function GraphicTab() {
     const loadPlayerDatabases = async () => {
       try {
         let customMap = {};
-        
         try {
           const res = await fetch('/api/dynasty-players');
           const data = await res.json();
@@ -72,31 +74,45 @@ export default function GraphicTab() {
         setDbLoading(false);
       }
     };
-    
     loadPlayerDatabases();
   }, []);
 
-  const fetchSleeperLeagues = async () => {
-    if (!username) return;
+  // 🚀 NEW: Step 1 - Verify Account
+  const handleVerifyAccount = async () => {
+    if (!username.trim()) return;
     setLoading(true);
     setError('');
+    setVerifiedUser(null);
     setLeagues([]);
     setSelectedLeague('');
     setTeamData(null);
     setStarters([]);
     setBench([]);
-    setDraftPicks({});
 
     try {
-      const userRes = await fetch(`https://api.sleeper.app/v1/user/${username.trim()}`);
-      if (!userRes.ok) throw new Error('Could not find that Sleeper username.');
-      const userData = await userRes.json();
-      
+      const res = await fetch(`https://api.sleeper.app/v1/user/${username.trim()}`);
+      if (!res.ok) throw new Error("Could not find a Sleeper account with that username.");
+      const data = await res.json();
+      setVerifiedUser(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🚀 UPDATED: Step 2 - Fetch Leagues using Verified User ID
+  const fetchSleeperLeagues = async () => {
+    if (!verifiedUser) return;
+    setLoading(true);
+    setError('');
+
+    try {
       const dnoPoolRes = await fetch(`/api/scl?type=dno_pool&t=${Date.now()}`);
       const dnoPoolData = await dnoPoolRes.json();
       const validDnoLeagueIds = new Set((dnoPoolData.leagues || []).map(l => String(l.id)));
 
-      const leaguesRes = await fetch(`https://api.sleeper.app/v1/user/${userData.user_id}/leagues/nfl/2026`);
+      const leaguesRes = await fetch(`https://api.sleeper.app/v1/user/${verifiedUser.user_id}/leagues/nfl/2026`);
       if (!leaguesRes.ok) throw new Error('Could not fetch Sleeper leagues.');
       const userLeagues = await leaguesRes.json();
 
@@ -111,7 +127,6 @@ export default function GraphicTab() {
       }
 
       setLeagues(matchingDnoLeagues);
-      setTeamData({ userId: userData.user_id, username: userData.display_name, avatar: userData.avatar });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -135,20 +150,21 @@ export default function GraphicTab() {
       const rostersRes = await fetch(`https://api.sleeper.app/v1/league/${leagueId}/rosters`);
       const rosters = await rostersRes.json();
       
-      const myRoster = rosters.find(r => r.owner_id === teamData.userId);
+      const myRoster = rosters.find(r => r.owner_id === verifiedUser.user_id);
       if (!myRoster) throw new Error('Could not find your roster in this DNO division.');
 
       const usersRes = await fetch(`https://api.sleeper.app/v1/league/${leagueId}/users`);
       const users = await usersRes.json();
-      const me = users.find(u => u.user_id === teamData.userId);
+      const me = users.find(u => u.user_id === verifiedUser.user_id);
 
-      setTeamData(prev => ({
-        ...prev,
+      setTeamData({
+        userId: verifiedUser.user_id,
+        username: me?.metadata?.team_name || verifiedUser.display_name,
+        avatar: verifiedUser.avatar,
         leagueName: activeLeague.name,
-        teamName: me?.metadata?.team_name || prev.username
-      }));
+        teamName: me?.metadata?.team_name || verifiedUser.display_name
+      });
 
-      // Fetch draft picks attached to the active league
       let pickMap = {};
       try {
         const draftId = activeLeague.draft_id;
@@ -247,27 +263,63 @@ export default function GraphicTab() {
       </div>
 
       <div className="bg-[#111] border border-gray-800 rounded-2xl p-6 mb-8 shadow-xl max-w-3xl">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-            <input 
-              type="text" 
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && fetchSleeperLeagues()}
-              placeholder="Enter Sleeper Username..." 
-              disabled={dbLoading}
-              className="w-full bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-[#1b75bb] font-bold text-sm transition-colors disabled:opacity-50"
-            />
+        
+        {/* 🚀 Account Verification UI */}
+        {!verifiedUser ? (
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+              <input 
+                type="text" 
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleVerifyAccount()}
+                placeholder="Enter Sleeper Username..." 
+                disabled={dbLoading}
+                className="w-full bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-[#1b75bb] font-bold text-sm transition-colors disabled:opacity-50"
+              />
+            </div>
+            <button 
+              onClick={handleVerifyAccount}
+              disabled={loading || !username || dbLoading}
+              className="bg-[#f5a623] hover:bg-[#e0961d] disabled:opacity-50 text-[#111] font-black uppercase tracking-widest text-xs px-8 py-3.5 rounded-xl transition-colors shrink-0 flex items-center justify-center"
+            >
+              {loading || dbLoading ? <Loader2 size={16} className="animate-spin" /> : 'Verify Account'}
+            </button>
           </div>
-          <button 
-            onClick={fetchSleeperLeagues}
-            disabled={loading || !username || dbLoading}
-            className="bg-[#f5a623] hover:bg-[#e0961d] disabled:opacity-50 text-[#111] font-black uppercase tracking-widest text-xs px-8 py-3.5 rounded-xl transition-colors shrink-0 flex items-center justify-center"
-          >
-            {loading || dbLoading ? <Loader2 size={16} className="animate-spin" /> : 'Find DNO Leagues'}
-          </button>
-        </div>
+        ) : (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-[#1a1a1a] border border-gray-700 animate-in fade-in">
+             <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#1b75bb] bg-[#111] shrink-0">
+                  {verifiedUser.avatar ? (
+                    <img src={`https://sleepercdn.com/avatars/thumbs/${verifiedUser.avatar}`} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-600 bg-black">
+                      <ImageIcon size={20} />
+                    </div>
+                  )}
+                </div>
+                <div>
+                   <div className="flex items-center gap-1.5">
+                     <h4 className="text-white font-black text-lg">{verifiedUser.display_name}</h4>
+                     <CheckCircle size={14} className="text-[#1b75bb]" />
+                   </div>
+                   <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Account Verified</p>
+                </div>
+             </div>
+             
+             <div className="flex items-center gap-3">
+               <button onClick={() => { setVerifiedUser(null); setUsername(''); setLeagues([]); }} className="text-gray-400 hover:text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors">
+                  Change User
+               </button>
+               {!leagues.length && (
+                 <button onClick={fetchSleeperLeagues} disabled={loading} className="bg-[#1b75bb] hover:bg-[#155d96] text-white px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-2">
+                   {loading ? <Loader2 size={14} className="animate-spin" /> : 'Find My Leagues'}
+                 </button>
+               )}
+             </div>
+          </div>
+        )}
 
         {error && (
           <div className="mt-4 bg-red-900/20 border border-red-500/30 p-3 rounded-lg flex items-center gap-2 text-red-400 text-xs font-bold uppercase tracking-widest">
@@ -276,7 +328,7 @@ export default function GraphicTab() {
         )}
 
         {leagues.length > 0 && (
-          <div className="mt-6 animate-in fade-in duration-300">
+          <div className="mt-6 pt-6 border-t border-gray-800/50 animate-in fade-in duration-300">
             <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Select Your DNO Division</label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {leagues.map(l => {
@@ -389,14 +441,12 @@ export default function GraphicTab() {
                                        </div>
                                     </div>
 
-                                    {/* Top Left Position Badge */}
                                     <div className="absolute top-3 left-3 z-40">
                                        <span className="bg-black/80 backdrop-blur-md px-2.5 py-1 rounded text-[11px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">
                                           {position}
                                        </span>
                                     </div>
 
-                                    {/* 🚀 Top Right Draft Pick Badge (Only renders if draft pick is found) */}
                                     {pickInfo && (
                                       <div className="absolute top-3 right-3 z-40 flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded border border-zinc-700/50 shadow-md">
                                          <span className="text-[11px] font-black text-white tracking-widest">
@@ -439,7 +489,7 @@ export default function GraphicTab() {
 
                          {/* BENCH PLAYERS */}
                          {bench.length > 0 && (
-                           <div className="mt-8">
+                           <div className="mt-6">
                              <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4 px-1 flex items-center gap-2 drop-shadow-md">
                                <span className="w-2 h-2 rounded-full bg-zinc-600"></span> Bench
                              </h3>
@@ -505,7 +555,6 @@ export default function GraphicTab() {
                                           <span className="text-white font-black text-[19px] uppercase truncate tracking-wide">{lastName}</span>
                                        </div>
 
-                                       {/* 🚀 Right Draft Pick Badge (Only renders if draft pick is found) */}
                                        {pickInfo && (
                                          <div className="pr-4 z-20 shrink-0 text-right flex flex-col items-end justify-center">
                                             <span className="text-[12px] font-black text-white tracking-widest leading-none">
