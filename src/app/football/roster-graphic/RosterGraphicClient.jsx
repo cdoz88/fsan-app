@@ -118,7 +118,6 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
         teamName: me?.metadata?.team_name || prev.username
       }));
 
-      // Separate Starters and Bench
       const allPlayers = myRoster.players ? myRoster.players.filter(id => id !== '0') : [];
       const starterIds = myRoster.starters ? myRoster.starters.filter(id => id !== '0') : [];
       const benchIds = allPlayers.filter(id => !starterIds.includes(id));
@@ -127,8 +126,8 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
           throw new Error('No starting lineup set for this roster yet.');
       }
       
-      setStarters(starterIds.slice(0, 9)); // Up to 9 starters for 3x3 grid
-      setBench(benchIds.slice(0, 8)); // Up to 8 bench players for 2x4 list
+      setStarters(starterIds.slice(0, 9)); 
+      setBench(benchIds.slice(0, 8)); 
     } catch (err) {
       setError(err.message);
     } finally {
@@ -155,7 +154,7 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
       link.click();
     } catch (err) {
       console.error("Error generating image:", err);
-      setError("Failed to generate image. Make sure images exist in public/images folder.");
+      setError("Failed to generate image. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -166,7 +165,8 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
       case 'QB': return { border: 'border-cyan-500/60 shadow-[0_0_20px_rgba(6,182,212,0.15)]', gradient: 'from-cyan-950/40 to-black', text: 'text-cyan-400', bg: 'bg-cyan-500' };
       case 'RB': return { border: 'border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]', gradient: 'from-emerald-950/40 to-black', text: 'text-emerald-400', bg: 'bg-emerald-500' };
       case 'WR': return { border: 'border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.15)]', gradient: 'from-amber-900/40 to-black', text: 'text-amber-400', bg: 'bg-amber-500' };
-      case 'TE': return { border: 'border-fuchsia-500/60 shadow-[0_0_20px_rgba(217,70,239,0.15)]', gradient: 'from-fuchsia-900/40 to-black', text: 'text-fuchsia-400', bg: 'bg-fuchsia-500' };
+      // 🚀 Changed TE to Red
+      case 'TE': return { border: 'border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.15)]', gradient: 'from-red-950/40 to-black', text: 'text-red-400', bg: 'bg-red-600' };
       case 'K': return { border: 'border-purple-500/60 shadow-[0_0_20px_rgba(168,85,247,0.15)]', gradient: 'from-purple-950/40 to-black', text: 'text-purple-400', bg: 'bg-purple-500' };
       case 'DEF': return { border: 'border-slate-300/60 shadow-[0_0_20px_rgba(203,213,225,0.15)]', gradient: 'from-slate-700/40 to-black', text: 'text-slate-300', bg: 'bg-slate-400' };
       default: return { border: 'border-zinc-500/60 shadow-[0_0_20px_rgba(113,113,122,0.15)]', gradient: 'from-zinc-800/40 to-black', text: 'text-zinc-300', bg: 'bg-zinc-600' };
@@ -241,20 +241,19 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
           {starters.length > 0 && teamData && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               
-              {/* EXPORTABLE GRAPHIC CONTAINER (1080x1350 Instagram Portrait) */}
               <div className="w-full overflow-x-auto pb-6 custom-scrollbar">
                   <div 
                     ref={graphicRef}
                     className="relative w-[1080px] h-[1350px] bg-zinc-950 border border-zinc-800 overflow-hidden flex flex-col shrink-0"
                   >
-                    {/* Cinematic Background via local /images/ folder */}
+                    {/* 🚀 REMOVED crossOrigin="anonymous" from local assets to prevent CORS blocks */}
                     <div className="absolute inset-0 z-0 opacity-40 mix-blend-luminosity bg-cover bg-center" style={{ backgroundImage: "url('/images/DNO-Background.webp')" }} />
                     <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
                     <div className="absolute inset-0 z-0 bg-gradient-to-r from-blue-900/10 to-zinc-950/30 pointer-events-none" />
 
-                    {/* Header Banner */}
                     <div className="relative z-10 p-8 flex items-center justify-between border-b border-zinc-800/50 bg-black/60 backdrop-blur-md h-[140px] shrink-0">
                       <div className="flex items-center gap-6">
+                         {/* 🚀 REMOVED crossOrigin="anonymous" from local assets */}
                          <img src="/images/DNO-Logo_Logo.webp" alt="DNO" className="h-16 w-auto object-contain drop-shadow-lg" />
                          <div>
                           <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic drop-shadow-md">
@@ -269,10 +268,10 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                       </div>
                     </div>
 
-                    {/* Main Content Area */}
-                    <div className="relative z-10 p-6 flex-1 flex flex-col justify-between">
+                    {/* Main Content Area (Tighter gaps) */}
+                    <div className="relative z-10 px-8 py-6 flex-1 flex flex-col justify-start gap-4">
                        
-                       {/* 1. STARTING LINEUP (Cinematic Cards) */}
+                       {/* STARTING LINEUP */}
                        <div>
                          <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-3 px-1 flex items-center gap-2">
                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Starting Lineup
@@ -313,10 +312,10 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                               const teamLogo = `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
 
                               return (
-                                <div key={`starter-${playerId}-${idx}`} className={`relative w-full h-[250px] rounded-[20px] flex flex-col justify-end bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden group shadow-xl`}>
+                                <div key={`starter-${playerId}-${idx}`} className={`relative w-full h-[240px] rounded-[20px] flex flex-col justify-end bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden group shadow-xl`}>
                                   
                                   <div className="absolute top-3 left-3 z-40">
-                                     <span className="bg-black/80 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">
+                                     <span className="bg-black/80 backdrop-blur-md px-2.5 py-1 rounded text-[11px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">
                                         {position}
                                      </span>
                                   </div>
@@ -325,11 +324,11 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                                      <img src={teamLogo} className="w-[120%] max-w-none h-auto object-contain -translate-y-4 mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
                                   </div>
 
-                                  {/* Headshot aligned and scaled to remove top empty space */}
-                                  <div className="absolute inset-x-0 bottom-0 top-2 flex items-end justify-center z-10 pointer-events-none overflow-hidden">
+                                  {/* 🚀 FIX: Reduced scale and removed translate-y so heads stay fully inside the card */}
+                                  <div className="absolute inset-x-0 bottom-0 top-0 flex items-end justify-center z-10 pointer-events-none overflow-hidden">
                                      <img 
                                         src={playerImage} 
-                                        className={isDefense ? "max-w-[70%] max-h-[75%] object-contain drop-shadow-2xl origin-bottom mb-6" : "w-[160%] max-w-none object-cover object-bottom drop-shadow-2xl filter contrast-125 brightness-110 origin-bottom scale-125 translate-y-3"} 
+                                        className={isDefense ? "max-w-[70%] max-h-[75%] object-contain drop-shadow-2xl origin-bottom mb-6" : "w-auto h-[90%] object-contain object-bottom drop-shadow-2xl filter contrast-110 brightness-110 origin-bottom"} 
                                         crossOrigin="anonymous" 
                                         alt="" 
                                         onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
@@ -353,13 +352,13 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                          </div>
                        </div>
 
-                       {/* 2. BENCH PLAYERS (Simpler horizontal list strips based on your reference image) */}
+                       {/* 🚀 BENCH PLAYERS (Fancy Blocks) */}
                        {bench.length > 0 && (
-                         <div className="mt-4">
+                         <div className="mt-2">
                            <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-3 px-1 flex items-center gap-2">
                              <span className="w-2 h-2 rounded-full bg-zinc-600"></span> Bench
                            </h3>
-                           <div className="grid grid-cols-2 gap-2.5">
+                           <div className="grid grid-cols-2 gap-3">
                               {bench.map((playerId, idx) => {
                                 const isDefense = playerId.length < 4; 
                                 const dbPlayer = playerDB[playerId]; 
@@ -395,14 +394,14 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                                 const teamLogo = `https://sleepercdn.com/images/team_logos/nfl/${team}.png`;
 
                                 return (
-                                  <div key={`bench-${playerId}-${idx}`} className="bg-zinc-900/90 border border-zinc-800 rounded-xl h-[52px] flex items-center overflow-hidden relative shadow-md">
+                                  <div key={`bench-${playerId}-${idx}`} className="bg-zinc-900/90 border border-zinc-800 rounded-2xl h-[60px] flex items-center overflow-hidden relative shadow-md">
                                      {/* Left Colored Badge Strip */}
                                      <div className={`w-12 h-full ${cardStyle.bg} flex items-center justify-center font-black text-black text-xs shrink-0 tracking-wider`}>
                                         {position}
                                      </div>
 
                                      {/* Headshot / Thumbnail */}
-                                     <div className="w-10 h-10 mx-2 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center justify-center overflow-hidden shrink-0 relative">
+                                     <div className="w-10 h-10 mx-3 rounded bg-zinc-950 border border-zinc-700/50 flex items-center justify-center overflow-hidden shrink-0 relative">
                                         <img 
                                           src={playerImage} 
                                           alt="" 
@@ -413,14 +412,12 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                                      </div>
 
                                      {/* Team Logo */}
-                                     <img src={teamLogo} className="w-5 h-5 object-contain mr-2 opacity-80 shrink-0" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
+                                     <img src={teamLogo} className="w-6 h-6 object-contain mr-3 opacity-80 shrink-0 drop-shadow-md" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
 
                                      {/* Player Name */}
-                                     <div className="flex-1 min-w-0 pr-3">
-                                        <div className="text-white font-black text-sm uppercase truncate leading-none">
-                                           <span className="font-medium text-zinc-400 mr-1">{firstName.charAt(0)}.</span>
-                                           {lastName}
-                                        </div>
+                                     <div className="flex-1 min-w-0 pr-4 flex items-center">
+                                        <span className="font-bold text-zinc-400 mr-2 uppercase text-sm tracking-wide">{firstName.charAt(0)}.</span>
+                                        <span className="text-white font-black text-base uppercase truncate tracking-wide">{lastName}</span>
                                      </div>
                                   </div>
                                 );
@@ -433,7 +430,6 @@ export default function RosterGraphicClient({ proToolsMenu, connectMenu }) {
                   </div>
               </div>
 
-              {/* ACTION BUTTON */}
               <div className="flex justify-start">
                 <button 
                   onClick={downloadGraphic}
