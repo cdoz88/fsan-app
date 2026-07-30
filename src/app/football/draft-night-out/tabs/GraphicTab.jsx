@@ -148,7 +148,7 @@ export default function GraphicTab() {
         teamName: me?.metadata?.team_name || prev.username
       }));
 
-      // 🚀 FIXED: Fetch the exact draft_id attached to the active league to prevent pulling supplemental/rookie drafts
+      // Fetch draft picks attached to the active league
       let pickMap = {};
       try {
         const draftId = activeLeague.draft_id;
@@ -167,7 +167,6 @@ export default function GraphicTab() {
                 const formattedPick = `${p.round}.${slotFormatted}`;
                 const posRank = `${pos}${posCounts[pos]}`;
 
-                // Force String mapping to prevent Sleeper ID mismatches
                 pickMap[String(p.player_id)] = {
                   round: p.round,
                   slot: p.draft_slot,
@@ -349,7 +348,6 @@ export default function GraphicTab() {
                               {starters.map((playerId, idx) => {
                                 const isDefense = playerId.length < 4; 
                                 const dbPlayer = playerDB[playerId]; 
-                                // 🚀 FIXED: Force matching against String representation
                                 const pickInfo = draftPicks[String(playerId)];
                                 
                                 let firstName = "Unknown";
@@ -398,17 +396,19 @@ export default function GraphicTab() {
                                        </span>
                                     </div>
 
-                                    {/* 🚀 FIXED: Draft Pick Badge - Changed text to white */}
-                                    <div className="absolute top-3 right-3 z-40 flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded border border-zinc-700/50 shadow-md">
-                                       <span className="text-[11px] font-black text-white tracking-widest">
-                                          {pickInfo ? pickInfo.formatted : 'FA'}
-                                       </span>
-                                       {pickInfo?.posRank && (
-                                          <span className="text-[10px] font-bold text-zinc-400">
-                                             • {pickInfo.posRank}
-                                          </span>
-                                       )}
-                                    </div>
+                                    {/* 🚀 Top Right Draft Pick Badge (Only renders if draft pick is found) */}
+                                    {pickInfo && (
+                                      <div className="absolute top-3 right-3 z-40 flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded border border-zinc-700/50 shadow-md">
+                                         <span className="text-[11px] font-black text-white tracking-widest">
+                                            {pickInfo.formatted}
+                                         </span>
+                                         {pickInfo.posRank && (
+                                            <span className="text-[10px] font-bold text-zinc-400">
+                                               • {pickInfo.posRank}
+                                            </span>
+                                         )}
+                                      </div>
+                                    )}
 
                                     <div className="absolute inset-x-0 bottom-0 flex items-end justify-center z-10 pointer-events-none h-[130%]">
                                        <img 
@@ -439,7 +439,7 @@ export default function GraphicTab() {
 
                          {/* BENCH PLAYERS */}
                          {bench.length > 0 && (
-                           <div className="mt-6">
+                           <div className="mt-8">
                              <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4 px-1 flex items-center gap-2 drop-shadow-md">
                                <span className="w-2 h-2 rounded-full bg-zinc-600"></span> Bench
                              </h3>
@@ -447,7 +447,6 @@ export default function GraphicTab() {
                                 {bench.map((playerId, idx) => {
                                   const isDefense = playerId.length < 4; 
                                   const dbPlayer = playerDB[playerId]; 
-                                  // 🚀 FIXED: Force matching against String representation
                                   const pickInfo = draftPicks[String(playerId)];
                                   
                                   let firstName = "Unknown";
@@ -506,17 +505,19 @@ export default function GraphicTab() {
                                           <span className="text-white font-black text-[19px] uppercase truncate tracking-wide">{lastName}</span>
                                        </div>
 
-                                       {/* 🚀 FIXED: Draft Pick Badge - Changed text to white */}
-                                       <div className="pr-4 z-20 shrink-0 text-right flex flex-col items-end justify-center">
-                                          <span className="text-[12px] font-black text-white tracking-widest leading-none">
-                                             {pickInfo ? pickInfo.formatted : 'FA'}
-                                          </span>
-                                          {pickInfo?.posRank && (
-                                             <span className="text-[9px] font-bold text-zinc-500 uppercase mt-0.5">
-                                                {pickInfo.posRank}
-                                             </span>
-                                          )}
-                                       </div>
+                                       {/* 🚀 Right Draft Pick Badge (Only renders if draft pick is found) */}
+                                       {pickInfo && (
+                                         <div className="pr-4 z-20 shrink-0 text-right flex flex-col items-end justify-center">
+                                            <span className="text-[12px] font-black text-white tracking-widest leading-none">
+                                               {pickInfo.formatted}
+                                            </span>
+                                            {pickInfo.posRank && (
+                                               <span className="text-[9px] font-bold text-zinc-500 uppercase mt-0.5">
+                                                  {pickInfo.posRank}
+                                               </span>
+                                            )}
+                                         </div>
+                                       )}
                                     </div>
                                   );
                                 })}
