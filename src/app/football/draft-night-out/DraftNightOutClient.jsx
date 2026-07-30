@@ -4,12 +4,11 @@ import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import NapkinLeaderboard from '../../../components/NapkinLeaderboard';
 import { useSession } from 'next-auth/react';
-import { MonitorSmartphone, Trophy, BookOpen, Handshake, HeartHandshake, ListOrdered, Loader2, AlertCircle, X, Image as ImageIcon } from 'lucide-react';
+import { MonitorSmartphone, Trophy, BookOpen, Handshake, Share2, ListOrdered, Loader2, AlertCircle, X } from 'lucide-react';
 
 import SuccessToast from './components/SuccessToast';
 import RaffleModal from './components/RaffleModal';
 import DraftsTab from './tabs/DraftsTab';
-import CharityTab from './tabs/CharityTab';
 import PrizesTab from './tabs/PrizesTab';
 import RulesTab from './tabs/RulesTab';
 import SponsorsTab from './tabs/SponsorsTab';
@@ -40,8 +39,8 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   
   const [recentlyJoinedLeagues, setRecentlyJoinedLeagues] = useState([]);
 
-  // 🚀 Added 'graphic' to valid tabs
-  const validTabs = ['drafts', 'leaderboard', 'graphic', 'charity', 'prizes', 'rules', 'sponsors'];
+  // 🚀 Updated tab list: Changed 'charity' & 'graphic' into 'share'
+  const validTabs = ['drafts', 'leaderboard', 'share', 'prizes', 'rules', 'sponsors'];
   const [activeTab, setActiveTab] = useState('drafts');
   
   const [draftView, setDraftView] = useState('online');
@@ -54,7 +53,13 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
-      if (validTabs.includes(hash)) setActiveTab(hash);
+      // Handle legacy #charity links redirecting to #share
+      if (hash === 'charity') {
+        setActiveTab('share');
+        window.history.replaceState(null, '', window.location.pathname + '#share');
+      } else if (validTabs.includes(hash)) {
+        setActiveTab(hash);
+      }
     };
     handleHashChange();
     window.addEventListener('hashchange', handleHashChange);
@@ -178,12 +183,12 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
             </div>
 
             <div className="max-w-5xl mx-auto">
+              {/* 🚀 Updated Navigation Tabs (Charity replaced with Share) */}
               <div className="flex items-center justify-start lg:justify-center gap-2 md:gap-4 py-2 px-2 md:px-4 mb-10 bg-[#151515] rounded-2xl border border-gray-800/50 w-full lg:w-fit mx-auto shadow-inner animate-in fade-in duration-500 delay-100 overflow-x-auto scrollbar-hide">
                 {[
                   { id: 'drafts', icon: MonitorSmartphone, label: 'Drafts' },
                   { id: 'leaderboard', icon: ListOrdered, label: 'Leaderboard' },
-                  { id: 'graphic', icon: ImageIcon, label: 'Graphic' },
-                  { id: 'charity', icon: HeartHandshake, label: 'Charity' },
+                  { id: 'share', icon: Share2, label: 'Share Roster' },
                   { id: 'prizes', icon: Trophy, label: 'Prizes' },
                   { id: 'rules', icon: BookOpen, label: 'Rules' },
                   { id: 'sponsors', icon: Handshake, label: 'Sponsor' }
@@ -201,8 +206,7 @@ export default function DraftNightOutClient({ proToolsMenu, connectMenu, initial
 
               {activeTab === 'drafts' && <DraftsTab draftView={draftView} setDraftView={setDraftView} isProPlus={isProPlus} ticketsAvailable={ticketsAvailable} handlePurchaseExtraEntry={handlePurchaseExtraEntry} errorMessage={errorMessage} loadingLeagues={loadingLeagues} leagues={leagues} sortedLeagues={sortedLeagues} recentlyJoinedLeagues={recentlyJoinedLeagues} setConfirmingLeague={setConfirmingLeague} setShowRaffleModal={setShowRaffleModal} />}
               {activeTab === 'leaderboard' && <div className="animate-in fade-in slide-in-from-bottom-4 duration-500"><NapkinLeaderboard initialLeaderboard={liveLeaderboard} overrideSeasonLabel={liveSeasonLabel} /></div>}
-              {activeTab === 'graphic' && <GraphicTab />}
-              {activeTab === 'charity' && <CharityTab />}
+              {activeTab === 'share' && <GraphicTab />}
               {activeTab === 'prizes' && <PrizesTab />}
               {activeTab === 'rules' && <RulesTab />}
               {activeTab === 'sponsors' && <SponsorsTab />}
