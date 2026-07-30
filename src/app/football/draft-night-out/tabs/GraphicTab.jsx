@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
-import { Search, Loader2, Download, AlertCircle } from 'lucide-react';
+import { Search, Image as ImageIcon, Loader2, Download, AlertCircle } from 'lucide-react';
 
 export default function GraphicTab() {
   const [username, setUsername] = useState('');
@@ -14,6 +14,7 @@ export default function GraphicTab() {
   const [teamData, setTeamData] = useState(null);
   const [starters, setStarters] = useState([]);
   const [bench, setBench] = useState([]);
+  const [draftPicks, setDraftPicks] = useState({}); // Stores draft pick data for each player
   const [generating, setGenerating] = useState(false);
   
   const [playerDB, setPlayerDB] = useState({});
@@ -23,12 +24,10 @@ export default function GraphicTab() {
   const wrapperRef = useRef(null);
   const [scale, setScale] = useState(1);
 
-  // Dynamic Base URL to ensure html2canvas resolves the images perfectly
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const dnoBgUrl = `${baseUrl}/images/DNO-Background.webp`;
   const dnoLogoUrl = `${baseUrl}/images/DNO-Logo_Logo.webp`;
 
-  // Scale the graphic dynamically to fit on the screen without horizontal scrolling
   useEffect(() => {
     const updateScale = () => {
       if (wrapperRef.current) {
@@ -86,6 +85,7 @@ export default function GraphicTab() {
     setTeamData(null);
     setStarters([]);
     setBench([]);
+    setDraftPicks({});
 
     try {
       const userRes = await fetch(`https://api.sleeper.app/v1/user/${username.trim()}`);
@@ -124,6 +124,7 @@ export default function GraphicTab() {
     if (!leagueId) {
       setStarters([]);
       setBench([]);
+      setDraftPicks({});
       return;
     }
 
@@ -146,6 +147,41 @@ export default function GraphicTab() {
         leagueName: activeLeague.name,
         teamName: me?.metadata?.team_name || prev.username
       }));
+
+      // 🚀 FETCH DRAFT PICKS & CALCULATE POSITIONAL RANKS
+      let pickMap = {};
+      try {
+        const draftsRes = await fetch(`https://api.sleeper.app/v1/league/${leagueId}/drafts`);
+        const drafts = await draftsRes.json();
+        if (drafts && drafts.length > 0) {
+          const draftId = drafts[0].draft_id;
+          const picksRes = await fetch(`https://api.sleeper.app/v1/draft/${draftId}/picks`);
+          const picks = await picksRes.json();
+
+          const posCounts = {};
+
+          picks.forEach(p => {
+            if (p.player_id) {
+              const pos = p.metadata?.position || playerDB[p.player_id]?.position || 'FLEX';
+              posCounts[pos] = (posCounts[pos] || 0) + 1;
+              
+              const slotFormatted = p.draft_slot < 10 ? `0${p.draft_slot}` : `${p.draft_slot}`;
+              const formattedPick = `${p.round}.${slotFormatted}`;
+              const posRank = `${pos}${posCounts[pos]}`;
+
+              pickMap[p.player_id] = {
+                round: p.round,
+                slot: p.draft_slot,
+                formatted: formattedPick,
+                posRank: posRank
+              };
+            }
+          });
+        }
+      } catch (e) {
+        console.warn("Could not fetch draft pick data:", e);
+      }
+      setDraftPicks(pickMap);
 
       const allPlayers = myRoster.players ? myRoster.players.filter(id => id !== '0') : [];
       const starterIds = myRoster.starters ? myRoster.starters.filter(id => id !== '0') : [];
@@ -196,7 +232,7 @@ export default function GraphicTab() {
       case 'WR': return { border: 'border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.15)]', gradient: 'from-amber-900/40 to-black', text: 'text-amber-500' };
       case 'TE': return { border: 'border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.15)]', gradient: 'from-red-950/40 to-black', text: 'text-red-500' };
       case 'K': return { border: 'border-purple-500/60 shadow-[0_0_20px_rgba(168,85,247,0.15)]', gradient: 'from-purple-950/40 to-black', text: 'text-purple-400' };
-      case 'DEF': return { border: 'border-slate-300/60 shadow-[0_0_20px_rgba(203,213,225,0.15)]', gradient: 'from-slate-700/40 to-black', text: 'text-slate-300' };
+      case 'DEF': return { border: 'border-slate-300/60 shadow-[0_0_20px_rgba(203,213,225,0.15)]', gradient: 'from-slate700/40 to-black', text: 'text-slate-300' };
       default: return { border: 'border-zinc-500/60 shadow-[0_0_20px_rgba(113,113,122,0.15)]', gradient: 'from-zinc-800/40 to-black', text: 'text-zinc-400' };
     }
   };
@@ -206,13 +242,11 @@ export default function GraphicTab() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
       
-      {/* Intro / Header (Blue icon removed) */}
       <div className="mb-8">
         <h2 className="text-2xl font-black italic text-white uppercase tracking-tighter">Social Roster Graphic</h2>
         <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Generate & Share Your DNO Squad</p>
       </div>
 
-      {/* Inputs */}
       <div className="bg-[#111] border border-gray-800 rounded-2xl p-6 mb-8 shadow-xl max-w-3xl">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
@@ -242,7 +276,6 @@ export default function GraphicTab() {
           </div>
         )}
 
-        {/* 🚀 Single-click League Buttons (Replaced Dropdown) */}
         {leagues.length > 0 && (
           <div className="mt-6 animate-in fade-in duration-300">
             <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Select Your DNO Division</label>
@@ -316,6 +349,7 @@ export default function GraphicTab() {
                               {starters.map((playerId, idx) => {
                                 const isDefense = playerId.length < 4; 
                                 const dbPlayer = playerDB[playerId]; 
+                                const pickInfo = draftPicks[playerId];
                                 
                                 let firstName = "Unknown";
                                 let lastName = "Player";
@@ -356,10 +390,23 @@ export default function GraphicTab() {
                                        </div>
                                     </div>
 
+                                    {/* Top Left Position Badge */}
                                     <div className="absolute top-3 left-3 z-40">
                                        <span className="bg-black/80 backdrop-blur-md px-2.5 py-1 rounded text-[11px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">
                                           {position}
                                        </span>
+                                    </div>
+
+                                    {/* 🚀 Top Right Draft Pick Badge */}
+                                    <div className="absolute top-3 right-3 z-40 flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded border border-zinc-700/50 shadow-md">
+                                       <span className="text-[11px] font-black text-[#f5a623] tracking-widest">
+                                          {pickInfo ? pickInfo.formatted : 'FA'}
+                                       </span>
+                                       {pickInfo?.posRank && (
+                                          <span className="text-[10px] font-bold text-zinc-400">
+                                             • {pickInfo.posRank}
+                                          </span>
+                                       )}
                                     </div>
 
                                     <div className="absolute inset-x-0 bottom-0 flex items-end justify-center z-10 pointer-events-none h-[130%]">
@@ -391,7 +438,7 @@ export default function GraphicTab() {
 
                          {/* BENCH PLAYERS */}
                          {bench.length > 0 && (
-                           <div className="mt-6">
+                           <div className="mt-8">
                              <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4 px-1 flex items-center gap-2 drop-shadow-md">
                                <span className="w-2 h-2 rounded-full bg-zinc-600"></span> Bench
                              </h3>
@@ -399,6 +446,7 @@ export default function GraphicTab() {
                                 {bench.map((playerId, idx) => {
                                   const isDefense = playerId.length < 4; 
                                   const dbPlayer = playerDB[playerId]; 
+                                  const pickInfo = draftPicks[playerId];
                                   
                                   let firstName = "Unknown";
                                   let lastName = "Player";
@@ -451,9 +499,21 @@ export default function GraphicTab() {
                                           />
                                        </div>
 
-                                       <div className="flex-1 min-w-0 pl-4 pr-3 flex items-baseline z-20">
+                                       <div className="flex-1 min-w-0 pl-4 pr-2 flex items-baseline z-20">
                                           <span className="font-black text-zinc-500 mr-2 uppercase text-[15px] tracking-wide">{firstName.charAt(0)}.</span>
                                           <span className="text-white font-black text-[19px] uppercase truncate tracking-wide">{lastName}</span>
+                                       </div>
+
+                                       {/* 🚀 Right Draft Pick Badge on Bench Strip */}
+                                       <div className="pr-4 z-20 shrink-0 text-right flex flex-col items-end justify-center">
+                                          <span className="text-[12px] font-black text-[#f5a623] tracking-widest leading-none">
+                                             {pickInfo ? pickInfo.formatted : 'FA'}
+                                          </span>
+                                          {pickInfo?.posRank && (
+                                             <span className="text-[9px] font-bold text-zinc-500 uppercase mt-0.5">
+                                                {pickInfo.posRank}
+                                             </span>
+                                          )}
                                        </div>
                                     </div>
                                   );
