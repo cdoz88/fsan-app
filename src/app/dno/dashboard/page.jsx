@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Ticket, ShieldCheck, Share2, Trophy, ExternalLink, Loader2 } from 'lucide-react';
+import { Ticket, ShieldCheck, Share2, Trophy, ExternalLink, Loader2, Link2, Check, RefreshCw, Gift } from 'lucide-react';
 
 // Importing DNO components
 import DNOHeader from '../../../components/dno/DNOHeader';
@@ -20,7 +20,14 @@ function DashboardContent() {
   const [myLeagues, setMyLeagues] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Set Page Title & Force Favicon Swap with Cache-Busting
+  // Sleeper Sync State
+  const [sleeperUsernameInput, setSleeperUsernameInput] = useState('');
+  const [syncedSleeperUser, setSyncedSleeperUser] = useState(null); // { sleeper_id, sleeper_username }
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState('');
+  const [syncSuccess, setSyncSuccess] = useState(false);
+
+  // Set Page Title & Force Favicon Swap
   useEffect(() => {
     document.title = "Locker Room | Draft Night Out";
     
@@ -60,11 +67,21 @@ function DashboardContent() {
     
     setIsLoading(true);
     try {
+      // 1. Fetch user data (includes tickets & sleeper_id/sleeper_username)
       const uRes = await fetch(`/api/user?id=${session.user.id}`);
       const uData = await uRes.json();
       
       setTicketCount(uData.dno_tickets || 0);
 
+      if (uData.sleeper_id) {
+        setSyncedSleeperUser({
+          sleeper_id: uData.sleeper_id,
+          sleeper_username: uData.sleeper_username || uData.sleeper_id
+        });
+        setSleeperUsernameInput(uData.sleeper_username || uData.sleeper_id);
+      }
+
+      // 2. Fetch DNO pool to filter user's joined leagues
       const pRes = await fetch(`/api/scl?type=dno_pool`);
       if (pRes.ok) {
         const pData = await pRes.json();
@@ -91,6 +108,62 @@ function DashboardContent() {
     }
   }, [status, loadAccountData]);
 
+  // Handle Sleeper Account Sync
+  const handleSyncSleeper = async (e) => {
+    e.preventDefault();
+    if (!sleeperUsernameInput.trim() || !session?.user?.id) return;
+
+    setIsSyncing(true);
+    setSyncError('');
+    setSyncSuccess(false);
+
+    try {
+      // Step A: Verify username exists on Sleeper via official public API
+      const sleeperRes = await fetch(`https://api.sleeper.app/v1/user/${sleeperUsernameInput.trim()}`);
+      if (!sleeperRes.ok) {
+        throw new Error("Sleeper user not found");
+      }
+      const sleeperData = await sleeperRes.json();
+      
+      if (!sleeperData || !sleeperData.user_id) {
+        throw new Error("Invalid Sleeper username");
+      }
+
+      // Step B: Save Sleeper ID & Username to our user database
+      const saveRes = await fetch('/api/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_sleeper',
+          userId: session.user.id,
+          sleeper_id: sleeperData.user_id,
+          sleeper_username: sleeperData.username || sleeperUsernameInput.trim()
+        })
+      });
+
+      if (!saveRes.ok) {
+        throw new Error("Failed saving Sleeper connection to database");
+      }
+
+      setSyncedSleeperUser({
+        sleeper_id: sleeperData.user_id,
+        sleeper_username: sleeperData.username || sleeperUsernameInput.trim()
+      });
+
+      setSyncSuccess(true);
+      setTimeout(() => setSyncSuccess(false), 3000);
+      
+      // Reload account data to update leagues immediately
+      loadAccountData();
+
+    } catch (err) {
+      console.error("Sleeper Sync Error:", err);
+      setSyncError(err.message || "Unable to sync Sleeper account.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   if (status === 'loading' || isLoading) {
     return (
       <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
@@ -109,7 +182,8 @@ function DashboardContent() {
         </h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Ticket Card */}
+          
+          {/* Ticket Balance Card */}
           <div className="bg-[#151515] border border-gray-800 rounded-3xl p-6 md:p-8 flex items-center justify-between shadow-lg relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#1b75bb] opacity-5 blur-[50px] rounded-full"></div>
             <div>
@@ -124,23 +198,53 @@ function DashboardContent() {
             </div>
           </div>
 
-          {/* FSAN Perk Card */}
-          <div className="bg-gradient-to-br from-[#111] to-[#151515] border border-[#1b75bb]/30 rounded-3xl p-6 md:p-8 flex items-center justify-between shadow-[0_0_20px_rgba(27,117,187,0.1)] group hover:border-[#1b75bb]/60 transition-colors">
-            <div>
-              <p className="text-[#1b75bb] font-bold uppercase tracking-widest text-xs mb-2 flex items-center gap-2">
-                <ShieldCheck size={14} /> FSAN Subscription
+          {/* Universal Sleeper Account Sync Card */}
+          <div className="bg-[#151515] border border-gray-800 rounded-3xl p-6 md:p-8 flex flex-col justify-between shadow-lg relative overflow-hidden">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[#1b75bb] font-bold uppercase tracking-widest text-xs flex items-center gap-2">
+                <Link2 size={14} /> Universal Sleeper Sync
               </p>
-              <h3 className="text-xl font-black text-white uppercase italic tracking-tight mb-1">Claim Your Free Year</h3>
-              <p className="text-sm text-gray-400 max-w-[250px]">Use your DNO entry to unlock premium tools at FSAN.</p>
+              {syncedSleeperUser && (
+                <span className="text-xs font-bold uppercase tracking-widest text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-full border border-teal-500/20 flex items-center gap-1">
+                  <Check size={12} /> Connected
+                </span>
+              )}
             </div>
-            <a href="https://fsan.com/subscribe" target="_blank" rel="noreferrer" className="w-12 h-12 rounded-full bg-[#1b75bb] flex items-center justify-center text-white group-hover:scale-110 transition-transform shadow-lg">
-              <ExternalLink size={20} />
-            </a>
+
+            <form onSubmit={handleSyncSleeper} className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <input 
+                  type="text"
+                  placeholder="Enter Sleeper Username"
+                  value={sleeperUsernameInput}
+                  onChange={(e) => setSleeperUsernameInput(e.target.value)}
+                  className="flex-1 bg-[#111] border border-gray-800 text-white text-sm rounded-xl py-2.5 px-4 focus:outline-none focus:border-[#1b75bb] transition-colors"
+                />
+                <button 
+                  type="submit"
+                  disabled={isSyncing}
+                  className="px-5 py-2.5 bg-[#1b75bb] hover:bg-teal-500 text-white font-bold uppercase tracking-widest text-xs rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2 shrink-0"
+                >
+                  {isSyncing ? <Loader2 size={14} className="animate-spin" /> : syncedSleeperUser ? 'Update' : 'Sync'}
+                </button>
+              </div>
+
+              {syncError && (
+                <p className="text-red-400 text-[11px] font-bold uppercase tracking-wider">{syncError}</p>
+              )}
+              {syncSuccess && (
+                <p className="text-teal-400 text-[11px] font-bold uppercase tracking-wider">Sleeper account successfully synced!</p>
+              )}
+              {!syncError && !syncSuccess && (
+                <p className="text-gray-500 text-[11px]">Syncing connects your DNO leagues and roster graphics automatically.</p>
+              )}
+            </form>
           </div>
+
         </div>
       </div>
 
-      {/* Navigation Tabs with URL Hash/Query Syncing */}
+      {/* Navigation Tabs */}
       <div className="flex items-center gap-4 mb-8 border-b border-gray-800 pb-px overflow-x-auto scrollbar-hide">
         <button 
           onClick={() => handleTabClick('my-leagues')}
@@ -157,13 +261,29 @@ function DashboardContent() {
           <div className="flex items-center gap-2"><Share2 size={16} /> Share Roster</div>
           {activeTab === 'share' && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-teal-400 to-[#1b75bb] rounded-t-full"></div>}
         </button>
+
+        <button 
+          onClick={() => handleTabClick('perks')}
+          className={`pb-4 px-2 font-black uppercase tracking-widest text-xs transition-colors whitespace-nowrap relative ${activeTab === 'perks' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+        >
+          <div className="flex items-center gap-2"><Gift size={16} /> Perks</div>
+          {activeTab === 'perks' && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-teal-400 to-[#1b75bb] rounded-t-full"></div>}
+        </button>
       </div>
 
-      {/* Tab Content */}
+      {/* Dynamic Tab Content */}
       <div className="bg-[#151515] border border-gray-800 rounded-3xl min-h-[400px]">
+        
+        {/* TAB 1: MY LEAGUES */}
         {activeTab === 'my-leagues' && (
           <div className="p-8">
-            {myLeagues.length === 0 ? (
+            {!syncedSleeperUser ? (
+              <div className="text-center py-20">
+                <Link2 className="w-16 h-16 text-gray-800 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2">Sync Your Sleeper Account</h3>
+                <p className="text-gray-400 max-w-md mx-auto mb-6">Enter your Sleeper username in the card above to automatically pull and display your Draft Night Out leagues here!</p>
+              </div>
+            ) : myLeagues.length === 0 ? (
               <div className="text-center py-20">
                 <Trophy className="w-16 h-16 text-gray-800 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-white mb-2">No Leagues Yet</h3>
@@ -204,11 +324,43 @@ function DashboardContent() {
           </div>
         )}
 
+        {/* TAB 2: SHARE ROSTER */}
         {activeTab === 'share' && (
           <div className="animate-in fade-in duration-300">
             <GraphicTab />
           </div>
         )}
+
+        {/* TAB 3: PERKS */}
+        {activeTab === 'perks' && (
+          <div className="p-8 animate-in fade-in duration-300">
+            <div className="max-w-xl mx-auto bg-gradient-to-br from-[#111] to-[#151515] border border-[#1b75bb]/40 rounded-3xl p-8 shadow-[0_0_30px_rgba(27,117,187,0.15)] text-center relative overflow-hidden">
+              <div className="w-16 h-16 rounded-full bg-[#1b75bb]/10 border border-[#1b75bb]/30 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <ShieldCheck className="w-8 h-8 text-[#1b75bb]" />
+              </div>
+              
+              <span className="text-[#1b75bb] font-bold uppercase tracking-widest text-xs mb-2 block">
+                Exclusive DNO Perk
+              </span>
+              <h3 className="text-2xl font-black text-white uppercase italic tracking-tight mb-3">
+                1 Free Year of FSAN Pro
+              </h3>
+              <p className="text-gray-400 text-sm leading-relaxed mb-8">
+                As a Draft Night Out participant, your entry includes 12 full months of access to FSAN’s premium rankings, trade calculator, trade value charts, and real-time draft advice.
+              </p>
+
+              <a 
+                href="https://fsan.com/subscribe" 
+                target="_blank" 
+                rel="noreferrer" 
+                className="inline-flex items-center gap-2 bg-[#1b75bb] hover:bg-teal-500 text-white font-black uppercase tracking-widest text-xs px-8 py-4 rounded-xl transition-all shadow-lg hover:scale-105"
+              >
+                Claim Subscription <ExternalLink size={16} />
+              </a>
+            </div>
+          </div>
+        )}
+
       </div>
 
     </main>
