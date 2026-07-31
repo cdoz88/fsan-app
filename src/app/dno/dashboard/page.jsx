@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Ticket, ShieldCheck, Share2, Trophy, ExternalLink, Loader2, Link2, CheckCircle2, Gift, Edit3, X } from 'lucide-react';
+import { Ticket, ShieldCheck, Share2, Trophy, ExternalLink, Loader2, Link2, CheckCircle2, Gift, Edit3, X, ArrowLeft } from 'lucide-react';
 
 // Importing DNO components
 import DNOHeader from '../../../components/dno/DNOHeader';
@@ -34,7 +35,7 @@ function DashboardContent() {
 
   // Set Page Title & Force Favicon Swap
   useEffect(() => {
-    document.title = "Locker Room | Draft Night Out";
+    document.title = "Dashboard | Draft Night Out";
     
     const dnoFaviconUrl = "/images/dno/DNO-Logo_Logo.webp?v=dno2026";
     const existingIcons = document.querySelectorAll("link[rel*='icon']");
@@ -109,7 +110,7 @@ function DashboardContent() {
     return null;
   };
 
-  // 🚀 Direct Sleeper API fetch for "My Leagues"
+  // Direct Sleeper API fetch for "My Leagues"
   const fetchMyDnoLeagues = useCallback(async (targetUser) => {
     const sleeperIdentifier = targetUser?.sleeper_id || targetUser?.user_id || targetUser?.sleeper_username;
     if (!sleeperIdentifier) {
@@ -119,7 +120,6 @@ function DashboardContent() {
 
     setLoadingLeagues(true);
     try {
-      // 1. Get Sleeper user ID
       let userId = targetUser?.sleeper_id || targetUser?.user_id;
       if (!userId) {
         const uRes = await fetch(`https://api.sleeper.app/v1/user/${sleeperIdentifier}`);
@@ -135,7 +135,6 @@ function DashboardContent() {
         return;
       }
 
-      // 2. Fetch DNO Pool to compare against
       const pRes = await fetch(`/api/scl?type=dno_pool&t=${Date.now()}`);
       let validDnoLeagueIds = new Set();
       let poolMap = {};
@@ -147,7 +146,6 @@ function DashboardContent() {
         });
       }
 
-      // 3. Query Sleeper for user's 2026 leagues
       const slpLeaguesRes = await fetch(`https://api.sleeper.app/v1/user/${userId}/leagues/nfl/2026`);
       if (!slpLeaguesRes.ok) {
         setMyLeagues([]);
@@ -156,7 +154,6 @@ function DashboardContent() {
       }
       const slpLeagues = await slpLeaguesRes.json();
 
-      // 4. Match against DNO leagues
       const matchedDnoLeagues = slpLeagues.filter(l => {
         const inPool = validDnoLeagueIds.has(String(l.league_id));
         const hasDnoName = l.name && (l.name.toUpperCase().includes('DNO') || l.name.toUpperCase().includes('DRAFT NIGHT OUT'));
@@ -182,7 +179,6 @@ function DashboardContent() {
     }
   }, []);
 
-  // Fetch My Leagues whenever syncedSleeperUser updates
   useEffect(() => {
     if (syncedSleeperUser) {
       fetchMyDnoLeagues(syncedSleeperUser);
@@ -191,7 +187,6 @@ function DashboardContent() {
     }
   }, [syncedSleeperUser, fetchMyDnoLeagues]);
 
-  // Load Account Data (tickets & server sync)
   const loadAccountData = useCallback(async () => {
     if (!session?.user?.id) return;
     
@@ -230,7 +225,6 @@ function DashboardContent() {
     }
   }, [status, loadAccountData]);
 
-  // Debounced Live Search against Sleeper API
   useEffect(() => {
     if (!sleeperInput || sleeperInput.trim().length < 3 || (syncedSleeperUser && !isEditingSync)) {
       setLivePreviewUser(null);
@@ -266,7 +260,6 @@ function DashboardContent() {
     return () => clearTimeout(delayDebounceFn);
   }, [sleeperInput, syncedSleeperUser, isEditingSync]);
 
-  // Save Dedicated DNO Sleeper Connection to WordPress & Local Storage
   const handleConfirmSync = async (userToSync) => {
     if (!userToSync || !session?.user?.id) return;
     setIsSaving(true);
@@ -330,10 +323,19 @@ function DashboardContent() {
   return (
     <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-28 pb-24 z-10 relative">
       
+      {/* Back Button */}
+      <Link 
+        href="/dno" 
+        className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors mb-4 group"
+      >
+        <ArrowLeft size={16} className="text-[#1b75bb] group-hover:-translate-x-1 transition-transform" />
+        <span>Back to Draft Lobby</span>
+      </Link>
+
       {/* Welcome Banner */}
       <div className="mb-10">
         <h1 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-white mb-6">
-          Welcome to the Locker Room, <span className="text-[#1b75bb]">{session?.user?.name || 'Manager'}</span>
+          Welcome to Your Dashboard, <span className="text-[#1b75bb]">{session?.user?.name || 'Manager'}</span>
         </h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
