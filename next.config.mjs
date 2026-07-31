@@ -21,9 +21,9 @@ const nextConfig = {
         destination: '/:sport/home',
         permanent: false,
       },
-      // FIX: Added articles, videos, podcasts, search, and teams to the protected list!
+      // FIX: Added 'dno' and 'dashboard' to the protected list so the middleware can route them!
       {
-        source: '/:slug((?!api|football|basketball|baseball|all|subscribe|scores|reset-password|player|admin|account|rankings|login|home|articles|videos|podcasts|search|teams)[a-zA-Z0-9-]+)',
+        source: '/:slug((?!api|football|basketball|baseball|all|subscribe|scores|reset-password|player|admin|account|rankings|login|home|articles|videos|podcasts|search|teams|dno|dashboard)[a-zA-Z0-9-]+)',
         destination: '/football/articles/:slug',
         permanent: true,
       }
