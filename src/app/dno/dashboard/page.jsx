@@ -1,19 +1,54 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Ticket, ShieldCheck, Share2, Trophy, ExternalLink, Loader2 } from 'lucide-react';
 
-// Importing from the DNO components folder
+// Importing DNO components
 import DNOHeader from '../../../components/dno/DNOHeader';
 import GraphicTab from '../../../components/dno/tabs/GraphicTab';
 
 export default function DNODashboard() {
   const { data: session, status } = useSession();
-  const [activeTab, setActiveTab] = useState('my-leagues');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Detail 3: Read active tab from URL query param (?tab=share)
+  const initialTab = searchParams.get('tab') || 'my-leagues';
+  const [activeTab, setActiveTab] = useState(initialTab);
   
   const [ticketCount, setTicketCount] = useState(0);
   const [myLeagues, setMyLeagues] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Detail 1 & 2: Set Page Title & Favicon dynamically for Locker Room
+  useEffect(() => {
+    document.title = "Locker Room | Draft Night Out";
+    
+    let link = document.querySelector("link[rel*='icon']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'shortcut icon';
+      document.getElementsByTagName('head')[0].appendChild(link);
+    }
+    link.href = "https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp";
+  }, []);
+
+  // Sync tab state if URL parameter changes
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
+
+  // Handle Tab Click and update URL parameter
+  const handleTabClick = (tabId) => {
+    setActiveTab(tabId);
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.set('tab', tabId);
+    router.push(`?${newParams.toString()}`, { scroll: false });
+  };
 
   const loadAccountData = useCallback(async () => {
     if (!session?.user?.id) return;
@@ -65,17 +100,16 @@ export default function DNODashboard() {
       {/* Floating DNO Header */}
       <DNOHeader onOpenAuthModal={() => {}} />
 
-      {/* Added pt-28 to push content below the absolute header */}
       <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-28 pb-24 z-10 relative">
         
-        {/* Welcome & Account Snapshot */}
+        {/* Welcome Banner */}
         <div className="mb-10">
           <h1 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-white mb-6">
             Welcome to the Locker Room, <span className="text-[#1b75bb]">{session?.user?.name || 'Manager'}</span>
           </h1>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Ticket Stash Card */}
+            {/* Ticket Card */}
             <div className="bg-[#151515] border border-gray-800 rounded-3xl p-6 md:p-8 flex items-center justify-between shadow-lg relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#1b75bb] opacity-5 blur-[50px] rounded-full"></div>
               <div>
@@ -106,10 +140,10 @@ export default function DNODashboard() {
           </div>
         </div>
 
-        {/* Dashboard Navigation */}
+        {/* Navigation Tabs with URL Hash/Query Syncing */}
         <div className="flex items-center gap-4 mb-8 border-b border-gray-800 pb-px overflow-x-auto scrollbar-hide">
           <button 
-            onClick={() => setActiveTab('my-leagues')}
+            onClick={() => handleTabClick('my-leagues')}
             className={`pb-4 px-2 font-black uppercase tracking-widest text-xs transition-colors whitespace-nowrap relative ${activeTab === 'my-leagues' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
           >
             <div className="flex items-center gap-2"><Trophy size={16} /> My Leagues</div>
@@ -117,7 +151,7 @@ export default function DNODashboard() {
           </button>
 
           <button 
-            onClick={() => setActiveTab('share')}
+            onClick={() => handleTabClick('share')}
             className={`pb-4 px-2 font-black uppercase tracking-widest text-xs transition-colors whitespace-nowrap relative ${activeTab === 'share' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
           >
             <div className="flex items-center gap-2"><Share2 size={16} /> Share Roster</div>
@@ -125,7 +159,7 @@ export default function DNODashboard() {
           </button>
         </div>
 
-        {/* Dynamic Dashboard Content */}
+        {/* Tab Content */}
         <div className="bg-[#151515] border border-gray-800 rounded-3xl min-h-[400px]">
           {activeTab === 'my-leagues' && (
             <div className="p-8">

@@ -1,9 +1,10 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { MonitorSmartphone, Trophy, BookOpen, Handshake, ListOrdered, HeartHandshake, Loader2 } from 'lucide-react';
 
-// Importing from the DNO components folder
+// Importing DNO components
 import DNOHeader from '../../components/dno/DNOHeader';
 import DNOAuthModal from '../../components/dno/DNOAuthModal';
 import DraftsTab from '../../components/dno/tabs/DraftsTab';
@@ -15,7 +16,12 @@ import NapkinLeaderboard from '../../components/dno/NapkinLeaderboard';
 
 export default function DNOPublicPage() {
   const { data: session, status } = useSession();
-  const [activeTab, setActiveTab] = useState('drafts');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Detail 3: Read active tab from URL query param (?tab=prizes), default to 'drafts'
+  const initialTab = searchParams.get('tab') || 'drafts';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [draftView, setDraftView] = useState('online');
   const [showAuthModal, setShowAuthModal] = useState(null); // 'login' or 'register'
   
@@ -24,12 +30,41 @@ export default function DNOPublicPage() {
   const [liveLeaderboard, setLiveLeaderboard] = useState({ teams: [] });
   const [liveSeasonLabel, setLiveSeasonLabel] = useState("2026 SEASON");
 
-  // New State for Purchasing and Joining
+  // State for Purchasing and Joining
   const [ticketsAvailable, setTicketsAvailable] = useState(0);
   const [confirmingLeague, setConfirmingLeague] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Fetch user's ticket balance if they are logged in
+  // Detail 1 & 2: Set Page Title & Favicon dynamically for DNO Public Page
+  useEffect(() => {
+    document.title = "Draft Night Out | The Ultimate Fantasy Football Event";
+    
+    let link = document.querySelector("link[rel*='icon']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'shortcut icon';
+      document.getElementsByTagName('head')[0].appendChild(link);
+    }
+    link.href = "https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp";
+  }, []);
+
+  // Sync tab state if URL parameter changes
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
+
+  // Handle Tab Click and update URL parameter seamlessly
+  const handleTabClick = (tabId) => {
+    setActiveTab(tabId);
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.set('tab', tabId);
+    router.push(`?${newParams.toString()}`, { scroll: false });
+  };
+
+  // Fetch user's ticket balance if logged in
   const loadAccountData = useCallback(async () => {
     if (!session?.user?.id) return;
     try {
@@ -41,7 +76,7 @@ export default function DNOPublicPage() {
     }
   }, [session]);
 
-  // Fetch the live pool data
+  // Fetch live pool data
   const loadDnoPool = useCallback(async () => {
     try {
       const res = await fetch(`/api/scl?type=dno_pool&t=${Date.now()}`, { cache: 'no-store' });
@@ -55,7 +90,7 @@ export default function DNOPublicPage() {
     }
   }, []);
 
-  // Fetch the live leaderboard
+  // Fetch live leaderboard
   const loadLiveLeaderboard = useCallback(async () => {
     try {
       const res = await fetch(`/api/scl?action=dno_get_leaderboard_data&t=${Date.now()}`, { cache: 'no-store' });
@@ -87,9 +122,7 @@ export default function DNOPublicPage() {
     return isFullA ? 1 : -1;
   });
 
-  const handleTabClick = (tabId) => setActiveTab(tabId);
-
-  // STRIPE CHECKOUT LOGIC
+  // Stripe Checkout
   const handlePurchaseExtraEntry = async () => {
     if (status !== 'authenticated') {
       setShowAuthModal('register');
@@ -120,7 +153,7 @@ export default function DNOPublicPage() {
     }
   };
 
-  // JOIN LEAGUE LOGIC
+  // Join League Execution
   const executeJoin = async () => {
     if (!confirmingLeague || !session?.user?.id) return;
     setIsProcessing(true);
@@ -155,7 +188,7 @@ export default function DNOPublicPage() {
       {/* Floating DNO Header */}
       <DNOHeader onOpenAuthModal={setShowAuthModal} />
 
-      {/* Auth Modal Injection */}
+      {/* Auth Modal */}
       {showAuthModal && (
         <DNOAuthModal 
           initialMode={showAuthModal} 
@@ -163,7 +196,7 @@ export default function DNOPublicPage() {
         />
       )}
 
-      {/* Confirm Join / Purchase Modal */}
+      {/* Confirm Join Modal */}
       {confirmingLeague && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
            <div className="bg-[#151515] p-8 rounded-3xl border border-gray-800 text-center text-white shadow-2xl w-full max-w-md relative overflow-hidden">
@@ -214,7 +247,7 @@ export default function DNOPublicPage() {
 
       <main className="flex-1 w-full pb-24">
         
-        {/* Full Bleed Hero Section */}
+        {/* Hero Banner */}
         <div className="relative w-full h-[320px] md:h-[450px] flex items-end overflow-hidden mb-10 shadow-2xl bg-[#0a0a0a]">
           <div className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-60" style={{ backgroundImage: `url('https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Background.webp')` }} />
           <img src="https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp" alt="Draft Night Out Logo" className="absolute -right-10 md:right-10 top-1/2 -translate-y-1/2 w-[280px] md:w-[550px] h-auto object-contain opacity-20 md:opacity-40 z-0 pointer-events-none mix-blend-plus-lighter drop-shadow-2xl" />
@@ -231,7 +264,7 @@ export default function DNOPublicPage() {
         {/* Dynamic Content Container */}
         <div className="w-full max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10">
           
-          {/* Tab Navigation */}
+          {/* Tab Navigation with Hash/Query Linking */}
           <div className="flex items-center justify-start lg:justify-center gap-2 md:gap-4 py-2 px-2 md:px-4 mb-10 bg-[#151515] rounded-2xl border border-gray-800/50 w-full lg:w-fit mx-auto shadow-inner overflow-x-auto scrollbar-hide">
             {[
               { id: 'drafts', icon: MonitorSmartphone, label: 'Drafts' },
@@ -253,7 +286,6 @@ export default function DNOPublicPage() {
           </div>
 
           <div className="max-w-5xl mx-auto">
-            {/* Dynamic Content Switching */}
             {activeTab === 'drafts' && (
               <DraftsTab 
                 draftView={draftView} 
