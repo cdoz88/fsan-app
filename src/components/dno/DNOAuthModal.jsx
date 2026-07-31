@@ -1,22 +1,71 @@
 "use client";
 import React, { useState } from 'react';
-import { X, Mail, Lock, User, ShieldCheck } from 'lucide-react';
+import { signIn } from 'next-auth/react';
+import { X, Mail, Lock, User, ShieldCheck, Loader2 } from 'lucide-react';
 
 export default function DNOAuthModal({ initialMode = 'login', onClose }) {
   const [mode, setMode] = useState(initialMode); // 'login' or 'register'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Wire this up to your NextAuth / WordPress backend
-    console.log(`Submitting ${mode}:`, { email, password, username });
+    setError('');
+    setIsLoading(true);
+
+    if (mode === 'login') {
+      // Standard NextAuth credentials login
+      const res = await signIn('credentials', {
+        redirect: false,
+        username: email, // Passes the email/username to your existing backend
+        password: password,
+      });
+
+      if (res?.error) {
+        setError(res.error);
+        setIsLoading(false);
+      } else {
+        // Success! Send them straight to the Locker Room
+        window.location.href = '/dno/dashboard';
+      }
+    } else {
+      // Registration flow
+      // NOTE: This assumes you have a standard registration endpoint. Adjust if your route differs!
+      try {
+        const res = await fetch('/api/auth/register', { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password }),
+        });
+        const data = await res.json();
+        
+        if (res.ok && data.success) {
+          // Automatically log them in after a successful registration
+          await signIn('credentials', {
+            redirect: false,
+            username: email,
+            password: password,
+          });
+          window.location.href = '/dno/dashboard';
+        } else {
+          setError(data.message || 'Registration failed. Username or email may already be in use.');
+          setIsLoading(false);
+        }
+      } catch (err) {
+        setError('Something went wrong checking the server. Please try again.');
+        setIsLoading(false);
+      }
+    }
   };
 
   const handleFSANLogin = () => {
-    // TODO: Wire this up to the SSO flow
-    console.log('Initiating FSAN SSO Login...');
+    // If they click "Log in with FSAN" while on the register tab, 
+    // simply swap them back to the login view and focus the input.
+    setMode('login');
+    document.getElementById('email-input')?.focus();
   };
 
   return (
@@ -39,20 +88,32 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
             {mode === 'login' ? 'Log in to access your Draft Night Out dashboard.' : 'Create your account to secure your draft ticket.'}
           </p>
 
-          {/* The FSAN SSO Button */}
-          <button 
-            onClick={handleFSANLogin}
-            className="w-full flex items-center justify-center gap-3 bg-[#111] hover:bg-gray-800 border border-[#1b75bb]/30 hover:border-[#1b75bb] transition-all px-4 py-3.5 rounded-xl text-white text-xs font-bold uppercase tracking-widest shadow-md mb-6 group"
-          >
-            <ShieldCheck size={18} className="text-[#1b75bb] group-hover:scale-110 transition-transform" />
-            Log in with FSAN Account
-          </button>
+          {/* Error Message Display */}
+          {error && (
+            <div className="mb-6 p-3 bg-red-500/10 border border-red-500/50 rounded-xl text-red-500 text-xs font-bold uppercase tracking-widest animate-in fade-in">
+              {error}
+            </div>
+          )}
 
-          <div className="flex items-center gap-4 mb-6">
-            <div className="h-px bg-gray-800 flex-1"></div>
-            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Or use email</span>
-            <div className="h-px bg-gray-800 flex-1"></div>
-          </div>
+          {/* The FSAN SSO Prompt (Only shows on Registration view to redirect existing users) */}
+          {mode === 'register' && (
+            <>
+              <button 
+                type="button"
+                onClick={handleFSANLogin}
+                className="w-full flex items-center justify-center gap-3 bg-[#111] hover:bg-gray-800 border border-[#1b75bb]/30 hover:border-[#1b75bb] transition-all px-4 py-3.5 rounded-xl text-white text-xs font-bold uppercase tracking-widest shadow-md mb-6 group"
+              >
+                <ShieldCheck size={18} className="text-[#1b75bb] group-hover:scale-110 transition-transform" />
+                Log in with existing FSAN Account
+              </button>
+
+              <div className="flex items-center gap-4 mb-6">
+                <div className="h-px bg-gray-800 flex-1"></div>
+                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Or create new account</span>
+                <div className="h-px bg-gray-800 flex-1"></div>
+              </div>
+            </>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
@@ -77,8 +138,9 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
                 <Mail size={16} className="text-gray-500" />
               </div>
               <input 
-                type="email" 
-                placeholder="Email Address" 
+                id="email-input"
+                type="text" 
+                placeholder={mode === 'login' ? 'Email or Username' : 'Email Address'} 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-[#111] border border-gray-800 text-white text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-[#1b75bb] transition-colors"
@@ -102,10 +164,11 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
 
             <button 
               type="submit" 
-              className="w-full mt-2 relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-[0_0_15px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5"
+              disabled={isLoading}
+              className="w-full mt-2 relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-[0_0_15px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
             >
               <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full h-full text-white font-black uppercase tracking-widest text-xs">
-                {mode === 'login' ? 'Log In' : 'Register & Draft'}
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (mode === 'login' ? 'Log In' : 'Register & Draft')}
               </div>
             </button>
           </form>
@@ -117,7 +180,11 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
           <p className="text-xs text-gray-400 font-medium">
             {mode === 'login' ? "Don't have a spot yet? " : "Already have an account? "}
             <button 
-              onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+              type="button"
+              onClick={() => {
+                setMode(mode === 'login' ? 'register' : 'login');
+                setError(''); // Clear errors when switching tabs
+              }}
               className="text-[#1b75bb] font-bold hover:underline"
             >
               {mode === 'login' ? 'Register Here' : 'Log In Here'}
