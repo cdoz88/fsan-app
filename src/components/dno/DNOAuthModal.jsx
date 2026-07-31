@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
-import { X, Mail, Lock, User, ShieldCheck, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, Mail, Lock, User, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function DNOAuthModal({ initialMode = 'login', onClose }) {
   const [mode, setMode] = useState(initialMode); // 'login', 'register', or 'forgotPassword'
@@ -37,7 +37,7 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
         setError('Invalid email or password. Please try again.');
         setIsLoading(false);
       } else {
-        // Success! Send them straight to the Locker Room
+        // Success! Send them straight to the Dashboard
         window.location.href = '/dno/dashboard';
       }
     } else if (mode === 'register') {
@@ -170,21 +170,31 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
             </div>
           )}
 
-          {/* The FSAN SSO Prompt */}
-          {mode === 'register' && (
+          {/* The Silver Gradient FSAN SSO Option (Available on Login & Register) */}
+          {(mode === 'login' || mode === 'register') && (
             <>
               <button 
                 type="button"
                 onClick={handleFSANLogin}
-                className="w-full flex items-center justify-center gap-3 bg-[#111] hover:bg-gray-800 border border-[#1b75bb]/30 hover:border-[#1b75bb] transition-all px-4 py-3.5 rounded-xl text-white text-xs font-bold uppercase tracking-widest shadow-md mb-6 group"
+                className="w-full relative group p-[1.5px] rounded-xl bg-gradient-to-r from-slate-400 via-gray-100 to-slate-500 shadow-[0_0_15px_rgba(203,213,225,0.15)] transition-all hover:scale-[1.01] active:scale-[0.99] mb-6"
               >
-                <ShieldCheck size={18} className="text-[#1b75bb] group-hover:scale-110 transition-transform" />
-                Log in with existing FSAN Account
+                <div className="bg-[#111] group-hover:bg-[#1a1a1a] transition-colors rounded-[10.5px] px-4 py-3.5 flex items-center justify-center gap-3 w-full h-full text-white font-black uppercase tracking-widest text-xs">
+                  <img 
+                    src="/images/dno/FSAN_Logo.png" 
+                    alt="FSAN Logo" 
+                    className="w-5 h-5 object-contain" 
+                  />
+                  <span>
+                    {mode === 'login' ? 'Log In with FSAN Account' : 'Log In with existing FSAN Account'}
+                  </span>
+                </div>
               </button>
 
               <div className="flex items-center gap-4 mb-6">
                 <div className="h-px bg-gray-800 flex-1"></div>
-                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Or create new account</span>
+                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                  {mode === 'login' ? 'Or log in below' : 'Or create new account'}
+                </span>
                 <div className="h-px bg-gray-800 flex-1"></div>
               </div>
             </>
