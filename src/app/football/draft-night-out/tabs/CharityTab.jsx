@@ -1,5 +1,6 @@
+"use client";
 import React, { useState, useEffect } from 'react';
-import { HeartHandshake, ExternalLink, Users, DollarSign, Loader2, Lock, Unlock, Plus } from 'lucide-react';
+import { HeartHandshake, ExternalLink, Users, DollarSign, Loader2, TrendingUp } from 'lucide-react';
 
 export default function CharityTab() {
   const [charityData, setCharityData] = useState(null);
@@ -18,42 +19,8 @@ export default function CharityTab() {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const goals = charityData?.goals || [];
   const raised = charityData?.total_raised || 0;
-  
-  // Calculate maximum goal for the textual percentage
-  const maxGoal = goals.length > 0 ? Math.max(...goals.map(g => parseFloat(g.amount))) : 5000;
-  const mathematicalPercent = Math.min(100, (raised / maxGoal) * 100);
-
-  // Calculate NON-LINEAR visual progress based on even segment spacing
-  let visualProgress = 0;
-  const numSegments = goals.length;
-  
-  if (numSegments > 0) {
-    const segmentWidth = 100 / numSegments;
-    let prevAmount = 0;
-    let prevVisual = 0;
-    
-    for (let i = 0; i < numSegments; i++) {
-      const goalAmount = parseFloat(goals[i].amount);
-      if (raised >= goalAmount) {
-        visualProgress = (i + 1) * segmentWidth;
-        prevAmount = goalAmount;
-        prevVisual = visualProgress;
-      } else {
-        // It falls within this segment. Calculate how far along it is.
-        const segmentRaised = raised - prevAmount;
-        const segmentTotal = goalAmount - prevAmount;
-        const segmentPct = segmentRaised / segmentTotal;
-        visualProgress = prevVisual + (segmentPct * segmentWidth);
-        break;
-      }
-    }
-    if (raised >= maxGoal) visualProgress = 100;
-  }
-  
-  // Only show the right border of the progress bar if it is actively in the field of play
-  const showProgressBorder = visualProgress > 0 && visualProgress < 100;
+  const players = charityData?.total_players || 0;
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
@@ -72,142 +39,54 @@ export default function CharityTab() {
         </div>
       </div>
 
-      {/* CHARITY PROGRESS FOOTBALL FIELD */}
-      {goals.length > 0 && (
-          <div className="bg-gradient-to-b from-[#151515] to-[#111] border border-gray-800 rounded-3xl p-6 md:p-10 shadow-2xl mb-8 relative overflow-hidden">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4 relative z-10">
-              <div>
-                <h3 className="text-2xl font-black italic text-white uppercase tracking-tighter drop-shadow-sm">Grand Prize Fundraiser</h3>
-                <p className="text-sm text-gray-400 mt-1">Help us reach our goals! Every target hit adds a new item to the Playoff Challenge grand prize package!</p>
+      {/* NEW HERO: COMMUNITY IMPACT TRACKER */}
+      <div className="bg-gradient-to-b from-[#151515] to-[#111] border border-gray-800 rounded-3xl p-6 md:p-10 shadow-2xl mb-8 relative overflow-hidden">
+        {/* Background Glow */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+        
+        <div className="text-center mb-10 relative z-10">
+          <h3 className="text-2xl md:text-3xl font-black italic text-white uppercase tracking-tighter drop-shadow-sm flex items-center justify-center gap-3">
+            <TrendingUp className="text-emerald-500" size={28} />
+            Community Impact Tracker
+          </h3>
+          <p className="text-sm text-gray-400 mt-3 max-w-2xl mx-auto leading-relaxed">
+            Watch our collective impact grow! Every roster drafted helps provide extensive, personalized support and resources to Veterans and their families through Mission 22.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+           {/* Total Raised Odometer */}
+           <div className="bg-gradient-to-br from-emerald-900/20 to-[#111] border border-emerald-900/50 rounded-2xl p-8 md:p-10 flex flex-col items-center justify-center shadow-lg relative overflow-hidden group">
+              <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="w-16 h-16 bg-emerald-900/30 border border-emerald-500/30 rounded-full flex items-center justify-center mb-5 shadow-inner">
+                <DollarSign size={32} className="text-emerald-400" />
               </div>
-              <div className="text-right shrink-0 bg-[#1a1a1a] px-5 py-3 rounded-xl border border-gray-700 w-full md:w-auto flex justify-between md:flex-col items-center md:items-end shadow-inner">
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest md:mb-1">Current Progress</p>
-                <p className="text-xl md:text-2xl font-black text-[#f5a623] drop-shadow-md">{mathematicalPercent.toFixed(1)}%</p>
+              <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2 text-center">Total Raised for Mission 22</p>
+              <div className="text-5xl md:text-6xl font-black text-emerald-500 drop-shadow-md tracking-tighter">
+                {isLoading ? (
+                  <Loader2 size={40} className="animate-spin text-emerald-900 mx-auto" />
+                ) : (
+                  `$${raised.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                )}
               </div>
-            </div>
+           </div>
 
-            {/* Football Field Layout */}
-            <div className="relative w-full h-28 md:h-36 bg-gradient-to-b from-green-600 to-green-900 rounded-xl border-2 border-white/20 shadow-[0_10px_30px_rgba(22,101,52,0.4)] flex mb-8 overflow-hidden ring-4 ring-green-900/30">
-
-                {/* Playing Field (0% to 100%) */}
-                <div className="flex-1 relative">
-                    
-                    {/* Generative Hash Marks (4 short lines per segment) */}
-                    <div className="absolute inset-0 opacity-40 pointer-events-none z-0">
-                        {Array.from({ length: numSegments * 5 }).map((_, i) => {
-                            if (i === 0) return null; // No hash at 0
-                            if (i % 5 === 0) return null; // Skip where major lines go
-                            return (
-                                <div 
-                                    key={`hash-${i}`} 
-                                    className="absolute top-0 w-0.5 h-3 md:h-4 bg-white shadow-[0_0_5px_rgba(255,255,255,0.5)]" 
-                                    style={{ left: `${(i / (numSegments * 5)) * 100}%` }}
-                                ></div>
-                            );
-                        })}
-                    </div>
-                    
-                    {/* Progress Bar Fill */}
-                    <div 
-                        className={`absolute left-0 top-0 bottom-0 bg-gradient-to-r from-blue-600 to-sky-400 transition-all duration-1000 ease-out z-10 shadow-[8px_0_25px_rgba(56,189,248,0.5)] ${showProgressBorder ? 'border-r-2 border-white/80' : ''}`} 
-                        style={{ width: `${visualProgress}%` }}
-                    ></div>
-
-                    {/* Evenly Spaced Goal Line Markers */}
-                    {goals.map((goal, idx) => {
-                        const isEndzone = idx === numSegments - 1;
-                        if (isEndzone) return null; // Endzone handles the 100% mark
-
-                        const segmentWidth = 100 / numSegments;
-                        const leftPercent = (idx + 1) * segmentWidth;
-                        
-                        return (
-                            <div 
-                                key={`goal-${idx}`} 
-                                className="absolute top-0 bottom-0 z-20 flex flex-col items-center pb-3 md:pb-4 -translate-x-1/2"
-                                style={{ left: `${leftPercent}%` }}
-                            >
-                                {/* Yard line stretches from the top and stops exactly above the text */}
-                                <div className="w-[3px] bg-white/30 flex-1 mb-1 md:mb-2"></div>
-                                {/* Painted number sits transparently on the field gradient */}
-                                <span className="text-white font-black text-sm md:text-2xl tracking-tighter leading-none opacity-95">
-                                  ${goal.amount}
-                                </span>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* Right Endzone - Modern Gradient */}
-                <div className="w-[12%] md:w-[10%] bg-gradient-to-b from-amber-400 to-orange-600 border-l border-white/40 z-30 shrink-0 shadow-inner flex items-center justify-center relative overflow-hidden">
-                   <div className="absolute inset-0 bg-black/5 mix-blend-overlay"></div>
-                   {goals.length > 0 && (
-                      <span className="text-white font-black text-sm md:text-xl tracking-tighter -rotate-90 md:rotate-0 drop-shadow-md relative z-10">
-                         ${goals[goals.length - 1].amount}
-                      </span>
-                   )}
-                </div>
-            </div>
-
-            {/* Prize Grid Header */}
-            <div className="mb-4 border-b border-gray-800 pb-3">
-               <h4 className="text-xs md:text-sm font-black text-gray-300 uppercase tracking-widest">Unlocked Grand Prize Package</h4>
-            </div>
-
-            {/* Prize Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 relative">
-              {goals.map((goal, idx) => {
-                  const isUnlocked = raised >= goal.amount;
-                  return (
-                      <div key={idx} className="relative w-full h-full">
-                          <div className={`h-full p-4 rounded-xl border flex flex-col items-center text-center transition-all ${isUnlocked ? 'bg-gradient-to-br from-[#1b75bb]/20 to-[#1b75bb]/5 border-[#1b75bb]/50 shadow-[0_0_20px_rgba(27,117,187,0.15)]' : 'bg-[#111] border-gray-800/80 opacity-70 hover:opacity-100'}`}>
-                             <div className="mb-3">
-                               {isUnlocked ? <Unlock size={24} className="text-[#f5a623] drop-shadow-md" /> : <Lock size={24} className="text-gray-600" />}
-                             </div>
-                             <h5 className={`font-black text-[11px] uppercase tracking-widest mb-1 leading-snug ${isUnlocked ? 'text-white' : 'text-gray-500'}`}>{goal.name}</h5>
-                             <span className={`text-[10px] font-bold ${isUnlocked ? 'text-emerald-400 drop-shadow-sm' : 'text-gray-600'}`}>
-                               {isUnlocked ? 'UNLOCKED' : `Unlocks at $${goal.amount}`}
-                             </span>
-                          </div>
-                          
-                          {/* Plus Icon Connector */}
-                          {idx < goals.length - 1 && (
-                              <div className="hidden md:flex absolute top-1/2 right-0 translate-x-[calc(50%+6px)] -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-[#1a1a1a] border border-gray-700 items-center justify-center shadow-md">
-                                  <Plus size={14} className="text-gray-400" />
-                              </div>
-                          )}
-                      </div>
-                  )
-              })}
-            </div>
-          </div>
-      )}
-
-      {/* LIVE COUNTER STATS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-         <div className="bg-gradient-to-br from-[#151515] to-[#111] border border-gray-800 rounded-2xl p-6 flex items-center justify-between shadow-lg">
-            <div>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Total Online Players</p>
-              <div className="text-3xl font-black text-white drop-shadow-sm">
-                {isLoading ? <Loader2 size={24} className="animate-spin text-gray-600 mt-1" /> : charityData?.total_players || 0}
+           {/* Total Players Odometer */}
+           <div className="bg-gradient-to-br from-[#1b75bb]/10 to-[#111] border border-[#1b75bb]/30 rounded-2xl p-8 md:p-10 flex flex-col items-center justify-center shadow-lg relative overflow-hidden group">
+              <div className="absolute inset-0 bg-[#1b75bb]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="w-16 h-16 bg-[#1a1a1a] border border-[#1b75bb]/30 rounded-full flex items-center justify-center mb-5 shadow-inner">
+                <Users size={32} className="text-[#1b75bb]" />
               </div>
-            </div>
-            <div className="w-12 h-12 bg-[#1a1a1a] border border-gray-700 rounded-full flex items-center justify-center shrink-0 shadow-inner">
-              <Users size={20} className="text-[#1b75bb]" />
-            </div>
-         </div>
-
-         <div className="bg-gradient-to-br from-emerald-900/20 to-[#111] border border-emerald-900/50 rounded-2xl p-6 flex items-center justify-between shadow-lg">
-            <div>
-              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Total Raised</p>
-              <div className="text-3xl font-black text-emerald-500 drop-shadow-sm">
-                {isLoading ? <Loader2 size={24} className="animate-spin text-emerald-900 mt-1" /> : `$${(charityData?.total_raised || 0).toFixed(2)}`}
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 text-center">Total Draft Night Out Players</p>
+              <div className="text-5xl md:text-6xl font-black text-white drop-shadow-md tracking-tighter">
+                {isLoading ? (
+                  <Loader2 size={40} className="animate-spin text-gray-600 mx-auto" />
+                ) : (
+                  players.toLocaleString()
+                )}
               </div>
-            </div>
-            <div className="w-12 h-12 bg-emerald-900/30 border border-emerald-500/30 rounded-full flex items-center justify-center shrink-0 shadow-inner">
-              <DollarSign size={20} className="text-emerald-400" />
-            </div>
-         </div>
+           </div>
+        </div>
       </div>
       
       {/* MISSION 22 BLURB */}
