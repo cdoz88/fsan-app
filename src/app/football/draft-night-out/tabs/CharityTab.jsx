@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { HeartHandshake, ExternalLink, Users, DollarSign, Loader2, TrendingUp } from 'lucide-react';
+import { HeartHandshake, ExternalLink, Users, DollarSign, Loader2 } from 'lucide-react';
 
 export default function CharityTab() {
   const [charityData, setCharityData] = useState(null);
@@ -21,6 +21,11 @@ export default function CharityTab() {
 
   const raised = charityData?.total_raised || 0;
   const players = charityData?.total_players || 0;
+  
+  // Static Goal for the Endzone
+  const GOAL_AMOUNT = 1000;
+  const percentComplete = Math.min(100, (raised / GOAL_AMOUNT) * 100);
+  const showProgressBorder = percentComplete > 0 && percentComplete < 100;
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
@@ -39,54 +44,100 @@ export default function CharityTab() {
         </div>
       </div>
 
-      {/* NEW HERO: COMMUNITY IMPACT TRACKER */}
+      {/* CHARITY PROGRESS FOOTBALL FIELD */}
       <div className="bg-gradient-to-b from-[#151515] to-[#111] border border-gray-800 rounded-3xl p-6 md:p-10 shadow-2xl mb-8 relative overflow-hidden">
-        {/* Background Glow */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-        
-        <div className="text-center mb-10 relative z-10">
-          <h3 className="text-2xl md:text-3xl font-black italic text-white uppercase tracking-tighter drop-shadow-sm flex items-center justify-center gap-3">
-            <TrendingUp className="text-emerald-500" size={28} />
-            Community Impact Tracker
-          </h3>
-          <p className="text-sm text-gray-400 mt-3 max-w-2xl mx-auto leading-relaxed">
-            Watch our collective impact grow! Every roster drafted helps provide extensive, personalized support and resources to Veterans and their families through Mission 22.
-          </p>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4 relative z-10">
+          <div>
+            <h3 className="text-2xl font-black italic text-white uppercase tracking-tighter drop-shadow-sm">Mission 22 Fundraiser</h3>
+            <p className="text-sm text-gray-400 mt-1">Help us march down the field to reach our $1,000 goal! Every dollar goes directly to supporting Veterans.</p>
+          </div>
+          <div className="text-right shrink-0 bg-[#1a1a1a] px-5 py-3 rounded-xl border border-gray-700 w-full md:w-auto flex justify-between md:flex-col items-center md:items-end shadow-inner">
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest md:mb-1">Current Progress</p>
+            <p className="text-xl md:text-2xl font-black text-[#f5a623] drop-shadow-md">
+                {isLoading ? <Loader2 size={20} className="animate-spin text-[#f5a623] mt-1" /> : `${percentComplete.toFixed(1)}%`}
+            </p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-           {/* Total Raised Odometer */}
-           <div className="bg-gradient-to-br from-emerald-900/20 to-[#111] border border-emerald-900/50 rounded-2xl p-8 md:p-10 flex flex-col items-center justify-center shadow-lg relative overflow-hidden group">
-              <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="w-16 h-16 bg-emerald-900/30 border border-emerald-500/30 rounded-full flex items-center justify-center mb-5 shadow-inner">
-                <DollarSign size={32} className="text-emerald-400" />
-              </div>
-              <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2 text-center">Total Raised for Mission 22</p>
-              <div className="text-5xl md:text-6xl font-black text-emerald-500 drop-shadow-md tracking-tighter">
-                {isLoading ? (
-                  <Loader2 size={40} className="animate-spin text-emerald-900 mx-auto" />
-                ) : (
-                  `$${raised.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
-                )}
-              </div>
-           </div>
+        {/* Football Field Layout */}
+        <div className="relative w-full h-28 md:h-36 bg-gradient-to-b from-green-600 to-green-900 rounded-xl border-2 border-white/20 shadow-[0_10px_30px_rgba(22,101,52,0.4)] flex overflow-hidden ring-4 ring-green-900/30">
 
-           {/* Total Players Odometer */}
-           <div className="bg-gradient-to-br from-[#1b75bb]/10 to-[#111] border border-[#1b75bb]/30 rounded-2xl p-8 md:p-10 flex flex-col items-center justify-center shadow-lg relative overflow-hidden group">
-              <div className="absolute inset-0 bg-[#1b75bb]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="w-16 h-16 bg-[#1a1a1a] border border-[#1b75bb]/30 rounded-full flex items-center justify-center mb-5 shadow-inner">
-                <Users size={32} className="text-[#1b75bb]" />
-              </div>
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 text-center">Total Draft Night Out Players</p>
-              <div className="text-5xl md:text-6xl font-black text-white drop-shadow-md tracking-tighter">
-                {isLoading ? (
-                  <Loader2 size={40} className="animate-spin text-gray-600 mx-auto" />
-                ) : (
-                  players.toLocaleString()
-                )}
-              </div>
-           </div>
+            {/* Playing Field (0% to 100%) */}
+            <div className="flex-1 relative">
+                
+                {/* Generative Hash Marks (50 intervals to look like a football field) */}
+                <div className="absolute inset-0 opacity-40 pointer-events-none z-0">
+                    {Array.from({ length: 50 }).map((_, i) => {
+                        if (i === 0) return null; // No hash at 0
+                        if (i % 5 === 0) return null; // Skip where major yard lines go
+                        return (
+                            <div 
+                                key={`hash-${i}`} 
+                                className="absolute top-0 w-0.5 h-3 md:h-4 bg-white shadow-[0_0_5px_rgba(255,255,255,0.5)]" 
+                                style={{ left: `${(i / 50) * 100}%` }}
+                            ></div>
+                        );
+                    })}
+                </div>
+                
+                {/* Progress Bar Fill */}
+                <div 
+                    className={`absolute left-0 top-0 bottom-0 bg-gradient-to-r from-blue-600 to-sky-400 transition-all duration-1000 ease-out z-10 shadow-[8px_0_25px_rgba(56,189,248,0.5)] ${showProgressBorder ? 'border-r-2 border-white/80' : ''}`} 
+                    style={{ width: `${percentComplete}%` }}
+                ></div>
+
+                {/* Evenly Spaced Major Yard Lines */}
+                {Array.from({ length: 9 }).map((_, idx) => {
+                    const leftPercent = (idx + 1) * 10;
+                    return (
+                        <div 
+                            key={`yardline-${idx}`} 
+                            className="absolute top-0 bottom-0 z-20 flex flex-col items-center pb-3 md:pb-4 -translate-x-1/2"
+                            style={{ left: `${leftPercent}%` }}
+                        >
+                            <div className="w-[3px] bg-white/30 flex-1"></div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Right Endzone - Modern Gradient */}
+            <div className="w-[18%] md:w-[12%] bg-gradient-to-b from-amber-400 to-orange-600 border-l border-white/40 z-30 shrink-0 shadow-inner flex items-center justify-center relative overflow-hidden">
+               <div className="absolute inset-0 bg-black/5 mix-blend-overlay"></div>
+               <span className="text-white font-black text-sm md:text-xl tracking-tighter -rotate-90 md:rotate-0 drop-shadow-md relative z-10">
+                  $1,000
+               </span>
+            </div>
         </div>
+      </div>
+
+      {/* LIVE COUNTER STATS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+         <div className="bg-gradient-to-br from-[#151515] to-[#111] border border-gray-800 rounded-2xl p-6 flex items-center justify-between shadow-lg group relative overflow-hidden">
+            <div className="absolute inset-0 bg-[#1b75bb]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="relative z-10">
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Total Online Players</p>
+              <div className="text-3xl font-black text-white drop-shadow-sm">
+                {isLoading ? <Loader2 size={24} className="animate-spin text-gray-600 mt-1" /> : players.toLocaleString()}
+              </div>
+            </div>
+            <div className="w-12 h-12 bg-[#1a1a1a] border border-gray-700 rounded-full flex items-center justify-center shrink-0 shadow-inner relative z-10">
+              <Users size={20} className="text-[#1b75bb]" />
+            </div>
+         </div>
+
+         <div className="bg-gradient-to-br from-emerald-900/20 to-[#111] border border-emerald-900/50 rounded-2xl p-6 flex items-center justify-between shadow-lg group relative overflow-hidden">
+            <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="relative z-10">
+              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Total Raised</p>
+              <div className="text-3xl font-black text-emerald-500 drop-shadow-sm">
+                {isLoading ? <Loader2 size={24} className="animate-spin text-emerald-900 mt-1" /> : `$${raised.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
+              </div>
+            </div>
+            <div className="w-12 h-12 bg-emerald-900/30 border border-emerald-500/30 rounded-full flex items-center justify-center shrink-0 shadow-inner relative z-10">
+              <DollarSign size={20} className="text-emerald-400" />
+            </div>
+         </div>
       </div>
       
       {/* MISSION 22 BLURB */}
