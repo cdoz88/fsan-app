@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
-import { X, Mail, Lock, User, Loader2, AlertCircle, CheckCircle2, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { X, Mail, Lock, User, Loader2, AlertCircle, CheckCircle2, ArrowLeft, ShieldCheck, Link2 } from 'lucide-react';
 
 export default function DNOAuthModal({ initialMode = 'login', onClose }) {
   const [mode, setMode] = useState(initialMode); // 'login', 'register', 'forgotPassword', or 'fsanLogin'
@@ -9,6 +9,12 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   
+  // Real-Time Registration Sleeper Sync State
+  const [sleeperInput, setSleeperInput] = useState('');
+  const [verifiedSleeper, setVerifiedSleeper] = useState(null);
+  const [isSearchingSleeper, setIsSearchingSleeper] = useState(false);
+  const [sleeperError, setSleeperError] = useState('');
+
   const [error, setError] = useState('');
   const [resetMessage, setResetMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -18,6 +24,42 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = 'unset'; };
   }, []);
+
+  // Debounced Live Search against Sleeper API during Registration
+  useEffect(() => {
+    if (mode !== 'register' || !sleeperInput || sleeperInput.trim().length < 3) {
+      setVerifiedSleeper(null);
+      setSleeperError('');
+      return;
+    }
+
+    setIsSearchingSleeper(true);
+    setSleeperError('');
+
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://api.sleeper.app/v1/user/${sleeperInput.trim()}`);
+        if (!res.ok) throw new Error("Sleeper account not found");
+        const data = await res.json();
+        
+        if (!data || !data.user_id) throw new Error("Sleeper account not found");
+
+        setVerifiedSleeper({
+          sleeper_id: data.user_id,
+          sleeper_username: data.username || data.display_name,
+          displayName: data.display_name,
+          avatar: data.avatar
+        });
+      } catch (err) {
+        setVerifiedSleeper(null);
+        setSleeperError("Sleeper username not found");
+      } finally {
+        setIsSearchingSleeper(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [sleeperInput, mode]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,8 +115,30 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
           return;
         }
 
-        if (json?.data?.registerUser?.user?.databaseId) {
-          // Automatically log them in after a successful registration
+        const newUserId = json?.data?.registerUser?.user?.databaseId;
+
+        if (newUserId) {
+          // If they verified a Sleeper username, save it immediately
+          if (verifiedSleeper) {
+            localStorage.setItem(`dno_dedicated_sleeper_${newUserId}`, JSON.stringify(verifiedSleeper));
+            
+            try {
+              await fetch('/api/scl', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'dno_update_sleeper',
+                  user_id: newUserId,
+                  dno_sleeper_id: verifiedSleeper.sleeper_id,
+                  dno_sleeper_username: verifiedSleeper.sleeper_username
+                })
+              });
+            } catch (saveErr) {
+              console.warn("Could not save initial Sleeper handle to DB:", saveErr);
+            }
+          }
+
+          // Automatically log them in after successful registration
           const loginRes = await signIn('credentials', {
             redirect: false,
             username,
@@ -148,7 +212,7 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-[#151515] border border-gray-800 rounded-3xl max-w-md w-full shadow-2xl relative flex flex-col overflow-hidden">
+      <div className="bg-[#151515] border border-gray-800 rounded-3xl max-w-md w-full shadow-2xl relative flex flex-col overflow-hidden max-h-[90vh] overflow-y-auto">
         
         {/* Close Button */}
         <button 
@@ -184,7 +248,6 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
           {mode === 'fsanLogin' && (
             <div className="mb-6 p-4 rounded-2xl bg-[#111] border border-slate-500/40 text-left relative overflow-hidden shadow-inner">
               <div className="flex items-start gap-3">
-                {/* 🚀 Directly rendered shield icon with no extra box or border */}
                 <img 
                   src="/images/dno/App Icons.png" 
                   alt="FSAN App Icon" 
@@ -228,7 +291,7 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
                   placeholder="Username" 
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full bg-[#111] border border-gray-800 text-white text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-[#1b75bb] transition-colors"
+                  className="w-full bg-[#111] border border-gray-800 text-white text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-[#1b75bb] transition-colors font-bold"
                   required 
                 />
               </div>
@@ -244,7 +307,7 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
                 placeholder={mode === 'fsanLogin' ? 'FSAN Email or Username' : mode === 'login' ? 'Email or Username' : 'Account Email Address'} 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-[#111] border border-gray-800 text-white text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-[#1b75bb] transition-colors"
+                className="w-full bg-[#111] border border-gray-800 text-white text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-[#1b75bb] transition-colors font-bold"
                 required 
               />
             </div>
@@ -260,7 +323,7 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
                     placeholder={mode === 'fsanLogin' ? 'FSAN Password' : 'Password'} 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-[#111] border border-gray-800 text-white text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-[#1b75bb] transition-colors"
+                    className="w-full bg-[#111] border border-gray-800 text-white text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-[#1b75bb] transition-colors font-bold"
                     required 
                   />
                 </div>
@@ -273,6 +336,57 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
                     >
                       Forgot Password?
                     </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 🚀 REAL-TIME SLEEPER FIELD (Only during Registration) */}
+            {mode === 'register' && (
+              <div className="flex flex-col gap-2 pt-1">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Link2 size={16} className="text-[#1b75bb]" />
+                  </div>
+                  <input 
+                    type="text" 
+                    placeholder="Sleeper Username (Recommended)" 
+                    value={sleeperInput}
+                    onChange={(e) => setSleeperInput(e.target.value)}
+                    className="w-full bg-[#111] border border-gray-800 text-white text-sm rounded-xl py-3.5 pl-11 pr-10 focus:outline-none focus:border-[#1b75bb] transition-colors font-bold"
+                  />
+                  {isSearchingSleeper && (
+                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                      <Loader2 size={16} className="animate-spin text-gray-400" />
+                    </div>
+                  )}
+                </div>
+
+                {sleeperError && (
+                  <p className="text-red-400 text-[10px] font-bold uppercase tracking-wider px-1">{sleeperError}</p>
+                )}
+
+                {/* VERIFIED SLEEPER PREVIEW CARD */}
+                {verifiedSleeper && (
+                  <div className="flex items-center justify-between bg-[#111] border border-[#1b75bb]/50 rounded-xl p-3 animate-in fade-in duration-200 shadow-inner">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-zinc-900 border border-[#1b75bb] overflow-hidden shrink-0 shadow">
+                        <img 
+                          src={verifiedSleeper.avatar ? `https://sleepercdn.com/avatars/thumbs/${verifiedSleeper.avatar}` : 'https://sleepercdn.com/images/v2/icons/player_default.webp'} 
+                          alt="" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
+                        />
+                      </div>
+                      <div className="min-w-0 text-left">
+                        <p className="text-white font-black text-xs uppercase truncate leading-tight">{verifiedSleeper.displayName}</p>
+                        <p className="text-[10px] font-bold text-gray-400 leading-tight">@{verifiedSleeper.sleeper_username}</p>
+                      </div>
+                    </div>
+
+                    <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0">
+                      <CheckCircle2 size={11} className="text-emerald-400" /> Verified
+                    </span>
                   </div>
                 )}
               </div>
