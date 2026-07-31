@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { MonitorSmartphone, MapPin, SlidersHorizontal, Ticket, Lock, Loader2, Coins, ExternalLink, Calendar, Clock, ChevronDown, AlertCircle, Hourglass, Eye, Trophy } from 'lucide-react';
+import { MonitorSmartphone, MapPin, SlidersHorizontal, Ticket, Loader2, Coins, ExternalLink, Calendar, Clock, ChevronDown, AlertCircle, Hourglass, Eye, Trophy, UserPlus } from 'lucide-react';
 
 const CustomDropdown = ({ value, options, onChange, minWidth = "sm:w-40" }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -120,6 +120,7 @@ export default function DraftsTab({
       {draftView === 'online' && (
         <div className="animate-in fade-in duration-300">
           
+          {/* Filters Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6 bg-[#111] p-3 rounded-xl border border-gray-800 shadow-inner">
               <div className="flex items-center gap-2 shrink-0 ml-1">
                 <SlidersHorizontal size={16} className="text-[#f5a623]" />
@@ -148,7 +149,7 @@ export default function DraftsTab({
                 ]}
               />
 
-              {/* Direct link to Locker Room's My Leagues dashboard tab */}
+              {/* Link to Locker Room's My Leagues tab */}
               <Link 
                 href="/dno/dashboard?tab=my-leagues"
                 className="px-5 py-2.5 rounded-lg border text-xs font-bold shrink-0 transition-colors w-full sm:w-auto bg-[#1a1a1a] border-gray-700 text-gray-300 hover:border-[#1b75bb] hover:text-white flex items-center justify-center gap-2"
@@ -157,6 +158,7 @@ export default function DraftsTab({
               </Link>
           </div>
 
+          {/* Ticket Balance & Registration Banner */}
           <div className="mb-8 p-[2px] rounded-2xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(27,117,187,0.15)] relative z-10">
             <div className="flex flex-col sm:flex-row items-center justify-between bg-[#151515] p-5 px-6 rounded-[14px] gap-4 w-full h-full">
               {isProPlus ? (
@@ -174,10 +176,19 @@ export default function DraftsTab({
               ) : (
                 <>
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center shrink-0 border border-gray-700"><Lock size={20} className="text-gray-400" /></div>
-                    <h3 className="text-white text-lg md:text-xl font-black uppercase tracking-wide italic text-center sm:text-left">A Pro+ account is required to enter Draft Night Out</h3>
+                    <div className="w-10 h-10 rounded-full bg-[#1b75bb]/20 flex items-center justify-center shrink-0 border border-[#1b75bb]/30">
+                      <UserPlus size={20} className="text-[#1b75bb]" />
+                    </div>
+                    <h3 className="text-white text-lg md:text-xl font-black uppercase tracking-wide italic text-center sm:text-left">
+                      Register or Log In to secure your DNO Draft Spot
+                    </h3>
                   </div>
-                  <Link href="/subscribe" className="shrink-0 w-full sm:w-auto bg-[#1b75bb] hover:bg-[#155d96] transition-colors text-white text-xs font-black uppercase tracking-widest px-8 py-3.5 rounded-xl shadow-lg hover:-translate-y-0.5 flex items-center justify-center gap-2">Upgrade</Link>
+                  <button 
+                    onClick={() => setConfirmingLeague({ mock: true })} 
+                    className="shrink-0 w-full sm:w-auto bg-[#1b75bb] hover:bg-[#155d96] transition-colors text-white text-xs font-black uppercase tracking-widest px-8 py-3.5 rounded-xl shadow-lg hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                  >
+                    Get Started
+                  </button>
                 </>
               )}
             </div>
@@ -260,11 +271,7 @@ export default function DraftsTab({
                         <span className={`text-xs font-black uppercase tracking-wider ${isFull && !isJoined ? 'text-gray-500' : 'text-green-500'}`}>{league.filled_spots} / {league.total_spots} Teams Filled</span>
                       </div>
                       <div className="shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
-                        {!isProPlus ? (
-                           <div className="flex items-center justify-center gap-2 text-gray-500 text-[10px] font-black uppercase tracking-widest bg-[#111] px-4 py-3 rounded-xl border border-gray-800 shadow-inner">
-                             <Lock size={12} /> Pro+ Exclusive
-                           </div>
-                        ) : isJoined ? (
+                        {isJoined ? (
                           <a href={`https://sleeper.com/leagues/${league.id}`} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-green-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-green-900/50 transition-colors flex items-center justify-center gap-2"><ExternalLink size={14} /> Go to League</a>
                         ) : (isFull && isSlow && league.draft_id) ? (
                           <a href={`https://sleeper.com/draft/nfl/${league.draft_id}`} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-red-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-red-900/50 transition-colors flex items-center justify-center gap-2">
@@ -272,10 +279,10 @@ export default function DraftsTab({
                           </a>
                         ) : isFull ? (
                           <button disabled className="w-full sm:w-auto px-6 bg-gray-800 text-gray-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-gray-700 cursor-not-allowed">League Full</button>
-                        ) : hasNoEntriesLeft ? (
+                        ) : hasNoEntriesLeft && isProPlus ? (
                           <button onClick={handlePurchaseExtraEntry} className="w-full sm:w-auto relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-lg transition-transform hover:-translate-y-0.5"><div className="bg-[#1a1a1a] group-hover:bg-[#222] transition-colors rounded-[10px] px-6 py-3 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs"><Coins size={14} className="text-teal-400" /> Buy Ticket</div></button>
                         ) : (
-                          <button onClick={() => setConfirmingLeague(league)} className="w-full sm:w-auto relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-md transition-transform hover:-translate-y-0.5"><div className="bg-[#1a1a1a] group-hover:bg-[#222] transition-colors rounded-[10px] px-6 py-3 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">Join League</div></button>
+                          <button onClick={() => setConfirmingLeague(league)} className="w-full sm:w-auto relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-md transition-transform hover:-translate-y-0.5"><div className="bg-[#1a1a1a] group-hover:bg-[#222] transition-colors rounded-[10px] px-6 py-3 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">Join Division</div></button>
                         )}
                       </div>
                     </div>
