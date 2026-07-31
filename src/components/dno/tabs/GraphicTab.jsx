@@ -26,10 +26,9 @@ export default function GraphicTab({ syncedSleeperUser }) {
   const wrapperRef = useRef(null);
   const [scale, setScale] = useState(1);
 
-  // Local Same-Origin URLs to avoid cross-domain CORS blocks in html2canvas
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-  const dnoBgUrl = `${baseUrl}/images/DNO-Background.webp`;
-  const dnoLogoUrl = `${baseUrl}/images/DNO-Logo_Logo.webp`;
+  // Direct relative URLs targeting public/images/ without CORS restrictions
+  const dnoBgUrl = "/images/DNO-Background.webp";
+  const dnoLogoUrl = "/images/DNO-Logo_Logo.webp";
 
   useEffect(() => {
     const updateScale = () => {
@@ -333,12 +332,13 @@ export default function GraphicTab({ syncedSleeperUser }) {
     <>
       <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-zinc-900/40" />
 
+      {/* Header Banner - Local images without crossOrigin="anonymous" */}
       <div className="relative z-10 flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950 h-[150px] shrink-0 overflow-hidden">
         <img src={dnoBgUrl} className="absolute inset-0 w-full h-full object-cover opacity-60 z-0" alt="Background" />
         <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-950/90 via-zinc-950/70 to-transparent" />
         
         <div className="flex items-center gap-6 relative z-10 px-10">
-           <img src={dnoLogoUrl} alt="DNO" className="h-24 w-auto object-contain drop-shadow-2xl" />
+           <img src={dnoLogoUrl} alt="DNO Logo" className="h-24 w-auto object-contain drop-shadow-2xl" />
            <div>
             <h2 className="text-[42px] font-black text-white tracking-tighter uppercase italic drop-shadow-md truncate max-w-[700px] leading-none mb-1">
               {teamData?.teamName}
@@ -399,7 +399,7 @@ export default function GraphicTab({ syncedSleeperUser }) {
                     <div className={`absolute inset-0 rounded-[20px] bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-sm border-2 ${cardStyle.border} overflow-hidden`}>
                        {teamLogo && (
                          <div className="absolute inset-x-0 top-0 z-0 flex items-start justify-center opacity-[0.25] pointer-events-none">
-                            <img src={teamLogo} className="w-[120%] max-w-none h-auto object-contain -translate-y-4 mix-blend-screen" alt="" onError={(e) => e.target.style.display = 'none'} />
+                            <img src={teamLogo} className="w-[120%] max-w-none h-auto object-contain -translate-y-4 mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
                          </div>
                        )}
                     </div>
@@ -425,6 +425,7 @@ export default function GraphicTab({ syncedSleeperUser }) {
                        <img 
                           src={playerImage} 
                           className={isDefense ? "max-w-[70%] max-h-[85%] object-contain drop-shadow-2xl origin-bottom mb-2" : "w-auto h-full object-contain object-bottom drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] filter contrast-110 brightness-110 origin-bottom"} 
+                          crossOrigin="anonymous" 
                           alt="" 
                           onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
                        />
@@ -491,7 +492,7 @@ export default function GraphicTab({ syncedSleeperUser }) {
                     <div key={`bench-${playerId}-${idx}`} className={`relative w-full h-[60px] rounded-[16px] flex items-center overflow-hidden bg-zinc-950 border border-zinc-800 shadow-md shadow-[0_3px_6px_rgba(0,0,0,0.5)]`}>
                        {teamLogo && (
                          <div className="absolute inset-y-0 right-8 flex items-center justify-center z-0 opacity-[0.2] pointer-events-none">
-                            <img src={teamLogo} className="h-[250%] w-auto object-contain mix-blend-screen" alt="" onError={(e) => e.target.style.display = 'none'} />
+                            <img src={teamLogo} className="h-[250%] w-auto object-contain mix-blend-screen" crossOrigin="anonymous" alt="" onError={(e) => e.target.style.display = 'none'} />
                          </div>
                        )}
 
@@ -504,6 +505,7 @@ export default function GraphicTab({ syncedSleeperUser }) {
                             src={playerImage} 
                             alt="" 
                             className={isDefense ? "w-6 h-6 object-contain" : "w-full h-full object-cover object-top scale-110 translate-y-1"}
+                            crossOrigin="anonymous" 
                             onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
                           />
                        </div>
