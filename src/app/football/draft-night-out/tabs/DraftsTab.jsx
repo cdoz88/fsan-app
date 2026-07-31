@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { MonitorSmartphone, MapPin, SlidersHorizontal, Ticket, Lock, Loader2, Coins, ExternalLink, Calendar, Clock, ChevronDown, AlertCircle } from 'lucide-react';
+import { MonitorSmartphone, MapPin, SlidersHorizontal, Ticket, Lock, Loader2, Coins, ExternalLink, Calendar, Clock, ChevronDown, AlertCircle, Hourglass, Eye } from 'lucide-react';
 
 const CustomDropdown = ({ value, options, onChange, minWidth = "sm:w-40" }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -155,6 +155,7 @@ export default function DraftsTab({
                   const isFull = openSpots === 0;
                   const hasNoEntriesLeft = ticketsAvailable === 0;
                   const isJoinedLocal = recentlyJoinedLeagues.includes(league.id);
+                  const isSlow = league.draft_style === 'slow';
 
                   const formattedDate = league.draft_date ? new Date(`${league.draft_date}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD';
                   
@@ -165,8 +166,35 @@ export default function DraftsTab({
                       formattedTime = league.draft_time; 
                   }
 
-                  const styleLabel = league.draft_style === 'slow' ? 'Slow Draft' : 'Live / Fast';
-                  const styleIcon = league.draft_style === 'slow' ? '🐢' : '⚡️';
+                  const styleLabel = isSlow ? 'Slow Draft' : 'Live / Fast';
+                  const styleIcon = isSlow ? '🐢' : '⚡️';
+
+                  // 🚀 Dynamic Time & Status Display
+                  let timeDisplay;
+                  if (isSlow) {
+                    if (isFull) {
+                      timeDisplay = (
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-red-400 uppercase tracking-widest bg-red-950/40 px-2 py-1 rounded border border-red-900/50 shadow-inner animate-pulse">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                          <span>Drafting Live</span>
+                        </div>
+                      );
+                    } else {
+                      timeDisplay = (
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-[#111] px-2 py-1 rounded border border-gray-800 shadow-inner">
+                          <Hourglass size={12} className="text-[#f5a623]" />
+                          <span>Starts when filled</span>
+                        </div>
+                      );
+                    }
+                  } else {
+                    timeDisplay = (
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-[#111] px-2 py-1 rounded border border-gray-800 shadow-inner">
+                        <Calendar size={12} className="text-[#1b75bb]" />
+                        <span>{formattedDate}{formattedTime ? ` @ ${formattedTime}` : ''}</span>
+                      </div>
+                    );
+                  }
 
                   return (
                     <div key={league.id} className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md relative overflow-hidden group">
@@ -174,10 +202,7 @@ export default function DraftsTab({
                         <h4 className="text-lg font-black text-white uppercase tracking-wide italic mb-2 line-clamp-1">{league.name}</h4>
                         
                         <div className="flex flex-wrap items-center gap-2 mb-3">
-                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-[#111] px-2 py-1 rounded border border-gray-800 shadow-inner">
-                            <Calendar size={12} className="text-[#1b75bb]" />
-                            <span>{formattedDate}{formattedTime ? ` @ ${formattedTime}` : ''}</span>
-                          </div>
+                          {timeDisplay}
                           <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-[#111] px-2 py-1 rounded border border-gray-800 shadow-inner">
                             <span className="text-[12px] leading-none">{styleIcon}</span>
                             <span>{styleLabel}</span>
@@ -187,13 +212,16 @@ export default function DraftsTab({
                         <span className={`text-xs font-black uppercase tracking-wider ${isFull && !isJoinedLocal ? 'text-gray-500' : 'text-green-500'}`}>{league.filled_spots} / {league.total_spots} Teams Filled</span>
                       </div>
                       <div className="shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
-                        {/* 🚀 FIX: Display a subtle badge for non-subscribers instead of the Join buttons */}
                         {!isProPlus ? (
                            <div className="flex items-center justify-center gap-2 text-gray-500 text-[10px] font-black uppercase tracking-widest bg-[#111] px-4 py-3 rounded-xl border border-gray-800 shadow-inner">
                              <Lock size={12} /> Pro+ Exclusive
                            </div>
                         ) : isJoinedLocal ? (
                           <a href="https://sleeper.com" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-green-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-green-900/50 transition-colors flex items-center justify-center gap-2"><ExternalLink size={14} /> Go to League</a>
+                        ) : (isFull && isSlow && league.draft_id) ? (
+                          <a href={`https://sleeper.com/draft/nfl/${league.draft_id}`} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-red-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-red-900/50 transition-colors flex items-center justify-center gap-2">
+                            <Eye size={14} /> Watch Draft
+                          </a>
                         ) : isFull ? (
                           <button disabled className="w-full sm:w-auto px-6 bg-gray-800 text-gray-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-gray-700 cursor-not-allowed">League Full</button>
                         ) : hasNoEntriesLeft ? (
