@@ -4,18 +4,19 @@ export function middleware(request) {
   const url = request.nextUrl;
   const hostname = request.headers.get('host');
 
-  // 1. The Local / Testing Override
-  // This explicitly catches '/dno' and prevents it from being sent to the articles route.
-  if (url.pathname === '/dno') {
-     return NextResponse.rewrite(new URL('/dno', request.url));
-  }
-
-  // 2. The Production Domain Routing (For when you connect GoDaddy)
-  // If the user visits the DNO domain directly, invisibly route them to the /dno folder.
+  // Production Domain Routing for Draft Night Out
   if (
     hostname === 'draftnightout.com' ||
     hostname === 'www.draftnightout.com'
   ) {
+    // 1. If the URL explicitly contains /dno, redirect them to the clean version
+    // (e.g., draftnightout.com/dno/dashboard -> draftnightout.com/dashboard)
+    if (url.pathname.startsWith('/dno')) {
+      url.pathname = url.pathname.replace('/dno', '') || '/';
+      return NextResponse.redirect(url); 
+    }
+    
+    // 2. Invisibly rewrite clean URLs to the hidden /dno folder
     url.pathname = `/dno${url.pathname === '/' ? '' : url.pathname}`;
     return NextResponse.rewrite(url);
   }
@@ -24,16 +25,8 @@ export function middleware(request) {
   return NextResponse.next();
 }
 
-// Ensure the middleware only runs on actual page visits, not on images or API calls.
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
