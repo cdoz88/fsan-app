@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { MonitorSmartphone, Trophy, BookOpen, Handshake, ListOrdered, HeartHandshake, Loader2 } from 'lucide-react';
@@ -14,12 +14,11 @@ import SponsorsTab from '../../components/dno/tabs/SponsorsTab';
 import CharityTab from '../../components/dno/tabs/CharityTab';
 import NapkinLeaderboard from '../../components/dno/NapkinLeaderboard';
 
-export default function DNOPublicPage() {
+function PublicPageContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Detail 3: Read active tab from URL query param (?tab=prizes), default to 'drafts'
   const initialTab = searchParams.get('tab') || 'drafts';
   const [activeTab, setActiveTab] = useState(initialTab);
   const [draftView, setDraftView] = useState('online');
@@ -35,7 +34,7 @@ export default function DNOPublicPage() {
   const [confirmingLeague, setConfirmingLeague] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Detail 1 & 2: Set Page Title & Favicon dynamically for DNO Public Page
+  // Set Page Title & Favicon dynamically for DNO Public Page
   useEffect(() => {
     document.title = "Draft Night Out | The Ultimate Fantasy Football Event";
     
@@ -320,5 +319,17 @@ export default function DNOPublicPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function DNOPublicPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+        <Loader2 className="w-12 h-12 text-[#1b75bb] animate-spin" />
+      </div>
+    }>
+      <PublicPageContent />
+    </Suspense>
   );
 }
