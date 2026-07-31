@@ -9,14 +9,13 @@ export function middleware(request) {
     hostname === 'draftnightout.com' ||
     hostname === 'www.draftnightout.com'
   ) {
-    // 1. If the URL explicitly contains /dno, redirect them to the clean version
-    // (e.g., draftnightout.com/dno/dashboard -> draftnightout.com/dashboard)
+    // 1. Redirect explicit /dno path to clean domain URL
     if (url.pathname.startsWith('/dno')) {
       url.pathname = url.pathname.replace('/dno', '') || '/';
       return NextResponse.redirect(url); 
     }
     
-    // 2. Invisibly rewrite clean URLs to the hidden /dno folder
+    // 2. Invisibly rewrite clean URLs to hidden /dno app folder
     url.pathname = `/dno${url.pathname === '/' ? '' : url.pathname}`;
     return NextResponse.rewrite(url);
   }
@@ -26,7 +25,8 @@ export function middleware(request) {
 }
 
 export const config = {
+  // Added 'images' to the exclusion matcher!
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|images|favicon.ico).*)',
   ],
 };

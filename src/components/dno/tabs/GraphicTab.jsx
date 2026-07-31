@@ -26,9 +26,9 @@ export default function GraphicTab({ syncedSleeperUser }) {
   const wrapperRef = useRef(null);
   const [scale, setScale] = useState(1);
 
-  // Direct relative URLs targeting public/images/ without CORS restrictions
-  const dnoBgUrl = "/images/DNO-Background.webp";
-  const dnoLogoUrl = "/images/DNO-Logo_Logo.webp";
+  // Dedicated local DNO Asset paths
+  const dnoBgUrl = "/images/dno/DNO-Background.webp";
+  const dnoLogoUrl = "/images/dno/DNO-Logo_Logo.webp";
 
   useEffect(() => {
     const updateScale = () => {
@@ -332,7 +332,7 @@ export default function GraphicTab({ syncedSleeperUser }) {
     <>
       <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-zinc-900/40" />
 
-      {/* Header Banner - Local images without crossOrigin="anonymous" */}
+      {/* Header Banner - Local same-origin images */}
       <div className="relative z-10 flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950 h-[150px] shrink-0 overflow-hidden">
         <img src={dnoBgUrl} className="absolute inset-0 w-full h-full object-cover opacity-60 z-0" alt="Background" />
         <div className="absolute inset-0 z-0 bg-gradient-to-r from-zinc-950/90 via-zinc-950/70 to-transparent" />

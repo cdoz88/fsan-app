@@ -29,13 +29,11 @@ function DashboardContent() {
   const [syncError, setSyncError] = useState('');
   const [isEditingSync, setIsEditingSync] = useState(false);
 
-  const getStorageKey = (userId) => `dno_sleeper_${userId}`;
-
   // Set Page Title & Force Favicon Swap
   useEffect(() => {
     document.title = "Locker Room | Draft Night Out";
     
-    const dnoFaviconUrl = "https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp?v=dno2026";
+    const dnoFaviconUrl = "/images/dno/DNO-Logo_Logo.webp?v=dno2026";
     const existingIcons = document.querySelectorAll("link[rel*='icon']");
     
     if (existingIcons.length > 0) {
@@ -49,24 +47,6 @@ function DashboardContent() {
       document.head.appendChild(link);
     }
   }, []);
-
-  // Instant restoration from localStorage on mount
-  useEffect(() => {
-    if (session?.user?.id) {
-      const cached = localStorage.getItem(getStorageKey(session.user.id));
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          if (parsed && (parsed.sleeper_id || parsed.sleeper_username)) {
-            setSyncedSleeperUser(parsed);
-            setSleeperInput(parsed.sleeper_username || parsed.displayName || '');
-          }
-        } catch (e) {
-          console.warn("Failed reading cached Sleeper user:", e);
-        }
-      }
-    }
-  }, [session]);
 
   // Sync tab state if URL parameter changes
   useEffect(() => {
@@ -83,51 +63,53 @@ function DashboardContent() {
     router.push(`?${newParams.toString()}`, { scroll: false });
   };
 
-  // Load User Data & Joined DNO Leagues safely through active endpoints
+  // Helper to fetch Sleeper display details given a Sleeper User ID or Username
+  const hydrateSleeperUser = async (identifier) => {
+    try {
+      const slpRes = await fetch(`https://api.sleeper.app/v1/user/${identifier}`);
+      if (slpRes.ok) {
+        const slpData = await slpRes.json();
+        const userObj = {
+          sleeper_id: slpData.user_id,
+          sleeper_username: slpData.username || slpData.display_name,
+          displayName: slpData.display_name,
+          avatar: slpData.avatar
+        };
+        setSyncedSleeperUser(userObj);
+        setSleeperInput(userObj.sleeper_username);
+        return userObj;
+      }
+    } catch (e) {
+      console.warn("Could not hydrate Sleeper details:", e);
+    }
+    return null;
+  };
+
+  // Load User Data & Joined DNO Leagues via FSAN Backend
   const loadAccountData = useCallback(async () => {
     if (!session?.user?.id) return;
     
     setIsLoading(true);
     try {
-      let activeSleeperId = null;
-      let activeSleeperUsername = null;
+      let activeSleeperId = session?.user?.sleeperId || null;
 
-      // 1. Query /api/scl for user data
-      try {
-        const uRes = await fetch(`/api/scl?action=dno_get_user_data&user_id=${session.user.id}&t=${Date.now()}`);
-        if (uRes.ok) {
-          const uData = await uRes.json();
-          setTicketCount(uData.dno_tickets || 0);
-          activeSleeperId = uData.sleeper_id || uData.sleeper_user_id;
-          activeSleeperUsername = uData.sleeper_username;
-        }
-      } catch (e) {
-        console.warn("SCL user fetch warning", e);
-      }
-
-      // If database returned a sleeper_id, fetch full Sleeper avatar & display details
+      // 1. Check NextAuth Session for cloud Sleeper ID
       if (activeSleeperId) {
+        await hydrateSleeperUser(activeSleeperId);
+      } else {
+        // Fallback: Query /api/scl for user profile data
         try {
-          const slpRes = await fetch(`https://api.sleeper.app/v1/user/${activeSleeperId}`);
-          if (slpRes.ok) {
-            const slpData = await slpRes.json();
-            const userObj = {
-              sleeper_id: slpData.user_id,
-              sleeper_username: slpData.username || slpData.display_name,
-              displayName: slpData.display_name,
-              avatar: slpData.avatar
-            };
-            setSyncedSleeperUser(userObj);
-            setSleeperInput(userObj.sleeper_username);
-            localStorage.setItem(getStorageKey(session.user.id), JSON.stringify(userObj));
+          const uRes = await fetch(`/api/scl?action=dno_get_user_data&user_id=${session.user.id}&t=${Date.now()}`);
+          if (uRes.ok) {
+            const uData = await uRes.json();
+            setTicketCount(uData.dno_tickets || 0);
+            activeSleeperId = uData.sleeper_id || uData.sleeper_user_id;
+            if (activeSleeperId) {
+              await hydrateSleeperUser(activeSleeperId);
+            }
           }
         } catch (e) {
-          const fallbackObj = {
-            sleeper_id: activeSleeperId,
-            sleeper_username: activeSleeperUsername || activeSleeperId
-          };
-          setSyncedSleeperUser(fallbackObj);
-          localStorage.setItem(getStorageKey(session.user.id), JSON.stringify(fallbackObj));
+          console.warn("User data fetch warning", e);
         }
       }
 
@@ -196,52 +178,46 @@ function DashboardContent() {
     return () => clearTimeout(delayDebounceFn);
   }, [sleeperInput, syncedSleeperUser, isEditingSync]);
 
-  // Save Sleeper connection to WordPress database via /api/scl and update state
+  // Save Sleeper connection using FSAN's exact cloud route /api/user/save-sleeper-id
   const handleConfirmSync = async (userToSync) => {
     if (!userToSync || !session?.user?.id) return;
     setIsSaving(true);
     setSyncError('');
 
+    const sleeperIdToSave = userToSync.user_id || userToSync.sleeper_id;
+
     try {
-      // Post update to /api/scl endpoint
-      const saveRes = await fetch('/api/scl', {
+      // Hit the EXACT route FSAN uses for cloud persistence!
+      const saveRes = await fetch('/api/user/save-sleeper-id', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'dno_update_sleeper',
-          user_id: session.user.id,
-          sleeper_id: userToSync.user_id || userToSync.sleeper_id,
-          sleeper_username: userToSync.username || userToSync.sleeper_username
-        })
+        body: JSON.stringify({ sleeperId: sleeperIdToSave })
       });
 
-      if (!saveRes.ok) throw new Error("Failed saving Sleeper connection to database");
+      if (!saveRes.ok) throw new Error("Cloud save failed");
 
       const finalUser = {
-        sleeper_id: userToSync.user_id || userToSync.sleeper_id,
+        sleeper_id: sleeperIdToSave,
         sleeper_username: userToSync.username || userToSync.sleeper_username,
         displayName: userToSync.displayName || userToSync.display_name,
         avatar: userToSync.avatar
       };
 
       setSyncedSleeperUser(finalUser);
-      localStorage.setItem(getStorageKey(session.user.id), JSON.stringify(finalUser));
       setLivePreviewUser(null);
       setIsEditingSync(false);
 
-      // Refresh joined leagues list
+      // Refresh leagues list
       loadAccountData();
     } catch (err) {
-      console.warn("Database sync warning, saving locally:", err);
-      // Fallback local save if server endpoint is busy
+      console.warn("Cloud save warning, applying locally:", err);
       const finalUser = {
-        sleeper_id: userToSync.user_id || userToSync.sleeper_id,
+        sleeper_id: sleeperIdToSave,
         sleeper_username: userToSync.username || userToSync.sleeper_username,
         displayName: userToSync.displayName || userToSync.display_name,
         avatar: userToSync.avatar
       };
       setSyncedSleeperUser(finalUser);
-      localStorage.setItem(getStorageKey(session.user.id), JSON.stringify(finalUser));
       setIsEditingSync(false);
     } finally {
       setIsSaving(false);
