@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { MonitorSmartphone, MapPin, SlidersHorizontal, Ticket, Lock, Loader2, Coins, ExternalLink, Calendar, Clock, ChevronDown, AlertCircle, Hourglass, Eye } from 'lucide-react';
+import { MonitorSmartphone, MapPin, SlidersHorizontal, Ticket, Lock, Loader2, Coins, ExternalLink, Calendar, Clock, ChevronDown, AlertCircle, Hourglass, Eye, Trophy } from 'lucide-react';
 
 const CustomDropdown = ({ value, options, onChange, minWidth = "sm:w-40" }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -44,15 +44,13 @@ export default function DraftsTab({
   const { data: session } = useSession();
   const [statusFilter, setStatusFilter] = useState('all');
   const [styleFilter, setStyleFilter] = useState('all');
-  const [myLeaguesOnly, setMyLeaguesOnly] = useState(false);
   const [mySleeperLeagueIds, setMySleeperLeagueIds] = useState(new Set());
 
-  // 🚀 Fetch connected Sleeper user's leagues automatically on load
+  // Fetch connected Sleeper user's leagues automatically on load
   useEffect(() => {
     const fetchUserSleeperLeagues = async () => {
       let sleeperIdentifier = null;
 
-      // Check DNO local cache first
       if (session?.user?.id) {
         const cached = localStorage.getItem(`dno_dedicated_sleeper_${session.user.id}`);
         if (cached) {
@@ -63,7 +61,6 @@ export default function DraftsTab({
         }
       }
 
-      // Fallback to general FSAN sleeper ID
       if (!sleeperIdentifier && session?.user?.sleeperId) {
         sleeperIdentifier = session.user.sleeperId;
       }
@@ -71,7 +68,6 @@ export default function DraftsTab({
       if (!sleeperIdentifier) return;
 
       try {
-        // Resolve Sleeper User ID if username was passed
         let userId = sleeperIdentifier;
         if (isNaN(userId)) {
           const uRes = await fetch(`https://api.sleeper.app/v1/user/${sleeperIdentifier}`);
@@ -83,7 +79,6 @@ export default function DraftsTab({
 
         if (!userId) return;
 
-        // Fetch 2026 leagues for this user
         const res = await fetch(`https://api.sleeper.app/v1/user/${userId}/leagues/nfl/2026`);
         if (res.ok) {
           const userLeagues = await res.json();
@@ -101,14 +96,10 @@ export default function DraftsTab({
   const filteredLeagues = sortedLeagues.filter(league => {
     const openSpots = Math.max(0, league.total_spots - league.filled_spots);
     const isFull = openSpots === 0;
-    
-    // Check if joined via local ticket claim OR via connected Sleeper account
-    const isJoined = mySleeperLeagueIds.has(String(league.id)) || recentlyJoinedLeagues.includes(league.id);
 
     if (statusFilter === 'open' && isFull) return false;
     if (statusFilter === 'filled' && !isFull) return false;
     if (styleFilter !== 'all' && league.draft_style !== styleFilter) return false;
-    if (myLeaguesOnly && !isJoined) return false;
 
     return true;
   });
@@ -157,12 +148,13 @@ export default function DraftsTab({
                 ]}
               />
 
-              <button 
-                onClick={() => setMyLeaguesOnly(!myLeaguesOnly)}
-                className={`px-5 py-2.5 rounded-lg border text-xs font-bold shrink-0 transition-colors w-full sm:w-auto ${myLeaguesOnly ? 'bg-[#1b75bb]/20 border-[#1b75bb] text-[#1b75bb]' : 'bg-[#1a1a1a] border-gray-700 text-gray-300 hover:border-[#1b75bb]'}`}
+              {/* Direct link to Locker Room's My Leagues dashboard tab */}
+              <Link 
+                href="/dno/dashboard?tab=my-leagues"
+                className="px-5 py-2.5 rounded-lg border text-xs font-bold shrink-0 transition-colors w-full sm:w-auto bg-[#1a1a1a] border-gray-700 text-gray-300 hover:border-[#1b75bb] hover:text-white flex items-center justify-center gap-2"
               >
-                My Leagues
-              </button>
+                <Trophy size={14} className="text-[#1b75bb]" /> My Leagues
+              </Link>
           </div>
 
           <div className="mb-8 p-[2px] rounded-2xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(27,117,187,0.15)] relative z-10">
@@ -211,7 +203,6 @@ export default function DraftsTab({
                   const isFull = openSpots === 0;
                   const hasNoEntriesLeft = ticketsAvailable === 0;
                   
-                  // 🚀 Dynamic Membership Detection
                   const isJoined = mySleeperLeagueIds.has(String(league.id)) || recentlyJoinedLeagues.includes(league.id);
                   const isSlow = league.draft_style === 'slow';
 
