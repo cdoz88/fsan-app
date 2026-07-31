@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Ticket, ShieldCheck, Share2, Trophy, ExternalLink, Loader2, Link2, Check, RefreshCw, Gift } from 'lucide-react';
+import { Ticket, ShieldCheck, Share2, Trophy, ExternalLink, Loader2, Link2, CheckCircle2, Gift, Edit3, X } from 'lucide-react';
 
 // Importing DNO components
 import DNOHeader from '../../../components/dno/DNOHeader';
@@ -20,12 +20,14 @@ function DashboardContent() {
   const [myLeagues, setMyLeagues] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Sleeper Sync State
-  const [sleeperUsernameInput, setSleeperUsernameInput] = useState('');
-  const [syncedSleeperUser, setSyncedSleeperUser] = useState(null); // { sleeper_id, sleeper_username }
-  const [isSyncing, setIsSyncing] = useState(false);
+  // Universal Sleeper Sync State
+  const [sleeperInput, setSleeperInput] = useState('');
+  const [livePreviewUser, setLivePreviewUser] = useState(null); // Found user on Sleeper API
+  const [syncedSleeperUser, setSyncedSleeperUser] = useState(null); // Saved user object
+  const [isSearching, setIsSearching] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [syncError, setSyncError] = useState('');
-  const [syncSuccess, setSyncSuccess] = useState(false);
+  const [isEditingSync, setIsEditingSync] = useState(false);
 
   // Set Page Title & Force Favicon Swap
   useEffect(() => {
@@ -54,7 +56,6 @@ function DashboardContent() {
     }
   }, [searchParams]);
 
-  // Handle Tab Click and update URL parameter
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
     const newParams = new URLSearchParams(searchParams.toString());
@@ -62,26 +63,41 @@ function DashboardContent() {
     router.push(`?${newParams.toString()}`, { scroll: false });
   };
 
+  // Load User Data & Joined DNO Leagues
   const loadAccountData = useCallback(async () => {
     if (!session?.user?.id) return;
     
     setIsLoading(true);
     try {
-      // 1. Fetch user data (includes tickets & sleeper_id/sleeper_username)
       const uRes = await fetch(`/api/user?id=${session.user.id}`);
       const uData = await uRes.json();
       
       setTicketCount(uData.dno_tickets || 0);
 
       if (uData.sleeper_id) {
-        setSyncedSleeperUser({
-          sleeper_id: uData.sleeper_id,
-          sleeper_username: uData.sleeper_username || uData.sleeper_id
-        });
-        setSleeperUsernameInput(uData.sleeper_username || uData.sleeper_id);
+        // Fetch full Sleeper details for the avatar & display name
+        try {
+          const slpRes = await fetch(`https://api.sleeper.app/v1/user/${uData.sleeper_id}`);
+          if (slpRes.ok) {
+            const slpData = await slpRes.json();
+            const userObj = {
+              sleeper_id: slpData.user_id,
+              sleeper_username: slpData.username || slpData.display_name,
+              displayName: slpData.display_name,
+              avatar: slpData.avatar
+            };
+            setSyncedSleeperUser(userObj);
+            setSleeperInput(userObj.sleeper_username);
+          }
+        } catch (e) {
+          setSyncedSleeperUser({
+            sleeper_id: uData.sleeper_id,
+            sleeper_username: uData.sleeper_username || uData.sleeper_id
+          });
+        }
       }
 
-      // 2. Fetch DNO pool to filter user's joined leagues
+      // Fetch DNO Pool
       const pRes = await fetch(`/api/scl?type=dno_pool`);
       if (pRes.ok) {
         const pData = await pRes.json();
@@ -108,59 +124,79 @@ function DashboardContent() {
     }
   }, [status, loadAccountData]);
 
-  // Handle Sleeper Account Sync
-  const handleSyncSleeper = async (e) => {
-    e.preventDefault();
-    if (!sleeperUsernameInput.trim() || !session?.user?.id) return;
+  // Debounced Live Search against Sleeper API as user types
+  useEffect(() => {
+    if (!sleeperInput || sleeperInput.trim().length < 3 || (syncedSleeperUser && !isEditingSync)) {
+      setLivePreviewUser(null);
+      setSyncError('');
+      return;
+    }
 
-    setIsSyncing(true);
+    setIsSearching(true);
     setSyncError('');
-    setSyncSuccess(false);
+
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://api.sleeper.app/v1/user/${sleeperInput.trim()}`);
+        if (!res.ok) throw new Error("Sleeper account not found");
+        const data = await res.json();
+        
+        if (!data || !data.user_id) throw new Error("Sleeper account not found");
+
+        setLivePreviewUser({
+          user_id: data.user_id,
+          username: data.username || data.display_name,
+          displayName: data.display_name,
+          avatar: data.avatar
+        });
+      } catch (err) {
+        setLivePreviewUser(null);
+        setSyncError("Username not found on Sleeper");
+      } finally {
+        setIsSearching(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [sleeperInput, syncedSleeperUser, isEditingSync]);
+
+  // Save the verified Sleeper connection to the backend
+  const handleConfirmSync = async (userToSync) => {
+    if (!userToSync || !session?.user?.id) return;
+    setIsSaving(true);
+    setSyncError('');
 
     try {
-      // Step A: Verify username exists on Sleeper via official public API
-      const sleeperRes = await fetch(`https://api.sleeper.app/v1/user/${sleeperUsernameInput.trim()}`);
-      if (!sleeperRes.ok) {
-        throw new Error("Sleeper user not found");
-      }
-      const sleeperData = await sleeperRes.json();
-      
-      if (!sleeperData || !sleeperData.user_id) {
-        throw new Error("Invalid Sleeper username");
-      }
-
-      // Step B: Save Sleeper ID & Username to our user database
       const saveRes = await fetch('/api/user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'update_sleeper',
           userId: session.user.id,
-          sleeper_id: sleeperData.user_id,
-          sleeper_username: sleeperData.username || sleeperUsernameInput.trim()
+          sleeper_id: userToSync.user_id || userToSync.sleeper_id,
+          sleeper_username: userToSync.username || userToSync.sleeper_username
         })
       });
 
-      if (!saveRes.ok) {
-        throw new Error("Failed saving Sleeper connection to database");
-      }
+      if (!saveRes.ok) throw new Error("Failed saving Sleeper connection");
 
-      setSyncedSleeperUser({
-        sleeper_id: sleeperData.user_id,
-        sleeper_username: sleeperData.username || sleeperUsernameInput.trim()
-      });
+      const finalUser = {
+        sleeper_id: userToSync.user_id || userToSync.sleeper_id,
+        sleeper_username: userToSync.username || userToSync.sleeper_username,
+        displayName: userToSync.displayName || userToSync.display_name,
+        avatar: userToSync.avatar
+      };
 
-      setSyncSuccess(true);
-      setTimeout(() => setSyncSuccess(false), 3000);
-      
-      // Reload account data to update leagues immediately
+      setSyncedSleeperUser(finalUser);
+      setLivePreviewUser(null);
+      setIsEditingSync(false);
+
+      // Refresh leagues list
       loadAccountData();
-
     } catch (err) {
-      console.error("Sleeper Sync Error:", err);
-      setSyncError(err.message || "Unable to sync Sleeper account.");
+      setSyncError("Failed to save connection. Please try again.");
     } finally {
-      setIsSyncing(false);
+      setIsSaving(false);
     }
   };
 
@@ -184,7 +220,7 @@ function DashboardContent() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
           {/* Ticket Balance Card */}
-          <div className="bg-[#151515] border border-gray-800 rounded-3xl p-6 md:p-8 flex items-center justify-between shadow-lg relative overflow-hidden">
+          <div className="bg-[#151515] border border-gray-800 rounded-3xl p-6 md:p-8 flex items-center justify-between shadow-lg relative overflow-hidden min-h-[160px]">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#1b75bb] opacity-5 blur-[50px] rounded-full"></div>
             <div>
               <p className="text-gray-400 font-bold uppercase tracking-widest text-xs mb-2">Available Draft Tickets</p>
@@ -198,47 +234,103 @@ function DashboardContent() {
             </div>
           </div>
 
-          {/* Universal Sleeper Account Sync Card */}
-          <div className="bg-[#151515] border border-gray-800 rounded-3xl p-6 md:p-8 flex flex-col justify-between shadow-lg relative overflow-hidden">
-            <div className="flex items-center justify-between mb-3">
+          {/* Universal Sleeper Sync Card */}
+          <div className="bg-[#151515] border border-gray-800 rounded-3xl p-6 md:p-8 flex flex-col justify-between shadow-lg relative overflow-hidden min-h-[160px]">
+            <div className="flex items-center justify-between mb-2">
               <p className="text-[#1b75bb] font-bold uppercase tracking-widest text-xs flex items-center gap-2">
                 <Link2 size={14} /> Universal Sleeper Sync
               </p>
-              {syncedSleeperUser && (
-                <span className="text-xs font-bold uppercase tracking-widest text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-full border border-teal-500/20 flex items-center gap-1">
-                  <Check size={12} /> Connected
-                </span>
+              {syncedSleeperUser && !isEditingSync && (
+                <button 
+                  onClick={() => { setIsEditingSync(true); setLivePreviewUser(null); }}
+                  className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white flex items-center gap-1 transition-colors"
+                >
+                  <Edit3 size={12} /> Change
+                </button>
               )}
             </div>
 
-            <form onSubmit={handleSyncSleeper} className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <input 
-                  type="text"
-                  placeholder="Enter Sleeper Username"
-                  value={sleeperUsernameInput}
-                  onChange={(e) => setSleeperUsernameInput(e.target.value)}
-                  className="flex-1 bg-[#111] border border-gray-800 text-white text-sm rounded-xl py-2.5 px-4 focus:outline-none focus:border-[#1b75bb] transition-colors"
-                />
-                <button 
-                  type="submit"
-                  disabled={isSyncing}
-                  className="px-5 py-2.5 bg-[#1b75bb] hover:bg-teal-500 text-white font-bold uppercase tracking-widest text-xs rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2 shrink-0"
-                >
-                  {isSyncing ? <Loader2 size={14} className="animate-spin" /> : syncedSleeperUser ? 'Update' : 'Sync'}
-                </button>
-              </div>
+            {/* LOCKED SYNCED USER DISPLAY */}
+            {syncedSleeperUser && !isEditingSync ? (
+              <div className="flex items-center justify-between bg-[#111] border border-gray-800 rounded-2xl p-3.5 mt-2">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-11 h-11 rounded-full bg-zinc-900 border-2 border-[#1b75bb] overflow-hidden shrink-0 shadow-md">
+                    <img 
+                      src={syncedSleeperUser.avatar ? `https://sleepercdn.com/avatars/thumbs/${syncedSleeperUser.avatar}` : 'https://sleepercdn.com/images/v2/icons/player_default.webp'} 
+                      alt="" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-white font-black text-sm uppercase tracking-tight truncate">
+                      {syncedSleeperUser.displayName || syncedSleeperUser.sleeper_username}
+                    </h4>
+                    <p className="text-[11px] font-bold text-gray-500 tracking-wider">@{syncedSleeperUser.sleeper_username}</p>
+                  </div>
+                </div>
 
-              {syncError && (
-                <p className="text-red-400 text-[11px] font-bold uppercase tracking-wider">{syncError}</p>
-              )}
-              {syncSuccess && (
-                <p className="text-teal-400 text-[11px] font-bold uppercase tracking-wider">Sleeper account successfully synced!</p>
-              )}
-              {!syncError && !syncSuccess && (
-                <p className="text-gray-500 text-[11px]">Syncing connects your DNO leagues and roster graphics automatically.</p>
-              )}
-            </form>
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1.5 rounded-full flex items-center gap-1.5 shrink-0">
+                  <CheckCircle2 size={13} className="text-emerald-400" /> Connected
+                </span>
+              </div>
+            ) : (
+              /* DYNAMIC INPUT & LIVE PREVIEW SEARCH */
+              <div className="flex flex-col gap-2 mt-1">
+                <div className="relative flex items-center gap-2">
+                  <input 
+                    type="text"
+                    placeholder="Enter Sleeper Username..."
+                    value={sleeperInput}
+                    onChange={(e) => setSleeperInput(e.target.value)}
+                    className="w-full bg-[#111] border border-gray-800 text-white text-sm rounded-xl py-3 pl-4 pr-10 focus:outline-none focus:border-[#1b75bb] transition-colors"
+                  />
+                  {isSearching && (
+                    <Loader2 size={16} className="absolute right-3 text-gray-400 animate-spin" />
+                  )}
+                  {isEditingSync && (
+                    <button 
+                      onClick={() => setIsEditingSync(false)}
+                      className="p-3 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl transition-colors shrink-0"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+
+                {syncError && (
+                  <p className="text-red-400 text-[11px] font-bold uppercase tracking-wider px-1">{syncError}</p>
+                )}
+
+                {/* LIVE FOUND USER CARD */}
+                {livePreviewUser && (
+                  <div className="flex items-center justify-between bg-[#111] border border-[#1b75bb]/50 rounded-xl p-3 mt-1 animate-in fade-in duration-200">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-full bg-zinc-900 border border-[#1b75bb] overflow-hidden shrink-0">
+                        <img 
+                          src={livePreviewUser.avatar ? `https://sleepercdn.com/avatars/thumbs/${livePreviewUser.avatar}` : 'https://sleepercdn.com/images/v2/icons/player_default.webp'} 
+                          alt="" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-white font-black text-xs uppercase truncate">{livePreviewUser.displayName}</p>
+                        <p className="text-[10px] text-gray-400">@{livePreviewUser.username}</p>
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={() => handleConfirmSync(livePreviewUser)}
+                      disabled={isSaving}
+                      className="bg-[#1b75bb] hover:bg-teal-500 text-white font-bold uppercase tracking-widest text-[10px] px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5 shrink-0"
+                    >
+                      {isSaving ? <Loader2 size={12} className="animate-spin" /> : 'Sync & Lock'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
         </div>
@@ -326,9 +418,7 @@ function DashboardContent() {
 
         {/* TAB 2: SHARE ROSTER */}
         {activeTab === 'share' && (
-          <div className="animate-in fade-in duration-300">
-            <GraphicTab />
-          </div>
+          <GraphicTab syncedSleeperUser={syncedSleeperUser} />
         )}
 
         {/* TAB 3: PERKS */}

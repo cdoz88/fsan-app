@@ -1,10 +1,9 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas-pro';
-import { Search, Loader2, Download, AlertCircle, Share2, Copy, Check, CheckCircle2 } from 'lucide-react';
+import { Loader2, Download, AlertCircle, Share2, Copy, Check, Link2, Trophy } from 'lucide-react';
 
-export default function GraphicTab() {
-  const [username, setUsername] = useState('');
+export default function GraphicTab({ syncedSleeperUser }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -83,24 +82,21 @@ export default function GraphicTab() {
     loadPlayerDatabases();
   }, []);
 
+  // Fetch leagues automatically whenever syncedSleeperUser changes
   useEffect(() => {
-    if (!username || username.trim().length < 3) {
-       setLeagues([]);
-       setSelectedLeague('');
-       setTeamData(null);
-       setStarters([]);
-       setBench([]);
-       setError('');
-       return;
+    const targetUsername = syncedSleeperUser?.sleeper_username || syncedSleeperUser?.sleeper_id;
+    if (targetUsername) {
+      fetchSleeperLeagues(targetUsername);
+    } else {
+      setLeagues([]);
+      setSelectedLeague('');
+      setTeamData(null);
+      setStarters([]);
+      setBench([]);
+      setError('');
     }
-
-    const delayDebounceFn = setTimeout(() => {
-      fetchSleeperLeagues();
-    }, 800);
-
-    return () => clearTimeout(delayDebounceFn);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [username]);
+  }, [syncedSleeperUser]);
 
   useEffect(() => {
     if (starters.length > 0 && teamData && graphicRef.current) {
@@ -131,7 +127,7 @@ export default function GraphicTab() {
     }
   }, [starters, bench, teamData]);
 
-  const fetchSleeperLeagues = async () => {
+  const fetchSleeperLeagues = async (targetUsername) => {
     setLoading(true);
     setError('');
     setLeagues([]);
@@ -143,11 +139,11 @@ export default function GraphicTab() {
     setGraphicBlob(null);
 
     try {
-      const userRes = await fetch(`https://api.sleeper.app/v1/user/${username.trim()}`);
-      if (!userRes.ok) throw new Error('Username not found');
+      const userRes = await fetch(`https://api.sleeper.app/v1/user/${targetUsername.trim()}`);
+      if (!userRes.ok) throw new Error('Username not found on Sleeper');
       
       const userData = await userRes.json();
-      if (!userData || !userData.user_id) throw new Error('Username not found');
+      if (!userData || !userData.user_id) throw new Error('Username not found on Sleeper');
       
       const dnoPoolRes = await fetch(`/api/scl?type=dno_pool&t=${Date.now()}`);
       const dnoPoolData = await dnoPoolRes.json();
@@ -176,9 +172,9 @@ export default function GraphicTab() {
       });
     } catch (err) {
       if (err.message.includes('properties of null')) {
-          setError('Username not found');
+        setError('Sleeper account not found');
       } else {
-          setError(err.message);
+        setError(err.message);
       }
     } finally {
       setLoading(false);
@@ -254,7 +250,7 @@ export default function GraphicTab() {
       const benchIds = allPlayers.filter(id => !starterIds.includes(id));
       
       if (starterIds.length === 0) {
-          throw new Error('No starting lineup set for this roster yet.');
+        throw new Error('No starting lineup set for this roster yet.');
       }
       
       setStarters(starterIds.slice(0, 9)); 
@@ -327,8 +323,6 @@ export default function GraphicTab() {
 
   const getESPNHeadshot = (espnId) => `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${espnId}.png&w=350&h=254`;
 
-  // 🚀 FIXED: Extracted the entire graphic layout into a clean JSX variable.
-  // This allows us to render it ONCE visually (scaled) and ONCE hidden (unscaled) for perfect mobile screenshots.
   const rosterGraphicContent = (
     <>
       <div className="absolute inset-0 z-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-zinc-900/40" />
@@ -536,91 +530,70 @@ export default function GraphicTab() {
   );
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16 overflow-x-hidden w-full">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 p-8 overflow-x-hidden w-full">
       
-      <div className="mb-8">
+      <div className="mb-6">
         <h2 className="text-2xl font-black italic text-white uppercase tracking-tighter">Social Roster Graphic</h2>
         <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Generate & Share Your DNO Squad</p>
       </div>
 
-      <div className="bg-[#111] border border-gray-800 rounded-2xl p-6 mb-8 shadow-xl w-full">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 relative w-full">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-            <input 
-              type="text" 
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter Sleeper Username..." 
-              disabled={dbLoading}
-              className="w-full bg-[#1a1a1a] border border-gray-700 text-white rounded-xl py-3.5 pl-11 pr-12 focus:outline-none focus:border-[#1b75bb] font-bold text-sm transition-colors disabled:opacity-50"
-            />
-            {loading && <Loader2 size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 animate-spin" />}
-          </div>
+      {!syncedSleeperUser ? (
+        <div className="bg-[#111] border border-gray-800 rounded-2xl p-12 text-center my-6">
+          <Link2 className="w-12 h-12 text-gray-700 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-white mb-2">Sync Your Sleeper Account</h3>
+          <p className="text-gray-400 text-sm max-w-md mx-auto">
+            Use the <strong>Universal Sleeper Sync</strong> card at the top of your Locker Room to connect your account. Once synced, your DNO divisions will appear here automatically!
+          </p>
         </div>
-
-        {error && (
-          <div className="mt-4 bg-red-900/20 border border-red-500/30 p-3 rounded-lg flex items-center gap-2 text-red-400 text-xs font-bold uppercase tracking-widest">
-            <AlertCircle size={14} /> {error}
-          </div>
-        )}
-
-        {teamData && !error && (
-          <div className="mt-6 pt-6 border-t border-gray-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in duration-300">
-             <div className="flex items-center gap-3.5 w-full sm:w-auto">
-                <div className="w-11 h-11 rounded-full bg-zinc-900 border-2 border-[#1b75bb] overflow-hidden shrink-0 shadow-md">
-                   <img 
-                     src={teamData.avatar ? `https://sleepercdn.com/avatars/thumbs/${teamData.avatar}` : 'https://sleepercdn.com/images/v2/icons/player_default.webp'} 
-                     alt="" 
-                     className="w-full h-full object-cover"
-                     onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
-                   />
-                </div>
-                <div className="min-w-0">
-                   <div className="flex items-center gap-2">
-                      <h4 className="text-white font-black text-sm uppercase tracking-tight truncate">{teamData.displayName || teamData.username}</h4>
-                      <CheckCircle2 size={15} className="text-emerald-400 fill-emerald-400/20 shrink-0" />
-                   </div>
-                   <p className="text-[11px] font-bold text-gray-500 tracking-wider">@{teamData.username}</p>
-                </div>
-             </div>
-             <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1.5 sm:py-1 rounded-full whitespace-nowrap">
-                Sleeper Verified
-             </span>
-          </div>
-        )}
-
-        {leagues.length > 0 && !error && (
-          <div className="mt-6 animate-in fade-in duration-300">
-            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Select Your DNO Division</label>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {leagues.map(l => {
-                const isSelected = selectedLeague === l.league_id;
-                return (
-                  <button
-                    key={l.league_id}
-                    type="button"
-                    onClick={() => handleLeagueSelect(l.league_id)}
-                    className={`px-5 py-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-left border transition-all flex items-center justify-between ${
-                      isSelected
-                        ? 'bg-[#1b75bb] border-[#1b75bb] text-white shadow-lg shadow-[#1b75bb]/20'
-                        : 'bg-[#1a1a1a] border-gray-700 text-gray-300 hover:border-[#1b75bb] hover:text-white'
-                    }`}
-                  >
-                    <span className="line-clamp-1">{l.name}</span>
-                    {isSelected && <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded font-bold uppercase tracking-wider shrink-0 ml-2">Active</span>}
-                  </button>
-                );
-              })}
+      ) : (
+        <div className="bg-[#111] border border-gray-800 rounded-2xl p-6 mb-8 shadow-xl w-full">
+          
+          {loading && (
+            <div className="flex items-center justify-center gap-3 py-6 text-gray-400 text-xs font-bold uppercase tracking-widest">
+              <Loader2 size={18} className="animate-spin text-[#1b75bb]" /> Fetching DNO Divisions...
             </div>
-          </div>
-        )}
-      </div>
+          )}
+
+          {error && (
+            <div className="bg-red-900/20 border border-red-500/30 p-4 rounded-xl flex items-center gap-3 text-red-400 text-xs font-bold uppercase tracking-widest">
+              <AlertCircle size={16} /> {error}
+            </div>
+          )}
+
+          {!loading && leagues.length > 0 && !error && (
+            <div className="animate-in fade-in duration-300">
+              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
+                Select Your DNO Division
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {leagues.map(l => {
+                  const isSelected = selectedLeague === l.league_id;
+                  return (
+                    <button
+                      key={l.league_id}
+                      type="button"
+                      onClick={() => handleLeagueSelect(l.league_id)}
+                      className={`px-5 py-4 rounded-xl text-xs font-black uppercase tracking-wider text-left border transition-all flex items-center justify-between ${
+                        isSelected
+                          ? 'bg-[#1b75bb] border-[#1b75bb] text-white shadow-lg shadow-[#1b75bb]/20'
+                          : 'bg-[#1a1a1a] border-gray-700 text-gray-300 hover:border-[#1b75bb] hover:text-white'
+                      }`}
+                    >
+                      <span className="line-clamp-1">{l.name}</span>
+                      {isSelected && <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded font-bold uppercase tracking-wider shrink-0 ml-2">Active</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {starters.length > 0 && teamData && teamData.teamName && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full flex flex-col items-start max-w-full">
           
-          {/* 🚀 VISIBLE SCALED WRAPPER (For UI Display Only) */}
+          {/* Visible Scaled Wrapper */}
           <div className="w-full max-w-full overflow-hidden mb-8" ref={wrapperRef}>
               <div 
                 className="relative rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 bg-black"
@@ -634,13 +607,14 @@ export default function GraphicTab() {
               </div>
           </div>
 
-          {/* 🚀 HIDDEN NATIVE WRAPPER (Strictly for html2canvas to capture pixel-perfect fonts safely away from Safari subpixel bugs) */}
+          {/* Hidden Native Capture Wrapper */}
           <div style={{ position: 'fixed', top: '-20000px', left: '-20000px', pointerEvents: 'none' }}>
               <div ref={graphicRef} className="w-[1080px] h-[1350px] bg-zinc-950 overflow-hidden flex flex-col relative">
                  {rosterGraphicContent}
               </div>
           </div>
 
+          {/* Action Buttons */}
           <div className="flex flex-wrap gap-4 justify-start w-full sm:max-w-none">
             <button 
               onClick={handleShareGraphic}
