@@ -172,7 +172,7 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
           </h3>
           <p className="text-gray-400 text-sm leading-relaxed mb-6">
             {mode === 'fsanLogin'
-              ? 'Enter your Fantasy Sports Advantage Network credentials to log in.'
+              ? 'Enter your Fantasy Sports Advice Network credentials to log in.'
               : mode === 'login' 
               ? 'Log in to access your Draft Night Out dashboard.' 
               : mode === 'forgotPassword' 
@@ -184,16 +184,19 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
           {mode === 'fsanLogin' && (
             <div className="mb-6 p-4 rounded-2xl bg-[#111] border border-slate-500/40 text-left relative overflow-hidden shadow-inner">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-400/30 flex items-center justify-center shrink-0 shadow-md">
-                  <img src="/images/dno/App Icons.png" alt="FSAN App Icon" className="w-6 h-6 object-contain" />
-                </div>
+                {/* 🚀 Directly rendered shield icon with no extra box or border */}
+                <img 
+                  src="/images/dno/App Icons.png" 
+                  alt="FSAN App Icon" 
+                  className="w-10 h-10 object-contain shrink-0 drop-shadow-md" 
+                />
                 <div>
                   <h4 className="text-xs font-black text-white uppercase tracking-wider mb-1 flex items-center gap-1.5">
                     <ShieldCheck size={14} className="text-slate-300" />
                     Central FSAN Account
                   </h4>
                   <p className="text-[11px] text-gray-400 leading-relaxed">
-                    Log in with your primary FSAN credentials. Your subscription perks and DNO tickets will be automatically linked.
+                    Log in with your FSAN credentials. Your subscription perks and DNO tickets will be automatically linked.
                   </p>
                 </div>
               </div>
@@ -283,7 +286,7 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
                 className="w-full mt-2 relative group p-[1.5px] rounded-xl bg-gradient-to-r from-slate-400 via-gray-100 to-slate-500 shadow-[0_0_15px_rgba(203,213,225,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50"
               >
                 <div className="bg-[#111] group-hover:bg-slate-200 group-hover:text-black transition-colors rounded-[10.5px] px-4 py-3.5 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">
-                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Log In with FSAN Credentials'}
+                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Log In'}
                 </div>
               </button>
             ) : (
