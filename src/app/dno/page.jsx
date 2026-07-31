@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
-import { MonitorSmartphone, Trophy, BookOpen, Handshake, ListOrdered, HeartHandshake } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { MonitorSmartphone, Trophy, BookOpen, Handshake, ListOrdered, HeartHandshake, Loader2 } from 'lucide-react';
 
 // Importing from the newly relocated DNO components folder
 import DNOHeader from '../../components/dno/DNOHeader';
@@ -13,6 +14,7 @@ import CharityTab from '../../components/dno/tabs/CharityTab';
 import NapkinLeaderboard from '../../components/dno/NapkinLeaderboard';
 
 export default function DNOPublicPage() {
+  const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState('drafts');
   const [draftView, setDraftView] = useState('online');
   const [showAuthModal, setShowAuthModal] = useState(null); // 'login' or 'register'
@@ -21,6 +23,23 @@ export default function DNOPublicPage() {
   const [loadingLeagues, setLoadingLeagues] = useState(true);
   const [liveLeaderboard, setLiveLeaderboard] = useState({ teams: [] });
   const [liveSeasonLabel, setLiveSeasonLabel] = useState("2026 SEASON");
+
+  // New State for Purchasing and Joining
+  const [ticketsAvailable, setTicketsAvailable] = useState(0);
+  const [confirmingLeague, setConfirmingLeague] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Fetch user's ticket balance if they are logged in
+  const loadAccountData = useCallback(async () => {
+    if (!session?.user?.id) return;
+    try {
+      const res = await fetch(`/api/user?id=${session.user.id}`);
+      const data = await res.json();
+      setTicketsAvailable(data.dno_tickets || 0);
+    } catch (err) {
+      console.error("Failed to fetch tickets", err);
+    }
+  }, [session]);
 
   // Fetch the live pool data so the DraftsTab shows accurate, real-time FOMO numbers
   const loadDnoPool = useCallback(async () => {
@@ -55,6 +74,12 @@ export default function DNOPublicPage() {
     loadDnoPool();
   }, [loadDnoPool, loadLiveLeaderboard]);
 
+  useEffect(() => {
+    if (status === 'authenticated') {
+      loadAccountData();
+    }
+  }, [status, loadAccountData]);
+
   const sortedLeagues = [...leagues].sort((a, b) => {
     const isFullA = a.filled_spots >= a.total_spots;
     const isFullB = b.filled_spots >= b.total_spots;
@@ -63,6 +88,68 @@ export default function DNOPublicPage() {
   });
 
   const handleTabClick = (tabId) => setActiveTab(tabId);
+
+  // STRIPE CHECKOUT LOGIC
+  const handlePurchaseExtraEntry = async () => {
+    if (status !== 'authenticated') {
+      setShowAuthModal('register');
+      return;
+    }
+    setIsProcessing(true);
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'dno_ticket',
+          userId: session.user.id,
+          email: session.user.email,
+          // Sends user to the private Locker Room upon successful payment
+          returnUrl: `${window.location.origin}/dno/dashboard`
+        })
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL returned");
+      }
+    } catch (err) {
+      console.error("Stripe Checkout Error:", err);
+      alert("Unable to initiate checkout. Please try again.");
+      setIsProcessing(false);
+    }
+  };
+
+  // JOIN LEAGUE LOGIC
+  const executeJoin = async () => {
+    if (!confirmingLeague || !session?.user?.id) return;
+    setIsProcessing(true);
+    try {
+      const res = await fetch('/api/scl', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'dno_join_league',
+          league_id: confirmingLeague.id,
+          sleeper_id: confirmingLeague.sleeper_id,
+          user_id: session.user.id
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Instantly send them to their dashboard locker room so they can see their new league
+        window.location.href = '/dno/dashboard';
+      } else {
+        alert(data.message || "Failed to join the league.");
+        setIsProcessing(false);
+      }
+    } catch (err) {
+      console.error("Join Error:", err);
+      alert("Something went wrong. Please try again.");
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#09090b] flex flex-col font-sans selection:bg-[#1b75bb] selection:text-white">
@@ -76,6 +163,55 @@ export default function DNOPublicPage() {
           initialMode={showAuthModal} 
           onClose={() => setShowAuthModal(null)} 
         />
+      )}
+
+      {/* Confirm Join / Purchase Modal */}
+      {confirmingLeague && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+           <div className="bg-[#151515] p-8 rounded-3xl border border-gray-800 text-center text-white shadow-2xl w-full max-w-md relative overflow-hidden">
+              <h3 className="text-2xl font-black uppercase italic mb-2 tracking-tighter">Confirm Entry</h3>
+              <p className="text-gray-400 mb-6 text-sm">
+                You are about to use <strong className="text-white">1 Draft Ticket</strong> to secure your spot in <strong className="text-[#1b75bb]">{confirmingLeague.name}</strong>.
+              </p>
+              
+              <div className="flex items-center justify-center gap-4 mb-8">
+                <div className="bg-[#111] border border-gray-800 rounded-xl px-6 py-4 shadow-inner">
+                   <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Your Tickets</p>
+                   <p className="text-3xl font-black text-[#f5a623] leading-none">{ticketsAvailable}</p>
+                </div>
+              </div>
+
+              {ticketsAvailable > 0 ? (
+                <button 
+                  onClick={executeJoin}
+                  disabled={isProcessing}
+                  className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-[0_0_15px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+                >
+                  <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs">
+                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm & Join League'}
+                  </div>
+                </button>
+              ) : (
+                <button 
+                  onClick={handlePurchaseExtraEntry}
+                  disabled={isProcessing}
+                  className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-[#f5a623] to-[#c30b16] shadow-[0_0_15px_rgba(245,166,35,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+                >
+                  <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs">
+                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Purchase Ticket to Join'}
+                  </div>
+                </button>
+              )}
+
+              <button 
+                onClick={() => setConfirmingLeague(null)} 
+                disabled={isProcessing}
+                className="w-full mt-3 px-6 py-3 bg-transparent hover:bg-gray-800 transition-colors text-gray-400 hover:text-white font-bold uppercase tracking-widest text-xs rounded-xl"
+              >
+                Cancel
+              </button>
+           </div>
+        </div>
       )}
 
       <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10 pt-6 pb-24">
@@ -122,14 +258,20 @@ export default function DNOPublicPage() {
             <DraftsTab 
               draftView={draftView} 
               setDraftView={setDraftView} 
-              isProPlus={false} // Forced false for public users so they see locks and are prompted to register
-              ticketsAvailable={0} 
-              handlePurchaseExtraEntry={() => setShowAuthModal('register')} 
+              isProPlus={status === 'authenticated'} 
+              ticketsAvailable={ticketsAvailable} 
+              handlePurchaseExtraEntry={handlePurchaseExtraEntry} 
               loadingLeagues={loadingLeagues} 
               leagues={leagues} 
               sortedLeagues={sortedLeagues} 
               recentlyJoinedLeagues={[]} 
-              setConfirmingLeague={() => setShowAuthModal('register')} 
+              setConfirmingLeague={(league) => {
+                if (status !== 'authenticated') {
+                  setShowAuthModal('register');
+                } else {
+                  setConfirmingLeague(league);
+                }
+              }} 
             />
           )}
           {activeTab === 'leaderboard' && (
