@@ -83,14 +83,21 @@ function DashboardContent() {
     router.push(`?${newParams.toString()}`, { scroll: false });
   };
 
-  // Load User Data & Joined DNO Leagues
+  // Load User Data & Joined DNO Leagues safely
   const loadAccountData = useCallback(async () => {
     if (!session?.user?.id) return;
     
     setIsLoading(true);
     try {
       const uRes = await fetch(`/api/user?id=${session.user.id}`);
-      const uData = await uRes.json();
+      let uData = {};
+      if (uRes.ok) {
+        try {
+          uData = await uRes.json();
+        } catch (e) {
+          console.warn("User API did not return JSON", e);
+        }
+      }
       
       setTicketCount(uData.dno_tickets || 0);
 
@@ -124,14 +131,16 @@ function DashboardContent() {
       // Fetch DNO Pool
       const pRes = await fetch(`/api/scl?type=dno_pool`);
       if (pRes.ok) {
-        const pData = await pRes.json();
-        
-        const myJoinedLeagues = (pData.leagues || []).filter(league => {
-           if (!activeSleeperId) return false;
-           return league.members?.some(m => m.user_id === activeSleeperId);
-        });
-        
-        setMyLeagues(myJoinedLeagues);
+        try {
+          const pData = await pRes.json();
+          const myJoinedLeagues = (pData.leagues || []).filter(league => {
+             if (!activeSleeperId) return false;
+             return league.members?.some(m => m.user_id === activeSleeperId);
+          });
+          setMyLeagues(myJoinedLeagues);
+        } catch (e) {
+          console.warn("DNO Pool API did not return JSON", e);
+        }
       }
     } catch (err) {
       console.error("Failed loading account data", err);
