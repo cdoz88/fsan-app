@@ -9,7 +9,6 @@ export async function GET(request) {
 
   try {
     if (type === 'dno_pool') {
-      // Fetch specifically for the logged-in user, or generically for a guest
       const wpUrl = session?.user?.id
         ? `https://admin.fsan.com/wp-admin/admin-ajax.php?action=dno_get_leagues_pool&user_id=${session.user.id}&t=${Date.now()}`
         : `https://admin.fsan.com/wp-admin/admin-ajax.php?action=dno_get_leagues_pool&t=${Date.now()}`;
@@ -33,7 +32,6 @@ export async function GET(request) {
         draft_style: l.draft_style || 'fast'
       }));
 
-      // 🚀 FIX: Switched to Sleeper's /rosters endpoint to count actual claimed teams, not just chat participants!
       const liveLeagues = await Promise.all(sanitizedLeagues.map(async (league) => {
         try {
           const slpRes = await fetch(`https://api.sleeper.app/v1/league/${league.id}/rosters?t=${Date.now()}`, { 
@@ -41,7 +39,6 @@ export async function GET(request) {
           });
           if (slpRes.ok) {
             const rosters = await slpRes.json();
-            // Only count rosters that have an active owner assigned
             league.filled_spots = rosters.filter(r => r.owner_id && r.owner_id !== '').length;
           }
         } catch (e) {
@@ -79,77 +76,101 @@ export async function GET(request) {
 export async function POST(request) {
   const session = await getServerSession(authOptions);
   
-  // 🚀 Security Check: Ensure POST actions are strictly gated for logged-in users only
   if (!session) {
     return NextResponse.json({ success: false, message: 'Authentication required' }, { status: 401 });
   }
 
   try {
     const url = new URL(request.url);
-    
-    if (url.searchParams.get('action') === 'claim-spot') {
-      const { leagueId } = await request.json();
+    const contentType = request.headers.get('content-type') || '';
+
+    // 🚀 NEW: Handle JSON payloads cleanly (DNO Sleeper sync, spot claims, etc.)
+    if (contentType.includes('application/json')) {
+      const jsonBody = await request.json();
       
-      const wpUrl = `https://admin.fsan.com/wp-admin/admin-ajax.php?action=dno_get_leagues_pool&user_id=${session.user.id}&t=${Date.now()}`;
-      const wpRes = await fetch(wpUrl, { cache: 'no-store' });
-      const wpData = await wpRes.json();
-
-      if (!wpData.success || !wpData.data) {
-        return NextResponse.json({ success: false, message: 'DNO configurations unavailable.' }, { status: 500 });
-      }
-
-      const userJoinedCount = wpData.data.user_joined_count || 0;
-      const allottedEntries = wpData.data.allotted_entries || 1;
-
-      if (userJoinedCount >= allottedEntries) {
-        return NextResponse.json({ success: false, message: 'No available entries remaining. Purchase an additional entry token to continue!' }, { status: 403 });
-      }
-
-      const targetedLeague = wpData.data.leagues.find(l => l.id === leagueId);
-      if (!targetedLeague || !targetedLeague.invite_link) {
-        return NextResponse.json({ success: false, message: 'Targeted draft room invite url link missing or invalid.' }, { status: 404 });
-      }
-
-      // Check real-time Sleeper capacity right before allowing them to claim (Checking /rosters)
-      let currentSleeperCount = targetedLeague.filled_spots;
-      try {
-        const slpRes = await fetch(`https://api.sleeper.app/v1/league/${leagueId}/rosters?t=${Date.now()}`, { cache: 'no-store' });
-        if (slpRes.ok) {
-           const rosters = await slpRes.json();
-           currentSleeperCount = rosters.filter(r => r.owner_id && r.owner_id !== '').length;
-        }
-      } catch (e) {
-         console.warn("Failed pre-join capacity check on Sleeper");
-      }
-
-      if (currentSleeperCount >= targetedLeague.total_spots) {
-        return NextResponse.json({ success: false, message: 'This draft room is full!' }, { status: 400 });
-      }
-
-      const ledgerFormData = new FormData();
-      ledgerFormData.append('action', 'dno_log_user_entry');
-      ledgerFormData.append('user_id', session.user.id);
-      ledgerFormData.append('league_id', leagueId);
-      ledgerFormData.append('secret', 'fsan_super_secret_webhook_key_2026'); 
-
-      try {
-        const ledgerRes = await fetch('https://admin.fsan.com/wp-admin/admin-ajax.php', {
-            method: 'POST',
-            body: ledgerFormData
-        });
-        const ledgerData = await ledgerRes.json();
+      // Reserve/Claim Spot logic
+      if (jsonBody.action === 'claim-spot' || url.searchParams.get('action') === 'claim-spot') {
+        const leagueId = jsonBody.leagueId;
         
-        if (!ledgerData.success) {
-            throw new Error('WP ledger sync rejected');
+        const wpUrl = `https://admin.fsan.com/wp-admin/admin-ajax.php?action=dno_get_leagues_pool&user_id=${session.user.id}&t=${Date.now()}`;
+        const wpRes = await fetch(wpUrl, { cache: 'no-store' });
+        const wpData = await wpRes.json();
+
+        if (!wpData.success || !wpData.data) {
+          return NextResponse.json({ success: false, message: 'DNO configurations unavailable.' }, { status: 500 });
         }
-      } catch (e) {
-        console.error("Failed to deduct ticket in WP:", e);
-        return NextResponse.json({ success: false, message: 'Database sync failed while reserving spot. Roster claim aborted.' }, { status: 500 });
+
+        const userJoinedCount = wpData.data.user_joined_count || 0;
+        const allottedEntries = wpData.data.allotted_entries || 1;
+
+        if (userJoinedCount >= allottedEntries) {
+          return NextResponse.json({ success: false, message: 'No available entries remaining. Purchase an additional entry token to continue!' }, { status: 403 });
+        }
+
+        const targetedLeague = wpData.data.leagues.find(l => l.id === leagueId);
+        if (!targetedLeague || !targetedLeague.invite_link) {
+          return NextResponse.json({ success: false, message: 'Targeted draft room invite link missing or invalid.' }, { status: 404 });
+        }
+
+        let currentSleeperCount = targetedLeague.filled_spots;
+        try {
+          const slpRes = await fetch(`https://api.sleeper.app/v1/league/${leagueId}/rosters?t=${Date.now()}`, { cache: 'no-store' });
+          if (slpRes.ok) {
+             const rosters = await slpRes.json();
+             currentSleeperCount = rosters.filter(r => r.owner_id && r.owner_id !== '').length;
+          }
+        } catch (e) {
+           console.warn("Failed pre-join capacity check on Sleeper");
+        }
+
+        if (currentSleeperCount >= targetedLeague.total_spots) {
+          return NextResponse.json({ success: false, message: 'This draft room is full!' }, { status: 400 });
+        }
+
+        const ledgerFormData = new FormData();
+        ledgerFormData.append('action', 'dno_log_user_entry');
+        ledgerFormData.append('user_id', session.user.id);
+        ledgerFormData.append('league_id', leagueId);
+        ledgerFormData.append('secret', 'fsan_super_secret_webhook_key_2026'); 
+
+        try {
+          const ledgerRes = await fetch('https://admin.fsan.com/wp-admin/admin-ajax.php', {
+              method: 'POST',
+              body: ledgerFormData
+          });
+          const ledgerData = await ledgerRes.json();
+          
+          if (!ledgerData.success) {
+              throw new Error('WP ledger sync rejected');
+          }
+        } catch (e) {
+          console.error("Failed to deduct ticket in WP:", e);
+          return NextResponse.json({ success: false, message: 'Database sync failed while reserving spot. Roster claim aborted.' }, { status: 500 });
+        }
+
+        return NextResponse.json({ success: true, invite_link: targetedLeague.invite_link });
       }
 
-      return NextResponse.json({ success: true, invite_link: targetedLeague.invite_link });
+      // Convert JSON body into URLSearchParams to forward to WordPress admin-ajax.php
+      const params = new URLSearchParams();
+      Object.keys(jsonBody).forEach(key => {
+        params.append(key, jsonBody[key]);
+      });
+      if (!params.has('user_id') && session.user?.id) {
+        params.append('user_id', session.user.id);
+      }
+
+      const wpRes = await fetch('https://admin.fsan.com/wp-admin/admin-ajax.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+      });
+
+      const data = await wpRes.json();
+      return NextResponse.json(data);
     }
 
+    // Handle standard FormData submissions
     const formData = await request.formData();
     const wpUrl = `https://admin.fsan.com/wp-admin/admin-ajax.php`;
 

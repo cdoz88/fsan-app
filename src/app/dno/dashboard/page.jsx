@@ -29,7 +29,6 @@ function DashboardContent() {
   const [syncError, setSyncError] = useState('');
   const [isEditingSync, setIsEditingSync] = useState(false);
 
-  // Dedicated storage key for DNO-only local caching
   const getDnoStorageKey = (userId) => `dno_dedicated_sleeper_${userId}`;
 
   // Set Page Title & Force Favicon Swap
@@ -117,13 +116,16 @@ function DashboardContent() {
     try {
       let dnoSleeperId = null;
 
-      // Fetch DNO user metadata (dno_tickets, dno_sleeper_id) from /api/scl
+      // Fetch DNO user metadata from /api/scl
       try {
         const uRes = await fetch(`/api/scl?action=dno_get_user_data&user_id=${session.user.id}&t=${Date.now()}`);
         if (uRes.ok) {
-          const uData = await uRes.json();
+          const uDataRaw = await uRes.json();
+          // Extract nested data payload if WordPress wraps response in `data`
+          const uData = uDataRaw.data || uDataRaw;
+
           setTicketCount(uData.dno_tickets || 0);
-          dnoSleeperId = uData.dno_sleeper_id || uData.dno_sleeper_user_id || null;
+          dnoSleeperId = uData.dno_sleeper_id || uData.dno_sleeper_user_id || uData.sleeper_id || null;
           
           if (dnoSleeperId) {
             await hydrateSleeperUser(dnoSleeperId);
@@ -209,7 +211,6 @@ function DashboardContent() {
     const sleeperUsernameToSave = userToSync.username || userToSync.sleeper_username;
 
     try {
-      // Save specifically to DNO metadata field on WordPress
       const saveRes = await fetch('/api/scl', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
