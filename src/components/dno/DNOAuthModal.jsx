@@ -185,7 +185,7 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
             <div className="mb-6 p-4 rounded-2xl bg-[#111] border border-slate-500/40 text-left relative overflow-hidden shadow-inner">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-400/30 flex items-center justify-center shrink-0 shadow-md">
-                  <img src="/images/dno/FSAN_Logo.png" alt="FSAN" className="w-6 h-6 object-contain" />
+                  <img src="/images/dno/App Icons.png" alt="FSAN App Icon" className="w-6 h-6 object-contain" />
                 </div>
                 <div>
                   <h4 className="text-xs font-black text-white uppercase tracking-wider mb-1 flex items-center gap-1.5">
@@ -213,37 +213,7 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
             </div>
           )}
 
-          {/* The Silver Gradient FSAN SSO Trigger (On Login & Register) */}
-          {(mode === 'login' || mode === 'register') && (
-            <>
-              <button 
-                type="button"
-                onClick={switchToFSANMode}
-                className="w-full relative group p-[1.5px] rounded-xl bg-gradient-to-r from-slate-400 via-gray-100 to-slate-500 shadow-[0_0_15px_rgba(203,213,225,0.15)] transition-all hover:scale-[1.01] active:scale-[0.99] mb-6"
-              >
-                <div className="bg-[#111] group-hover:bg-[#1a1a1a] transition-colors rounded-[10.5px] px-4 py-3.5 flex items-center justify-center gap-3 w-full h-full text-white font-black uppercase tracking-widest text-xs">
-                  <img 
-                    src="/images/dno/FSAN_Logo.png" 
-                    alt="FSAN Logo" 
-                    className="w-5 h-5 object-contain" 
-                  />
-                  <span>
-                    {mode === 'login' ? 'Log In with FSAN Account' : 'Log In with existing FSAN Account'}
-                  </span>
-                </div>
-              </button>
-
-              <div className="flex items-center gap-4 mb-6">
-                <div className="h-px bg-gray-800 flex-1"></div>
-                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                  {mode === 'login' ? 'Or log in with DNO account' : 'Or create new DNO account'}
-                </span>
-                <div className="h-px bg-gray-800 flex-1"></div>
-              </div>
-            </>
-          )}
-
-          {/* Form */}
+          {/* Form - Primary DNO Login / Register / Reset Form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
             {mode === 'register' && (
               <div className="relative">
@@ -305,15 +275,15 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
               </div>
             )}
 
-            {/* Submit Button */}
+            {/* Primary Submit Button */}
             {mode === 'fsanLogin' ? (
               <button 
                 type="submit"
                 disabled={isLoading}
                 className="w-full mt-2 relative group p-[1.5px] rounded-xl bg-gradient-to-r from-slate-400 via-gray-100 to-slate-500 shadow-[0_0_15px_rgba(203,213,225,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50"
               >
-                <div className="bg-[#111] group-hover:bg-transparent transition-colors rounded-[10.5px] px-4 py-3.5 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">
-                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Log In via FSAN Network'}
+                <div className="bg-[#111] group-hover:bg-slate-200 group-hover:text-black transition-colors rounded-[10.5px] px-4 py-3.5 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">
+                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Log In with FSAN Credentials'}
                 </div>
               </button>
             ) : (
@@ -328,6 +298,36 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
               </button>
             )}
           </form>
+
+          {/* Secondary FSAN Option (Placed UNDERNEATH the primary credentials form) */}
+          {(mode === 'login' || mode === 'register') && (
+            <div className="mt-6 pt-2">
+              <div className="flex items-center gap-4 mb-5">
+                <div className="h-px bg-gray-800 flex-1"></div>
+                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                  {mode === 'login' ? 'Or log in with your FSAN account' : 'Or register with your FSAN account'}
+                </span>
+                <div className="h-px bg-gray-800 flex-1"></div>
+              </div>
+
+              <button 
+                type="button"
+                onClick={switchToFSANMode}
+                className="w-full relative group p-[1.5px] rounded-xl bg-gradient-to-r from-slate-400 via-gray-100 to-slate-500 shadow-[0_0_15px_rgba(203,213,225,0.15)] transition-all hover:scale-[1.01] active:scale-[0.99]"
+              >
+                <div className="bg-[#111] group-hover:bg-slate-200 group-hover:text-black transition-colors rounded-[10.5px] px-4 py-3.5 flex items-center justify-center gap-3 w-full h-full text-white font-black uppercase tracking-widest text-xs">
+                  <img 
+                    src="/images/dno/FSAN_Logo.png" 
+                    alt="FSAN Logo" 
+                    className="w-5 h-5 object-contain" 
+                  />
+                  <span>
+                    {mode === 'login' ? 'Log In with FSAN Account' : 'Register with FSAN Account'}
+                  </span>
+                </div>
+              </button>
+            </div>
+          )}
 
         </div>
 
