@@ -1,71 +1,140 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
-import { X, Mail, Lock, User, ShieldCheck, Loader2 } from 'lucide-react';
+import { X, Mail, Lock, User, ShieldCheck, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function DNOAuthModal({ initialMode = 'login', onClose }) {
-  const [mode, setMode] = useState(initialMode); // 'login' or 'register'
+  const [mode, setMode] = useState(initialMode); // 'login', 'register', or 'forgotPassword'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  
   const [error, setError] = useState('');
+  const [resetMessage, setResetMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Lock scrolling when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = 'unset'; };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setResetMessage('');
     setIsLoading(true);
 
     if (mode === 'login') {
       // Standard NextAuth credentials login
       const res = await signIn('credentials', {
         redirect: false,
-        username: email, // Passes the email/username to your existing backend
+        username: email, // WP accepts email in the username field
         password: password,
       });
 
       if (res?.error) {
-        setError(res.error);
+        setError('Invalid email or password. Please try again.');
         setIsLoading(false);
       } else {
         // Success! Send them straight to the Locker Room
         window.location.href = '/dno/dashboard';
       }
-    } else {
-      // Registration flow
-      // NOTE: This assumes you have a standard registration endpoint. Adjust if your route differs!
+    } else if (mode === 'register') {
+      // WordPress GraphQL Registration
+      const query = `
+        mutation RegisterUser($username: String!, $email: String!, $password: String!) {
+          registerUser(
+            input: {username: $username, email: $email, password: $password}
+          ) {
+            user {
+              databaseId
+              username
+            }
+          }
+        }
+      `;
+
       try {
-        const res = await fetch('/api/auth/register', { 
+        const res = await fetch('https://admin.fsan.com/graphql', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, email, password }),
+          body: JSON.stringify({
+            query,
+            variables: { username, email, password }
+          })
         });
-        const data = await res.json();
-        
-        if (res.ok && data.success) {
-          // Automatically log them in after a successful registration
-          await signIn('credentials', {
-            redirect: false,
-            username: email,
-            password: password,
-          });
-          window.location.href = '/dno/dashboard';
-        } else {
-          setError(data.message || 'Registration failed. Username or email may already be in use.');
+
+        const json = await res.json();
+
+        if (json.errors) {
+          setError(json.errors[0].message);
           setIsLoading(false);
+          return;
+        }
+
+        if (json?.data?.registerUser?.user?.databaseId) {
+          // Automatically log them in after a successful registration
+          const loginRes = await signIn('credentials', {
+            redirect: false,
+            username,
+            password,
+          });
+
+          if (loginRes?.error) {
+            setError('Account created, but automatic login failed. Please log in.');
+            setIsLoading(false);
+          } else {
+            window.location.href = '/dno/dashboard';
+          }
         }
       } catch (err) {
-        setError('Something went wrong checking the server. Please try again.');
+        setError('An unexpected error occurred. Please try again.');
+        setIsLoading(false);
+      }
+    } else if (mode === 'forgotPassword') {
+      // WordPress GraphQL Password Reset
+      const query = `
+        mutation SendPasswordResetEmail($username: String!) {
+          sendPasswordResetEmail(input: { username: $username }) {
+            user {
+              databaseId
+            }
+          }
+        }
+      `;
+
+      try {
+        const res = await fetch('https://admin.fsan.com/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query,
+            variables: { username: email } // WP accepts email in the username field
+          })
+        });
+
+        const json = await res.json();
+
+        if (json.errors) {
+          setError(json.errors[0].message);
+        } else {
+          setResetMessage('If an account exists, a password reset link has been sent to your email.');
+          setEmail(''); 
+        }
+      } catch (err) {
+        setError('An unexpected error occurred. Please try again.');
+      } finally {
         setIsLoading(false);
       }
     }
   };
 
   const handleFSANLogin = () => {
-    // If they click "Log in with FSAN" while on the register tab, 
-    // simply swap them back to the login view and focus the input.
     setMode('login');
-    document.getElementById('email-input')?.focus();
+    setError('');
+    setResetMessage('');
+    setTimeout(() => document.getElementById('email-input')?.focus(), 100);
   };
 
   return (
@@ -82,20 +151,26 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
 
         <div className="p-8 pt-10 text-center">
           <h3 className="text-3xl font-black text-white uppercase tracking-tight italic mb-2">
-            {mode === 'login' ? 'Welcome Back' : 'Claim Your Spot'}
+            {mode === 'login' ? 'Welcome Back' : mode === 'forgotPassword' ? 'Reset Password' : 'Claim Your Spot'}
           </h3>
           <p className="text-gray-400 text-sm leading-relaxed mb-6">
-            {mode === 'login' ? 'Log in to access your Draft Night Out dashboard.' : 'Create your account to secure your draft ticket.'}
+            {mode === 'login' ? 'Log in to access your Draft Night Out dashboard.' : mode === 'forgotPassword' ? 'Enter your email to receive a secure reset link.' : 'Create your account to secure your draft ticket.'}
           </p>
 
-          {/* Error Message Display */}
+          {/* Error & Success Messages */}
           {error && (
-            <div className="mb-6 p-3 bg-red-500/10 border border-red-500/50 rounded-xl text-red-500 text-xs font-bold uppercase tracking-widest animate-in fade-in">
-              {error}
+            <div className="mb-6 p-3 bg-red-500/10 border border-red-500/50 rounded-xl text-red-500 text-xs font-bold flex items-center justify-center gap-2 animate-in fade-in">
+              <AlertCircle size={16} /> <span className="text-left">{error}</span>
             </div>
           )}
 
-          {/* The FSAN SSO Prompt (Only shows on Registration view to redirect existing users) */}
+          {resetMessage && (
+            <div className="mb-6 p-3 bg-green-500/10 border border-green-500/50 rounded-xl text-green-400 text-xs font-bold flex items-center justify-center gap-2 animate-in fade-in">
+              <CheckCircle2 size={16} /> <span className="text-left">{resetMessage}</span>
+            </div>
+          )}
+
+          {/* The FSAN SSO Prompt */}
           {mode === 'register' && (
             <>
               <button 
@@ -140,7 +215,7 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
               <input 
                 id="email-input"
                 type="text" 
-                placeholder={mode === 'login' ? 'Email or Username' : 'Email Address'} 
+                placeholder={mode === 'login' ? 'Email or Username' : 'Account Email Address'} 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-[#111] border border-gray-800 text-white text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-[#1b75bb] transition-colors"
@@ -148,19 +223,34 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
               />
             </div>
 
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Lock size={16} className="text-gray-500" />
+            {mode !== 'forgotPassword' && (
+              <div className="relative flex flex-col gap-2">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Lock size={16} className="text-gray-500" />
+                  </div>
+                  <input 
+                    type="password" 
+                    placeholder="Password" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-[#111] border border-gray-800 text-white text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-[#1b75bb] transition-colors"
+                    required 
+                  />
+                </div>
+                {mode === 'login' && (
+                  <div className="flex justify-end mt-1">
+                    <button 
+                      type="button" 
+                      onClick={() => { setMode('forgotPassword'); setError(''); setResetMessage(''); }} 
+                      className="text-[10px] text-gray-500 hover:text-gray-300 font-bold uppercase tracking-widest transition-colors"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                )}
               </div>
-              <input 
-                type="password" 
-                placeholder="Password" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#111] border border-gray-800 text-white text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-[#1b75bb] transition-colors"
-                required 
-              />
-            </div>
+            )}
 
             <button 
               type="submit" 
@@ -168,7 +258,7 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
               className="w-full mt-2 relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-[0_0_15px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
             >
               <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full h-full text-white font-black uppercase tracking-widest text-xs">
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (mode === 'login' ? 'Log In' : 'Register & Draft')}
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : mode === 'login' ? 'Log In' : mode === 'forgotPassword' ? 'Send Reset Link' : 'Register & Draft'}
               </div>
             </button>
           </form>
@@ -183,7 +273,8 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
               type="button"
               onClick={() => {
                 setMode(mode === 'login' ? 'register' : 'login');
-                setError(''); // Clear errors when switching tabs
+                setError('');
+                setResetMessage('');
               }}
               className="text-[#1b75bb] font-bold hover:underline"
             >
