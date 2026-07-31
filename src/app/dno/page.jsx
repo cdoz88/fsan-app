@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { MonitorSmartphone, Trophy, BookOpen, Handshake, ListOrdered, HeartHandshake, Loader2 } from 'lucide-react';
 
-// Importing from the newly relocated DNO components folder
+// Importing from the DNO components folder
 import DNOHeader from '../../components/dno/DNOHeader';
 import DNOAuthModal from '../../components/dno/DNOAuthModal';
 import DraftsTab from '../../components/dno/tabs/DraftsTab';
@@ -41,7 +41,7 @@ export default function DNOPublicPage() {
     }
   }, [session]);
 
-  // Fetch the live pool data so the DraftsTab shows accurate, real-time FOMO numbers
+  // Fetch the live pool data
   const loadDnoPool = useCallback(async () => {
     try {
       const res = await fetch(`/api/scl?type=dno_pool&t=${Date.now()}`, { cache: 'no-store' });
@@ -104,7 +104,6 @@ export default function DNOPublicPage() {
           type: 'dno_ticket',
           userId: session.user.id,
           email: session.user.email,
-          // Sends user to the private Locker Room upon successful payment
           returnUrl: `${window.location.origin}/dno/dashboard`
         })
       });
@@ -138,7 +137,6 @@ export default function DNOPublicPage() {
       });
       const data = await res.json();
       if (data.success) {
-        // Instantly send them to their dashboard locker room so they can see their new league
         window.location.href = '/dno/dashboard';
       } else {
         alert(data.message || "Failed to join the league.");
@@ -152,9 +150,9 @@ export default function DNOPublicPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#09090b] flex flex-col font-sans selection:bg-[#1b75bb] selection:text-white">
+    <div className="min-h-screen bg-[#09090b] flex flex-col font-sans selection:bg-[#1b75bb] selection:text-white relative">
       
-      {/* Standalone DNO Header */}
+      {/* Floating DNO Header */}
       <DNOHeader onOpenAuthModal={setShowAuthModal} />
 
       {/* Auth Modal Injection */}
@@ -214,23 +212,24 @@ export default function DNOPublicPage() {
         </div>
       )}
 
-      <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10 pt-6 pb-24">
+      <main className="flex-1 w-full pb-24">
         
-        {/* Hero Section */}
-        <div className="relative w-full h-[260px] md:h-[350px] flex items-end overflow-hidden rounded-3xl mb-10 shadow-2xl bg-[#0a0a0a]">
+        {/* Full Bleed Hero Section */}
+        <div className="relative w-full h-[320px] md:h-[450px] flex items-end overflow-hidden mb-10 shadow-2xl bg-[#0a0a0a]">
           <div className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-60" style={{ backgroundImage: `url('https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Background.webp')` }} />
-          <img src="https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp" alt="Draft Night Out Logo" className="absolute -right-10 md:right-4 top-1/2 -translate-y-1/2 w-[280px] md:w-[450px] h-auto object-contain opacity-20 md:opacity-40 z-0 pointer-events-none mix-blend-plus-lighter drop-shadow-2xl" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/70 to-transparent z-0" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#09090b]/90 via-[#09090b]/50 to-transparent z-0 md:w-2/3" />
+          <img src="https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp" alt="Draft Night Out Logo" className="absolute -right-10 md:right-10 top-1/2 -translate-y-1/2 w-[280px] md:w-[550px] h-auto object-contain opacity-20 md:opacity-40 z-0 pointer-events-none mix-blend-plus-lighter drop-shadow-2xl" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/40 to-transparent z-0" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#09090b]/90 via-[#09090b]/60 to-transparent z-0 md:w-2/3" />
           
-          <div className="relative z-10 w-full flex flex-col items-start justify-end h-full px-6 md:px-10 pb-10">
+          <div className="relative z-10 w-full max-w-[1600px] mx-auto flex flex-col items-start justify-end h-full px-6 md:px-8 lg:px-10 pb-10 pt-24">
             <span className="inline-block py-1.5 px-4 rounded-full bg-[#1b75bb]/20 border border-[#1b75bb]/30 text-[#f5a623] font-bold text-[10px] uppercase tracking-widest mb-4 backdrop-blur-sm">The Biggest Fantasy Hang of the Year</span>
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-3">Draft Night Out</h1>
             <p className="text-gray-300 font-medium md:text-lg leading-relaxed drop-shadow-md max-w-2xl">Secure your seat at one of our live Draft Night Out events, or build your championship roster from home in our exclusive online divisions. Dominate your league to win incredible prizes!</p>
           </div>
         </div>
 
-        <div className="max-w-5xl mx-auto">
+        {/* Dynamic Content Container */}
+        <div className="w-full max-w-[1600px] mx-auto px-4 md:px-8 lg:px-10">
           
           {/* Tab Navigation */}
           <div className="flex items-center justify-start lg:justify-center gap-2 md:gap-4 py-2 px-2 md:px-4 mb-10 bg-[#151515] rounded-2xl border border-gray-800/50 w-full lg:w-fit mx-auto shadow-inner overflow-x-auto scrollbar-hide">
@@ -253,36 +252,38 @@ export default function DNOPublicPage() {
             })}
           </div>
 
-          {/* Dynamic Content Switching */}
-          {activeTab === 'drafts' && (
-            <DraftsTab 
-              draftView={draftView} 
-              setDraftView={setDraftView} 
-              isProPlus={status === 'authenticated'} 
-              ticketsAvailable={ticketsAvailable} 
-              handlePurchaseExtraEntry={handlePurchaseExtraEntry} 
-              loadingLeagues={loadingLeagues} 
-              leagues={leagues} 
-              sortedLeagues={sortedLeagues} 
-              recentlyJoinedLeagues={[]} 
-              setConfirmingLeague={(league) => {
-                if (status !== 'authenticated') {
-                  setShowAuthModal('register');
-                } else {
-                  setConfirmingLeague(league);
-                }
-              }} 
-            />
-          )}
-          {activeTab === 'leaderboard' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <NapkinLeaderboard initialLeaderboard={liveLeaderboard} overrideSeasonLabel={liveSeasonLabel} />
-            </div>
-          )}
-          {activeTab === 'charity' && <CharityTab />}
-          {activeTab === 'prizes' && <PrizesTab />}
-          {activeTab === 'rules' && <RulesTab />}
-          {activeTab === 'sponsors' && <SponsorsTab />}
+          <div className="max-w-5xl mx-auto">
+            {/* Dynamic Content Switching */}
+            {activeTab === 'drafts' && (
+              <DraftsTab 
+                draftView={draftView} 
+                setDraftView={setDraftView} 
+                isProPlus={status === 'authenticated'} 
+                ticketsAvailable={ticketsAvailable} 
+                handlePurchaseExtraEntry={handlePurchaseExtraEntry} 
+                loadingLeagues={loadingLeagues} 
+                leagues={leagues} 
+                sortedLeagues={sortedLeagues} 
+                recentlyJoinedLeagues={[]} 
+                setConfirmingLeague={(league) => {
+                  if (status !== 'authenticated') {
+                    setShowAuthModal('register');
+                  } else {
+                    setConfirmingLeague(league);
+                  }
+                }} 
+              />
+            )}
+            {activeTab === 'leaderboard' && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <NapkinLeaderboard initialLeaderboard={liveLeaderboard} overrideSeasonLabel={liveSeasonLabel} />
+              </div>
+            )}
+            {activeTab === 'charity' && <CharityTab />}
+            {activeTab === 'prizes' && <PrizesTab />}
+            {activeTab === 'rules' && <RulesTab />}
+            {activeTab === 'sponsors' && <SponsorsTab />}
+          </div>
           
         </div>
       </main>

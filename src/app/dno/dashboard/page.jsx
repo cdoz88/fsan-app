@@ -20,19 +20,15 @@ export default function DNODashboard() {
     
     setIsLoading(true);
     try {
-      // 1. Fetch user data (which includes their dno_tickets balance)
       const uRes = await fetch(`/api/user?id=${session.user.id}`);
       const uData = await uRes.json();
       
-      // Update the ticket count from the database
       setTicketCount(uData.dno_tickets || 0);
 
-      // 2. Fetch the DNO Pool to find which leagues this user is in
       const pRes = await fetch(`/api/scl?type=dno_pool`);
       if (pRes.ok) {
         const pData = await pRes.json();
         
-        // Filter the leagues to only show the ones where the user's sleeper_id is in the members array
         const myJoinedLeagues = (pData.leagues || []).filter(league => {
            if (!uData.sleeper_id) return false;
            return league.members?.some(m => m.user_id === uData.sleeper_id);
@@ -51,7 +47,6 @@ export default function DNODashboard() {
     if (status === 'authenticated') {
       loadAccountData();
     } else if (status === 'unauthenticated') {
-      // If they somehow land here without being logged in, redirect home
       window.location.href = '/dno'; 
     }
   }, [status, loadAccountData]);
@@ -65,12 +60,13 @@ export default function DNODashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#09090b] flex flex-col font-sans selection:bg-[#1b75bb] selection:text-white">
+    <div className="min-h-screen bg-[#09090b] flex flex-col font-sans selection:bg-[#1b75bb] selection:text-white relative">
       
-      {/* Standalone DNO Header */}
+      {/* Floating DNO Header */}
       <DNOHeader onOpenAuthModal={() => {}} />
 
-      <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-8 pb-24">
+      {/* Added pt-28 to push content below the absolute header */}
+      <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-28 pb-24 z-10 relative">
         
         {/* Welcome & Account Snapshot */}
         <div className="mb-10">
