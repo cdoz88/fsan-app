@@ -20,14 +20,16 @@ function DashboardContent() {
   const [myLeagues, setMyLeagues] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Universal Sleeper Sync State
+  // Sleeper Sync State
   const [sleeperInput, setSleeperInput] = useState('');
-  const [livePreviewUser, setLivePreviewUser] = useState(null); // Found user on Sleeper API
-  const [syncedSleeperUser, setSyncedSleeperUser] = useState(null); // Saved user object
+  const [livePreviewUser, setLivePreviewUser] = useState(null); 
+  const [syncedSleeperUser, setSyncedSleeperUser] = useState(null); 
   const [isSearching, setIsSearching] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [syncError, setSyncError] = useState('');
   const [isEditingSync, setIsEditingSync] = useState(false);
+
+  const getStorageKey = (userId) => `dno_sleeper_${userId}`;
 
   // Set Page Title & Force Favicon Swap
   useEffect(() => {
@@ -47,6 +49,24 @@ function DashboardContent() {
       document.head.appendChild(link);
     }
   }, []);
+
+  // Instant restoration from localStorage on mount/refresh
+  useEffect(() => {
+    if (session?.user?.id) {
+      const cached = localStorage.getItem(getStorageKey(session.user.id));
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed && (parsed.sleeper_id || parsed.sleeper_username)) {
+            setSyncedSleeperUser(parsed);
+            setSleeperInput(parsed.sleeper_username || parsed.displayName || '');
+          }
+        } catch (e) {
+          console.warn("Failed reading cached Sleeper user:", e);
+        }
+      }
+    }
+  }, [session]);
 
   // Sync tab state if URL parameter changes
   useEffect(() => {
@@ -74,10 +94,11 @@ function DashboardContent() {
       
       setTicketCount(uData.dno_tickets || 0);
 
-      if (uData.sleeper_id) {
-        // Fetch full Sleeper details for the avatar & display name
+      const activeSleeperId = uData.sleeper_id;
+
+      if (activeSleeperId) {
         try {
-          const slpRes = await fetch(`https://api.sleeper.app/v1/user/${uData.sleeper_id}`);
+          const slpRes = await fetch(`https://api.sleeper.app/v1/user/${activeSleeperId}`);
           if (slpRes.ok) {
             const slpData = await slpRes.json();
             const userObj = {
@@ -88,12 +109,15 @@ function DashboardContent() {
             };
             setSyncedSleeperUser(userObj);
             setSleeperInput(userObj.sleeper_username);
+            localStorage.setItem(getStorageKey(session.user.id), JSON.stringify(userObj));
           }
         } catch (e) {
-          setSyncedSleeperUser({
-            sleeper_id: uData.sleeper_id,
-            sleeper_username: uData.sleeper_username || uData.sleeper_id
-          });
+          const fallbackObj = {
+            sleeper_id: activeSleeperId,
+            sleeper_username: uData.sleeper_username || activeSleeperId
+          };
+          setSyncedSleeperUser(fallbackObj);
+          localStorage.setItem(getStorageKey(session.user.id), JSON.stringify(fallbackObj));
         }
       }
 
@@ -103,8 +127,8 @@ function DashboardContent() {
         const pData = await pRes.json();
         
         const myJoinedLeagues = (pData.leagues || []).filter(league => {
-           if (!uData.sleeper_id) return false;
-           return league.members?.some(m => m.user_id === uData.sleeper_id);
+           if (!activeSleeperId) return false;
+           return league.members?.some(m => m.user_id === activeSleeperId);
         });
         
         setMyLeagues(myJoinedLeagues);
@@ -160,7 +184,7 @@ function DashboardContent() {
     return () => clearTimeout(delayDebounceFn);
   }, [sleeperInput, syncedSleeperUser, isEditingSync]);
 
-  // Save the verified Sleeper connection to the backend
+  // Save the verified Sleeper connection to the backend and localStorage
   const handleConfirmSync = async (userToSync) => {
     if (!userToSync || !session?.user?.id) return;
     setIsSaving(true);
@@ -188,6 +212,7 @@ function DashboardContent() {
       };
 
       setSyncedSleeperUser(finalUser);
+      localStorage.setItem(getStorageKey(session.user.id), JSON.stringify(finalUser));
       setLivePreviewUser(null);
       setIsEditingSync(false);
 
@@ -234,11 +259,11 @@ function DashboardContent() {
             </div>
           </div>
 
-          {/* Universal Sleeper Sync Card */}
+          {/* Connect Sleeper Account Card */}
           <div className="bg-[#151515] border border-gray-800 rounded-3xl p-6 md:p-8 flex flex-col justify-between shadow-lg relative overflow-hidden min-h-[160px]">
             <div className="flex items-center justify-between mb-2">
               <p className="text-[#1b75bb] font-bold uppercase tracking-widest text-xs flex items-center gap-2">
-                <Link2 size={14} /> Universal Sleeper Sync
+                <Link2 size={14} /> Connect Sleeper Account
               </p>
               {syncedSleeperUser && !isEditingSync && (
                 <button 
@@ -372,7 +397,7 @@ function DashboardContent() {
             {!syncedSleeperUser ? (
               <div className="text-center py-20">
                 <Link2 className="w-16 h-16 text-gray-800 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">Sync Your Sleeper Account</h3>
+                <h3 className="text-xl font-bold text-white mb-2">Connect Sleeper Account</h3>
                 <p className="text-gray-400 max-w-md mx-auto mb-6">Enter your Sleeper username in the card above to automatically pull and display your Draft Night Out leagues here!</p>
               </div>
             ) : myLeagues.length === 0 ? (

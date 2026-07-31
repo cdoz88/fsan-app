@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas-pro';
-import { Loader2, Download, AlertCircle, Share2, Copy, Check, Link2, Trophy } from 'lucide-react';
+import { Loader2, Download, AlertCircle, Share2, Copy, Check, Link2 } from 'lucide-react';
 
 export default function GraphicTab({ syncedSleeperUser }) {
   const [loading, setLoading] = useState(false);
@@ -26,9 +26,9 @@ export default function GraphicTab({ syncedSleeperUser }) {
   const wrapperRef = useRef(null);
   const [scale, setScale] = useState(1);
 
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-  const dnoBgUrl = `${baseUrl}/images/DNO-Background.webp`;
-  const dnoLogoUrl = `${baseUrl}/images/DNO-Logo_Logo.webp`;
+  // Updated Direct Image Assets
+  const dnoBgUrl = "https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Background.webp";
+  const dnoLogoUrl = "https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp";
 
   useEffect(() => {
     const updateScale = () => {
@@ -540,9 +540,9 @@ export default function GraphicTab({ syncedSleeperUser }) {
       {!syncedSleeperUser ? (
         <div className="bg-[#111] border border-gray-800 rounded-2xl p-12 text-center my-6">
           <Link2 className="w-12 h-12 text-gray-700 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-white mb-2">Sync Your Sleeper Account</h3>
+          <h3 className="text-lg font-bold text-white mb-2">Connect Sleeper Account</h3>
           <p className="text-gray-400 text-sm max-w-md mx-auto">
-            Use the <strong>Universal Sleeper Sync</strong> card at the top of your Locker Room to connect your account. Once synced, your DNO divisions will appear here automatically!
+            Use the <strong>Connect Sleeper Account</strong> card at the top of your Locker Room to link your account. Once connected, your DNO divisions will appear here automatically!
           </p>
         </div>
       ) : (
