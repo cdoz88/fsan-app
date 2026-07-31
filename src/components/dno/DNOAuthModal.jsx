@@ -1,10 +1,10 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
-import { X, Mail, Lock, User, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, Mail, Lock, User, Loader2, AlertCircle, CheckCircle2, ArrowLeft, ShieldCheck } from 'lucide-react';
 
 export default function DNOAuthModal({ initialMode = 'login', onClose }) {
-  const [mode, setMode] = useState(initialMode); // 'login', 'register', or 'forgotPassword'
+  const [mode, setMode] = useState(initialMode); // 'login', 'register', 'forgotPassword', or 'fsanLogin'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
@@ -25,8 +25,8 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
     setResetMessage('');
     setIsLoading(true);
 
-    if (mode === 'login') {
-      // Standard NextAuth credentials login
+    if (mode === 'login' || mode === 'fsanLogin') {
+      // Standard NextAuth credentials login (Works for both DNO and FSAN accounts)
       const res = await signIn('credentials', {
         redirect: false,
         username: email, // WP accepts email in the username field
@@ -34,7 +34,7 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
       });
 
       if (res?.error) {
-        setError('Invalid email or password. Please try again.');
+        setError(mode === 'fsanLogin' ? 'Invalid FSAN email or password. Please try again.' : 'Invalid email or password. Please try again.');
         setIsLoading(false);
       } else {
         // Success! Send them straight to the Dashboard
@@ -130,11 +130,20 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
     }
   };
 
-  const handleFSANLogin = () => {
+  const switchToFSANMode = () => {
+    setMode('fsanLogin');
+    setError('');
+    setResetMessage('');
+    setEmail('');
+    setPassword('');
+  };
+
+  const switchToDNOMode = () => {
     setMode('login');
     setError('');
     setResetMessage('');
-    setTimeout(() => document.getElementById('email-input')?.focus(), 100);
+    setEmail('');
+    setPassword('');
   };
 
   return (
@@ -150,12 +159,46 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
         </button>
 
         <div className="p-8 pt-10 text-center">
+          
+          {/* Header Title & Subtitle */}
           <h3 className="text-3xl font-black text-white uppercase tracking-tight italic mb-2">
-            {mode === 'login' ? 'Welcome Back' : mode === 'forgotPassword' ? 'Reset Password' : 'Claim Your Spot'}
+            {mode === 'fsanLogin' 
+              ? 'FSAN Network Login' 
+              : mode === 'login' 
+              ? 'Welcome Back' 
+              : mode === 'forgotPassword' 
+              ? 'Reset Password' 
+              : 'Claim Your Spot'}
           </h3>
           <p className="text-gray-400 text-sm leading-relaxed mb-6">
-            {mode === 'login' ? 'Log in to access your Draft Night Out dashboard.' : mode === 'forgotPassword' ? 'Enter your email to receive a secure reset link.' : 'Create your account to secure your draft ticket.'}
+            {mode === 'fsanLogin'
+              ? 'Enter your Fantasy Sports Advantage Network credentials to log in.'
+              : mode === 'login' 
+              ? 'Log in to access your Draft Night Out dashboard.' 
+              : mode === 'forgotPassword' 
+              ? 'Enter your email to receive a secure reset link.' 
+              : 'Create your account to secure your draft ticket.'}
           </p>
+
+          {/* FSAN SSO EXPLANATION BANNER (Only in FSAN Mode) */}
+          {mode === 'fsanLogin' && (
+            <div className="mb-6 p-4 rounded-2xl bg-[#111] border border-slate-500/40 text-left relative overflow-hidden shadow-inner">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-400/30 flex items-center justify-center shrink-0 shadow-md">
+                  <img src="/images/dno/FSAN_Logo.png" alt="FSAN" className="w-6 h-6 object-contain" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-white uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                    <ShieldCheck size={14} className="text-slate-300" />
+                    Central FSAN Account
+                  </h4>
+                  <p className="text-[11px] text-gray-400 leading-relaxed">
+                    Log in with your primary FSAN credentials. Your subscription perks and DNO tickets will be automatically linked.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Error & Success Messages */}
           {error && (
@@ -170,12 +213,12 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
             </div>
           )}
 
-          {/* The Silver Gradient FSAN SSO Option (Available on Login & Register) */}
+          {/* The Silver Gradient FSAN SSO Trigger (On Login & Register) */}
           {(mode === 'login' || mode === 'register') && (
             <>
               <button 
                 type="button"
-                onClick={handleFSANLogin}
+                onClick={switchToFSANMode}
                 className="w-full relative group p-[1.5px] rounded-xl bg-gradient-to-r from-slate-400 via-gray-100 to-slate-500 shadow-[0_0_15px_rgba(203,213,225,0.15)] transition-all hover:scale-[1.01] active:scale-[0.99] mb-6"
               >
                 <div className="bg-[#111] group-hover:bg-[#1a1a1a] transition-colors rounded-[10.5px] px-4 py-3.5 flex items-center justify-center gap-3 w-full h-full text-white font-black uppercase tracking-widest text-xs">
@@ -193,7 +236,7 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
               <div className="flex items-center gap-4 mb-6">
                 <div className="h-px bg-gray-800 flex-1"></div>
                 <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                  {mode === 'login' ? 'Or log in below' : 'Or create new account'}
+                  {mode === 'login' ? 'Or log in with DNO account' : 'Or create new DNO account'}
                 </span>
                 <div className="h-px bg-gray-800 flex-1"></div>
               </div>
@@ -225,7 +268,7 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
               <input 
                 id="email-input"
                 type="text" 
-                placeholder={mode === 'login' ? 'Email or Username' : 'Account Email Address'} 
+                placeholder={mode === 'fsanLogin' ? 'FSAN Email or Username' : mode === 'login' ? 'Email or Username' : 'Account Email Address'} 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-[#111] border border-gray-800 text-white text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-[#1b75bb] transition-colors"
@@ -241,14 +284,14 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
                   </div>
                   <input 
                     type="password" 
-                    placeholder="Password" 
+                    placeholder={mode === 'fsanLogin' ? 'FSAN Password' : 'Password'} 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full bg-[#111] border border-gray-800 text-white text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-[#1b75bb] transition-colors"
                     required 
                   />
                 </div>
-                {mode === 'login' && (
+                {(mode === 'login' || mode === 'fsanLogin') && (
                   <div className="flex justify-end mt-1">
                     <button 
                       type="button" 
@@ -262,35 +305,59 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
               </div>
             )}
 
-            <button 
-              type="submit" 
-              disabled={isLoading}
-              className="w-full mt-2 relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-[0_0_15px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
-            >
-              <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full h-full text-white font-black uppercase tracking-widest text-xs">
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : mode === 'login' ? 'Log In' : mode === 'forgotPassword' ? 'Send Reset Link' : 'Register & Draft'}
-              </div>
-            </button>
+            {/* Submit Button */}
+            {mode === 'fsanLogin' ? (
+              <button 
+                type="submit"
+                disabled={isLoading}
+                className="w-full mt-2 relative group p-[1.5px] rounded-xl bg-gradient-to-r from-slate-400 via-gray-100 to-slate-500 shadow-[0_0_15px_rgba(203,213,225,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+              >
+                <div className="bg-[#111] group-hover:bg-transparent transition-colors rounded-[10.5px] px-4 py-3.5 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">
+                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Log In via FSAN Network'}
+                </div>
+              </button>
+            ) : (
+              <button 
+                type="submit" 
+                disabled={isLoading}
+                className="w-full mt-2 relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-[0_0_15px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+              >
+                <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full h-full text-white font-black uppercase tracking-widest text-xs">
+                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : mode === 'login' ? 'Log In' : mode === 'forgotPassword' ? 'Send Reset Link' : 'Register & Draft'}
+                </div>
+              </button>
+            )}
           </form>
 
         </div>
 
         {/* Toggle Mode Footer */}
         <div className="bg-[#111] border-t border-gray-800 p-6 text-center">
-          <p className="text-xs text-gray-400 font-medium">
-            {mode === 'login' ? "Don't have a spot yet? " : "Already have an account? "}
+          {mode === 'fsanLogin' ? (
             <button 
               type="button"
-              onClick={() => {
-                setMode(mode === 'login' ? 'register' : 'login');
-                setError('');
-                setResetMessage('');
-              }}
-              className="text-[#1b75bb] font-bold hover:underline"
+              onClick={switchToDNOMode}
+              className="text-xs font-bold text-gray-400 hover:text-white uppercase tracking-wider flex items-center justify-center gap-2 mx-auto transition-colors"
             >
-              {mode === 'login' ? 'Register Here' : 'Log In Here'}
+              <ArrowLeft size={14} className="text-[#1b75bb]" />
+              <span>Use Draft Night Out Login Instead</span>
             </button>
-          </p>
+          ) : (
+            <p className="text-xs text-gray-400 font-medium">
+              {mode === 'login' ? "Don't have a spot yet? " : "Already have an account? "}
+              <button 
+                type="button"
+                onClick={() => {
+                  setMode(mode === 'login' ? 'register' : 'login');
+                  setError('');
+                  setResetMessage('');
+                }}
+                className="text-[#1b75bb] font-bold hover:underline ml-1"
+              >
+                {mode === 'login' ? 'Register Here' : 'Log In Here'}
+              </button>
+            </p>
+          )}
         </div>
 
       </div>
