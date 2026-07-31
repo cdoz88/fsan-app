@@ -34,17 +34,23 @@ function PublicPageContent() {
   const [confirmingLeague, setConfirmingLeague] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Set Page Title & Favicon dynamically for DNO Public Page
+  // Set Page Title & Force Favicon Swap with Cache-Busting
   useEffect(() => {
     document.title = "Draft Night Out | The Ultimate Fantasy Football Event";
     
-    let link = document.querySelector("link[rel*='icon']");
-    if (!link) {
-      link = document.createElement('link');
-      link.rel = 'shortcut icon';
-      document.getElementsByTagName('head')[0].appendChild(link);
+    const dnoFaviconUrl = "https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp?v=dno2026";
+    const existingIcons = document.querySelectorAll("link[rel*='icon']");
+    
+    if (existingIcons.length > 0) {
+      existingIcons.forEach(icon => {
+        icon.href = dnoFaviconUrl;
+      });
+    } else {
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.href = dnoFaviconUrl;
+      document.head.appendChild(link);
     }
-    link.href = "https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp";
   }, []);
 
   // Sync tab state if URL parameter changes
