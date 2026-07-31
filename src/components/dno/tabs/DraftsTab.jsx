@@ -1,6 +1,7 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { MonitorSmartphone, MapPin, SlidersHorizontal, Ticket, Lock, Loader2, Coins, ExternalLink, Calendar, Clock, ChevronDown, AlertCircle, Hourglass, Eye } from 'lucide-react';
 
 const CustomDropdown = ({ value, options, onChange, minWidth = "sm:w-40" }) => {
@@ -40,19 +41,74 @@ const CustomDropdown = ({ value, options, onChange, minWidth = "sm:w-40" }) => {
 export default function DraftsTab({
   draftView, setDraftView, isProPlus, ticketsAvailable, handlePurchaseExtraEntry, errorMessage, loadingLeagues, leagues, sortedLeagues, recentlyJoinedLeagues, setConfirmingLeague, setShowRaffleModal
 }) {
+  const { data: session } = useSession();
   const [statusFilter, setStatusFilter] = useState('all');
   const [styleFilter, setStyleFilter] = useState('all');
   const [myLeaguesOnly, setMyLeaguesOnly] = useState(false);
+  const [mySleeperLeagueIds, setMySleeperLeagueIds] = useState(new Set());
+
+  // 🚀 Fetch connected Sleeper user's leagues automatically on load
+  useEffect(() => {
+    const fetchUserSleeperLeagues = async () => {
+      let sleeperIdentifier = null;
+
+      // Check DNO local cache first
+      if (session?.user?.id) {
+        const cached = localStorage.getItem(`dno_dedicated_sleeper_${session.user.id}`);
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            sleeperIdentifier = parsed.sleeper_id || parsed.sleeper_username;
+          } catch (e) { console.warn(e); }
+        }
+      }
+
+      // Fallback to general FSAN sleeper ID
+      if (!sleeperIdentifier && session?.user?.sleeperId) {
+        sleeperIdentifier = session.user.sleeperId;
+      }
+
+      if (!sleeperIdentifier) return;
+
+      try {
+        // Resolve Sleeper User ID if username was passed
+        let userId = sleeperIdentifier;
+        if (isNaN(userId)) {
+          const uRes = await fetch(`https://api.sleeper.app/v1/user/${sleeperIdentifier}`);
+          if (uRes.ok) {
+            const uData = await uRes.json();
+            userId = uData.user_id;
+          }
+        }
+
+        if (!userId) return;
+
+        // Fetch 2026 leagues for this user
+        const res = await fetch(`https://api.sleeper.app/v1/user/${userId}/leagues/nfl/2026`);
+        if (res.ok) {
+          const userLeagues = await res.json();
+          const leagueIdSet = new Set(userLeagues.map(l => String(l.league_id)));
+          setMySleeperLeagueIds(leagueIdSet);
+        }
+      } catch (err) {
+        console.warn("Could not fetch user's Sleeper leagues for DraftsTab:", err);
+      }
+    };
+
+    fetchUserSleeperLeagues();
+  }, [session]);
 
   const filteredLeagues = sortedLeagues.filter(league => {
     const openSpots = Math.max(0, league.total_spots - league.filled_spots);
     const isFull = openSpots === 0;
-    const isJoinedLocal = recentlyJoinedLeagues.includes(league.id);
+    
+    // Check if joined via local ticket claim OR via connected Sleeper account
+    const isJoined = mySleeperLeagueIds.has(String(league.id)) || recentlyJoinedLeagues.includes(league.id);
 
     if (statusFilter === 'open' && isFull) return false;
     if (statusFilter === 'filled' && !isFull) return false;
     if (styleFilter !== 'all' && league.draft_style !== styleFilter) return false;
-    if (myLeaguesOnly && !isJoinedLocal) return false;
+    if (myLeaguesOnly && !isJoined) return false;
 
     return true;
   });
@@ -154,7 +210,9 @@ export default function DraftsTab({
                   const openSpots = Math.max(0, league.total_spots - league.filled_spots);
                   const isFull = openSpots === 0;
                   const hasNoEntriesLeft = ticketsAvailable === 0;
-                  const isJoinedLocal = recentlyJoinedLeagues.includes(league.id);
+                  
+                  // 🚀 Dynamic Membership Detection
+                  const isJoined = mySleeperLeagueIds.has(String(league.id)) || recentlyJoinedLeagues.includes(league.id);
                   const isSlow = league.draft_style === 'slow';
 
                   const formattedDate = league.draft_date ? new Date(`${league.draft_date}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD';
@@ -169,7 +227,6 @@ export default function DraftsTab({
                   const styleLabel = isSlow ? 'Slow Draft' : 'Live / Fast';
                   const styleIcon = isSlow ? '🐢' : '⚡️';
 
-                  // 🚀 Dynamic Time & Status Display
                   let timeDisplay;
                   if (isSlow) {
                     if (isFull) {
@@ -209,15 +266,15 @@ export default function DraftsTab({
                           </div>
                         </div>
 
-                        <span className={`text-xs font-black uppercase tracking-wider ${isFull && !isJoinedLocal ? 'text-gray-500' : 'text-green-500'}`}>{league.filled_spots} / {league.total_spots} Teams Filled</span>
+                        <span className={`text-xs font-black uppercase tracking-wider ${isFull && !isJoined ? 'text-gray-500' : 'text-green-500'}`}>{league.filled_spots} / {league.total_spots} Teams Filled</span>
                       </div>
                       <div className="shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
                         {!isProPlus ? (
                            <div className="flex items-center justify-center gap-2 text-gray-500 text-[10px] font-black uppercase tracking-widest bg-[#111] px-4 py-3 rounded-xl border border-gray-800 shadow-inner">
                              <Lock size={12} /> Pro+ Exclusive
                            </div>
-                        ) : isJoinedLocal ? (
-                          <a href="https://sleeper.com" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-green-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-green-900/50 transition-colors flex items-center justify-center gap-2"><ExternalLink size={14} /> Go to League</a>
+                        ) : isJoined ? (
+                          <a href={`https://sleeper.com/leagues/${league.id}`} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-green-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-green-900/50 transition-colors flex items-center justify-center gap-2"><ExternalLink size={14} /> Go to League</a>
                         ) : (isFull && isSlow && league.draft_id) ? (
                           <a href={`https://sleeper.com/draft/nfl/${league.draft_id}`} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-red-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-red-900/50 transition-colors flex items-center justify-center gap-2">
                             <Eye size={14} /> Watch Draft

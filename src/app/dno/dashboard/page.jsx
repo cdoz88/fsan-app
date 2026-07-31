@@ -19,6 +19,7 @@ function DashboardContent() {
   const [ticketCount, setTicketCount] = useState(0);
   const [myLeagues, setMyLeagues] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingLeagues, setLoadingLeagues] = useState(false);
 
   // Dedicated DNO Sleeper Sync State
   const [sleeperInput, setSleeperInput] = useState('');
@@ -108,7 +109,89 @@ function DashboardContent() {
     return null;
   };
 
-  // Load User Data & Joined DNO Leagues via Dedicated DNO Endpoints
+  // 🚀 Direct Sleeper API fetch for "My Leagues"
+  const fetchMyDnoLeagues = useCallback(async (targetUser) => {
+    const sleeperIdentifier = targetUser?.sleeper_id || targetUser?.user_id || targetUser?.sleeper_username;
+    if (!sleeperIdentifier) {
+      setMyLeagues([]);
+      return;
+    }
+
+    setLoadingLeagues(true);
+    try {
+      // 1. Get Sleeper user ID
+      let userId = targetUser?.sleeper_id || targetUser?.user_id;
+      if (!userId) {
+        const uRes = await fetch(`https://api.sleeper.app/v1/user/${sleeperIdentifier}`);
+        if (uRes.ok) {
+          const uData = await uRes.json();
+          userId = uData.user_id;
+        }
+      }
+
+      if (!userId) {
+        setMyLeagues([]);
+        setLoadingLeagues(false);
+        return;
+      }
+
+      // 2. Fetch DNO Pool to compare against
+      const pRes = await fetch(`/api/scl?type=dno_pool&t=${Date.now()}`);
+      let validDnoLeagueIds = new Set();
+      let poolMap = {};
+      if (pRes.ok) {
+        const pData = await pRes.json();
+        (pData.leagues || []).forEach(l => {
+          validDnoLeagueIds.add(String(l.id));
+          poolMap[String(l.id)] = l;
+        });
+      }
+
+      // 3. Query Sleeper for user's 2026 leagues
+      const slpLeaguesRes = await fetch(`https://api.sleeper.app/v1/user/${userId}/leagues/nfl/2026`);
+      if (!slpLeaguesRes.ok) {
+        setMyLeagues([]);
+        setLoadingLeagues(false);
+        return;
+      }
+      const slpLeagues = await slpLeaguesRes.json();
+
+      // 4. Match against DNO leagues
+      const matchedDnoLeagues = slpLeagues.filter(l => {
+        const inPool = validDnoLeagueIds.has(String(l.league_id));
+        const hasDnoName = l.name && (l.name.toUpperCase().includes('DNO') || l.name.toUpperCase().includes('DRAFT NIGHT OUT'));
+        return inPool || hasDnoName;
+      }).map(l => {
+        const poolMatch = poolMap[String(l.league_id)];
+        return {
+          id: l.league_id,
+          sleeper_id: l.league_id,
+          name: l.name,
+          total_spots: l.total_rosters || poolMatch?.total_spots || 12,
+          filled_spots: poolMatch?.filled_spots || l.total_rosters || 12,
+          avatar: l.avatar
+        };
+      });
+
+      setMyLeagues(matchedDnoLeagues);
+    } catch (err) {
+      console.warn("Failed fetching My Leagues from Sleeper:", err);
+      setMyLeagues([]);
+    } finally {
+      setLoadingLeagues(false);
+    }
+  }, []);
+
+  // Fetch My Leagues whenever syncedSleeperUser updates
+  useEffect(() => {
+    if (syncedSleeperUser) {
+      fetchMyDnoLeagues(syncedSleeperUser);
+    } else {
+      setMyLeagues([]);
+    }
+  }, [syncedSleeperUser, fetchMyDnoLeagues]);
+
+  // Load Account Data (tickets & server sync)
   const loadAccountData = useCallback(async () => {
     if (!session?.user?.id) return;
     
@@ -116,39 +199,21 @@ function DashboardContent() {
     try {
       let dnoSleeperId = null;
 
-      // Fetch DNO user metadata from /api/scl
       try {
         const uRes = await fetch(`/api/scl?action=dno_get_user_data&user_id=${session.user.id}&t=${Date.now()}`);
         if (uRes.ok) {
           const uDataRaw = await uRes.json();
-          // Extract nested data payload if WordPress wraps response in `data`
           const uData = uDataRaw.data || uDataRaw;
 
           setTicketCount(uData.dno_tickets || 0);
           dnoSleeperId = uData.dno_sleeper_id || uData.dno_sleeper_user_id || uData.sleeper_id || null;
           
-          if (dnoSleeperId) {
+          if (dnoSleeperId && !syncedSleeperUser) {
             await hydrateSleeperUser(dnoSleeperId);
           }
         }
       } catch (e) {
         console.warn("DNO User data fetch warning", e);
-      }
-
-      // Fetch DNO Pool to highlight joined leagues for this DNO Sleeper ID
-      const activeId = dnoSleeperId || syncedSleeperUser?.sleeper_id;
-      const pRes = await fetch(`/api/scl?type=dno_pool&t=${Date.now()}`);
-      if (pRes.ok) {
-        try {
-          const pData = await pRes.json();
-          const myJoinedLeagues = (pData.leagues || []).filter(league => {
-             if (!activeId) return false;
-             return league.members?.some(m => m.user_id === activeId);
-          });
-          setMyLeagues(myJoinedLeagues);
-        } catch (e) {
-          console.warn("DNO Pool API parsing warning", e);
-        }
       }
     } catch (err) {
       console.error("Failed loading account data", err);
@@ -236,7 +301,7 @@ function DashboardContent() {
       setLivePreviewUser(null);
       setIsEditingSync(false);
 
-      loadAccountData();
+      fetchMyDnoLeagues(finalUser);
     } catch (err) {
       console.warn("Server save warning, applying locally:", err);
       const finalUser = {
@@ -248,6 +313,7 @@ function DashboardContent() {
       setSyncedSleeperUser(finalUser);
       localStorage.setItem(getDnoStorageKey(session.user.id), JSON.stringify(finalUser));
       setIsEditingSync(false);
+      fetchMyDnoLeagues(finalUser);
     } finally {
       setIsSaving(false);
     }
@@ -427,6 +493,11 @@ function DashboardContent() {
                 <Link2 className="w-16 h-16 text-gray-800 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-white mb-2">Connect Sleeper Account</h3>
                 <p className="text-gray-400 max-w-md mx-auto mb-6">Enter your Sleeper username in the card above to automatically pull and display your Draft Night Out leagues here!</p>
+              </div>
+            ) : loadingLeagues ? (
+              <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                <Loader2 className="w-10 h-10 text-[#1b75bb] animate-spin mb-3" />
+                <p className="text-xs font-bold uppercase tracking-widest">Searching Sleeper for your DNO Leagues...</p>
               </div>
             ) : myLeagues.length === 0 ? (
               <div className="text-center py-20">
