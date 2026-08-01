@@ -20,8 +20,8 @@ export async function POST(req) {
 
     // 🚀 DYNAMIC CHECKOUT ROUTING & BUNDLING
     // Check if this is a DNO Ticket purchase via the payload type OR the specific DNO price IDs
-    // NOTE: Update these IDs once you create your $22 One-Time products in Stripe!
-    const dnoPriceIds = ['price_1Tv8ANBaSOn1la2fsYurqR32', 'price_1Tv8VeBaSOn1la2fIytAwZZ7'];
+    // NOTE: 'price_1Tv8ANBaSOn1la2fsYurqR32' is the placeholder for your future Live ID
+    const dnoPriceIds = ['price_1Tv8ANBaSOn1la2fsYurqR32', 'price_1Tze3ZBaSOn1la2fKKZusWaM'];
     const isDnoBundle = type === 'dno_ticket' || (priceId && dnoPriceIds.includes(priceId));
 
     let line_items = [];
@@ -35,10 +35,9 @@ export async function POST(req) {
       purchaseType = 'dno_ticket_bundle';
       
       // Determine correct DNO Ticket Price ID (Live vs Test)
-      // REPLACE THESE with your actual $22 one-time Price IDs from Stripe
       const dnoTicketPriceId = process.env.NODE_ENV === 'development' 
-        ? 'price_1Tv8VeBaSOn1la2fIytAwZZ7' // Your TEST $22 Ticket ID
-        : 'price_1Tv8ANBaSOn1la2fsYurqR32'; // Your LIVE $22 Ticket ID
+        ? 'price_1Tze3ZBaSOn1la2fKKZusWaM' // Your TEST $22 Ticket ID
+        : 'price_1Tv8ANBaSOn1la2fsYurqR32'; // Your LIVE $22 Ticket ID (Update this later!)
 
       // Your actual Pro+ Monthly Price ID ($7.99/mo)
       const proPlusMonthlyPriceId = process.env.STRIPE_PRO_PLUS_MONTHLY_PRICE_ID || 'price_1RsVe1BaSOn1la2fTvpGPNIr';
