@@ -64,7 +64,8 @@ function PublicPageContent() {
       setLeagues(data.leagues || []);
       
       if (session?.user?.id) {
-        const allotted = data.allotted_entries !== undefined ? data.allotted_entries : 1;
+        // Enforce fallback to 0 instead of 1
+        const allotted = data.allotted_entries !== undefined ? data.allotted_entries : 0;
         const joined = data.user_joined_count || 0;
         setTicketsAvailable(Math.max(0, allotted - joined));
         setUserJoinedCount(joined);
