@@ -32,6 +32,7 @@ function PublicPageContent() {
 
   // State for Purchasing and Joining
   const [ticketsAvailable, setTicketsAvailable] = useState(0);
+  const [userJoinedCount, setUserJoinedCount] = useState(0);
   const [confirmingLeague, setConfirmingLeague] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -58,6 +59,7 @@ function PublicPageContent() {
       const res = await fetch(`/api/user?id=${session.user.id}`);
       const data = await res.json();
       setTicketsAvailable(data.dno_tickets || 0);
+      setUserJoinedCount(data.dno_joined_count || 0);
     } catch (err) {
       console.error("Failed to fetch tickets", err);
     }
@@ -117,11 +119,16 @@ function PublicPageContent() {
     }
     setIsProcessing(true);
     try {
+      // Determine if they are buying the initial bundle or an extra ticket
+      // If they have 0 available AND 0 joined, it's definitely their first ticket.
+      const isFirstTicket = ticketsAvailable <= 0 && userJoinedCount === 0;
+      const purchaseType = isFirstTicket ? 'dno_bundle' : 'dno_extra_ticket';
+
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: 'dno_ticket',
+          type: purchaseType,
           userId: session.user.id,
           email: session.user.email,
           returnUrl: `${window.location.origin}/dno/dashboard`
@@ -188,11 +195,8 @@ function PublicPageContent() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
            <div className="bg-[#151515] p-8 rounded-3xl border border-gray-800 text-center text-white shadow-2xl w-full max-w-md relative overflow-hidden">
               <h3 className="text-2xl font-black uppercase italic mb-2 tracking-tighter">Confirm Entry</h3>
-              <p className="text-gray-400 mb-6 text-sm">
-                You are about to use <strong className="text-white">1 Draft Ticket</strong> to secure your spot in <strong className="text-[#1b75bb]">{confirmingLeague.name}</strong>.
-              </p>
               
-              <div className="flex items-center justify-center gap-4 mb-8">
+              <div className="flex items-center justify-center gap-4 mb-6 mt-4">
                 <div className="bg-[#111] border border-gray-800 rounded-xl px-6 py-4 shadow-inner">
                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Your Tickets</p>
                    <p className="text-3xl font-black text-[#f5a623] leading-none">{ticketsAvailable}</p>
@@ -200,25 +204,43 @@ function PublicPageContent() {
               </div>
 
               {ticketsAvailable > 0 ? (
-                <button 
-                  onClick={executeJoin}
-                  disabled={isProcessing}
-                  className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-[0_0_15px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
-                >
-                  <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs">
-                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm & Join League'}
-                  </div>
-                </button>
+                <>
+                  <p className="text-gray-400 mb-6 text-sm">
+                    You are about to use <strong className="text-white">1 Draft Ticket</strong> to secure your spot in <strong className="text-[#1b75bb]">{confirmingLeague.name}</strong>.
+                  </p>
+                  <button 
+                    onClick={executeJoin}
+                    disabled={isProcessing}
+                    className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-[0_0_15px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+                  >
+                    <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs">
+                      {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm & Join League'}
+                    </div>
+                  </button>
+                </>
               ) : (
-                <button 
-                  onClick={handlePurchaseExtraEntry}
-                  disabled={isProcessing}
-                  className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-[#f5a623] to-[#c30b16] shadow-[0_0_15px_rgba(245,166,35,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
-                >
-                  <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs">
-                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Purchase Ticket to Join'}
+                <div className="flex flex-col gap-3 mt-2">
+                  <div className="bg-[#111] border border-[#1b75bb]/30 p-4 rounded-xl text-left mb-2 shadow-inner">
+                    <p className="text-sm text-gray-300 leading-relaxed">
+                      <strong className="text-white block mb-1">Need a ticket?</strong> 
+                      Each entry is $22 (with $2 going directly to charity).
+                    </p>
+                    {userJoinedCount === 0 && (
+                      <p className="text-xs text-[#f5a623] font-bold mt-3 bg-[#f5a623]/10 p-2 rounded-lg inline-block border border-[#f5a623]/20">
+                        🎁 First-time buyers get a free 1-month trial of FSAN Pro+ automatically applied at checkout!
+                      </p>
+                    )}
                   </div>
-                </button>
+                  <button 
+                    onClick={handlePurchaseExtraEntry}
+                    disabled={isProcessing}
+                    className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-[#f5a623] to-[#c30b16] shadow-[0_0_15px_rgba(245,166,35,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+                  >
+                    <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs">
+                      {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Purchase Draft Ticket ($22)'}
+                    </div>
+                  </button>
+                </div>
               )}
 
               <button 
@@ -243,8 +265,15 @@ function PublicPageContent() {
           
           <div className="relative z-10 w-full max-w-[1600px] mx-auto flex flex-col items-start justify-end h-full px-6 md:px-8 lg:px-10 pb-10 pt-24">
             <span className="inline-block py-1.5 px-4 rounded-full bg-[#1b75bb]/20 border border-[#1b75bb]/30 text-[#f5a623] font-bold text-[10px] uppercase tracking-widest mb-4 backdrop-blur-sm">The Biggest Fantasy Hang of the Year</span>
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-3">Draft Night Out</h1>
-            <p className="text-gray-300 font-medium md:text-lg leading-relaxed drop-shadow-md max-w-2xl">Secure your seat at one of our live Draft Night Out events, or build your championship roster from home in our exclusive online divisions. Dominate your league to win incredible prizes!</p>
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-2">Draft Night Out</h1>
+            
+            {/* Powered By Label */}
+            <div className="flex items-center gap-2 mb-4 opacity-80">
+              <span className="text-gray-400 text-[10px] md:text-xs font-bold uppercase tracking-widest">Powered by</span>
+              <span className="text-white text-[10px] md:text-xs font-black uppercase tracking-widest drop-shadow-md">Fantasy Sports Advice Network</span>
+            </div>
+
+            <p className="text-gray-300 font-medium md:text-lg leading-relaxed drop-shadow-md max-w-2xl mt-2">Secure your seat at one of our live Draft Night Out events, or build your championship roster from home in our exclusive online divisions. Dominate your league to win incredible prizes!</p>
           </div>
         </div>
 

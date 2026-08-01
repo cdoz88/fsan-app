@@ -18,33 +18,27 @@ export async function POST(req) {
     const body = await req.json();
     const { priceId, type, returnUrl } = body;
 
-    // 🚀 DYNAMIC CHECKOUT ROUTING & BUNDLING
-    // Check if this is a DNO Ticket purchase via the payload type OR the specific DNO price IDs
-    // NOTE: 'price_1Tv8ANBaSOn1la2fsYurqR32' is the placeholder for your future Live ID
-    const dnoPriceIds = ['price_1Tv8ANBaSOn1la2fsYurqR32', 'price_1Tze3ZBaSOn1la2fKKZusWaM'];
-    const isDnoBundle = type === 'dno_ticket' || (priceId && dnoPriceIds.includes(priceId));
-
     let line_items = [];
     let mode = 'payment';
     let subscription_data = undefined;
     let purchaseType = 'subscription';
 
-    if (isDnoBundle) {
-      // MIXED CART: One-time ticket + Recurring Subscription with Free Trial
-      mode = 'subscription'; // Must be 'subscription' if any recurring items are in the cart
+    if (type === 'dno_bundle') {
+      // 🛒 FIRST TICKET MIXED CART: $22 Ticket + Recurring $7.99 Subscription with Free Trial
+      mode = 'subscription'; 
       purchaseType = 'dno_ticket_bundle';
       
-      // Determine correct DNO Ticket Price ID (Live vs Test)
-      const dnoTicketPriceId = process.env.NODE_ENV === 'development' 
-        ? 'price_1Tze3ZBaSOn1la2fKKZusWaM' // Your TEST $22 Ticket ID
-        : 'price_1Tv8ANBaSOn1la2fsYurqR32'; // Your LIVE $22 Ticket ID (Update this later!)
+      // Your $22 Initial Ticket Price ID
+      const dnoBundlePriceId = process.env.NODE_ENV === 'development' 
+        ? 'price_1Tze3ZBaSOn1la2fKKZusWaM' // TEST $22 Ticket ID
+        : 'price_XXXX_LIVE_22_INITIAL_XXXX'; // <-- PASTE YOUR $22 LIVE INITIAL ID HERE
 
       // Your actual Pro+ Monthly Price ID ($7.99/mo)
       const proPlusMonthlyPriceId = process.env.STRIPE_PRO_PLUS_MONTHLY_PRICE_ID || 'price_1RsVe1BaSOn1la2fTvpGPNIr';
 
       line_items = [
         {
-          price: dnoTicketPriceId,
+          price: dnoBundlePriceId,
           quantity: 1, // Billed immediately
         },
         {
@@ -57,6 +51,22 @@ export async function POST(req) {
       subscription_data = {
         trial_period_days: 30,
       };
+
+    } else if (type === 'dno_extra_ticket') {
+      // 🎟 EXTRA TICKET CART: Just the $22 Ticket, NO Subscription
+      mode = 'payment';
+      purchaseType = 'dno_extra_ticket';
+      
+      const dnoExtraTicketPriceId = process.env.NODE_ENV === 'development' 
+        ? 'price_1Tv8VeBaSOn1la2fIytAwZZ7' // Your existing $20 TEST Ticket ID (Update to $22 in Stripe!)
+        : 'price_XXXX_LIVE_22_EXTRA_XXXX'; // <-- PASTE YOUR $22 LIVE EXTRA TICKET ID HERE
+
+      line_items = [
+        {
+          price: dnoExtraTicketPriceId,
+          quantity: 1,
+        }
+      ];
 
     } else if (priceId) {
       // Standard FSAN Single-Item Checkout (e.g., standard Pro+ signup)
@@ -74,15 +84,15 @@ export async function POST(req) {
 
     // Dynamic URL Routing
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://fsan.com';
+    const isDno = type === 'dno_bundle' || type === 'dno_extra_ticket';
     
-    // If DNO passed a specific returnUrl, use it. Otherwise, default to FSAN routes.
     const successUrl = returnUrl 
       ? `${returnUrl}?checkout=success` 
-      : (isDnoBundle ? `https://draftnightout.com/dno/dashboard?checkout=success` : `${baseUrl}/account?checkout=success`);
+      : (isDno ? `https://draftnightout.com/dno/dashboard?checkout=success` : `${baseUrl}/account?checkout=success`);
       
     const cancelUrl = returnUrl 
       ? `${returnUrl}?checkout=canceled` 
-      : (isDnoBundle ? `https://draftnightout.com/dno/dashboard?checkout=canceled` : `${baseUrl}/subscribe?checkout=canceled`);
+      : (isDno ? `https://draftnightout.com/dno/dashboard?checkout=canceled` : `${baseUrl}/subscribe?checkout=canceled`);
 
     // Build the Stripe Session Configuration
     const sessionConfig = {
