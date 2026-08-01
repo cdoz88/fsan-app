@@ -28,13 +28,8 @@ export async function POST(req) {
       mode = 'subscription'; 
       purchaseType = 'dno_ticket_bundle';
       
-      // Your $22 Initial Ticket Price ID
-      const dnoBundlePriceId = process.env.NODE_ENV === 'development' 
-        ? 'price_1Tze3ZBaSOn1la2fKKZusWaM' // TEST $22 Ticket ID
-        : 'price_XXXX_LIVE_22_INITIAL_XXXX'; // <-- PASTE YOUR $22 LIVE INITIAL ID HERE
-
-      // Your actual Pro+ Monthly Price ID ($7.99/mo)
-      const proPlusMonthlyPriceId = process.env.STRIPE_PRO_PLUS_MONTHLY_PRICE_ID || 'price_1RsVe1BaSOn1la2fTvpGPNIr';
+      const dnoBundlePriceId = 'price_1Tze3ZBaSOn1la2fKKZusWaM';
+      const proPlusMonthlyPriceId = 'price_1RsVe1BaSOn1la2fTvpGPNIr';
 
       line_items = [
         {
@@ -57,9 +52,7 @@ export async function POST(req) {
       mode = 'payment';
       purchaseType = 'dno_extra_ticket';
       
-      const dnoExtraTicketPriceId = process.env.NODE_ENV === 'development' 
-        ? 'price_1Tv8VeBaSOn1la2fIytAwZZ7' // Your existing $20 TEST Ticket ID (Update to $22 in Stripe!)
-        : 'price_XXXX_LIVE_22_EXTRA_XXXX'; // <-- PASTE YOUR $22 LIVE EXTRA TICKET ID HERE
+      const dnoExtraTicketPriceId = 'price_1Tv8VeBaSOn1la2fIytAwZZ7';
 
       line_items = [
         {

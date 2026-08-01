@@ -52,32 +52,29 @@ function PublicPageContent() {
     router.push(`?${newParams.toString()}`, { scroll: false });
   };
 
-  // Fetch user's ticket balance if logged in
-  const loadAccountData = useCallback(async () => {
-    if (!session?.user?.id) return;
-    try {
-      const res = await fetch(`/api/user?id=${session.user.id}`);
-      const data = await res.json();
-      setTicketsAvailable(data.dno_tickets || 0);
-      setUserJoinedCount(data.dno_joined_count || 0);
-    } catch (err) {
-      console.error("Failed to fetch tickets", err);
-    }
-  }, [session]);
-
-  // Fetch live pool data
+  // Fetch live pool data & securely fetch user ticket counts in the same call
   const loadDnoPool = useCallback(async () => {
     try {
-      const res = await fetch(`/api/scl?type=dno_pool&t=${Date.now()}`, { cache: 'no-store' });
+      const userIdParam = session?.user?.id ? `&user_id=${session.user.id}` : '';
+      const res = await fetch(`/api/scl?type=dno_pool${userIdParam}&t=${Date.now()}`, { cache: 'no-store' });
+      
       if (!res.ok) throw new Error("Could not reach DNO matrix");
       const data = await res.json();
+      
       setLeagues(data.leagues || []);
+      
+      if (session?.user?.id) {
+        const allotted = data.allotted_entries !== undefined ? data.allotted_entries : 1;
+        const joined = data.user_joined_count || 0;
+        setTicketsAvailable(Math.max(0, allotted - joined));
+        setUserJoinedCount(joined);
+      }
     } catch (err) { 
       console.warn("Failed syncing live DNO array: ", err); 
     } finally { 
       setLoadingLeagues(false); 
     }
-  }, []);
+  }, [session]);
 
   // Fetch live leaderboard
   const loadLiveLeaderboard = useCallback(async () => {
@@ -95,14 +92,11 @@ function PublicPageContent() {
 
   useEffect(() => {
     loadLiveLeaderboard();
-    loadDnoPool();
-  }, [loadDnoPool, loadLiveLeaderboard]);
+  }, [loadLiveLeaderboard]);
 
   useEffect(() => {
-    if (status === 'authenticated') {
-      loadAccountData();
-    }
-  }, [status, loadAccountData]);
+    loadDnoPool();
+  }, [loadDnoPool, session]);
 
   const sortedLeagues = [...leagues].sort((a, b) => {
     const isFullA = a.filled_spots >= a.total_spots;
@@ -120,7 +114,6 @@ function PublicPageContent() {
     setIsProcessing(true);
     try {
       // Determine if they are buying the initial bundle or an extra ticket
-      // If they have 0 available AND 0 joined, it's definitely their first ticket.
       const isFirstTicket = ticketsAvailable <= 0 && userJoinedCount === 0;
       const purchaseType = isFirstTicket ? 'dno_bundle' : 'dno_extra_ticket';
 
