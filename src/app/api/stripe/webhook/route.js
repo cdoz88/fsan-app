@@ -9,7 +9,8 @@ const priceTierMapping = {
   'price_1TH5H5BaSOn1la2fRtfzRPpp': 'pro',
   'price_1TH5HsBaSOn1la2fuOcXj2nq': 'pro',
   'price_1TH5IaBaSOn1la2fS8s0HMPv': 'pro-plus',
-  'price_1TH5J9BaSOn1la2f861yf4yB': 'pro-plus'
+  'price_1TH5J9BaSOn1la2f861yf4yB': 'pro-plus',
+  'price_1RsVe1BaSOn1la2fTvpGPNIr': 'pro-plus' // Added your new $7.99 Pro+ ID here just in case!
 };
 
 export async function POST(req) {
@@ -46,9 +47,10 @@ export async function POST(req) {
 
       // Get the WordPress User ID we secretly passed during checkout
       const wpUserId = parseInt(session.metadata.wpUserId, 10);
+      const purchaseType = session.metadata.purchaseType;
 
-      // 🚀 NEW LOGIC: Handle DNO Extra Ticket Purchases
-      if (session.metadata.purchaseType === 'dno_extra_ticket') {
+      // 🚀 LOGIC 1: Handle DNO Ticket Purchases (Both Bundle and Extra Tickets)
+      if (purchaseType === 'dno_extra_ticket' || purchaseType === 'dno_ticket_bundle') {
         const query = `
           mutation AddDnoTicket {
             addDnoTicket(
@@ -73,48 +75,55 @@ export async function POST(req) {
 
         if (wpJson.errors) {
           console.error("WordPress failed to add DNO ticket:", wpJson.errors);
-          return NextResponse.json({ error: 'Failed to update WP DNO tickets' }, { status: 500 });
+        } else {
+          console.log(`Successfully added 1 DNO ticket to WP User ${wpUserId}`);
         }
-
-        console.log(`Successfully added 1 DNO ticket to WP User ${wpUserId}`);
-        return NextResponse.json({ received: true }, { status: 200 });
       }
 
-      // 🚀 EXISTING LOGIC: Handle Subscription Upgrades
-      // Retrieve the session line items to figure out exactly what they bought
-      const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
-      const purchasedPriceId = lineItems.data[0]?.price?.id;
-      const assignedTier = priceTierMapping[purchasedPriceId] || 'subscriber';
+      // 🚀 LOGIC 2: Handle Subscription Upgrades (Both Standard Subs and the DNO Bundle Trial)
+      if (purchaseType === 'subscription' || purchaseType === 'dno_ticket_bundle') {
+        
+        let assignedTier = 'subscriber';
 
-      // Tell WordPress to upgrade the user
-      const query = `
-        mutation UpgradeUser {
-          updateUserTier(
-            input: {
-              userId: ${wpUserId}, 
-              tier: "${assignedTier}", 
-              secret: "fsan_super_secret_webhook_key_2026"
+        if (purchaseType === 'dno_ticket_bundle') {
+           // We know for a fact the bundle includes Pro+
+           assignedTier = 'pro-plus';
+        } else {
+           // Standard subscription logic: figure out what they bought
+           const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+           const purchasedPriceId = lineItems.data[0]?.price?.id;
+           assignedTier = priceTierMapping[purchasedPriceId] || 'subscriber';
+        }
+
+        // Tell WordPress to upgrade the user
+        const query = `
+          mutation UpgradeUser {
+            updateUserTier(
+              input: {
+                userId: ${wpUserId}, 
+                tier: "${assignedTier}", 
+                secret: "fsan_super_secret_webhook_key_2026"
+              }
+            ) {
+              success
             }
-          ) {
-            success
           }
+        `;
+
+        const wpRes = await fetch('https://admin.fsan.com/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query }),
+        });
+
+        const wpJson = await wpRes.json();
+
+        if (wpJson.errors) {
+          console.error("WordPress failed to upgrade user:", wpJson.errors);
+        } else {
+          console.log(`Successfully upgraded WP User ${wpUserId} to ${assignedTier}`);
         }
-      `;
-
-      const wpRes = await fetch('https://admin.fsan.com/graphql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query }),
-      });
-
-      const wpJson = await wpRes.json();
-
-      if (wpJson.errors) {
-        console.error("WordPress failed to upgrade user:", wpJson.errors);
-        return NextResponse.json({ error: 'Failed to update WP role' }, { status: 500 });
       }
-
-      console.log(`Successfully upgraded WP User ${wpUserId} to ${assignedTier}`);
     }
 
     return NextResponse.json({ received: true }, { status: 200 });
