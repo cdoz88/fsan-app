@@ -33,25 +33,6 @@ function DashboardContent() {
 
   const getDnoStorageKey = (userId) => `dno_dedicated_sleeper_${userId}`;
 
-  // Set Page Title & Force Favicon Swap
-  useEffect(() => {
-    document.title = "Dashboard | Draft Night Out";
-    
-    const dnoFaviconUrl = "/images/dno/DNO-Logo_Logo.webp?v=dno2026";
-    const existingIcons = document.querySelectorAll("link[rel*='icon']");
-    
-    if (existingIcons.length > 0) {
-      existingIcons.forEach(icon => {
-        icon.href = dnoFaviconUrl;
-      });
-    } else {
-      const link = document.createElement('link');
-      link.rel = 'icon';
-      link.href = dnoFaviconUrl;
-      document.head.appendChild(link);
-    }
-  }, []);
-
   // Restore DNO-specific Sleeper sync from local cache on initial render
   useEffect(() => {
     if (session?.user?.id) {
