@@ -28,8 +28,11 @@ export async function POST(req) {
       mode = 'subscription'; 
       purchaseType = 'dno_ticket_bundle';
       
-      const dnoBundlePriceId = 'price_1Tze3ZBaSOn1la2fKKZusWaM';
-      const proPlusMonthlyPriceId = 'price_1RsVe1BaSOn1la2fTvpGPNIr';
+      // Live $22 Initial Ticket Price ID
+      const dnoBundlePriceId = 'price_1Tze2DBaSOn1la2fjK7ediju';
+
+      // Your actual Pro+ Monthly Price ID ($7.99/mo)
+      const proPlusMonthlyPriceId = process.env.STRIPE_PRO_PLUS_MONTHLY_PRICE_ID || 'price_1RsVe1BaSOn1la2fTvpGPNIr';
 
       line_items = [
         {
@@ -52,7 +55,8 @@ export async function POST(req) {
       mode = 'payment';
       purchaseType = 'dno_extra_ticket';
       
-      const dnoExtraTicketPriceId = 'price_1Tv8VeBaSOn1la2fIytAwZZ7';
+      // Live $22 Extra Ticket Price ID
+      const dnoExtraTicketPriceId = 'price_1TzeUyBaSOn1la2fhgegZYeC';
 
       line_items = [
         {
