@@ -15,19 +15,23 @@ export default function DnoWelcomePage() {
     setLoading(true);
     setError('');
 
-    // Sign in and redirect directly to the subscription settings
+    // Pass both username and email to ensure NextAuth / WordPress gets the required field
     const res = await signIn('credentials', {
       redirect: false,
-      email,
-      password,
+      username: email,
+      email: email,
+      password: password,
       callbackUrl: '/account#subscription'
     });
 
     if (res?.error) {
-      setError('Invalid email or password. Please try again.');
+      setError('Invalid email/username or password. Please try again.');
       setLoading(false);
     } else if (res?.url) {
       window.location.href = res.url;
+    } else {
+      // Fallback redirect if URL isn't returned directly
+      window.location.href = '/account#subscription';
     }
   };
 
@@ -65,7 +69,7 @@ export default function DnoWelcomePage() {
               <Lock size={14} /> Account Linked
             </span>
             <p className="text-sm text-gray-300 leading-relaxed">
-              As a Draft Night Out participant, your account is already active! Simply log in below using the <strong>exact same email and password</strong> you used to purchase your DNO ticket.
+              As a Draft Night Out participant, your account is already active! Simply log in below using the <strong>exact same email/username and password</strong> you used on Draft Night Out.
             </p>
           </div>
         </div>
@@ -79,15 +83,15 @@ export default function DnoWelcomePage() {
           
           <div>
             <label className="block text-[11px] font-black text-gray-500 uppercase tracking-widest mb-2 ml-1">
-              Email Address
+              Email or Username
             </label>
             <input 
-              type="email" 
+              type="text" 
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-[#111] border border-gray-800 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-[#1b75bb] focus:ring-1 focus:ring-[#1b75bb] transition-all shadow-inner"
-              placeholder="The email you used for DNO..."
+              placeholder="Your email or username..."
             />
           </div>
 
@@ -101,7 +105,7 @@ export default function DnoWelcomePage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-[#111] border border-gray-800 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-[#1b75bb] focus:ring-1 focus:ring-[#1b75bb] transition-all shadow-inner"
-              placeholder="Your DNO password..."
+              placeholder="Your password..."
             />
           </div>
 
