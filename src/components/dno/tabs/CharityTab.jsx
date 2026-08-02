@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { HeartHandshake, ExternalLink, Users, DollarSign, Loader2 } from 'lucide-react';
+import { HeartHandshake, ExternalLink, Users, DollarSign, Loader2, Trophy } from 'lucide-react';
 
 export default function CharityTab() {
   const [charityData, setCharityData] = useState(null);
@@ -21,6 +21,7 @@ export default function CharityTab() {
 
   const raised = charityData?.total_raised || 0;
   const players = charityData?.total_players || 0;
+  const wallOfFame = charityData?.wall_of_fame || [];
   
   // Static Goal for the Endzone
   const GOAL_AMOUNT = 1000;
@@ -139,6 +140,31 @@ export default function CharityTab() {
             </div>
          </div>
       </div>
+
+      {/* WALL OF FAME (Only renders if there are public donors) */}
+      {!isLoading && wallOfFame.length > 0 && (
+        <div className="bg-gradient-to-b from-[#151515] to-[#111] border border-gray-800 rounded-3xl p-6 md:p-10 shadow-2xl mb-8 relative overflow-hidden">
+          <div className="flex items-center gap-3 mb-2">
+            <Trophy className="text-[#f5a623] w-6 h-6" />
+            <h3 className="text-2xl font-black italic text-white uppercase tracking-tighter">Wall of Fame</h3>
+          </div>
+          <p className="text-sm text-gray-400 mb-6">A huge thank you to the managers who went above and beyond with an extra donation to Mission 22!</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {wallOfFame.map((donor, index) => (
+              <div key={index} className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-4 flex items-center justify-between shadow-inner hover:border-gray-700 transition-colors">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-[#f5a623] font-black text-lg w-6">#{index + 1}</span>
+                  <span className="text-white font-bold text-sm truncate">{donor.username}</span>
+                </div>
+                <span className="text-emerald-400 font-black text-sm bg-emerald-900/20 px-3 py-1 rounded-lg border border-emerald-900/50 shrink-0">
+                  +${donor.amount.toFixed(2)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       
       {/* MISSION 22 BLURB */}
       <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] rounded-3xl p-8 md:p-10 border border-gray-800 shadow-xl relative overflow-hidden">
