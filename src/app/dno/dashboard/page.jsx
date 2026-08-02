@@ -440,6 +440,14 @@ function DashboardContent() {
     }
   };
 
+  const handleShareRoster = (leagueId) => {
+    setActiveTab('share');
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.set('tab', 'share');
+    newParams.set('leagueId', leagueId);
+    router.push(`?${newParams.toString()}`, { scroll: false });
+  };
+
   const getBadges = (team) => {
     let badges = [];
     if (!team || !team.badges) return badges;
@@ -907,7 +915,7 @@ function DashboardContent() {
 
                       </div>
                       
-                      <div className="flex gap-2 w-full mt-auto">
+                      <div className="flex flex-col gap-2 w-full mt-auto">
                         <a 
                           href={`https://sleeper.com/leagues/${league.sleeper_id}`} 
                           target="_blank" 
@@ -917,14 +925,23 @@ function DashboardContent() {
                           Go To Draft Room
                         </a>
                         
-                        {teamStats && (
+                        <div className="flex gap-2 w-full">
                           <button 
-                            onClick={() => handleViewStats(teamStats)} 
-                            className="w-full text-center bg-[#1b75bb]/10 border border-[#1b75bb]/30 hover:bg-[#1b75bb]/20 text-[#27d7ff] font-bold uppercase tracking-widest text-[10px] md:text-xs py-3 rounded-xl transition-colors"
+                            onClick={() => handleShareRoster(league.id)}
+                            className="flex-1 text-center bg-indigo-900/20 border border-indigo-500/30 hover:bg-indigo-900/40 text-indigo-400 font-bold uppercase tracking-widest text-[10px] md:text-xs py-3 rounded-xl transition-colors"
                           >
-                            Detailed Stats
+                            <Share2 size={14} className="inline mr-1 mb-0.5" /> Share
                           </button>
-                        )}
+                          
+                          {teamStats && (
+                            <button 
+                              onClick={() => handleViewStats(teamStats)} 
+                              className="flex-1 text-center bg-[#1b75bb]/10 border border-[#1b75bb]/30 hover:bg-[#1b75bb]/20 text-[#27d7ff] font-bold uppercase tracking-widest text-[10px] md:text-xs py-3 rounded-xl transition-colors"
+                            >
+                              Detailed Stats
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -939,7 +956,7 @@ function DashboardContent() {
           <GraphicTab syncedSleeperUser={syncedSleeperUser} />
         )}
 
-        {/* TAB 3: PERKS (FSAN LOGO & TICKET LOCK CHECK) */}
+        {/* TAB 3: PERKS */}
         {activeTab === 'perks' && (
           <div className="p-6 md:p-8 animate-in fade-in duration-300">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
