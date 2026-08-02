@@ -162,7 +162,7 @@ export default function MyPerksTab({ userTier }) {
                 </div>
                 <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">Join an online league and compete to win your league, enter the playoff challenge, and win the grand prize!</p>
                 {userTier === 'pro-plus' ? (
-                    <Link href="/football/draft-night-out#online" className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-white font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">JOIN A LEAGUE <ChevronRight size={14} /></Link>
+                    <Link href="https://draftnightout.com" target="_blank" className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-white font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">JOIN A LEAGUE <ChevronRight size={14} /></Link>
                 ) : (
                     <button onClick={() => router.push('/subscribe')} className="w-full mt-auto bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 font-bold uppercase tracking-widest py-3 px-6 rounded-xl text-xs relative z-10 shadow-inner transition-colors flex items-center justify-center gap-2"><Lock size={14} /> Pro+ Required</button>
                 )}

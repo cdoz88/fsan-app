@@ -116,6 +116,7 @@ function DashboardContent() {
     fetchRookieGuide();
   }, [fetchRookieGuide]);
 
+  // Restore Sleeper Account from local cache initially
   useEffect(() => {
     if (session?.user?.id) {
       const cached = localStorage.getItem(getDnoStorageKey(session.user.id));
@@ -246,14 +247,15 @@ function DashboardContent() {
     try {
       let dnoSleeperId = null;
 
+      // 1. Fetch DNO Sleeper connection from WordPress database (Cross-Device Sync)
       try {
-        const uRes = await fetch(`/api/scl?action=dno_get_user_data&user_id=${session.user.id}&t=${Date.now()}`);
+        const uRes = await fetch(`/api/scl?action=dno_get_user_data&user_id=${session.user.id}&t=${Date.now()}`, { cache: 'no-store' });
         if (uRes.ok) {
           const uDataRaw = await uRes.json();
           const uData = uDataRaw.data || uDataRaw;
           dnoSleeperId = uData.dno_sleeper_id || uData.dno_sleeper_user_id || uData.sleeper_id || null;
           
-          if (dnoSleeperId && !syncedSleeperUser) {
+          if (dnoSleeperId) {
             await hydrateSleeperUser(dnoSleeperId);
           }
         }
@@ -261,6 +263,7 @@ function DashboardContent() {
         console.warn("DNO User data fetch warning", e);
       }
 
+      // 2. Fetch Ticket Balance from WordPress DNO Pool API
       try {
         const poolRes = await fetch(`/api/scl?type=dno_pool&user_id=${session.user.id}&t=${Date.now()}`, { cache: 'no-store' });
         if (poolRes.ok) {
@@ -274,6 +277,7 @@ function DashboardContent() {
         console.warn("DNO Ticket fetch warning", e);
       }
 
+      // 3. Fetch Leaderboard Data
       try {
         const lbRes = await fetch(`/api/scl?action=dno_get_leaderboard_data&t=${Date.now()}`);
         const lbJson = await lbRes.json();
@@ -289,7 +293,7 @@ function DashboardContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [session, syncedSleeperUser]);
+  }, [session]);
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -342,6 +346,7 @@ function DashboardContent() {
     return () => clearTimeout(delayDebounceFn);
   }, [sleeperInput, syncedSleeperUser, isEditingSync]);
 
+  // 🚀 Save Sleeper Account directly to WordPress User Profile (Cross-Device Sync)
   const handleConfirmSync = async (userToSync) => {
     if (!userToSync || !session?.user?.id) return;
     setIsSaving(true);
@@ -351,7 +356,7 @@ function DashboardContent() {
     const sleeperUsernameToSave = userToSync.username || userToSync.sleeper_username;
 
     try {
-      const saveRes = await fetch('/api/scl', {
+      const saveRes = await fetch('/api/scl?action=dno_update_sleeper', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -362,7 +367,10 @@ function DashboardContent() {
         })
       });
 
-      if (!saveRes.ok) throw new Error("Failed saving DNO Sleeper connection");
+      const saveJson = await saveRes.json();
+      if (!saveRes.ok || !saveJson.success) {
+        throw new Error(saveJson?.data?.message || "Failed saving DNO Sleeper connection");
+      }
 
       const finalUser = {
         sleeper_id: sleeperIdToSave,
@@ -378,17 +386,8 @@ function DashboardContent() {
 
       fetchMyDnoLeagues(finalUser);
     } catch (err) {
-      console.warn("Server save warning, applying locally:", err);
-      const finalUser = {
-        sleeper_id: sleeperIdToSave,
-        sleeper_username: sleeperUsernameToSave,
-        displayName: userToSync.displayName || userToSync.display_name,
-        avatar: userToSync.avatar
-      };
-      setSyncedSleeperUser(finalUser);
-      localStorage.setItem(getDnoStorageKey(session.user.id), JSON.stringify(finalUser));
-      setIsEditingSync(false);
-      fetchMyDnoLeagues(finalUser);
+      console.warn("Server save error:", err);
+      setSyncError("Unable to save to database. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -940,7 +939,7 @@ function DashboardContent() {
           <GraphicTab syncedSleeperUser={syncedSleeperUser} />
         )}
 
-        {/* TAB 3: PERKS (SWAPPED ORDER) */}
+        {/* TAB 3: PERKS (FSAN LOGO & TICKET LOCK CHECK) */}
         {activeTab === 'perks' && (
           <div className="p-6 md:p-8 animate-in fade-in duration-300">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
@@ -949,7 +948,7 @@ function DashboardContent() {
               <div className="bg-gradient-to-br from-[#111] to-[#151515] border border-[#1b75bb]/40 rounded-3xl p-6 md:p-8 shadow-[0_0_30px_rgba(27,117,187,0.15)] text-center relative overflow-hidden flex flex-col justify-between">
                 <div className="relative z-10 flex flex-col h-full justify-between items-center">
                   <div>
-                    <div className="w-14 h-14 rounded-2xl bg-[#1b75bb]/10 border border-[#1b75bb]/30 flex items-center justify-center mx-auto mb-6 shadow-inner overflow-hidden p-1.5">
+                    <div className="w-14 h-14 rounded-2xl bg-[#1b75bb]/10 border border-[#1b75bb]/30 flex items-center justify-center mx-auto mb-6 shadow-inner overflow-hidden p-2">
                       <img src="/images/dno/FSAN_Logo.png" alt="FSAN" className="w-full h-full object-contain" />
                     </div>
                     
