@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Lock, Book, Loader2, Download, Ticket, ChevronRight, ShoppingCart, Tag, CheckCircle2 } from 'lucide-react';
+import { Lock, Book, Loader2, Download, Ticket, ChevronRight, ShoppingCart, Tag, CheckCircle2, RefreshCw } from 'lucide-react';
 
 const PremiumCommunityIcon = ({ className = "", size = 24, monochrome = false }) => {
   // If monochrome is true, everything uses the inherited text color (allowing opacity/fades).
@@ -182,6 +182,23 @@ export default function MyPerksTab({ userTier }) {
                 </p>
                 {userTier === 'pro-plus' || userTier === 'pro' ? (
                     <a href="https://www.selloutcrowds.com/crowd/fsan" target="_blank" rel="noopener noreferrer" className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-white font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">Join the Conversation <ChevronRight size={14} /></a>
+                ) : (
+                    <button onClick={() => router.push('/subscribe')} className="w-full mt-auto bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 font-bold uppercase tracking-widest py-3 px-6 rounded-xl text-xs relative z-10 shadow-inner transition-colors flex items-center justify-center gap-2"><Lock size={14} /> Pro / Pro+ Required</button>
+                )}
+            </div>
+        </div>
+
+        {/* Sync Leagues */}
+        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#111] border border-gray-800 rounded-2xl p-6 relative overflow-hidden group hover:border-gray-600 transition-all shadow-lg flex flex-col h-full">
+            <div className="absolute -right-4 -top-4 text-gray-700/30 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500"><RefreshCw size={120} /></div>
+            <div className="relative z-10 flex flex-col h-full">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-gray-800 text-blue-400 border border-gray-700 rounded-xl flex items-center justify-center shadow-inner shrink-0"><RefreshCw size={20} /></div>
+                  <h3 className="text-lg font-black text-white uppercase tracking-wide leading-tight">Sync Your Leagues</h3>
+                </div>
+                <p className="text-xs text-gray-400 leading-relaxed mb-6 flex-1 pr-4">Connect your fantasy platforms to enable auto-syncing for personalized rankings, trade calculators, and live scoreboards.</p>
+                {userTier === 'pro-plus' || userTier === 'pro' ? (
+                    <a href="#synced-leagues" className="w-full mt-auto bg-[#1a1a1a] hover:bg-gray-800 border border-gray-700 text-white font-bold uppercase tracking-widest text-[10px] py-3.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">Sync Leagues <ChevronRight size={14} /></a>
                 ) : (
                     <button onClick={() => router.push('/subscribe')} className="w-full mt-auto bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white border border-gray-700 font-bold uppercase tracking-widest py-3 px-6 rounded-xl text-xs relative z-10 shadow-inner transition-colors flex items-center justify-center gap-2"><Lock size={14} /> Pro / Pro+ Required</button>
                 )}
