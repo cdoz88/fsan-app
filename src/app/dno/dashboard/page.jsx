@@ -85,6 +85,20 @@ function DashboardContent() {
 
   const getDnoStorageKey = (userId) => `dno_dedicated_sleeper_${userId}`;
 
+  // 🚀 Clean up URL query parameters (e.g. checkout=canceled) on mount
+  useEffect(() => {
+    const checkoutStatus = searchParams.get('checkout');
+    if (checkoutStatus) {
+      const tabParam = searchParams.get('tab') || activeTab;
+      const leagueIdParam = searchParams.get('leagueId');
+      
+      let cleanUrl = `/dno/dashboard?tab=${tabParam}`;
+      if (leagueIdParam) cleanUrl += `&leagueId=${leagueIdParam}`;
+      
+      window.history.replaceState(null, '', cleanUrl);
+    }
+  }, [searchParams, activeTab]);
+
   // Fetch the Rookie Draft Guide PDF URL from GraphQL
   const fetchRookieGuide = useCallback(async () => {
     setGuideLoading(true);
@@ -143,9 +157,7 @@ function DashboardContent() {
 
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
-    const newParams = new URLSearchParams(searchParams.toString());
-    newParams.set('tab', tabId);
-    router.push(`?${newParams.toString()}`, { scroll: false });
+    router.push(`?tab=${tabId}`, { scroll: false });
   };
 
   const hydrateSleeperUser = async (identifier) => {
@@ -338,15 +350,13 @@ function DashboardContent() {
       } catch (err) {
         setLivePreviewUser(null);
         setSyncError("Username not found on Sleeper");
-      } finally {
-        setIsSearching(false);
-      }
+      } font-bold uppercase tracking-wider px-1
     }, 600);
 
     return () => clearTimeout(delayDebounceFn);
   }, [sleeperInput, syncedSleeperUser, isEditingSync]);
 
-  // 🚀 Save Sleeper Account directly to WordPress User Profile (Cross-Device Sync)
+  // 🚀 Save Sleeper Account directly to WordPress User Profile
   const handleConfirmSync = async (userToSync) => {
     if (!userToSync || !session?.user?.id) return;
     setIsSaving(true);
@@ -440,12 +450,10 @@ function DashboardContent() {
     }
   };
 
+  // 🚀 Clean & Direct Route to the Graphic Tab with auto-selected League ID
   const handleShareRoster = (leagueId) => {
     setActiveTab('share');
-    const newParams = new URLSearchParams(searchParams.toString());
-    newParams.set('tab', 'share');
-    newParams.set('leagueId', leagueId);
-    router.push(`?${newParams.toString()}`, { scroll: false });
+    router.push(`?tab=share&leagueId=${leagueId}`, { scroll: false });
   };
 
   const getBadges = (team) => {
