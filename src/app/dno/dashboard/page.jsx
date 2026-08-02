@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Ticket, ShieldCheck, Share2, Trophy, ExternalLink, Loader2, Link2, CheckCircle2, Gift, Edit3, X, ArrowLeft } from 'lucide-react';
+import { Ticket, ShieldCheck, Share2, Trophy, ExternalLink, Loader2, Link2, CheckCircle2, Gift, Edit3, X, ArrowLeft, ShoppingCart, Plus, Minus } from 'lucide-react';
 
 // Importing DNO components
 import DNOHeader from '../../../components/dno/DNOHeader';
@@ -18,9 +18,15 @@ function DashboardContent() {
   const [activeTab, setActiveTab] = useState(initialTab);
   
   const [ticketCount, setTicketCount] = useState(0);
+  const [userJoinedCount, setUserJoinedCount] = useState(0);
   const [myLeagues, setMyLeagues] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadingLeagues, setLoadingLeagues] = useState(false);
+
+  // Purchasing State
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [purchaseQuantity, setPurchaseQuantity] = useState(1);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Dedicated DNO Sleeper Sync State
   const [sleeperInput, setSleeperInput] = useState('');
@@ -182,6 +188,7 @@ function DashboardContent() {
           const uData = uDataRaw.data || uDataRaw;
 
           setTicketCount(uData.dno_tickets || 0);
+          setUserJoinedCount(uData.dno_joined_count || 0);
           dnoSleeperId = uData.dno_sleeper_id || uData.dno_sleeper_user_id || uData.sleeper_id || null;
           
           if (dnoSleeperId && !syncedSleeperUser) {
@@ -293,6 +300,37 @@ function DashboardContent() {
     }
   };
 
+  // Execute Stripe Checkout from the Purchase Modal
+  const executeStripeCheckout = async () => {
+    setIsProcessing(true);
+    try {
+      const isFirstTicket = ticketCount <= 0 && userJoinedCount === 0;
+      const purchaseType = isFirstTicket ? 'dno_bundle' : 'dno_extra_ticket';
+
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: purchaseType,
+          quantity: purchaseQuantity,
+          userId: session.user.id,
+          email: session.user.email,
+          returnUrl: `${window.location.origin}/dno/dashboard`
+        })
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL returned");
+      }
+    } catch (err) {
+      console.error("Stripe Checkout Error:", err);
+      alert("Unable to initiate checkout. Please try again.");
+      setIsProcessing(false);
+    }
+  };
+
   if (status === 'loading' || isLoading) {
     return (
       <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
@@ -313,6 +351,73 @@ function DashboardContent() {
         <span>Back to Draft Lobby</span>
       </Link>
 
+      {/* Dedicated Ticket Purchase Modal */}
+      {showPurchaseModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+           <div className="bg-[#151515] p-8 rounded-3xl border border-gray-800 text-center text-white shadow-2xl w-full max-w-md relative overflow-hidden">
+              <button 
+                onClick={() => { setShowPurchaseModal(false); setPurchaseQuantity(1); }} 
+                className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors p-2"
+                disabled={isProcessing}
+              >
+                 <X size={20} />
+              </button>
+              
+              <div className="mx-auto w-12 h-12 bg-[#1b75bb]/20 text-[#1b75bb] rounded-full flex items-center justify-center mb-4">
+                 <ShoppingCart size={24} />
+              </div>
+
+              <h3 className="text-2xl font-black uppercase italic mb-2 tracking-tighter">Get Draft Tickets</h3>
+              
+              <div className="flex flex-col gap-3 mt-4">
+                <div className="bg-[#111] border border-[#1b75bb]/30 p-4 rounded-xl text-left mb-2 shadow-inner">
+                  <p className="text-sm text-gray-300 leading-relaxed">
+                    <strong className="text-white block mb-1">Standard Entry</strong> 
+                    Each ticket is $22 ($2 goes directly to charity).
+                  </p>
+                  {ticketCount <= 0 && userJoinedCount === 0 && (
+                    <p className="text-xs text-[#f5a623] font-bold mt-3 bg-[#f5a623]/10 p-2 rounded-lg inline-block border border-[#f5a623]/20">
+                      🎁 First-time buyers get a free 1-month trial of FSAN Pro+ automatically applied at checkout!
+                    </p>
+                  )}
+
+                  {/* Quantity Selector */}
+                  <div className="mt-4 pt-4 border-t border-gray-800 flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Select Quantity:</span>
+                    <div className="flex items-center gap-3 bg-[#181818] border border-gray-700 rounded-xl px-3 py-1.5">
+                      <button 
+                        onClick={() => setPurchaseQuantity(Math.max(1, purchaseQuantity - 1))}
+                        disabled={isProcessing}
+                        className="text-gray-400 hover:text-white transition-colors p-1"
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span className="font-black text-white text-base min-w-[20px] text-center">{purchaseQuantity}</span>
+                      <button 
+                        onClick={() => setPurchaseQuantity(Math.min(25, purchaseQuantity + 1))}
+                        disabled={isProcessing}
+                        className="text-gray-400 hover:text-white transition-colors p-1"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={executeStripeCheckout}
+                  disabled={isProcessing}
+                  className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-[#f5a623] to-[#c30b16] shadow-[0_0_15px_rgba(245,166,35,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+                >
+                  <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs">
+                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : `Checkout ($${22 * purchaseQuantity})`}
+                  </div>
+                </button>
+              </div>
+           </div>
+        </div>
+      )}
+
       {/* Welcome Banner */}
       <div className="mb-10">
         <h1 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-white mb-6">
@@ -323,7 +428,7 @@ function DashboardContent() {
           
           {/* Ticket Balance Card */}
           <div className="bg-[#151515] border border-gray-800 rounded-3xl p-6 md:p-8 flex items-center justify-between shadow-lg relative overflow-hidden min-h-[160px]">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#1b75bb] opacity-5 blur-[50px] rounded-full"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#1b75bb] opacity-5 blur-[50px] rounded-full pointer-events-none"></div>
             <div>
               <p className="text-gray-400 font-bold uppercase tracking-widest text-xs mb-2">Available Draft Tickets</p>
               <div className="flex items-end gap-3">
@@ -331,8 +436,19 @@ function DashboardContent() {
                 <span className="text-gray-500 font-medium mb-1">Tickets</span>
               </div>
             </div>
-            <div className="w-16 h-16 rounded-full bg-[#111] border border-gray-800 flex items-center justify-center shadow-inner">
-              <Ticket className="w-8 h-8 text-[#f5a623]" />
+            
+            <div className="flex flex-col items-end gap-3 relative z-10">
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-[#111] border border-gray-800 flex items-center justify-center shadow-inner">
+                <Ticket className="w-6 h-6 md:w-8 md:h-8 text-[#f5a623]" />
+              </div>
+              <button 
+                onClick={() => setShowPurchaseModal(true)}
+                className="relative group p-[2px] rounded-xl bg-gradient-to-r from-[#f5a623] to-[#c30b16] shadow-[0_0_15px_rgba(245,166,35,0.2)] transition-transform hover:-translate-y-0.5"
+              >
+                <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-2 flex items-center justify-center text-white font-black uppercase tracking-widest text-[10px] md:text-xs whitespace-nowrap">
+                  Buy More Tickets
+                </div>
+              </button>
             </div>
           </div>
 
