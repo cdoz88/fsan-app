@@ -1,9 +1,14 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import html2canvas from 'html2canvas-pro';
 import { Loader2, Download, AlertCircle, Share2, Copy, Check, Link2 } from 'lucide-react';
 
 export default function GraphicTab({ syncedSleeperUser }) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const urlLeagueId = searchParams.get('leagueId');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -102,6 +107,17 @@ export default function GraphicTab({ syncedSleeperUser }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [syncedSleeperUser]);
 
+  // Auto-select league if present in URL
+  useEffect(() => {
+    if (leagues.length > 0 && urlLeagueId && selectedLeague !== urlLeagueId) {
+      const leagueExists = leagues.some(l => l.league_id === urlLeagueId);
+      if (leagueExists) {
+        handleLeagueSelect(urlLeagueId);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leagues, urlLeagueId]);
+
   useEffect(() => {
     if (starters.length > 0 && teamData && graphicRef.current) {
       setGenerating(true);
@@ -188,6 +204,16 @@ export default function GraphicTab({ syncedSleeperUser }) {
 
   const handleLeagueSelect = async (leagueId) => {
     setSelectedLeague(leagueId);
+    
+    // Update URL to maintain state visually
+    const newParams = new URLSearchParams(searchParams.toString());
+    if (leagueId) {
+      newParams.set('leagueId', leagueId);
+    } else {
+      newParams.delete('leagueId');
+    }
+    router.replace(`?${newParams.toString()}`, { scroll: false });
+    
     if (!leagueId) {
       setStarters([]);
       setBench([]);
