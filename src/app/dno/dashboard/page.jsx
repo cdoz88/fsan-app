@@ -869,7 +869,6 @@ function DashboardContent() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {myLeagues.map((league) => {
                   
-                  // Try to find this user's stats for this specific league in the global leaderboard array
                   const teamStats = liveLeaderboard?.teams?.find(
                     t => String(t.leagueId) === String(league.id) && String(t.ownerId) === String(syncedSleeperUser?.sleeper_id)
                   );
@@ -888,7 +887,6 @@ function DashboardContent() {
                         <h4 className="text-lg font-black italic uppercase text-white mb-1">{league.name}</h4>
                         <p className="text-sm text-gray-400 mb-6">PPR • 12 Team • 17 Rounds</p>
                         
-                        {/* Injected Leaderboard Stats Banner */}
                         {teamStats && (
                           <div className="flex items-center justify-between bg-[#151515] p-4 rounded-xl border border-gray-800 mb-6 shadow-inner">
                             <div className="flex flex-col items-center">
@@ -942,7 +940,7 @@ function DashboardContent() {
           <GraphicTab syncedSleeperUser={syncedSleeperUser} />
         )}
 
-        {/* TAB 3: PERKS (UPDATED SWAP WITH ROOKIE GUIDE & 1 MONTH TEXT) */}
+        {/* TAB 3: PERKS (SWAPPED ORDER) */}
         {activeTab === 'perks' && (
           <div className="p-6 md:p-8 animate-in fade-in duration-300">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
