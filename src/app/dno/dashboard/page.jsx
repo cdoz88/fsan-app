@@ -350,7 +350,9 @@ function DashboardContent() {
       } catch (err) {
         setLivePreviewUser(null);
         setSyncError("Username not found on Sleeper");
-      } font-bold uppercase tracking-wider px-1
+      } finally {
+        setIsSearching(false);
+      }
     }, 600);
 
     return () => clearTimeout(delayDebounceFn);
@@ -964,7 +966,7 @@ function DashboardContent() {
           <GraphicTab syncedSleeperUser={syncedSleeperUser} />
         )}
 
-        {/* TAB 3: PERKS */}
+        {/* TAB 3: PERKS (SWAPPED ORDER) */}
         {activeTab === 'perks' && (
           <div className="p-6 md:p-8 animate-in fade-in duration-300">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
