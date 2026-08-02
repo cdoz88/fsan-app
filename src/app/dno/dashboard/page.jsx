@@ -3,8 +3,7 @@ import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
-// ADDED HeartHandshake to the imports below!
-import { Ticket, ShieldCheck, Share2, Trophy, ExternalLink, Loader2, Link2, CheckCircle2, Gift, Edit3, X, ArrowLeft, ShoppingCart, Plus, Minus, HeartHandshake } from 'lucide-react';
+import { Ticket, ShieldCheck, Share2, Trophy, ExternalLink, Loader2, Link2, CheckCircle2, Gift, Edit3, X, ArrowLeft, ShoppingCart, Plus, Minus, HeartHandshake, Book, Download, Lock } from 'lucide-react';
 
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip as ChartTooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
@@ -56,6 +55,13 @@ function DashboardContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingLeagues, setLoadingLeagues] = useState(false);
 
+  // Determine if they've ever purchased/received a ticket
+  const hasPurchasedTicket = ticketCount > 0 || userJoinedCount > 0;
+
+  // Perks State
+  const [rookieGuideUrl, setRookieGuideUrl] = useState(null);
+  const [guideLoading, setGuideLoading] = useState(true);
+
   // Stats Modal State
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [modalData, setModalData] = useState(null);
@@ -78,6 +84,37 @@ function DashboardContent() {
   const [isEditingSync, setIsEditingSync] = useState(false);
 
   const getDnoStorageKey = (userId) => `dno_dedicated_sleeper_${userId}`;
+
+  // Fetch the Rookie Draft Guide PDF URL from GraphQL
+  const fetchRookieGuide = useCallback(async () => {
+    setGuideLoading(true);
+    try {
+      const res = await fetch(`https://admin.fsan.com/graphql`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: `
+          query GetRookieGuide {
+            guideByLocation: menuItems(where: {location: ROOKIE_GUIDE}) { nodes { url path uri } }
+            guideBySlug: menu(id: "rookie-guide", idType: SLUG) { menuItems { nodes { url path uri } } }
+          }
+        `}),
+        cache: 'no-store'
+      });
+      const json = await res.json();
+      let guideNodes = json?.data?.guideByLocation?.nodes || json?.data?.guideBySlug?.menuItems?.nodes;
+      if (guideNodes && guideNodes.length > 0) {
+        setRookieGuideUrl(guideNodes[0].url || guideNodes[0].path || guideNodes[0].uri);
+      }
+    } catch (err) {
+      console.warn("Could not fetch Rookie Draft Guide URL:", err);
+    } finally {
+      setGuideLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRookieGuide();
+  }, [fetchRookieGuide]);
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -483,7 +520,6 @@ function DashboardContent() {
                     </div>
                   </div>
 
-                  {/* 🚀 NEW: Optional Charity Donation UI */}
                   <div className="mt-5 pt-4 border-t border-gray-800 text-left">
                     <span className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-2">
                       <HeartHandshake size={14} className="text-[#f5a623]" /> Optional Charity Donation:
@@ -833,7 +869,6 @@ function DashboardContent() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {myLeagues.map((league) => {
                   
-                  // Try to find this user's stats for this specific league in the global leaderboard array
                   const teamStats = liveLeaderboard?.teams?.find(
                     t => String(t.leagueId) === String(league.id) && String(t.ownerId) === String(syncedSleeperUser?.sleeper_id)
                   );
@@ -852,7 +887,6 @@ function DashboardContent() {
                         <h4 className="text-lg font-black italic uppercase text-white mb-1">{league.name}</h4>
                         <p className="text-sm text-gray-400 mb-6">PPR • 12 Team • 17 Rounds</p>
                         
-                        {/* Injected Leaderboard Stats Banner */}
                         {teamStats && (
                           <div className="flex items-center justify-between bg-[#151515] p-4 rounded-xl border border-gray-800 mb-6 shadow-inner">
                             <div className="flex flex-col items-center">
@@ -906,32 +940,93 @@ function DashboardContent() {
           <GraphicTab syncedSleeperUser={syncedSleeperUser} />
         )}
 
-        {/* TAB 3: PERKS */}
+        {/* TAB 3: PERKS (UPDATED WITH ROOKIE GUIDE & 1 MONTH TEXT) */}
         {activeTab === 'perks' && (
-          <div className="p-8 animate-in fade-in duration-300">
-            <div className="max-w-xl mx-auto bg-gradient-to-br from-[#111] to-[#151515] border border-[#1b75bb]/40 rounded-3xl p-8 shadow-[0_0_30px_rgba(27,117,187,0.15)] text-center relative overflow-hidden">
-              <div className="w-16 h-16 rounded-full bg-[#1b75bb]/10 border border-[#1b75bb]/30 flex items-center justify-center mx-auto mb-6 shadow-inner">
-                <ShieldCheck className="w-8 h-8 text-[#1b75bb]" />
-              </div>
+          <div className="p-6 md:p-8 animate-in fade-in duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               
-              <span className="text-[#1b75bb] font-bold uppercase tracking-widest text-xs mb-2 block">
-                Exclusive DNO Perk
-              </span>
-              <h3 className="text-2xl font-black text-white uppercase italic tracking-tight mb-3">
-                1 Free Year of FSAN Pro
-              </h3>
-              <p className="text-gray-400 text-sm leading-relaxed mb-8">
-                As a Draft Night Out participant, your entry includes 12 full months of access to FSAN’s premium rankings, trade calculator, trade value charts, and real-time draft advice.
-              </p>
+              {/* Card 1: Football Rookie Draft Guide */}
+              <div className="bg-gradient-to-br from-[#301012] to-[#111] border border-red-900/50 rounded-3xl p-6 md:p-8 relative overflow-hidden group hover:border-red-700 transition-all shadow-xl flex flex-col justify-between">
+                <div className="absolute -right-4 -top-4 text-red-500/10 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500">
+                  <Book size={140} />
+                </div>
+                <div className="relative z-10 flex flex-col h-full justify-between">
+                  <div>
+                    <div className="w-14 h-14 rounded-2xl bg-red-900/20 border border-red-500/30 flex items-center justify-center mb-6 shadow-inner text-red-500">
+                      <Book className="w-7 h-7" />
+                    </div>
+                    <span className="text-red-400 font-bold uppercase tracking-widest text-xs mb-2 block">
+                      Exclusive DNO Perk
+                    </span>
+                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tight mb-3">
+                      Football Rookie Draft Guide
+                    </h3>
+                    <p className="text-gray-300 text-sm leading-relaxed mb-8">
+                      Download the official FSAN Rookie Guide to dominate your dynasty rookie drafts with exclusive player grades and tape breakdowns.
+                    </p>
+                  </div>
 
-              <a 
-                href="https://fsan.com/subscribe" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="inline-flex items-center gap-2 bg-[#1b75bb] hover:bg-teal-500 text-white font-black uppercase tracking-widest text-xs px-8 py-4 rounded-xl transition-all shadow-lg hover:scale-105"
-              >
-                Claim Subscription <ExternalLink size={16} />
-              </a>
+                  {!hasPurchasedTicket ? (
+                    <button disabled className="w-full bg-[#1a1a1a] border border-gray-700 text-gray-500 font-bold uppercase tracking-widest text-xs py-4 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 shadow-inner">
+                      <Lock size={14} /> Ticket Required
+                    </button>
+                  ) : guideLoading ? (
+                    <button disabled className="w-full bg-[#1a1a1a] border border-gray-700 text-gray-500 font-bold uppercase tracking-widest text-xs py-4 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 shadow-inner">
+                      <Loader2 size={16} className="animate-spin" /> Syncing File...
+                    </button>
+                  ) : rookieGuideUrl ? (
+                    <a 
+                      href={rookieGuideUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="w-full bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest text-xs py-4 rounded-xl transition-all shadow-lg hover:scale-[1.02] flex items-center justify-center gap-2"
+                    >
+                      <Download size={16} /> Download PDF
+                    </a>
+                  ) : (
+                    <button disabled className="w-full bg-[#1a1a1a] border border-gray-700 text-gray-500 font-bold uppercase tracking-widest text-xs py-4 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 shadow-inner">
+                      Not Available
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Card 2: 1 Free Month of FSAN Pro+ */}
+              <div className="bg-gradient-to-br from-[#111] to-[#151515] border border-[#1b75bb]/40 rounded-3xl p-6 md:p-8 shadow-[0_0_30px_rgba(27,117,187,0.15)] text-center relative overflow-hidden flex flex-col justify-between">
+                <div className="relative z-10 flex flex-col h-full justify-between items-center">
+                  <div>
+                    <div className="w-14 h-14 rounded-2xl bg-[#1b75bb]/10 border border-[#1b75bb]/30 flex items-center justify-center mx-auto mb-6 shadow-inner overflow-hidden p-1.5">
+                      <img src="/images/dno/FSAN%20Icons_Black%20Circle.png" alt="FSAN" className="w-full h-full object-contain" />
+                    </div>
+                    
+                    <span className="text-[#1b75bb] font-bold uppercase tracking-widest text-xs mb-2 block">
+                      Exclusive DNO Perk
+                    </span>
+                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tight mb-3">
+                      1 Free Month of FSAN Pro+
+                    </h3>
+                    <p className="text-gray-400 text-sm leading-relaxed mb-8">
+                      As a Draft Night Out participant, your entry includes 1 free month of access to FSAN’s premium rankings, trade calculator, trade value charts, and real-time draft advice.
+                    </p>
+                  </div>
+
+                  {!hasPurchasedTicket ? (
+                    <button disabled className="w-full bg-[#1a1a1a] border border-gray-700 text-gray-500 font-bold uppercase tracking-widest text-xs py-4 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 shadow-inner">
+                      <Lock size={14} /> Ticket Required
+                    </button>
+                  ) : (
+                    <a 
+                      href="https://fsan.com/subscribe" 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="w-full inline-flex items-center justify-center gap-2 bg-[#1b75bb] hover:bg-teal-500 text-white font-black uppercase tracking-widest text-xs px-8 py-4 rounded-xl transition-all shadow-lg hover:scale-[1.02]"
+                    >
+                      Claim Subscription <ExternalLink size={16} />
+                    </a>
+                  )}
+                </div>
+              </div>
+
             </div>
           </div>
         )}
