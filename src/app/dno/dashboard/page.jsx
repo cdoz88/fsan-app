@@ -25,7 +25,7 @@ const WeeklyScorerSVG = () => (
 const LitchSVG = () => (
   <svg viewBox="0 0 512 512" className="w-5 h-5 shrink-0 drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
     <defs><linearGradient id="litchGrad"><stop stopOpacity="1" stopColor="#b89905" offset="0.02"/><stop stopOpacity="1" stopColor="#e6d604" offset="1"/></linearGradient></defs>
-    <path d="m434.6 30.2h-76.4c-6.9 50.2-50.1 89.1-102.2 89.1s-95.3-38.8-102.2-89.1h-76.4c-26 0-47.2 21.2-47.2 47.2v115h51.7v-49.4c0-7.8 6.3-14.1 14.1-14.1s14.1 6.3 14.1 14.1v338.8h291.7v-338.8c0-7.8 6.3-14.1 14.1-14.1s14.1 6.3 14.1 14.1v49.4h51.7v-115c.1-26-21.1-47.2-47.1-47.2z" fill="url(#litchGrad)"/>
+    <path d="m434.6 30.2h-76.4c-6.9 50.2-50.1 89.1-102.2 89.1s-95.3-38.8-102.2-89.1h-76.4c-26 0-47.2 21.2-47.2 47.2v115h51.7v-49.4c0-7.8 6.3-14.1 14.1-14.1s14.1 6.3 14.1 14.1v338.8h291.7v-338.8c0-7.8 6.3-14.1 14.1-14.1s-14.1 6.3 14.1 14.1v49.4h51.7v-115c.1-26-21.1-47.2-47.1-47.2z" fill="url(#litchGrad)"/>
     <path d="m434.6 2h-89.5c-7.8 0-14.1 6.3-14.1 14.1 0 41.3-33.6 75-75 75-41.3 0-75-33.6-75-75 0-7.8-6.3-14.1-14.1-14.1h-89.5c-41.6 0-75.4 33.8-75.4 75.4v129.1c0 7.8 6.3 14.1 14.1 14.1h65.8v275.3c0 7.8 6.3 14.1 14.1 14.1h319.9c7.8 0 14.1-6.3 14.1-14.1v-275.3h65.8c7.8 0 14.1-6.3 14.1-14.1v-129.1c.1-41.6-33.7-75.4-75.3-75.4zm47.2 190.4h-51.7v-49.4c0-7.8-6.3-14.1-14.1-14.1s-14.1 6.3-14.1 14.1v338.8h-291.7v-338.8c0-7.8-6.3-14.1-14.1-14.1s-14.1 6.3-14.1 14.1v49.4h-51.8v-115c0-26 21.2-47.2 47.2-47.2h76.4c6.9 50.2 50.1 89.1 102.2 89.1s95.3-38.8 102.2-89.1h76.4c26 0 47.2 21.2 47.2 47.2z" fill="#000000"/>
     <g fill="#194f82"><path d="m216.3 218c5.5 5.5 4.6 12.8-.6 21.3-6.5 9.2-27.6 29.1-47.7 50.5v18.8h80.1v-22.7h-44.8c15.4-16 30.1-30.1 37-41.8 7.9-15.8 5.2-32.2-6.7-42.2-19.8-17.3-53.4-10.5-67.5 15.7l20.3 12c5.9-10.2 18.9-21.6 29.9-11.6z" fill="#000000"/><path d="m278.2 274.3-13.3 18.5c23.9 28.5 80.1 21.1 81.1-21.7 0-26.6-25.5-41.3-51.7-35.2v-19h44.8v-21.9h-68.6v55.4l10.6 11.4c21.6-11.8 39.6-5.1 39.5 9.7-.3 16.9-21.6 22.7-42.4 2.8z" fill="#000000"/><path d="m339.1 349.1h-166.3c-7.8 0-14.1 6.3-14.1 14.1s6.3 14.1 14.1 14.1h166.3c7.8 0 14.1-6.3 14.1-14.1.1-7.8-6.3-14.1-14.1-14.1z" fill="#000000"/><path d="m339.1 405.5h-166.3c-7.8 0-14.1 6.3-14.1 14.1s6.3 14.1 14.1 14.1h166.3c7.8 0 14.1-6.3 14.1-14.1.1-7.8-6.3-14.1-14.1-14.1z" fill="#000000"/></g>
   </svg>
@@ -85,7 +85,7 @@ function DashboardContent() {
 
   const getDnoStorageKey = (userId) => `dno_dedicated_sleeper_${userId}`;
 
-  // 🚀 Clean up URL query parameters (e.g. checkout=canceled) on mount
+  // Clean up URL query parameters (e.g. checkout=canceled) on mount
   useEffect(() => {
     const checkoutStatus = searchParams.get('checkout');
     if (checkoutStatus) {
@@ -259,7 +259,6 @@ function DashboardContent() {
     try {
       let dnoSleeperId = null;
 
-      // 1. Fetch DNO Sleeper connection from WordPress database (Cross-Device Sync)
       try {
         const uRes = await fetch(`/api/scl?action=dno_get_user_data&user_id=${session.user.id}&t=${Date.now()}`, { cache: 'no-store' });
         if (uRes.ok) {
@@ -275,7 +274,6 @@ function DashboardContent() {
         console.warn("DNO User data fetch warning", e);
       }
 
-      // 2. Fetch Ticket Balance from WordPress DNO Pool API
       try {
         const poolRes = await fetch(`/api/scl?type=dno_pool&user_id=${session.user.id}&t=${Date.now()}`, { cache: 'no-store' });
         if (poolRes.ok) {
@@ -289,7 +287,6 @@ function DashboardContent() {
         console.warn("DNO Ticket fetch warning", e);
       }
 
-      // 3. Fetch Leaderboard Data
       try {
         const lbRes = await fetch(`/api/scl?action=dno_get_leaderboard_data&t=${Date.now()}`);
         const lbJson = await lbRes.json();
@@ -358,7 +355,6 @@ function DashboardContent() {
     return () => clearTimeout(delayDebounceFn);
   }, [sleeperInput, syncedSleeperUser, isEditingSync]);
 
-  // 🚀 Save Sleeper Account directly to WordPress User Profile
   const handleConfirmSync = async (userToSync) => {
     if (!userToSync || !session?.user?.id) return;
     setIsSaving(true);
@@ -452,7 +448,6 @@ function DashboardContent() {
     }
   };
 
-  // 🚀 Clean & Direct Route to the Graphic Tab with auto-selected League ID
   const handleShareRoster = (leagueId) => {
     setActiveTab('share');
     router.push(`?tab=share&leagueId=${leagueId}`, { scroll: false });
