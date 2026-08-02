@@ -16,10 +16,15 @@ export async function POST(req) {
     }
 
     const body = await req.json();
-    const { priceId, type, returnUrl, quantity = 1 } = body;
+    
+    // NEW: Extract charity parameters
+    const { priceId, type, returnUrl, quantity = 1, donationAmount = 0, isAnonymous = false } = body;
 
     // Enforce a valid integer quantity (at least 1)
     const ticketQty = Math.max(1, parseInt(quantity, 10) || 1);
+    
+    // Parse the donation amount safely
+    const parsedDonation = parseFloat(donationAmount) || 0;
 
     let line_items = [];
     let mode = 'payment';
@@ -78,6 +83,21 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Valid priceId or type is required' }, { status: 400 });
     }
 
+    // 🚀 NEW LOGIC: Inject custom inline Charity item if applicable
+    if (parsedDonation > 0) {
+      line_items.push({
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: 'DNO Charity Donation',
+            description: '100% of this donation goes directly to our featured charity!',
+          },
+          unit_amount: Math.round(parsedDonation * 100), // Stripe requires cents
+        },
+        quantity: 1,
+      });
+    }
+
     // Dynamic URL Routing
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://fsan.com';
     const isDno = type === 'dno_bundle' || type === 'dno_extra_ticket';
@@ -103,7 +123,9 @@ export async function POST(req) {
       metadata: {
         wpUserId: String(session.user.id), 
         purchaseType: purchaseType,
-        ticketQuantity: String(ticketQty) // Pass quantity to Webhook
+        ticketQuantity: String(ticketQty),
+        donationAmount: String(parsedDonation), // NEW: Send to webhook
+        isAnonymous: String(isAnonymous)        // NEW: Send to webhook
       }
     };
 
