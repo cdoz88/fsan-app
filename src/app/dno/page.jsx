@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { MonitorSmartphone, Trophy, BookOpen, Handshake, ListOrdered, HeartHandshake, Loader2, Users, Plus, Minus } from 'lucide-react';
+import { MonitorSmartphone, Trophy, BookOpen, Handshake, ListOrdered, HeartHandshake, Loader2, Users, Plus, Minus, X, ShoppingCart } from 'lucide-react';
 
 // Importing DNO components
 import DNOHeader from '../../components/dno/DNOHeader';
@@ -34,6 +34,7 @@ function PublicPageContent() {
   const [ticketsAvailable, setTicketsAvailable] = useState(0);
   const [userJoinedCount, setUserJoinedCount] = useState(0);
   const [confirmingLeague, setConfirmingLeague] = useState(null);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [purchaseQuantity, setPurchaseQuantity] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -106,12 +107,17 @@ function PublicPageContent() {
     return isFullA ? 1 : -1;
   });
 
-  // Stripe Checkout
-  const handlePurchaseExtraEntry = async () => {
+  // Open the Purchase Modal
+  const handlePurchaseExtraEntry = () => {
     if (status !== 'authenticated') {
       setShowAuthModal('register');
       return;
     }
+    setShowPurchaseModal(true);
+  };
+
+  // Execute Stripe Checkout from the Purchase Modal
+  const executeStripeCheckout = async () => {
     setIsProcessing(true);
     try {
       const isFirstTicket = ticketsAvailable <= 0 && userJoinedCount === 0;
@@ -184,7 +190,74 @@ function PublicPageContent() {
         />
       )}
 
-      {/* Confirm Join Modal */}
+      {/* Dedicated Ticket Purchase Modal */}
+      {showPurchaseModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+           <div className="bg-[#151515] p-8 rounded-3xl border border-gray-800 text-center text-white shadow-2xl w-full max-w-md relative overflow-hidden">
+              <button 
+                onClick={() => { setShowPurchaseModal(false); setPurchaseQuantity(1); }} 
+                className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors p-2"
+                disabled={isProcessing}
+              >
+                 <X size={20} />
+              </button>
+              
+              <div className="mx-auto w-12 h-12 bg-[#1b75bb]/20 text-[#1b75bb] rounded-full flex items-center justify-center mb-4">
+                 <ShoppingCart size={24} />
+              </div>
+
+              <h3 className="text-2xl font-black uppercase italic mb-2 tracking-tighter">Get Draft Tickets</h3>
+              
+              <div className="flex flex-col gap-3 mt-4">
+                <div className="bg-[#111] border border-[#1b75bb]/30 p-4 rounded-xl text-left mb-2 shadow-inner">
+                  <p className="text-sm text-gray-300 leading-relaxed">
+                    <strong className="text-white block mb-1">Standard Entry</strong> 
+                    Each ticket is $22 ($2 goes directly to charity).
+                  </p>
+                  {ticketsAvailable <= 0 && userJoinedCount === 0 && (
+                    <p className="text-xs text-[#f5a623] font-bold mt-3 bg-[#f5a623]/10 p-2 rounded-lg inline-block border border-[#f5a623]/20">
+                      🎁 First-time buyers get a free 1-month trial of FSAN Pro+ automatically applied at checkout!
+                    </p>
+                  )}
+
+                  {/* Quantity Selector */}
+                  <div className="mt-4 pt-4 border-t border-gray-800 flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Select Quantity:</span>
+                    <div className="flex items-center gap-3 bg-[#181818] border border-gray-700 rounded-xl px-3 py-1.5">
+                      <button 
+                        onClick={() => setPurchaseQuantity(Math.max(1, purchaseQuantity - 1))}
+                        disabled={isProcessing}
+                        className="text-gray-400 hover:text-white transition-colors p-1"
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span className="font-black text-white text-base min-w-[20px] text-center">{purchaseQuantity}</span>
+                      <button 
+                        onClick={() => setPurchaseQuantity(Math.min(25, purchaseQuantity + 1))}
+                        disabled={isProcessing}
+                        className="text-gray-400 hover:text-white transition-colors p-1"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={executeStripeCheckout}
+                  disabled={isProcessing}
+                  className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-[#f5a623] to-[#c30b16] shadow-[0_0_15px_rgba(245,166,35,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+                >
+                  <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs">
+                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : `Checkout ($${22 * purchaseQuantity})`}
+                  </div>
+                </button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* Confirm Join League Modal */}
       {confirmingLeague && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
            <div className="bg-[#151515] p-8 rounded-3xl border border-gray-800 text-center text-white shadow-2xl w-full max-w-md relative overflow-hidden">
@@ -214,55 +287,26 @@ function PublicPageContent() {
                 </>
               ) : (
                 <div className="flex flex-col gap-3 mt-2">
-                  <div className="bg-[#111] border border-[#1b75bb]/30 p-4 rounded-xl text-left mb-2 shadow-inner">
-                    <p className="text-sm text-gray-300 leading-relaxed">
-                      <strong className="text-white block mb-1">Need tickets?</strong> 
-                      Each entry is $22 ($2 goes directly to charity).
-                    </p>
-                    {userJoinedCount === 0 && (
-                      <p className="text-xs text-[#f5a623] font-bold mt-2 bg-[#f5a623]/10 p-2 rounded-lg border border-[#f5a623]/20">
-                        🎁 First-time buyers get a free 1-month trial of FSAN Pro+ automatically applied at checkout!
-                      </p>
-                    )}
-
-                    {/* Quantity Selector */}
-                    <div className="mt-4 pt-4 border-t border-gray-800 flex items-center justify-between">
-                      <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Select Quantity:</span>
-                      <div className="flex items-center gap-3 bg-[#181818] border border-gray-700 rounded-xl px-3 py-1.5">
-                        <button 
-                          onClick={() => setPurchaseQuantity(Math.max(1, purchaseQuantity - 1))}
-                          className="text-gray-400 hover:text-white transition-colors p-1"
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <span className="font-black text-white text-base min-w-[20px] text-center">{purchaseQuantity}</span>
-                        <button 
-                          onClick={() => setPurchaseQuantity(Math.min(10, purchaseQuantity + 1))}
-                          className="text-gray-400 hover:text-white transition-colors p-1"
-                        >
-                          <Plus size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
+                  <p className="text-sm text-gray-300 leading-relaxed mb-4">
+                    You need a Draft Ticket to join this league. 
+                  </p>
                   <button 
-                    onClick={handlePurchaseExtraEntry}
+                    onClick={() => {
+                      setConfirmingLeague(null);
+                      setShowPurchaseModal(true);
+                    }}
                     disabled={isProcessing}
                     className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-[#f5a623] to-[#c30b16] shadow-[0_0_15px_rgba(245,166,35,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
                   >
                     <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs">
-                      {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : `Purchase ${purchaseQuantity} Ticket${purchaseQuantity > 1 ? 's' : ''} ($${22 * purchaseQuantity})`}
+                      Get Tickets
                     </div>
                   </button>
                 </div>
               )}
 
               <button 
-                onClick={() => {
-                  setConfirmingLeague(null);
-                  setPurchaseQuantity(1);
-                }} 
+                onClick={() => setConfirmingLeague(null)} 
                 disabled={isProcessing}
                 className="w-full mt-3 px-6 py-3 bg-transparent hover:bg-gray-800 transition-colors text-gray-400 hover:text-white font-bold uppercase tracking-widest text-xs rounded-xl"
               >
