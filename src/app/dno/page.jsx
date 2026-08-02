@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
-// ADDED HeartHandshake to the imports below!
 import { MonitorSmartphone, Trophy, BookOpen, Handshake, ListOrdered, HeartHandshake, Loader2, Users, Plus, Minus, X, ShoppingCart } from 'lucide-react';
 
 // Importing DNO components
@@ -354,13 +353,13 @@ function PublicPageContent() {
       <main className="flex-1 w-full pb-24">
         
         {/* Hero Banner */}
-        <div className="relative w-full h-[320px] md:h-[450px] flex items-end overflow-hidden mb-10 shadow-2xl bg-[#0a0a0a]">
+        <div className="relative w-full min-h-[400px] md:min-h-[450px] flex items-end overflow-hidden mb-10 shadow-2xl bg-[#0a0a0a]">
           <div className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-60" style={{ backgroundImage: `url('https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Background.webp')` }} />
           <img src="https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp" alt="Draft Night Out Logo" className="absolute -right-10 md:right-10 top-1/2 -translate-y-1/2 w-[280px] md:w-[550px] h-auto object-contain opacity-20 md:opacity-40 z-0 pointer-events-none mix-blend-plus-lighter drop-shadow-2xl" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/40 to-transparent z-0" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#09090b]/90 via-[#09090b]/60 to-transparent z-0 md:w-2/3" />
           
-          <div className="relative z-10 w-full max-w-[1600px] mx-auto flex flex-col items-start justify-end h-full px-6 md:px-8 lg:px-10 pb-10 pt-24">
+          <div className="relative z-10 w-full max-w-[1600px] mx-auto flex flex-col items-start justify-end h-full px-6 md:px-8 lg:px-10 pb-8 md:pb-10 pt-32 md:pt-24">
             <span className="inline-block py-1.5 px-4 rounded-full bg-[#1b75bb]/20 border border-[#1b75bb]/30 text-[#f5a623] font-bold text-[10px] uppercase tracking-widest mb-4 backdrop-blur-sm">The Biggest Fantasy Hang of the Year</span>
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-2">Draft Night Out</h1>
             
