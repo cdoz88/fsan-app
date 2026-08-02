@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
+// ADDED HeartHandshake to the imports below!
 import { MonitorSmartphone, Trophy, BookOpen, Handshake, ListOrdered, HeartHandshake, Loader2, Users, Plus, Minus, X, ShoppingCart } from 'lucide-react';
 
 // Importing DNO components
@@ -36,6 +37,8 @@ function PublicPageContent() {
   const [confirmingLeague, setConfirmingLeague] = useState(null);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [purchaseQuantity, setPurchaseQuantity] = useState(1);
+  const [donationAmount, setDonationAmount] = useState(0);
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Sync tab state if URL parameter changes
@@ -129,6 +132,8 @@ function PublicPageContent() {
         body: JSON.stringify({
           type: purchaseType,
           quantity: purchaseQuantity,
+          donationAmount: donationAmount,
+          isAnonymous: isAnonymous,
           userId: session.user.id,
           email: session.user.email,
           returnUrl: `${window.location.origin}/dno/dashboard`
@@ -192,10 +197,10 @@ function PublicPageContent() {
 
       {/* Dedicated Ticket Purchase Modal */}
       {showPurchaseModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-           <div className="bg-[#151515] p-8 rounded-3xl border border-gray-800 text-center text-white shadow-2xl w-full max-w-md relative overflow-hidden">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
+           <div className="bg-[#151515] p-8 rounded-3xl border border-gray-800 text-center text-white shadow-2xl w-full max-w-md relative overflow-hidden my-auto">
               <button 
-                onClick={() => { setShowPurchaseModal(false); setPurchaseQuantity(1); }} 
+                onClick={() => { setShowPurchaseModal(false); setPurchaseQuantity(1); setDonationAmount(0); setIsAnonymous(false); }} 
                 className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors p-2"
                 disabled={isProcessing}
               >
@@ -241,6 +246,36 @@ function PublicPageContent() {
                       </button>
                     </div>
                   </div>
+
+                  {/* Optional Charity Donation UI */}
+                  <div className="mt-5 pt-4 border-t border-gray-800 text-left">
+                    <span className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-2">
+                      <HeartHandshake size={14} className="text-[#f5a623]" /> Optional Charity Donation:
+                    </span>
+                    <div className="flex gap-2 mb-3">
+                      {[0, 5, 10, 25].map(amt => (
+                        <button 
+                          key={amt} 
+                          onClick={() => setDonationAmount(amt)}
+                          disabled={isProcessing}
+                          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-colors border ${donationAmount === amt ? 'bg-gradient-to-r from-teal-400 to-[#1b75bb] border-transparent text-white' : 'bg-[#181818] border-gray-700 text-gray-400 hover:text-white hover:border-gray-500'}`}
+                        >
+                          {amt === 0 ? 'None' : `+$${amt}`}
+                        </button>
+                      ))}
+                    </div>
+                    {donationAmount > 0 && (
+                      <label className="flex items-center gap-2 cursor-pointer mt-1 group">
+                        <input 
+                          type="checkbox" 
+                          checked={isAnonymous} 
+                          onChange={(e) => setIsAnonymous(e.target.checked)} 
+                          className="rounded border-gray-700 bg-[#181818] text-[#1b75bb] focus:ring-[#1b75bb] focus:ring-offset-gray-900"
+                        />
+                        <span className="text-xs font-medium text-gray-500 group-hover:text-gray-300 transition-colors">Keep my donation anonymous on the Wall of Fame</span>
+                      </label>
+                    )}
+                  </div>
                 </div>
 
                 <button 
@@ -249,7 +284,7 @@ function PublicPageContent() {
                   className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-[#f5a623] to-[#c30b16] shadow-[0_0_15px_rgba(245,166,35,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
                 >
                   <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs">
-                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : `Checkout ($${22 * purchaseQuantity})`}
+                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : `Checkout ($${(22 * purchaseQuantity) + donationAmount})`}
                   </div>
                 </button>
               </div>
