@@ -212,14 +212,12 @@ function DashboardContent() {
     try {
       let dnoSleeperId = null;
 
+      // 1. Fetch DNO Meta Info & Handle Sleeper Sync
       try {
         const uRes = await fetch(`/api/scl?action=dno_get_user_data&user_id=${session.user.id}&t=${Date.now()}`);
         if (uRes.ok) {
           const uDataRaw = await uRes.json();
           const uData = uDataRaw.data || uDataRaw;
-
-          setTicketCount(uData.dno_tickets || 0);
-          setUserJoinedCount(uData.dno_joined_count || 0);
           dnoSleeperId = uData.dno_sleeper_id || uData.dno_sleeper_user_id || uData.sleeper_id || null;
           
           if (dnoSleeperId && !syncedSleeperUser) {
@@ -230,7 +228,22 @@ function DashboardContent() {
         console.warn("DNO User data fetch warning", e);
       }
 
-      // Also grab the live leaderboard so we can merge stats into the league cards
+      // 2. 🚀 NEW: Fetch Ticket Information using the same DNO Pool endpoint as the lobby
+      // This is crucial to run the Pro+ fallback logic natively in the WordPress API
+      try {
+        const poolRes = await fetch(`/api/scl?type=dno_pool&user_id=${session.user.id}&t=${Date.now()}`, { cache: 'no-store' });
+        if (poolRes.ok) {
+          const poolData = await poolRes.json();
+          const allotted = poolData.allotted_entries !== undefined ? poolData.allotted_entries : 0;
+          const joined = poolData.user_joined_count || 0;
+          setTicketCount(Math.max(0, allotted - joined));
+          setUserJoinedCount(joined);
+        }
+      } catch (e) {
+        console.warn("DNO Ticket fetch warning", e);
+      }
+
+      // 3. Fetch Leaderboard Data to map to leagues
       try {
         const lbRes = await fetch(`/api/scl?action=dno_get_leaderboard_data&t=${Date.now()}`);
         const lbJson = await lbRes.json();
