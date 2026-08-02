@@ -16,7 +16,10 @@ export async function POST(req) {
     }
 
     const body = await req.json();
-    const { priceId, type, returnUrl } = body;
+    const { priceId, type, returnUrl, quantity = 1 } = body;
+
+    // Enforce a valid integer quantity (at least 1)
+    const ticketQty = Math.max(1, parseInt(quantity, 10) || 1);
 
     let line_items = [];
     let mode = 'payment';
@@ -24,24 +27,21 @@ export async function POST(req) {
     let purchaseType = 'subscription';
 
     if (type === 'dno_bundle') {
-      // 🛒 FIRST TICKET MIXED CART: $22 Ticket + Recurring $7.99 Subscription with Free Trial
+      // 🛒 FIRST TICKET MIXED CART: N x $22 Tickets + 1 x Recurring $7.99 Subscription with Free Trial
       mode = 'subscription'; 
       purchaseType = 'dno_ticket_bundle';
       
-      // Live $22 Initial Ticket Price ID
       const dnoBundlePriceId = 'price_1Tze2DBaSOn1la2fjK7ediju';
-
-      // Your actual Pro+ Monthly Price ID ($7.99/mo)
       const proPlusMonthlyPriceId = process.env.STRIPE_PRO_PLUS_MONTHLY_PRICE_ID || 'price_1RsVe1BaSOn1la2fTvpGPNIr';
 
       line_items = [
         {
           price: dnoBundlePriceId,
-          quantity: 1, // Billed immediately
+          quantity: ticketQty, // Billed N times immediately
         },
         {
           price: proPlusMonthlyPriceId,
-          quantity: 1, // Billed after the 30-day trial
+          quantity: 1, // Billed once after the 30-day trial
         }
       ];
 
@@ -51,17 +51,16 @@ export async function POST(req) {
       };
 
     } else if (type === 'dno_extra_ticket') {
-      // 🎟 EXTRA TICKET CART: Just the $22 Ticket, NO Subscription
+      // 🎟 EXTRA TICKET CART: Just N x $22 Tickets, NO Subscription
       mode = 'payment';
       purchaseType = 'dno_extra_ticket';
       
-      // Live $22 Extra Ticket Price ID
       const dnoExtraTicketPriceId = 'price_1TzeUyBaSOn1la2fhgegZYeC';
 
       line_items = [
         {
           price: dnoExtraTicketPriceId,
-          quantity: 1,
+          quantity: ticketQty,
         }
       ];
 
@@ -103,7 +102,8 @@ export async function POST(req) {
       client_reference_id: String(session.user.id), 
       metadata: {
         wpUserId: String(session.user.id), 
-        purchaseType: purchaseType
+        purchaseType: purchaseType,
+        ticketQuantity: String(ticketQty) // Pass quantity to Webhook
       }
     };
 

@@ -10,7 +10,7 @@ const priceTierMapping = {
   'price_1TH5HsBaSOn1la2fuOcXj2nq': 'pro',
   'price_1TH5IaBaSOn1la2fS8s0HMPv': 'pro-plus',
   'price_1TH5J9BaSOn1la2f861yf4yB': 'pro-plus',
-  'price_1RsVe1BaSOn1la2fTvpGPNIr': 'pro-plus' // Added your new $7.99 Pro+ ID here just in case!
+  'price_1RsVe1BaSOn1la2fTvpGPNIr': 'pro-plus'
 };
 
 export async function POST(req) {
@@ -45,18 +45,19 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Missing WP User ID' }, { status: 400 });
       }
 
-      // Get the WordPress User ID we secretly passed during checkout
+      // Get the WordPress User ID and Quantity passed during checkout
       const wpUserId = parseInt(session.metadata.wpUserId, 10);
       const purchaseType = session.metadata.purchaseType;
+      const ticketQuantity = parseInt(session.metadata.ticketQuantity || '1', 10);
 
-      // 🚀 LOGIC 1: Handle DNO Ticket Purchases (Both Bundle and Extra Tickets)
+      // 🚀 LOGIC 1: Handle DNO Ticket Purchases (Bulk or Single)
       if (purchaseType === 'dno_extra_ticket' || purchaseType === 'dno_ticket_bundle') {
         const query = `
           mutation AddDnoTicket {
             addDnoTicket(
               input: {
                 userId: ${wpUserId}, 
-                amount: 1, 
+                amount: ${ticketQuantity}, 
                 secret: "fsan_super_secret_webhook_key_2026"
               }
             ) {
@@ -74,22 +75,20 @@ export async function POST(req) {
         const wpJson = await wpRes.json();
 
         if (wpJson.errors) {
-          console.error("WordPress failed to add DNO ticket:", wpJson.errors);
+          console.error("WordPress failed to add DNO tickets:", wpJson.errors);
         } else {
-          console.log(`Successfully added 1 DNO ticket to WP User ${wpUserId}`);
+          console.log(`Successfully added ${ticketQuantity} DNO ticket(s) to WP User ${wpUserId}`);
         }
       }
 
-      // 🚀 LOGIC 2: Handle Subscription Upgrades (Both Standard Subs and the DNO Bundle Trial)
+      // 🚀 LOGIC 2: Handle Subscription Upgrades
       if (purchaseType === 'subscription' || purchaseType === 'dno_ticket_bundle') {
         
         let assignedTier = 'subscriber';
 
         if (purchaseType === 'dno_ticket_bundle') {
-           // We know for a fact the bundle includes Pro+
            assignedTier = 'pro-plus';
         } else {
-           // Standard subscription logic: figure out what they bought
            const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
            const purchasedPriceId = lineItems.data[0]?.price?.id;
            assignedTier = priceTierMapping[purchasedPriceId] || 'subscriber';

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { MonitorSmartphone, Trophy, BookOpen, Handshake, ListOrdered, HeartHandshake, Loader2, Users } from 'lucide-react';
+import { MonitorSmartphone, Trophy, BookOpen, Handshake, ListOrdered, HeartHandshake, Loader2, Users, Plus, Minus } from 'lucide-react';
 
 // Importing DNO components
 import DNOHeader from '../../components/dno/DNOHeader';
@@ -34,6 +34,7 @@ function PublicPageContent() {
   const [ticketsAvailable, setTicketsAvailable] = useState(0);
   const [userJoinedCount, setUserJoinedCount] = useState(0);
   const [confirmingLeague, setConfirmingLeague] = useState(null);
+  const [purchaseQuantity, setPurchaseQuantity] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Sync tab state if URL parameter changes
@@ -64,7 +65,6 @@ function PublicPageContent() {
       setLeagues(data.leagues || []);
       
       if (session?.user?.id) {
-        // Enforce fallback to 0 instead of 1
         const allotted = data.allotted_entries !== undefined ? data.allotted_entries : 0;
         const joined = data.user_joined_count || 0;
         setTicketsAvailable(Math.max(0, allotted - joined));
@@ -114,7 +114,6 @@ function PublicPageContent() {
     }
     setIsProcessing(true);
     try {
-      // Determine if they are buying the initial bundle or an extra ticket
       const isFirstTicket = ticketsAvailable <= 0 && userJoinedCount === 0;
       const purchaseType = isFirstTicket ? 'dno_bundle' : 'dno_extra_ticket';
 
@@ -123,6 +122,7 @@ function PublicPageContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: purchaseType,
+          quantity: purchaseQuantity,
           userId: session.user.id,
           email: session.user.email,
           returnUrl: `${window.location.origin}/dno/dashboard`
@@ -216,29 +216,53 @@ function PublicPageContent() {
                 <div className="flex flex-col gap-3 mt-2">
                   <div className="bg-[#111] border border-[#1b75bb]/30 p-4 rounded-xl text-left mb-2 shadow-inner">
                     <p className="text-sm text-gray-300 leading-relaxed">
-                      <strong className="text-white block mb-1">Need a ticket?</strong> 
-                      Each entry is $22 (with $2 going directly to charity).
+                      <strong className="text-white block mb-1">Need tickets?</strong> 
+                      Each entry is $22 ($2 goes directly to charity).
                     </p>
                     {userJoinedCount === 0 && (
-                      <p className="text-xs text-[#f5a623] font-bold mt-3 bg-[#f5a623]/10 p-2 rounded-lg inline-block border border-[#f5a623]/20">
+                      <p className="text-xs text-[#f5a623] font-bold mt-2 bg-[#f5a623]/10 p-2 rounded-lg border border-[#f5a623]/20">
                         🎁 First-time buyers get a free 1-month trial of FSAN Pro+ automatically applied at checkout!
                       </p>
                     )}
+
+                    {/* Quantity Selector */}
+                    <div className="mt-4 pt-4 border-t border-gray-800 flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Select Quantity:</span>
+                      <div className="flex items-center gap-3 bg-[#181818] border border-gray-700 rounded-xl px-3 py-1.5">
+                        <button 
+                          onClick={() => setPurchaseQuantity(Math.max(1, purchaseQuantity - 1))}
+                          className="text-gray-400 hover:text-white transition-colors p-1"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span className="font-black text-white text-base min-w-[20px] text-center">{purchaseQuantity}</span>
+                        <button 
+                          onClick={() => setPurchaseQuantity(Math.min(10, purchaseQuantity + 1))}
+                          className="text-gray-400 hover:text-white transition-colors p-1"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
+
                   <button 
                     onClick={handlePurchaseExtraEntry}
                     disabled={isProcessing}
                     className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-[#f5a623] to-[#c30b16] shadow-[0_0_15px_rgba(245,166,35,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
                   >
                     <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs">
-                      {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Purchase Draft Ticket ($22)'}
+                      {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : `Purchase ${purchaseQuantity} Ticket${purchaseQuantity > 1 ? 's' : ''} ($${22 * purchaseQuantity})`}
                     </div>
                   </button>
                 </div>
               )}
 
               <button 
-                onClick={() => setConfirmingLeague(null)} 
+                onClick={() => {
+                  setConfirmingLeague(null);
+                  setPurchaseQuantity(1);
+                }} 
                 disabled={isProcessing}
                 className="w-full mt-3 px-6 py-3 bg-transparent hover:bg-gray-800 transition-colors text-gray-400 hover:text-white font-bold uppercase tracking-widest text-xs rounded-xl"
               >
