@@ -40,7 +40,7 @@ export default function CharityTab() {
         <div>
           <h5 className="text-xs font-black text-[#1b75bb] uppercase tracking-widest mb-1">Playing for a Purpose</h5>
           <p className="text-sm text-gray-300 leading-relaxed">
-            Draft Night Out isn't just about winning a championship—it's about giving back. A portion of every online draft entry will be directly donated to Mission 22 to support Veterans and their families.
+            Draft Night Out isn't just about winning a championship—it's about giving back. A portion of every draft entry will be directly donated to Mission 22 to support Veterans and their families.
           </p>
         </div>
       </div>
@@ -117,7 +117,7 @@ export default function CharityTab() {
          <div className="bg-gradient-to-br from-[#151515] to-[#111] border border-gray-800 rounded-2xl p-6 flex items-center justify-between shadow-lg group relative overflow-hidden">
             <div className="absolute inset-0 bg-[#1b75bb]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <div className="relative z-10">
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Total Online Players</p>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Total Players</p>
               <div className="text-3xl font-black text-white drop-shadow-sm">
                 {isLoading ? <Loader2 size={24} className="animate-spin text-gray-600 mt-1" /> : players.toLocaleString()}
               </div>
