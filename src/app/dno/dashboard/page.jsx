@@ -32,7 +32,7 @@ const LitchSVG = () => (
 );
 const Club200SVG = () => (
   <svg viewBox="0 0 4183.08 3651.57" className="w-5 h-5 shrink-0 drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
-    <path d="m1185.2,2637.54c-20.07,22.98-1022.68,270.18-1074.5,246.53s-97.39-94.54-104.6-154.26c-11.07-26.04-3.69-85.66-3.69-85.66,23.68-48.92,44.28-87.41,61.82-115.41,3.47-5.04,57.86-94.71,163.19-268.99,71.7-119.89,136.79-218.48,195.25-295.72,24.96-38.98,66.46-116.78,124.54-233.43,80.65-197.01,132.39-329.89,155.23-398.61,44.07-133.99,71.52-262.29,82.32-384.9,5.55-63.08,2.59-105.42-8.85-127.02-11.44-21.6-38.24-35.12-80.38-40.63,0,0-93.63,12.05-129.38,61.11s-285.69,311.06-310.93,311.07-77.96-52.76-91.88-105.02c-25.18-73.94,26.77-167.96,27.24-173.3,25.23-27.32,53.12-62.91,83.68-106.77,49.59-54.73,101.66-108.33,156.24-160.81,83.21-79.51,146.25-130.38,189.11-152.57,36.12-19.18,82.61-26.28,139.44-21.28,51.27,4.51,99.59,40.12,144.97,106.75,54.53,80,78.71,172.1,72.56,276.31,1.48,46.72,2.95,71.45,4.44,74.26.49-.83.83-2.13.99-3.92l-8.91,101.26c-1.53,12.43-4.24,30.98-8.13,55.7-3.94,20.24-8,44.52-12.21,72.79-20.76,157.53-70.09,341.19-147.97,550.99-15.23,40.77-63.89,158.25-145.99,352.43-35.97,51.45-126.53,246.25-147.53,289.16-31.64,46.48-70.11,109.34-115.42,188.61l9.32,11.55,490.85-95.1s153.05,3.95,221.33,61.09c33.96,28.43,66.45,49.73,79.01,92.92-1.17,13.33,8.9,47.93-11.17,70.91Z" style={{fill:"#e00511"}}/>
+    <path d="m1185.2,2637.54c-20.07,22.98-1022.68,270.18-1074.5,246.53s-97.39-94.54-104.6-154.26c-11.07-26.04-3.69-85.66-3.69-85.66,23.68-48.92,44.28-87.41,61.82-115.41,3.47-5.04,57.86-94.71,163.19-268.99,71.7-119.89,136.79-218.48,195.25-295.72,24.96-38.98,66.46-116.78,124.54-233.43,80.65-197.01,132.39-329.89,155.23-398.61,44.07-133.99,71.52-262.29,82.32-384.9,5.55-63.08,2.59-105.42-8.85-127.02-11.44-21.6-38.24-35.12-80.38-40.63,0,0-93.63,12.05-129.38,61.11s-285.69,311.06-310.93,311.07-77.96-52.76-91.88-105.02c-25.18-73.94,26.77-167.96,27.24-173.3,25.23-27.32,53.12-62.91,83.68-106.77,49.59-54.73,101.66-108.33,156.24-160.81,83.21-79.51,146.25-130.38,189.11-152.57,36.12-19.18,82.61-26.28,139.44-21.28,51.27,4.51,99.59,40.12,144.97,106.75,54.53,80,78.71,72.56,276.31,1.48,46.72,2.95,71.45,4.44,74.26.49-.83.83-2.13.99-3.92l-8.91,101.26c-1.53,12.43-4.24,30.98-8.13,55.7-3.94,20.24-8,44.52-12.21,72.79-20.76,157.53-70.09,341.19-147.97,550.99-15.23,40.77-63.89,158.25-145.99,352.43-35.97,51.45-126.53,246.25-147.53,289.16-31.64,46.48-70.11,109.34-115.42,188.61l9.32,11.55,490.85-95.1s153.05,3.95,221.33,61.09c33.96,28.43,66.45,49.73,79.01,92.92-1.17,13.33,8.9,47.93-11.17,70.91Z" style={{fill:"#e00511"}}/>
     <path d="m1661.57,2589.62c310.82,50.68,555.49-198.56,676.61-458.09,79.93-175.31,140.06-358.93,183.43-546.74,73.14-330.32,102.07-679.13-6.47-1008.5-73.65-189.64-346.56-91.44-283.51,101.09,147.18,449.47,52.24,1017.33-170.28,1428.28-41.23,76.15-90.11,150.7-159.8,202.09-103.26,76.13-247.86,77.72-349.98-1.44-84.86-65.87-136.97-165.43-160.55-269.47-21.09-89.1-25.51-186.58-23.15-287.03,7.12-265.97,41.59-529.63,141.31-774.79,124.01-304.54,363.94-585.63,692.34-668.92,58.74-14.52,41.94-99.47-17.87-90.37,0,0-40.73,7.76-40.73,7.76-27.68,4.19-63.65,15.9-90.64,23.07-22.26,8.46-46.46,15.89-68.38,25.14-102.37,42.34-197.06,104.01-280.77,176.15-283.13,245.75-430.45,609.62-489.88,972.48-38.61,268.44-81.66,572.51,32.17,831.19,75.6,169.33,227.75,311.78,416.14,338.1Z" style={{fill:"#e00511"}}/>
     <path d="m3257.87,2374.59c310.82,50.68,555.49-198.56,676.61-458.09,79.93-175.31,140.06-358.93,183.43-546.74,73.14-330.32,102.07-679.13-6.47-1008.5-73.65-189.64-346.56-91.44-283.51,101.09,147.18,449.47,52.24,1017.33-170.28,1428.28-41.23,76.15-90.11,150.7-159.8,202.09-103.26,76.13-247.86,77.72-349.98-1.44-84.86-65.87-136.97-165.43-160.55-269.47-21.09-89.1-25.51-186.58-23.15-287.03,7.12-265.97,41.59-529.63,141.31-774.79,124.01-304.54,363.94-585.63,692.34-668.92,58.74-14.52,41.94-99.47-17.87-90.37,0,0-40.73,7.76-40.73,7.76-27.68,4.19-63.65,15.9-90.64,23.07-22.26,8.46-46.46,15.89-68.38,25.14-102.37,42.34-197.06,104.01-280.77,176.15-283.13,245.75-430.45,609.62-489.88,972.48-38.61,268.44-81.66,572.51,32.17,831.19,75.6,169.33,227.75,311.78,416.14,338.1Z" style={{fill:"#e00511"}}/>
     <path d="m2275.73,2797.71c-489.76,46.4-964.56,123.96-1466.41,272.78-41.45,12.43-66.62,50.42-57.29,89.52,10.19,42.72,57.67,70.65,106.05,62.39,0,0,340.17-58.1,340.17-58.1,339.32-57.22,680.38-107.5,1023.18-147.14,169.38-19.43,345.25-37.18,515.59-50.73,287.32-24.03,576.23-38.67,865.35-50.63,40.99-1.57,74.56-30.04,76.88-66.97,2.51-39.78-32.15-74.35-77.4-77.22-441.56-27.13-887.21-14.66-1326.12,26.1Z" style={{fill:"#e00511"}}/>
@@ -503,7 +503,7 @@ function DashboardContent() {
                 <div className="bg-[#111] border border-[#1b75bb]/30 p-4 rounded-xl text-left mb-2 shadow-inner">
                   <p className="text-sm text-gray-300 leading-relaxed">
                     <strong className="text-white block mb-1">Standard Entry</strong> 
-                    Each ticket is $22 ($2 goes directly to charity).
+                    Each ticket is $22 ($4 goes directly to charity).
                   </p>
                   {ticketCount <= 0 && userJoinedCount === 0 && (
                     <p className="text-xs text-[#f5a623] font-bold mt-3 bg-[#f5a623]/10 p-2 rounded-lg inline-block border border-[#f5a623]/20">
@@ -922,7 +922,7 @@ function DashboardContent() {
                       
                       <div className="flex flex-col gap-2 w-full mt-auto">
                         <a 
-                          href={`https://sleeper.com/leagues/${league.sleeper_id}`} 
+                          href={`https://sleeper.com/leagues/${league.id}`} 
                           target="_blank" 
                           rel="noreferrer"
                           className="w-full text-center bg-gray-800 hover:bg-gray-700 text-white font-bold uppercase tracking-widest text-[10px] md:text-xs py-3 rounded-xl transition-colors"
@@ -961,12 +961,12 @@ function DashboardContent() {
           <GraphicTab syncedSleeperUser={syncedSleeperUser} />
         )}
 
-        {/* TAB 3: PERKS (SWAPPED ORDER) */}
+        {/* TAB 3: PERKS */}
         {activeTab === 'perks' && (
           <div className="p-6 md:p-8 animate-in fade-in duration-300">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               
-              {/* Card 1: 1 Free Month of FSAN Pro+ */}
+              {/* Card 1: 1 Free Month of FSAN Pro+ ($7.99 Value) */}
               <div className="bg-gradient-to-br from-[#111] to-[#151515] border border-[#1b75bb]/40 rounded-3xl p-6 md:p-8 shadow-[0_0_30px_rgba(27,117,187,0.15)] text-center relative overflow-hidden flex flex-col justify-between">
                 <div className="relative z-10 flex flex-col h-full justify-between items-center">
                   <div>
@@ -974,14 +974,17 @@ function DashboardContent() {
                       <img src="/images/dno/FSAN_Logo.png" alt="FSAN" className="w-full h-full object-contain" />
                     </div>
                     
-                    <span className="text-[#1b75bb] font-bold uppercase tracking-widest text-xs mb-2 block">
+                    <span className="text-[#1b75bb] font-bold uppercase tracking-widest text-xs mb-1 block">
                       Exclusive DNO Perk
+                    </span>
+                    <span className="inline-block bg-[#1b75bb]/20 border border-[#1b75bb]/40 text-[#27d7ff] text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md mb-3">
+                      $7.99 Value
                     </span>
                     <h3 className="text-2xl font-black text-white uppercase italic tracking-tight mb-3">
                       1 Free Month of FSAN Pro+
                     </h3>
                     <p className="text-gray-400 text-sm leading-relaxed mb-4">
-                      As a Draft Night Out participant, your entry includes 1 free month of access to FSAN’s premium rankings, trade calculator, trade value charts, and real-time draft advice.
+                      As a Draft Night Out participant, your entry includes 1 free month of access to FSAN's premium rankings, trade calculator, trade value charts, and real-time draft advice.
                     </p>
                     
                     {/* Shared Credentials Call-Out */}
@@ -1003,7 +1006,7 @@ function DashboardContent() {
                     <a 
                       href="https://fsan.com/dno-welcome" 
                       target="_blank" 
-                      rel="noreferrer" 
+                      rel="noreferrer"
                       className="w-full inline-flex items-center justify-center gap-2 bg-[#1b75bb] hover:bg-teal-500 text-white font-black uppercase tracking-widest text-xs px-8 py-4 rounded-xl transition-all shadow-lg hover:scale-[1.02]"
                     >
                       Access FSAN Pro+ <ExternalLink size={16} />
@@ -1012,7 +1015,7 @@ function DashboardContent() {
                 </div>
               </div>
 
-              {/* Card 2: Football Rookie Draft Guide */}
+              {/* Card 2: Football Rookie Draft Guide ($9.99 Value) */}
               <div className="bg-gradient-to-br from-[#301012] to-[#111] border border-red-900/50 rounded-3xl p-6 md:p-8 relative overflow-hidden group hover:border-red-700 transition-all shadow-xl flex flex-col justify-between">
                 <div className="absolute -right-4 -top-4 text-red-500/10 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500">
                   <Book size={140} />
@@ -1022,8 +1025,11 @@ function DashboardContent() {
                     <div className="w-14 h-14 rounded-2xl bg-red-900/20 border border-red-500/30 flex items-center justify-center mb-6 shadow-inner text-red-500">
                       <Book className="w-7 h-7" />
                     </div>
-                    <span className="text-red-400 font-bold uppercase tracking-widest text-xs mb-2 block">
+                    <span className="text-red-400 font-bold uppercase tracking-widest text-xs mb-1 block">
                       Exclusive DNO Perk
+                    </span>
+                    <span className="inline-block bg-red-500/20 border border-red-500/40 text-red-400 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md mb-3">
+                      $9.99 Value
                     </span>
                     <h3 className="text-2xl font-black text-white uppercase italic tracking-tight mb-3">
                       Football Rookie Draft Guide
@@ -1045,7 +1051,7 @@ function DashboardContent() {
                     <a 
                       href={rookieGuideUrl} 
                       target="_blank" 
-                      rel="noopener noreferrer" 
+                      rel="noreferrer"
                       className="w-full bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest text-xs py-4 rounded-xl transition-all shadow-lg hover:scale-[1.02] flex items-center justify-center gap-2"
                     >
                       <Download size={16} /> Download PDF
@@ -1061,7 +1067,6 @@ function DashboardContent() {
             </div>
           </div>
         )}
-
       </div>
 
     </main>

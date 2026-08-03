@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { Trophy, Medal, Gift, Star, Crown, Sparkles } from 'lucide-react';
+import { Trophy, Medal, Gift, Star, Crown, Sparkles, Book, Sparkle } from 'lucide-react';
 
 export default function PrizesTab() {
   return (
@@ -12,13 +12,39 @@ export default function PrizesTab() {
         <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
       </div>
 
+      {/* Instant Perks Banner for EVERY Participant */}
+      <div className="bg-gradient-to-r from-[#1b75bb]/20 via-[#111] to-[#c30b16]/20 border border-[#1b75bb]/40 rounded-3xl p-6 md:p-8 relative overflow-hidden shadow-2xl">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+          <div className="flex items-center gap-5 text-center md:text-left">
+            <div className="w-16 h-16 bg-gradient-to-br from-[#1b75bb] to-[#c30b16] rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg">
+              <Gift size={32} />
+            </div>
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f5a623]/10 border border-[#f5a623]/30 text-[#f5a623] text-[10px] font-black uppercase tracking-widest mb-2">
+                <Sparkles size={12} /> Instant Bonus ($18 Total Value)
+              </div>
+              <h3 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tighter">
+                Every Ticket Includes Instant Perks
+              </h3>
+              <p className="text-xs md:text-sm text-gray-300 mt-1 max-w-xl leading-relaxed">
+                You don't even have to win your league to walk away with value. Every DNO entry instantly unlocks <strong>1 Free Month of FSAN Pro+ ($7.99 value)</strong> and the <strong>FSAN Football Rookie Draft Guide ($9.99 value)</strong>!
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0 w-full md:w-auto">
+            <span className="bg-[#111] border border-gray-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl text-center shadow-inner">
+              ⚡ 1 Mo. Pro+ Access <span className="text-[#27d7ff]">($7.99)</span>
+            </span>
+            <span className="bg-[#111] border border-gray-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl text-center shadow-inner">
+              📘 Rookie Draft Guide <span className="text-red-400">($9.99)</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* 1. League Champion (Mini Belt) */}
       <div className="relative flex flex-col md:flex-row items-center gap-8 md:gap-12 bg-gradient-to-br from-[#151515] to-[#0a0a0a] border border-gray-800 rounded-3xl p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden group hover:border-blue-900/50 transition-colors duration-500">
-        
-        {/* Subtle Background Glow for the Card */}
         <div className="absolute inset-0 bg-gradient-to-r from-blue-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-        
-        {/* Image Section - Tilted & Glowing */}
         <div className="w-full md:w-1/2 relative flex justify-center items-center py-10 md:py-0">
           <div className="absolute w-[250px] h-[250px] bg-blue-500/20 blur-[80px] rounded-full group-hover:bg-blue-500/40 group-hover:scale-125 transition-all duration-700 pointer-events-none"></div>
           <img 
@@ -27,8 +53,6 @@ export default function PrizesTab() {
             className="relative z-10 w-full max-w-[320px] object-contain -rotate-6 group-hover:rotate-2 group-hover:scale-110 transition-transform duration-500 ease-out drop-shadow-[0_20px_30px_rgba(0,0,0,0.6)]"
           />
         </div>
-
-        {/* Text Section */}
         <div className="w-full md:w-1/2 relative z-10 text-center md:text-left">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-900/30 text-blue-400 border border-blue-500/30 rounded-2xl mb-6 shadow-inner">
             <Medal size={28} />
@@ -45,13 +69,9 @@ export default function PrizesTab() {
         </div>
       </div>
 
-      {/* 2. Season Champion (Full Belt) - Reversed Layout */}
+      {/* 2. Season Champion (Full Belt) */}
       <div className="relative flex flex-col md:flex-row-reverse items-center gap-8 md:gap-12 bg-gradient-to-bl from-[#1a1500] to-[#0a0a0a] border border-yellow-900/30 rounded-3xl p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden group hover:border-yellow-600/50 transition-colors duration-500">
-        
-        {/* Subtle Background Glow for the Card */}
         <div className="absolute inset-0 bg-gradient-to-l from-yellow-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-        
-        {/* Image Section - Tilted & Glowing */}
         <div className="w-full md:w-1/2 relative flex justify-center items-center py-10 md:py-0">
           <div className="absolute w-[300px] h-[300px] bg-yellow-500/20 blur-[100px] rounded-full group-hover:bg-yellow-400/30 group-hover:scale-125 transition-all duration-700 pointer-events-none"></div>
           <img 
@@ -60,8 +80,6 @@ export default function PrizesTab() {
             className="relative z-10 w-full max-w-[400px] object-contain rotate-3 group-hover:-rotate-2 group-hover:scale-110 transition-transform duration-500 ease-out drop-shadow-[0_25px_35px_rgba(0,0,0,0.8)]"
           />
         </div>
-
-        {/* Text Section */}
         <div className="w-full md:w-1/2 relative z-10 text-center md:text-left">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-yellow-900/30 text-yellow-400 border border-yellow-500/30 rounded-2xl mb-6 shadow-inner">
             <Crown size={28} />
@@ -80,11 +98,7 @@ export default function PrizesTab() {
 
       {/* 3. Grand Prize Bundle */}
       <div id="grand-prize" className="relative flex flex-col md:flex-row items-center gap-8 md:gap-12 bg-gradient-to-br from-[#150a1a] to-[#0a0a0a] border border-purple-900/30 rounded-3xl p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden group hover:border-purple-600/50 transition-colors duration-500">
-        
-        {/* Subtle Background Glow for the Card */}
         <div className="absolute inset-0 bg-gradient-to-r from-purple-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-        
-        {/* Image Section - Tilted & Glowing */}
         <div className="w-full md:w-1/2 relative flex justify-center items-center py-10 md:py-0">
           <div className="absolute w-[280px] h-[280px] bg-purple-600/20 blur-[90px] rounded-full group-hover:bg-purple-500/30 group-hover:scale-125 transition-all duration-700 pointer-events-none"></div>
           <img 
@@ -93,8 +107,6 @@ export default function PrizesTab() {
             className="relative z-10 w-full max-w-[350px] object-contain -rotate-3 group-hover:rotate-3 group-hover:scale-110 transition-transform duration-500 ease-out drop-shadow-[0_20px_40px_rgba(0,0,0,0.7)]"
           />
         </div>
-
-        {/* Text Section */}
         <div className="w-full md:w-1/2 relative z-10 text-center md:text-left">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-purple-900/30 text-purple-400 border border-purple-500/30 rounded-2xl mb-6 shadow-inner">
             <Gift size={28} />

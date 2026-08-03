@@ -159,40 +159,41 @@ export default function DraftsTab({
           </div>
 
           {/* Ticket Balance & Registration Banner */}
-          <div className="mb-8 p-[2px] rounded-2xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(27,117,187,0.15)] relative z-10">
-            <div className="flex flex-col sm:flex-row items-center justify-between bg-[#151515] p-5 px-6 rounded-[14px] gap-4 w-full h-full">
-              {isProPlus ? (
-                <>
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-[#1b75bb]/20 flex items-center justify-center shrink-0 border border-[#1b75bb]/30"><Ticket size={20} className="text-[#1b75bb]" /></div>
-                    <h3 className="text-white text-lg md:text-xl font-black uppercase tracking-wide italic text-center sm:text-left">
-                      You have <span className="text-[#f5a623]">{ticketsAvailable}</span> online draft ticket{ticketsAvailable !== 1 ? 's' : ''} available
-                    </h3>
-                  </div>
-                  <button onClick={handlePurchaseExtraEntry} className="shrink-0 w-full sm:w-auto bg-teal-600 hover:bg-teal-500 transition-colors text-white text-xs font-black uppercase tracking-widest px-6 py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:-translate-y-0.5">
-                    <Ticket size={16} /> Buy More Tickets
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-[#1b75bb]/20 flex items-center justify-center shrink-0 border border-[#1b75bb]/30">
-                      <UserPlus size={20} className="text-[#1b75bb]" />
-                    </div>
-                    <h3 className="text-white text-lg md:text-xl font-black uppercase tracking-wide italic text-center sm:text-left">
-                      Register or Log In to secure your DNO Draft Spot
-                    </h3>
-                  </div>
-                  <button 
-                    onClick={() => setConfirmingLeague({ mock: true })} 
-                    className="shrink-0 w-full sm:w-auto bg-[#1b75bb] hover:bg-[#155d96] transition-colors text-white text-xs font-black uppercase tracking-widest px-8 py-3.5 rounded-xl shadow-lg hover:-translate-y-0.5 flex items-center justify-center gap-2"
-                  >
-                    Get Started
-                  </button>
-                </>
-              )}
+          {isProPlus ? (
+            <div className="mb-8 p-[2px] rounded-2xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(27,117,187,0.15)] relative z-10">
+              <div className="flex flex-col sm:flex-row items-center justify-between bg-[#151515] p-5 px-6 rounded-[14px] gap-4 w-full h-full">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-[#1b75bb]/20 flex items-center justify-center shrink-0 border border-[#1b75bb]/30"><Ticket size={20} className="text-[#1b75bb]" /></div>
+                  <h3 className="text-white text-lg md:text-xl font-black uppercase tracking-wide italic text-center sm:text-left">
+                    You have <span className="text-[#f5a623]">{ticketsAvailable}</span> online draft ticket{ticketsAvailable !== 1 ? 's' : ''} available
+                  </h3>
+                </div>
+                <button onClick={handlePurchaseExtraEntry} className="shrink-0 w-full sm:w-auto bg-teal-600 hover:bg-teal-500 transition-colors text-white text-xs font-black uppercase tracking-widest px-6 py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:-translate-y-0.5">
+                  <Ticket size={16} /> Buy More Tickets
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-gradient-to-r from-[#1b75bb]/20 via-[#151515] to-[#f5a623]/20 border border-[#1b75bb]/40 rounded-3xl p-6 md:p-8 mb-8 text-center md:text-left flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl relative overflow-hidden">
+              <div className="relative z-10">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f5a623]/10 border border-[#f5a623]/30 text-[#f5a623] text-[10px] font-black uppercase tracking-widest mb-3">
+                  ✨ Included Free With Every Entry ($18 Value)
+                </div>
+                <h3 className="text-2xl md:text-3xl font-black text-white uppercase italic tracking-tighter mb-2">
+                  Ready to Join a Division?
+                </h3>
+                <p className="text-gray-300 text-xs md:text-sm max-w-xl leading-relaxed">
+                  Register or log in to secure your DNO draft spot. Every ticket comes with <strong className="text-white">1 Free Month of FSAN Pro+ ($7.99 value)</strong> and the <strong className="text-white">Rookie Draft Guide ($9.99 value)</strong>!
+                </p>
+              </div>
+              <button 
+                onClick={handlePurchaseExtraEntry}
+                className="relative z-10 shrink-0 w-full md:w-auto px-8 py-4 bg-gradient-to-r from-teal-400 to-[#1b75bb] hover:from-teal-300 hover:to-blue-600 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-[0_0_20px_rgba(27,117,187,0.4)] transition-transform hover:-translate-y-0.5"
+              >
+                Get Started & Claim Perks
+              </button>
+            </div>
+          )}
 
           {errorMessage && (
             <div className="mb-6 bg-red-900/20 border border-red-500/30 rounded-xl p-4 flex items-center gap-3 text-red-400 text-xs font-bold uppercase tracking-wider shadow-md relative z-10">
