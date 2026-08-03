@@ -6,11 +6,10 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 // Map your Stripe Price IDs to your WordPress Tiers
 const priceTierMapping = {
-  'price_1TH5H5BaSOn1la2fRtfzRPpp': 'pro',
-  'price_1TH5HsBaSOn1la2fuOcXj2nq': 'pro',
-  'price_1TH5IaBaSOn1la2fS8s0HMPv': 'pro-plus',
-  'price_1TH5J9BaSOn1la2f861yf4yB': 'pro-plus',
-  'price_1RsVe1BaSOn1la2fTvpGPNIr': 'pro-plus'
+  'price_1RsVXlBaSOn1la2fOQ0EJWIC': 'pro',      // Pro Monthly
+  'price_1Rua9uBaSOn1la2fdbOXRkwM': 'pro',      // Pro Yearly
+  'price_1RsVe1BaSOn1la2fTvpGPNIr': 'pro-plus', // Pro+ Monthly
+  'price_1RrIpqBaSOn1la2foiaJ9ShC': 'pro-plus'  // Pro+ Yearly
 };
 
 export async function POST(req) {
@@ -50,7 +49,7 @@ export async function POST(req) {
       const purchaseType = session.metadata.purchaseType || 'unknown';
       const ticketQuantity = parseInt(session.metadata.ticketQuantity || '1', 10);
       
-      // NEW: Extract charity metadata
+      // Extract charity metadata
       const donationAmount = parseFloat(session.metadata.donationAmount || '0');
       const isAnonymous = session.metadata.isAnonymous === 'true';
 
@@ -127,7 +126,14 @@ export async function POST(req) {
         } else {
            const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
            const purchasedPriceId = lineItems.data[0]?.price?.id;
-           assignedTier = priceTierMapping[purchasedPriceId] || 'subscriber';
+           
+           if (priceTierMapping[purchasedPriceId]) {
+             assignedTier = priceTierMapping[purchasedPriceId];
+           } else {
+             // LOG THE MISSING PRICE ID FOR EASY DEBUGGING IN VERCEL
+             console.warn(`⚠️ WARNING: Unmapped Stripe Price ID detected: ${purchasedPriceId}. Falling back to 'subscriber'. Add this ID to priceTierMapping in your webhook!`);
+             assignedTier = 'subscriber';
+           }
         }
 
         // Tell WordPress to upgrade the user AND pass the source for the welcome email
