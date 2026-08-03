@@ -401,7 +401,7 @@ export default function DNOAuthModal({ initialMode = 'login', onClose }) {
                   className="mt-0.5 rounded border-gray-700 bg-[#111] text-[#1b75bb] focus:ring-[#1b75bb]"
                 />
                 <span className="text-xs text-gray-400 group-hover:text-gray-300 leading-snug">
-                  I am at least 18 years old and agree to the{' '}
+                  I agree to the{' '}
                   <a href="/dno/terms" target="_blank" rel="noopener noreferrer" className="text-[#1b75bb] underline hover:text-white font-bold">
                     Terms of Service & Official Rules
                   </a>.
