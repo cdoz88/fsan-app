@@ -224,7 +224,6 @@ function DashboardContent() {
           poolMap[String(l.id)] = l;
         });
         
-        // This is the ledger trick to instantly show new leagues
         if (pData.joined_leagues && Array.isArray(pData.joined_leagues)) {
           pData.joined_leagues.forEach(id => wpJoinedIds.add(String(id)));
         }
@@ -257,20 +256,37 @@ function DashboardContent() {
         }
       });
 
-      // Fallback: Add WP-confirmed leagues if Sleeper API is lagging behind
+      // 4. Smart Fallback for Sleeper Cache Delay
+      // Only add WP-logged leagues if we can explicitly verify they are still on the roster
+      const cacheCheckPromises = [];
       wpJoinedIds.forEach(id => {
          if (!mergedLeaguesMap.has(id) && poolMap[id]) {
-            const poolLeague = poolMap[id];
-            mergedLeaguesMap.set(id, {
-               id: poolLeague.id,
-               sleeper_id: poolLeague.id,
-               name: poolLeague.name,
-               total_spots: poolLeague.total_spots || 12,
-               filled_spots: poolLeague.filled_spots || 1, // Assume at least 1 since we just joined it
-               avatar: null
-            });
+            cacheCheckPromises.push(
+               fetch(`https://api.sleeper.app/v1/league/${id}/users`)
+               .then(res => res.json())
+               .then(users => {
+                  if (Array.isArray(users)) {
+                     const isStillInLeague = users.some(u => String(u.user_id) === String(userId));
+                     if (isStillInLeague) {
+                        const poolLeague = poolMap[id];
+                        mergedLeaguesMap.set(id, {
+                           id: poolLeague.id,
+                           sleeper_id: poolLeague.id,
+                           name: poolLeague.name,
+                           total_spots: poolLeague.total_spots || 12,
+                           filled_spots: poolLeague.filled_spots || 1,
+                           avatar: null
+                        });
+                     }
+                  }
+               }).catch(e => console.warn("Cache check failed for", id))
+            );
          }
       });
+
+      if (cacheCheckPromises.length > 0) {
+         await Promise.all(cacheCheckPromises);
+      }
 
       setMyLeagues(Array.from(mergedLeaguesMap.values()));
     } catch (err) {
@@ -627,6 +643,120 @@ function DashboardContent() {
                     {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : `Checkout ($${(22 * purchaseQuantity) + donationAmount})`}
                   </div>
                 </button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* Global Leaderboard Stats Modal */}
+      {selectedTeam && (
+        <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4">
+           <div className="absolute inset-0" onClick={() => setSelectedTeam(null)}></div>
+           <div className="relative bg-[#1a1a1a] border border-gray-700 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col animate-in fade-in duration-200 overflow-hidden">
+              <button onClick={() => setSelectedTeam(null)} className="absolute top-4 right-4 p-2 bg-gray-900 rounded-full text-gray-400 z-10 hover:text-white"><X size={20} /></button>
+              <div className="p-6 border-b border-gray-800 bg-[#111] flex items-center gap-6">
+                <img src={selectedTeam.ownerAvatar} className="w-16 h-16 rounded-full border-2 border-gray-600 shadow-xl" alt="" />
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-black text-white italic">{selectedTeam.ownerUsername}</h2>
+                  <span className="text-xs font-bold text-gray-500 uppercase">{selectedTeam.leagueName}</span>
+                </div>
+              </div>
+              <div className="p-6 md:p-8 overflow-y-auto flex-1 scrollbar-hide">
+                 {modalLoading ? ( 
+                   <div className="flex flex-col items-center justify-center py-20">
+                     <Loader2 size={40} className="animate-spin text-gray-600 mb-4" />
+                     <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Compiling Stats...</span>
+                   </div>
+                 ) : modalData ? (
+                    <div className="flex flex-col gap-8">
+                       <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
+                            <span className="text-[10px] font-black uppercase text-gray-500 mb-1">Rank</span>
+                            <span className="text-xl font-black text-white">{selectedTeam.rank}</span>
+                          </div>
+                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
+                            <span className="text-[10px] font-black uppercase text-gray-500 mb-1">Points</span>
+                            <span className="text-xl font-black text-white">{parseFloat(selectedTeam.totalPoints).toFixed(2)}</span>
+                          </div>
+                          
+                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
+                             <span className="text-[10px] font-black uppercase text-gray-500 mb-2">Awards</span>
+                             <div className="flex gap-4 items-center justify-center">
+                               {getBadges(selectedTeam).length > 0 ? getBadges(selectedTeam).map((b, i) => (
+                                 <div key={i} className="flex items-center gap-1.5">
+                                   {b.icon}
+                                   {b.count && <span className="text-white font-bold text-sm">{b.count}</span>}
+                                 </div>
+                               )) : <span className="text-gray-700 font-bold">-</span>}
+                             </div>
+                          </div>
+
+                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
+                            <span className="text-[10px] font-black uppercase text-gray-500 mb-1">H2H Wins</span>
+                            <span className="text-xl font-black text-white">{Object.values(modalData.weekly_results).filter(w => w.h2h === 'W').length}</span>
+                          </div>
+                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
+                            <span className="text-[10px] font-black uppercase text-gray-500 mb-1">Med Wins</span>
+                            <span className="text-xl font-black text-white">{Object.values(modalData.weekly_results).filter(w => w.median === 'W').length}</span>
+                          </div>
+                          <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
+                            <span className="text-[10px] font-black uppercase text-gray-500 mb-1">Total Wins</span>
+                            <span className="text-xl font-black text-white">{Object.values(modalData.weekly_results).filter(w => w.h2h === 'W').length + Object.values(modalData.weekly_results).filter(w => w.median === 'W').length}</span>
+                          </div>
+                       </div>
+                       
+                       <div className="w-full h-[300px] bg-[#111] border border-gray-800 rounded-2xl p-4 shadow-inner">
+                         <Line 
+                           data={{ 
+                             labels: Array.from({length: 17}, (_, i) => `Wk ${i + 1}`), 
+                             datasets: [
+                               { label: 'Points', data: Array.from({length: 17}, (_, i) => modalData.weekly_results[i+1]?.points || null), borderColor: '#48bb78', backgroundColor: 'rgba(72, 187, 120, 0.1)', yAxisID: 'yPoints', fill: true, tension: 0.4 }, 
+                               { label: 'Rank', data: Array.from({length: 17}, (_, i) => modalData.weekly_results[i+1]?.rank || null), borderColor: '#27d7ff', backgroundColor: 'rgba(39, 215, 255, 0.1)', yAxisID: 'yRank', fill: true, tension: 0.4 }
+                             ] 
+                           }} 
+                           options={{ 
+                             responsive: true, 
+                             maintainAspectRatio: false, 
+                             scales: { 
+                               yPoints: { type: 'linear', position: 'left', grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a0aec0' } }, 
+                               yRank: { type: 'linear', position: 'right', reverse: true, min: 1, max: liveLeaderboard?.teams?.length || 100, grid: { drawOnChartArea: false }, ticks: { color: '#a0aec0' } }, 
+                               x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a0aec0' } } 
+                             }, 
+                             plugins: { legend: { labels: { color: '#e2e8f0', usePointStyle: true, boxWidth: 8 } } } 
+                           }} 
+                         />
+                       </div>
+
+                       <div className="w-full overflow-x-auto bg-[#111] border border-gray-800 rounded-2xl shadow-inner">
+                         <table className="w-full text-center whitespace-nowrap">
+                           <thead>
+                             <tr className="border-b border-gray-800 bg-[#0a0a0a]">
+                               <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase text-left">Week</th>
+                               {Array.from({length: 17}, (_, i) => <th key={i} className="px-3 py-3 text-[10px] font-black text-gray-500">{i + 1}</th>)}
+                             </tr>
+                           </thead>
+                           <tbody className="divide-y divide-gray-800/50 text-xs font-bold text-gray-300">
+                             <tr className="hover:bg-[#151515]">
+                               <td className="px-4 py-3 text-left text-gray-500">PTS</td>
+                               {Array.from({length: 17}, (_, i) => <td key={i} className="px-3 py-3">{modalData.weekly_results[i+1] ? Math.round(modalData.weekly_results[i+1].points) : '-'}</td>)}
+                             </tr>
+                             <tr className="hover:bg-[#151515]">
+                               <td className="px-4 py-3 text-left text-gray-500">H2H</td>
+                               {Array.from({length: 17}, (_, i) => { const res = modalData.weekly_results[i+1]?.h2h; return <td key={i} className={`px-3 py-3 ${res === 'W' ? 'text-green-500' : res === 'L' ? 'text-red-500' : ''}`}>{res || '-'}</td> })}
+                             </tr>
+                             <tr className="hover:bg-[#151515]">
+                               <td className="px-4 py-3 text-left text-gray-500">MED</td>
+                               {Array.from({length: 17}, (_, i) => { const res = modalData.weekly_results[i+1]?.median; return <td key={i} className={`px-3 py-3 ${res === 'W' ? 'text-green-500' : res === 'L' ? 'text-red-500' : ''}`}>{res || '-'}</td> })}
+                             </tr>
+                             <tr className="hover:bg-[#151515]">
+                               <td className="px-4 py-3 text-left text-gray-500 font-black">RNK</td>
+                               {Array.from({length: 17}, (_, i) => <td key={i} className="px-3 py-3 text-white">{modalData.weekly_results[i+1]?.rank || '-'}</td>)}
+                             </tr>
+                           </tbody>
+                         </table>
+                       </div>
+                    </div>
+                 ) : <div className="text-center py-20 text-gray-500 uppercase font-black tracking-widest text-sm border border-dashed border-gray-800 rounded-2xl">No manager data recorded.</div>}
               </div>
            </div>
         </div>
