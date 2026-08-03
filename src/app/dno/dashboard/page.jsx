@@ -57,26 +57,21 @@ function DashboardContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingLeagues, setLoadingLeagues] = useState(false);
 
-  // Determine if they've ever purchased/received a ticket OR are a legacy Canton drafter
   const hasPurchasedTicket = ticketCount > 0 || userJoinedCount > 0 || isLegacyDrafter;
 
-  // Perks State
   const [rookieGuideUrl, setRookieGuideUrl] = useState(null);
   const [guideLoading, setGuideLoading] = useState(true);
 
-  // Stats Modal State
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [modalData, setModalData] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
 
-  // Purchasing State
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [purchaseQuantity, setPurchaseQuantity] = useState(1);
   const [donationAmount, setDonationAmount] = useState(0);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Dedicated DNO Sleeper Sync State
   const [sleeperInput, setSleeperInput] = useState('');
   const [livePreviewUser, setLivePreviewUser] = useState(null); 
   const [syncedSleeperUser, setSyncedSleeperUser] = useState(null); 
@@ -87,7 +82,6 @@ function DashboardContent() {
 
   const getDnoStorageKey = (userId) => `dno_dedicated_sleeper_${userId}`;
 
-  // Clean up URL query parameters (e.g. checkout=canceled) on mount
   useEffect(() => {
     const checkoutStatus = searchParams.get('checkout');
     if (checkoutStatus) {
@@ -101,7 +95,6 @@ function DashboardContent() {
     }
   }, [searchParams, activeTab]);
 
-  // Fetch the Rookie Draft Guide PDF URL from GraphQL
   const fetchRookieGuide = useCallback(async () => {
     setGuideLoading(true);
     try {
@@ -132,7 +125,6 @@ function DashboardContent() {
     fetchRookieGuide();
   }, [fetchRookieGuide]);
 
-  // Restore Sleeper Account from local cache initially
   useEffect(() => {
     if (session?.user?.id) {
       const cached = localStorage.getItem(getDnoStorageKey(session.user.id));

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { MonitorSmartphone, Trophy, BookOpen, Handshake, ListOrdered, HeartHandshake, Loader2, Users, Plus, Minus, X, ShoppingCart, Swords } from 'lucide-react';
+import { MonitorSmartphone, Trophy, BookOpen, Handshake, ListOrdered, HeartHandshake, Loader2, Users, Plus, Minus, X, ShoppingCart, Swords, CheckCircle2, ExternalLink } from 'lucide-react';
 
 // Importing DNO components
 import DNOHeader from '../../components/dno/DNOHeader';
@@ -36,6 +36,7 @@ function PublicPageContent() {
   const [userJoinedCount, setUserJoinedCount] = useState(0);
   const [isQualified, setIsQualified] = useState(false);
   const [confirmingLeague, setConfirmingLeague] = useState(null);
+  const [joinSuccess, setJoinSuccess] = useState(false);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [purchaseQuantity, setPurchaseQuantity] = useState(1);
   const [donationAmount, setDonationAmount] = useState(0);
@@ -200,12 +201,9 @@ function PublicPageContent() {
       });
       const data = await res.json();
       if (data.success) {
-        // Redirection Logic 
-        if (confirmingLeague.invite_link) {
-          window.location.href = confirmingLeague.invite_link;
-        } else {
-          window.location.href = '/dno/dashboard';
-        }
+        // Change to the Success state instead of redirecting so browsers don't block the popup
+        setJoinSuccess(true);
+        setIsProcessing(false);
       } else {
         alert(data.message || "Failed to join the league.");
         setIsProcessing(false);
@@ -344,57 +342,101 @@ function PublicPageContent() {
       {confirmingLeague && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
            <div className="bg-[#151515] p-8 rounded-3xl border border-gray-800 text-center text-white shadow-2xl w-full max-w-md relative overflow-hidden">
-              <h3 className="text-2xl font-black uppercase italic mb-2 tracking-tighter">Confirm Entry</h3>
-              
-              <div className="flex items-center justify-center gap-4 mb-6 mt-4">
-                <div className="bg-[#111] border border-gray-800 rounded-xl px-6 py-4 shadow-inner">
-                   <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Your Tickets</p>
-                   <p className="text-3xl font-black text-[#f5a623] leading-none">{ticketsAvailable}</p>
-                </div>
-              </div>
-
-              {ticketsAvailable > 0 ? (
+              {!joinSuccess ? (
                 <>
-                  <p className="text-gray-400 mb-6 text-sm">
-                    You are about to use <strong className="text-white">1 Draft Ticket</strong> to secure your spot in <strong className="text-[#1b75bb]">{confirmingLeague.name}</strong>.
-                  </p>
-                  <button 
-                    onClick={executeJoin}
-                    disabled={isProcessing}
-                    className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-[0_0_15px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
-                  >
-                    <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs">
-                      {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm & Join League'}
+                  <h3 className="text-2xl font-black uppercase italic mb-2 tracking-tighter">Confirm Entry</h3>
+                  
+                  <div className="flex items-center justify-center gap-4 mb-6 mt-4">
+                    <div className="bg-[#111] border border-gray-800 rounded-xl px-6 py-4 shadow-inner">
+                       <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Your Tickets</p>
+                       <p className="text-3xl font-black text-[#f5a623] leading-none">{ticketsAvailable}</p>
                     </div>
+                  </div>
+
+                  {ticketsAvailable > 0 ? (
+                    <>
+                      <p className="text-gray-400 mb-6 text-sm">
+                        You are about to use <strong className="text-white">1 Draft Ticket</strong> to secure your spot in <strong className="text-[#1b75bb]">{confirmingLeague.name}</strong>.
+                      </p>
+                      <button 
+                        onClick={executeJoin}
+                        disabled={isProcessing}
+                        className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-[0_0_15px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+                      >
+                        <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs">
+                          {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm & Join League'}
+                        </div>
+                      </button>
+                    </>
+                  ) : (
+                    <div className="flex flex-col gap-3 mt-2">
+                      <p className="text-sm text-gray-300 leading-relaxed mb-4">
+                        You need a Draft Ticket to join this league. 
+                      </p>
+                      <button 
+                        onClick={() => {
+                          setConfirmingLeague(null);
+                          setShowPurchaseModal(true);
+                        }}
+                        disabled={isProcessing}
+                        className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-[#f5a623] to-[#c30b16] shadow-[0_0_15px_rgba(245,166,35,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+                      >
+                        <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs">
+                          Get Tickets
+                        </div>
+                      </button>
+                    </div>
+                  )}
+
+                  <button 
+                     onClick={() => {
+                       setConfirmingLeague(null);
+                       setJoinSuccess(false);
+                     }} 
+                     disabled={isProcessing}
+                    className="w-full mt-3 px-6 py-3 bg-transparent hover:bg-gray-800 transition-colors text-gray-400 hover:text-white font-bold uppercase tracking-widest text-xs rounded-xl"
+                  >
+                    Cancel
                   </button>
                 </>
               ) : (
-                <div className="flex flex-col gap-3 mt-2">
-                  <p className="text-sm text-gray-300 leading-relaxed mb-4">
-                    You need a Draft Ticket to join this league. 
+                <div className="animate-in fade-in duration-300">
+                  <div className="mx-auto w-16 h-16 bg-green-500/10 text-green-400 rounded-full flex items-center justify-center mb-4 border border-green-500/20 shadow-inner">
+                    <CheckCircle2 size={32} />
+                  </div>
+                  <h3 className="text-2xl font-black uppercase italic mb-2 tracking-tighter text-white">Ticket Applied!</h3>
+                  <p className="text-gray-400 mb-6 text-sm leading-relaxed">
+                    Your spot is secured! Click the button below to open Sleeper in a new tab and officially enter the draft room.
                   </p>
-                  <button 
+                  
+                  <a 
+                    href={confirmingLeague.invite_link || `https://sleeper.com/leagues/${confirmingLeague.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     onClick={() => {
                       setConfirmingLeague(null);
-                      setShowPurchaseModal(true);
+                      setJoinSuccess(false);
+                      window.location.href = '/dno/dashboard';
                     }}
-                    disabled={isProcessing}
-                    className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-[#f5a623] to-[#c30b16] shadow-[0_0_15px_rgba(245,166,35,0.2)] transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+                    className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-[0_0_15px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5 block mb-2"
                   >
-                    <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs">
-                      Get Tickets
+                    <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs gap-2">
+                      Join League on Sleeper <ExternalLink size={16} />
                     </div>
+                  </a>
+
+                  <button 
+                     onClick={() => {
+                       setConfirmingLeague(null);
+                       setJoinSuccess(false);
+                       window.location.href = '/dno/dashboard';
+                     }} 
+                    className="w-full px-6 py-3 bg-transparent hover:bg-gray-800 transition-colors text-gray-400 hover:text-white font-bold uppercase tracking-widest text-xs rounded-xl"
+                  >
+                    Return to Dashboard
                   </button>
                 </div>
               )}
-
-              <button 
-                 onClick={() => setConfirmingLeague(null)} 
-                 disabled={isProcessing}
-                className="w-full mt-3 px-6 py-3 bg-transparent hover:bg-gray-800 transition-colors text-gray-400 hover:text-white font-bold uppercase tracking-widest text-xs rounded-xl"
-              >
-                Cancel
-              </button>
            </div>
         </div>
       )}
