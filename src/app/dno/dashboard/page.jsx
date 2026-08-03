@@ -57,21 +57,26 @@ function DashboardContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingLeagues, setLoadingLeagues] = useState(false);
 
+  // Determine if they've ever purchased/received a ticket OR are a legacy Canton drafter
   const hasPurchasedTicket = ticketCount > 0 || userJoinedCount > 0 || isLegacyDrafter;
 
+  // Perks State
   const [rookieGuideUrl, setRookieGuideUrl] = useState(null);
   const [guideLoading, setGuideLoading] = useState(true);
 
+  // Stats Modal State
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [modalData, setModalData] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
 
+  // Purchasing State
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [purchaseQuantity, setPurchaseQuantity] = useState(1);
   const [donationAmount, setDonationAmount] = useState(0);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Dedicated DNO Sleeper Sync State
   const [sleeperInput, setSleeperInput] = useState('');
   const [livePreviewUser, setLivePreviewUser] = useState(null); 
   const [syncedSleeperUser, setSyncedSleeperUser] = useState(null); 
@@ -82,6 +87,7 @@ function DashboardContent() {
 
   const getDnoStorageKey = (userId) => `dno_dedicated_sleeper_${userId}`;
 
+  // Clean up URL query parameters (e.g. checkout=canceled) on mount
   useEffect(() => {
     const checkoutStatus = searchParams.get('checkout');
     if (checkoutStatus) {
@@ -95,6 +101,7 @@ function DashboardContent() {
     }
   }, [searchParams, activeTab]);
 
+  // Fetch the Rookie Draft Guide PDF URL from GraphQL
   const fetchRookieGuide = useCallback(async () => {
     setGuideLoading(true);
     try {
@@ -125,6 +132,7 @@ function DashboardContent() {
     fetchRookieGuide();
   }, [fetchRookieGuide]);
 
+  // Restore Sleeper Account from local cache initially
   useEffect(() => {
     if (session?.user?.id) {
       const cached = localStorage.getItem(getDnoStorageKey(session.user.id));
@@ -202,49 +210,76 @@ function DashboardContent() {
         return;
       }
 
-      const pRes = await fetch(`/api/scl?type=dno_pool&t=${Date.now()}`);
+      // 1. Fetch DNO Pool AND User's WP-Logged Joined Leagues simultaneously
+      const userIdParam = session?.user?.id ? `&user_id=${session.user.id}` : '';
+      const pRes = await fetch(`/api/scl?type=dno_pool${userIdParam}&t=${Date.now()}`, { cache: 'no-store' });
       let validDnoLeagueIds = new Set();
+      let wpJoinedIds = new Set();
       let poolMap = {};
+      
       if (pRes.ok) {
         const pData = await pRes.json();
         (pData.leagues || []).forEach(l => {
           validDnoLeagueIds.add(String(l.id));
           poolMap[String(l.id)] = l;
         });
+        
+        // This is the ledger trick to instantly show new leagues
+        if (pData.joined_leagues && Array.isArray(pData.joined_leagues)) {
+          pData.joined_leagues.forEach(id => wpJoinedIds.add(String(id)));
+        }
       }
 
-      const slpLeaguesRes = await fetch(`https://api.sleeper.app/v1/user/${userId}/leagues/nfl/2026`);
-      if (!slpLeaguesRes.ok) {
-        setMyLeagues([]);
-        setLoadingLeagues(false);
-        return;
+      // 2. Fetch Sleeper Leagues (Bust browser cache)
+      const slpLeaguesRes = await fetch(`https://api.sleeper.app/v1/user/${userId}/leagues/nfl/2026?t=${Date.now()}`, { cache: 'no-store' });
+      let slpLeagues = [];
+      if (slpLeaguesRes.ok) {
+         slpLeagues = await slpLeaguesRes.json();
       }
-      const slpLeagues = await slpLeaguesRes.json();
 
-      const matchedDnoLeagues = slpLeagues.filter(l => {
-        const inPool = validDnoLeagueIds.has(String(l.league_id));
+      // 3. Merge Strategy
+      const mergedLeaguesMap = new Map();
+
+      // Add Sleeper-confirmed leagues
+      slpLeagues.forEach(l => {
+        const inPool = poolMap[String(l.league_id)];
         const hasDnoName = l.name && (l.name.toUpperCase().includes('DNO') || l.name.toUpperCase().includes('DRAFT NIGHT OUT'));
-        return inPool || hasDnoName;
-      }).map(l => {
-        const poolMatch = poolMap[String(l.league_id)];
-        return {
-          id: l.league_id,
-          sleeper_id: l.league_id,
-          name: l.name,
-          total_spots: l.total_rosters || poolMatch?.total_spots || 12,
-          filled_spots: poolMatch?.filled_spots || l.total_rosters || 12,
-          avatar: l.avatar
-        };
+        
+        if (validDnoLeagueIds.has(String(l.league_id)) || hasDnoName) {
+          mergedLeaguesMap.set(String(l.league_id), {
+            id: l.league_id,
+            sleeper_id: l.league_id,
+            name: l.name,
+            total_spots: l.total_rosters || inPool?.total_spots || 12,
+            filled_spots: inPool?.filled_spots || l.total_rosters || 12,
+            avatar: l.avatar
+          });
+        }
       });
 
-      setMyLeagues(matchedDnoLeagues);
+      // Fallback: Add WP-confirmed leagues if Sleeper API is lagging behind
+      wpJoinedIds.forEach(id => {
+         if (!mergedLeaguesMap.has(id) && poolMap[id]) {
+            const poolLeague = poolMap[id];
+            mergedLeaguesMap.set(id, {
+               id: poolLeague.id,
+               sleeper_id: poolLeague.id,
+               name: poolLeague.name,
+               total_spots: poolLeague.total_spots || 12,
+               filled_spots: poolLeague.filled_spots || 1, // Assume at least 1 since we just joined it
+               avatar: null
+            });
+         }
+      });
+
+      setMyLeagues(Array.from(mergedLeaguesMap.values()));
     } catch (err) {
       console.warn("Failed fetching My Leagues from Sleeper:", err);
       setMyLeagues([]);
     } finally {
       setLoadingLeagues(false);
     }
-  }, []);
+  }, [session]);
 
   const loadAccountData = useCallback(async () => {
     if (!session?.user?.id) return;
