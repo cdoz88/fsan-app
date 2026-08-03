@@ -298,25 +298,44 @@ export default function DraftsTab({
       {draftView === 'live' && (
         <div className="animate-in fade-in duration-300">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-[#1a1a1a] rounded-3xl border border-gray-800 p-6 flex flex-col relative overflow-hidden group shadow-lg">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#1b75bb]/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+            <div className="bg-[#1a1a1a] rounded-3xl border border-gray-800 p-6 flex flex-col relative overflow-hidden group shadow-lg opacity-80">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gray-800/20 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+              
+              {/* Event Concluded Badge */}
+              <div className="absolute top-4 right-4 bg-gray-800/80 border border-gray-600 text-gray-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest backdrop-blur-sm z-20">
+                Event Concluded
+              </div>
+
               <div className="flex items-center gap-4 w-full mb-6 relative z-10">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#1b75bb] to-[#0a4b7d] flex items-center justify-center shrink-0 shadow-lg"><MapPin className="text-white" size={28} /></div>
-                <div><h3 className="text-2xl font-black text-white uppercase tracking-wide leading-tight italic">Canton, OH</h3><p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Fantasy Football Expo</p></div>
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center shrink-0 shadow-lg"><MapPin className="text-gray-400" size={28} /></div>
+                <div><h3 className="text-2xl font-black text-gray-300 uppercase tracking-wide leading-tight italic">Canton, OH</h3><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Fantasy Football Expo</p></div>
               </div>
-              <p className="text-sm text-gray-300 leading-relaxed mb-6 relative z-10">Secure your spot to draft in person. You will be able to select your specific division (named after NFL legends) during checkout.</p>
-              <div className="bg-[#111] rounded-2xl border border-gray-800 p-4 mb-6 grid grid-cols-2 gap-4 relative z-10">
-                  <div><div className="flex items-center gap-2 mb-1"><Calendar size={14} className="text-[#f5a623]"/><span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Date</span></div><p className="text-xs text-gray-200">July 25, 2026</p></div>
-                  <div><div className="flex items-center gap-2 mb-1"><Clock size={14} className="text-[#f5a623]"/><span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Time</span></div><p className="text-xs text-gray-200">12pm - 4pm ET</p></div>
-                  <div className="col-span-2 border-t border-gray-800 pt-3 mt-1"><div className="flex items-center gap-2 mb-1"><MapPin size={14} className="text-[#f5a623]"/><span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Where</span></div><p className="text-[11px] text-gray-400 leading-snug">Jerzee's Sports Grille<br/>5260 Dressler Rd NW, Canton, OH 44718</p></div>
+              <p className="text-sm text-gray-500 leading-relaxed mb-6 relative z-10">This live drafting event has successfully concluded! Thank you to everyone who joined us in Canton. The divisions drafted here are now competing for the Overall Season Championship.</p>
+              
+              <div className="bg-[#111] rounded-2xl border border-gray-800 p-4 mb-6 grid grid-cols-2 gap-4 relative z-10 opacity-70">
+                  <div><div className="flex items-center gap-2 mb-1"><Calendar size={14} className="text-gray-600"/><span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Date</span></div><p className="text-xs text-gray-400 line-through">July 25, 2026</p></div>
+                  <div><div className="flex items-center gap-2 mb-1"><Clock size={14} className="text-gray-600"/><span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Time</span></div><p className="text-xs text-gray-400 line-through">12pm - 4pm ET</p></div>
+                  <div className="col-span-2 border-t border-gray-800 pt-3 mt-1"><div className="flex items-center gap-2 mb-1"><MapPin size={14} className="text-gray-600"/><span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Where</span></div><p className="text-[11px] text-gray-400 leading-snug">Jerzee's Sports Grille<br/>5260 Dressler Rd NW, Canton, OH 44718</p></div>
               </div>
+              
               <div className="mt-auto relative z-10 flex flex-col gap-3">
-                <a href="https://in-betweenmedia.com/product/draft-night-out-2026-tickets/" target="_blank" rel="noopener noreferrer" className="w-full inline-block relative group p-[2px] rounded-xl bg-[conic-gradient(from_225deg_at_50%_50%,#1b75bb_0%,#c30b16_25%,#c30b16_50%,#f5a623_75%,#1b75bb_100%)] shadow-[0_0_20px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5"><div className="bg-[#1a1a1a] group-hover:bg-[#222] transition-colors rounded-[10px] px-6 py-3.5 flex items-center justify-center gap-2 w-full h-full text-white font-black uppercase tracking-widest text-xs">Get Canton Tickets <ExternalLink size={16} /></div></a>
-                <button onClick={() => setShowRaffleModal(true)} className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px] bg-[#111] hover:bg-[#1a1a1a] text-gray-200 hover:text-white text-xs font-black uppercase tracking-widest border border-[#f5a623]/60 hover:border-[#f5a623] shadow-[0_0_10px_rgba(245,166,35,0.05)] transition-all"><Ticket size={16} className="text-[#1b75bb]" /> View Raffle Prizes & Promos</button>
+                <button disabled className="w-full inline-block relative p-[2px] rounded-xl bg-gray-800 cursor-not-allowed">
+                  <div className="bg-[#1a1a1a] rounded-[10px] px-6 py-3.5 flex items-center justify-center gap-2 w-full h-full text-gray-500 font-black uppercase tracking-widest text-xs">Registration Closed</div>
+                </button>
+                <button onClick={() => setShowRaffleModal(true)} className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px] bg-[#111] hover:bg-[#1a1a1a] text-gray-400 hover:text-gray-300 text-xs font-black uppercase tracking-widest border border-gray-700 transition-all">
+                  <Ticket size={16} className="text-gray-500" /> View Raffle Winners
+                </button>
               </div>
             </div>
           </div>
-          <div className="mt-8 bg-[#1b75bb]/10 border border-[#1b75bb]/30 rounded-xl p-4 flex items-start gap-3"><Ticket size={20} className="text-[#f5a623] shrink-0 mt-0.5" /><div><h5 className="text-xs font-black text-[#1b75bb] uppercase tracking-widest mb-1">Live Event Note</h5><p className="text-sm text-gray-400 leading-relaxed">These are private events featuring exclusive raffles and giveaways! All attendees must have a ticket (Draft or "Just To Hang" covers available).</p></div></div>
+          
+          <div className="mt-8 bg-gray-900/30 border border-gray-800/50 rounded-xl p-4 flex items-start gap-3">
+            <Ticket size={20} className="text-gray-600 shrink-0 mt-0.5" />
+            <div>
+              <h5 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Live Event Note</h5>
+              <p className="text-sm text-gray-500 leading-relaxed">These are private events featuring exclusive raffles and giveaways! Keep an eye out for our next live drafting location announcement.</p>
+            </div>
+          </div>
         </div>
       )}
     </div>
