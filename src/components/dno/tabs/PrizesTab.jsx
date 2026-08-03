@@ -1,40 +1,116 @@
+"use client";
 import React from 'react';
-import { Medal, Gift, Trophy, Shield } from 'lucide-react';
+import { Trophy, Medal, Gift, Star, Crown, Sparkles } from 'lucide-react';
 
 export default function PrizesTab() {
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-16">
+    <div className="space-y-12 md:space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700 mb-16 relative z-10">
+      
+      {/* Header */}
       <div className="flex items-center gap-6 mb-8">
-         <h2 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">What's on the Line?</h2>
-         <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
+        <h2 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">The Prizes</h2>
+        <div className="flex-1 h-px bg-gradient-to-r from-gray-800 to-transparent"></div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-         <div className="bg-[#111] p-8 rounded-3xl border border-gray-800 flex flex-col items-center text-center shadow-lg hover:-translate-y-1 transition-transform">
-           <Medal className="text-gray-400 mb-4" size={40} />
-           <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">League Winners</h4>
-           <p className="text-sm text-gray-400 leading-relaxed">Mini Championship Belt from <strong className="text-white">TrophySmack</strong>.</p>
-         </div>
-         <div className="bg-[#111] p-8 rounded-3xl border border-gray-800 flex flex-col items-center text-center shadow-lg hover:-translate-y-1 transition-transform">
-           <Gift className="text-[#f5a623] mb-4" size={40} />
-           <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2">Overall Regular Season Champ</h4>
-           <p className="text-sm text-gray-400 leading-relaxed">Ultimate 6lb Custom Championship Belt from <strong className="text-[#f5a623]">TrophySmack</strong>.</p>
-         </div>
-         <div className="bg-gradient-to-b from-[#0a1220] to-[#111] p-8 rounded-3xl border border-[#1b75bb]/30 flex flex-col items-center text-center shadow-[0_0_30px_rgba(27,117,187,0.15)] hover:-translate-y-1 transition-transform relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-32 h-32 bg-[#1b75bb]/10 blur-2xl rounded-full"></div>
-           <Trophy className="text-yellow-500 mb-4 relative z-10" size={40} />
-           <h4 className="text-xl font-black text-white uppercase tracking-wider mb-2 relative z-10">Playoff Challenge Champion</h4>
-           <p className="text-sm text-gray-300 leading-relaxed relative z-10">Playstation 5, Madden 2027, and championship ring from <strong className="text-white">TrophySmack</strong>!</p>
-         </div>
-      </div>
-      <div className="bg-gradient-to-br from-[#0a1220] to-[#111] rounded-3xl border border-[#1b75bb]/30 p-8 md:p-12 mb-12 shadow-[0_0_40px_rgba(27,117,187,0.1)] relative overflow-hidden flex flex-col md:flex-row items-center gap-8 md:gap-12">
-        <div className="absolute -right-4 -top-4 text-[120px] md:text-[180px] font-black text-[#1b75bb]/10 z-0 select-none transition-colors leading-none pointer-events-none">🏆</div>
-        <div className="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-[#1b75bb] to-[#0d4a7a] rounded-full flex items-center justify-center shrink-0 shadow-[0_0_30px_rgba(27,117,187,0.4)] border-4 border-[#111] relative z-10"><Shield size={48} className="text-white drop-shadow-md" /></div>
-        <div className="flex-1 text-center md:text-left relative z-10">
-          <div className="inline-block px-3 py-1 bg-[#f5a623] text-black font-black text-[10px] uppercase tracking-widest rounded-full mb-3 shadow-md">New in 2026!</div>
-          <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter mb-4 italic">The Playoff Challenge</h2>
-          <p className="text-gray-300 text-base md:text-lg leading-relaxed">We are hosting a massive playoff challenge for <strong>all league winners</strong> from the regular season. Qualify for the playoffs to compete for the ultimate prize package and prove you are the undisputed champion!</p>
+
+      {/* 1. League Champion (Mini Belt) */}
+      <div className="relative flex flex-col md:flex-row items-center gap-8 md:gap-12 bg-gradient-to-br from-[#151515] to-[#0a0a0a] border border-gray-800 rounded-3xl p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden group hover:border-blue-900/50 transition-colors duration-500">
+        
+        {/* Subtle Background Glow for the Card */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+        
+        {/* Image Section - Tilted & Glowing */}
+        <div className="w-full md:w-1/2 relative flex justify-center items-center py-10 md:py-0">
+          <div className="absolute w-[250px] h-[250px] bg-blue-500/20 blur-[80px] rounded-full group-hover:bg-blue-500/40 group-hover:scale-125 transition-all duration-700 pointer-events-none"></div>
+          <img 
+            src="/images/dno/mini-belt.png" 
+            alt="League Champion Mini Belt" 
+            className="relative z-10 w-full max-w-[320px] object-contain -rotate-6 group-hover:rotate-2 group-hover:scale-110 transition-transform duration-500 ease-out drop-shadow-[0_20px_30px_rgba(0,0,0,0.6)]"
+          />
+        </div>
+
+        {/* Text Section */}
+        <div className="w-full md:w-1/2 relative z-10 text-center md:text-left">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-900/30 text-blue-400 border border-blue-500/30 rounded-2xl mb-6 shadow-inner">
+            <Medal size={28} />
+          </div>
+          <h3 className="text-3xl md:text-4xl font-black text-white uppercase italic tracking-tighter mb-4 drop-shadow-md">
+            League Champion
+          </h3>
+          <p className="text-gray-300 leading-relaxed mb-8 text-sm md:text-base">
+            Win your individual 12-team online division and take home the official Draft Night Out Mini Title Belt. It is the absolute perfect desk piece to constantly remind your coworkers exactly who dominates the gridiron.
+          </p>
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-black uppercase tracking-widest shadow-inner">
+            <Star size={16} /> 1 Winner Per Division
+          </div>
         </div>
       </div>
+
+      {/* 2. Season Champion (Full Belt) - Reversed Layout */}
+      <div className="relative flex flex-col md:flex-row-reverse items-center gap-8 md:gap-12 bg-gradient-to-bl from-[#1a1500] to-[#0a0a0a] border border-yellow-900/30 rounded-3xl p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden group hover:border-yellow-600/50 transition-colors duration-500">
+        
+        {/* Subtle Background Glow for the Card */}
+        <div className="absolute inset-0 bg-gradient-to-l from-yellow-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+        
+        {/* Image Section - Tilted & Glowing */}
+        <div className="w-full md:w-1/2 relative flex justify-center items-center py-10 md:py-0">
+          <div className="absolute w-[300px] h-[300px] bg-yellow-500/20 blur-[100px] rounded-full group-hover:bg-yellow-400/30 group-hover:scale-125 transition-all duration-700 pointer-events-none"></div>
+          <img 
+            src="/images/dno/championship-belt.png" 
+            alt="Overall Season Championship Belt" 
+            className="relative z-10 w-full max-w-[400px] object-contain rotate-3 group-hover:-rotate-2 group-hover:scale-110 transition-transform duration-500 ease-out drop-shadow-[0_25px_35px_rgba(0,0,0,0.8)]"
+          />
+        </div>
+
+        {/* Text Section */}
+        <div className="w-full md:w-1/2 relative z-10 text-center md:text-left">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-yellow-900/30 text-yellow-400 border border-yellow-500/30 rounded-2xl mb-6 shadow-inner">
+            <Crown size={28} />
+          </div>
+          <h3 className="text-3xl md:text-4xl font-black text-white uppercase italic tracking-tighter mb-4 drop-shadow-md">
+            Overall Season Champion
+          </h3>
+          <p className="text-gray-300 leading-relaxed mb-8 text-sm md:text-base">
+            Outscore everyone. Beat the best of the best across the entire Draft Night Out platform, and you will be crowned the undisputed Season Champion. Your prize? A massive, heavy-duty, full-sized customized Championship Belt.
+          </p>
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs font-black uppercase tracking-widest shadow-inner">
+            <Trophy size={16} /> 1 Overall Winner
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Grand Prize Bundle */}
+      <div className="relative flex flex-col md:flex-row items-center gap-8 md:gap-12 bg-gradient-to-br from-[#150a1a] to-[#0a0a0a] border border-purple-900/30 rounded-3xl p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden group hover:border-purple-600/50 transition-colors duration-500">
+        
+        {/* Subtle Background Glow for the Card */}
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+        
+        {/* Image Section - Tilted & Glowing */}
+        <div className="w-full md:w-1/2 relative flex justify-center items-center py-10 md:py-0">
+          <div className="absolute w-[280px] h-[280px] bg-purple-600/20 blur-[90px] rounded-full group-hover:bg-purple-500/30 group-hover:scale-125 transition-all duration-700 pointer-events-none"></div>
+          <img 
+            src="/images/dno/prize-bundle.png" 
+            alt="Grand Prize Bundle" 
+            className="relative z-10 w-full max-w-[350px] object-contain -rotate-3 group-hover:rotate-3 group-hover:scale-110 transition-transform duration-500 ease-out drop-shadow-[0_20px_40px_rgba(0,0,0,0.7)]"
+          />
+        </div>
+
+        {/* Text Section */}
+        <div className="w-full md:w-1/2 relative z-10 text-center md:text-left">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-purple-900/30 text-purple-400 border border-purple-500/30 rounded-2xl mb-6 shadow-inner">
+            <Gift size={28} />
+          </div>
+          <h3 className="text-3xl md:text-4xl font-black text-white uppercase italic tracking-tighter mb-4 drop-shadow-md">
+            The Ultimate Grand Prize
+          </h3>
+          <p className="text-gray-300 leading-relaxed mb-8 text-sm md:text-base">
+            Survive the gauntlet and win the Playoff Challenge to secure the ultimate gaming and fantasy package. You will walk away with a brand new PlayStation 5, the latest edition of Madden, and a stunning Championship Ring by TrophySmack!
+          </p>
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-black uppercase tracking-widest shadow-inner">
+            <Sparkles size={16} /> Playoff Challenge Winner
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }
