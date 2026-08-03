@@ -213,13 +213,28 @@ function DashboardContent() {
       // 1. Fetch DNO Pool AND User's WP-Logged Joined Leagues simultaneously
       const userIdParam = session?.user?.id ? `&user_id=${session.user.id}` : '';
       const pRes = await fetch(`/api/scl?type=dno_pool${userIdParam}&t=${Date.now()}`, { cache: 'no-store' });
+      
       let validDnoLeagueIds = new Set();
       let wpJoinedIds = new Set();
       let poolMap = {};
+
+      // DIRECT WP FETCH TO ENSURE WE HAVE THE UNSTRIPPED INVITE LINKS
+      let directWpLeagues = [];
+      try {
+          const wpRes = await fetch('https://admin.fsan.com/wp-admin/admin-ajax.php?action=dno_get_leagues_pool');
+          const wpJson = await wpRes.json();
+          if (wpJson.success && wpJson.data?.leagues) {
+              directWpLeagues = wpJson.data.leagues;
+          }
+      } catch (wpErr) {
+          console.warn("Direct WP fetch failed:", wpErr);
+      }
       
       if (pRes.ok) {
         const pData = await pRes.json();
-        (pData.leagues || []).forEach(l => {
+        const allLeagues = directWpLeagues.length > 0 ? directWpLeagues : (pData.leagues || []);
+        
+        allLeagues.forEach(l => {
           validDnoLeagueIds.add(String(l.id));
           poolMap[String(l.id)] = l;
         });
@@ -252,7 +267,8 @@ function DashboardContent() {
             total_spots: l.total_rosters || inPool?.total_spots || 12,
             filled_spots: inPool?.filled_spots || l.total_rosters || 12,
             avatar: l.avatar,
-            pending_join: false
+            pending_join: false,
+            invite_link: inPool?.invite_link || inPool?.inviteLink || inPool?.sleeper_invite_link || inPool?.invite
           });
         }
       });
@@ -278,7 +294,8 @@ function DashboardContent() {
                            total_spots: poolLeague.total_spots || 12,
                            filled_spots: poolLeague.filled_spots || 1,
                            avatar: null,
-                           pending_join: false
+                           pending_join: false,
+                           invite_link: poolLeague.invite_link || poolLeague.inviteLink || poolLeague.sleeper_invite_link || poolLeague.invite
                         });
                      } else {
                         // PENDING JOIN STATE: User spent ticket but hasn't accepted Sleeper invite!
@@ -985,6 +1002,8 @@ function DashboardContent() {
                     t => String(t.leagueId) === String(league.id) && String(t.ownerId) === String(syncedSleeperUser?.sleeper_id)
                   );
 
+                  const targetInviteLink = league.invite_link || league.inviteLink || league.sleeper_invite_link || league.invite;
+
                   return (
                     <div key={league.id} className="bg-[#111] border border-gray-800 rounded-2xl p-6 flex flex-col justify-between hover:border-gray-700 transition-colors">
                       <div>
@@ -1027,7 +1046,7 @@ function DashboardContent() {
                                <AlertCircle size={12} /> Pending Sleeper Join
                              </div>
                              <a 
-                               href={league.invite_link || `https://sleeper.com/leagues/${league.id}`} 
+                               href={targetInviteLink || `https://sleeper.com/leagues/${league.id}`} 
                                target="_blank" 
                                rel="noreferrer"
                                className="w-full text-center bg-amber-600 hover:bg-amber-500 text-white font-black uppercase tracking-widest text-[10px] md:text-xs py-3 rounded-xl transition-colors shadow-[0_0_15px_rgba(217,119,6,0.3)] animate-pulse"
@@ -1037,7 +1056,7 @@ function DashboardContent() {
                            </div>
                         ) : (
                            <a 
-                             href={`https://sleeper.com/leagues/${league.id}`} 
+                             href={targetInviteLink || `https://sleeper.com/leagues/${league.id}`} 
                              target="_blank" 
                              rel="noreferrer"
                              className="w-full text-center bg-gray-800 hover:bg-gray-700 text-white font-bold uppercase tracking-widest text-[10px] md:text-xs py-3 rounded-xl transition-colors"
