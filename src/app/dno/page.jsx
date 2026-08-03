@@ -56,6 +56,9 @@ function PublicPageContent() {
     const newParams = new URLSearchParams(searchParams.toString());
     newParams.set('tab', tabId);
     router.push(`?${newParams.toString()}`, { scroll: false });
+    
+    // Smoothly scroll to top so the user isn't stuck at the bottom of the page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Fetch live pool data & securely fetch user ticket counts in the same call
@@ -448,7 +451,7 @@ function PublicPageContent() {
             )}
             {activeTab === 'charity' && <CharityTab />}
             {activeTab === 'prizes' && <PrizesTab />}
-            {activeTab === 'playoffs' && <PlayoffTab isQualified={isQualified} />}
+            {activeTab === 'playoffs' && <PlayoffTab isQualified={isQualified} onTabChange={handleTabClick} />}
             {activeTab === 'rules' && <RulesTab />}
             {activeTab === 'community' && <CommunityTab />}
             {activeTab === 'sponsors' && <SponsorsTab />}

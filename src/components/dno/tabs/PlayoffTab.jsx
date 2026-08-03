@@ -1,9 +1,8 @@
 "use client";
 import React from 'react';
-import Link from 'next/link';
 import { Lock, Unlock, Swords, Trophy, TrendingUp, ShieldAlert, ChevronRight, Gift } from 'lucide-react';
 
-export default function PlayoffTab({ isQualified = false }) {
+export default function PlayoffTab({ isQualified = false, onTabChange }) {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 mb-16 relative z-10">
       
@@ -108,16 +107,17 @@ export default function PlayoffTab({ isQualified = false }) {
         <h3 className="text-xl md:text-2xl font-black text-white uppercase italic tracking-tighter mb-5 text-center drop-shadow-md">
           What happens if you win it all?
         </h3>
-        <Link 
-          href="?tab=prizes" 
-          scroll={false} 
+        <button 
+          onClick={() => {
+            if (onTabChange) onTabChange('prizes');
+          }}
           className="relative group p-[2px] rounded-xl bg-gradient-to-r from-purple-500 to-[#1b75bb] shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-transform hover:-translate-y-1"
         >
           <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-8 py-4 flex items-center justify-center gap-3 text-white font-black uppercase tracking-widest text-sm">
             <Gift size={20} className="text-purple-400 group-hover:text-white transition-colors" /> 
             See the Grand Prize Package
           </div>
-        </Link>
+        </button>
       </div>
 
     </div>
