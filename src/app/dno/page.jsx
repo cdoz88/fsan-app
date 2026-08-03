@@ -247,7 +247,7 @@ function PublicPageContent() {
                 <div className="bg-[#111] border border-[#1b75bb]/30 p-4 rounded-xl text-left mb-2 shadow-inner">
                   <p className="text-sm text-gray-300 leading-relaxed">
                     <strong className="text-white block mb-1">Standard Entry</strong> 
-                    Each ticket is $22 ($2 goes directly to charity).
+                    Each ticket is $22 ($4 goes directly to charity).
                   </p>
                   
                   {ticketsAvailable <= 0 && userJoinedCount === 0 && (
