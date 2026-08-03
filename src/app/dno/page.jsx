@@ -200,7 +200,12 @@ function PublicPageContent() {
       });
       const data = await res.json();
       if (data.success) {
-        window.location.href = '/dno/dashboard';
+        // Fix: Redirect to the Sleeper invite link!
+        if (confirmingLeague.invite_link) {
+          window.location.href = confirmingLeague.invite_link;
+        } else {
+          window.location.href = '/dno/dashboard';
+        }
       } else {
         alert(data.message || "Failed to join the league.");
         setIsProcessing(false);
