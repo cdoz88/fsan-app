@@ -50,15 +50,25 @@ function PublicPageContent() {
     }
   }, [searchParams]);
 
-  // Handle Tab Click and update URL parameter seamlessly
-  const handleTabClick = (tabId) => {
+  // Handle Tab Click, update URL, and handle specific scroll targets
+  const handleTabClick = (tabId, targetElementId = null) => {
     setActiveTab(tabId);
     const newParams = new URLSearchParams(searchParams.toString());
     newParams.set('tab', tabId);
     router.push(`?${newParams.toString()}`, { scroll: false });
     
-    // Smoothly scroll to top so the user isn't stuck at the bottom of the page
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (targetElementId) {
+      // Give React a tiny fraction of a second to render the new tab content before searching for the ID
+      setTimeout(() => {
+        const element = document.getElementById(targetElementId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 50); 
+    } else {
+      // Default: Smoothly scroll to top so the user isn't stuck at the bottom of the page
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   // Fetch live pool data & securely fetch user ticket counts in the same call

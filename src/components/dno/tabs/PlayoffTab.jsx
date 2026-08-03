@@ -109,7 +109,7 @@ export default function PlayoffTab({ isQualified = false, onTabChange }) {
         </h3>
         <button 
           onClick={() => {
-            if (onTabChange) onTabChange('prizes');
+            if (onTabChange) onTabChange('prizes', 'grand-prize');
           }}
           className="relative group p-[2px] rounded-xl bg-gradient-to-r from-purple-500 to-[#1b75bb] shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-transform hover:-translate-y-1"
         >

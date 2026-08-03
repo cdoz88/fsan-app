@@ -37,7 +37,7 @@ export default function PrizesTab() {
             League Champion
           </h3>
           <p className="text-gray-300 leading-relaxed mb-8 text-sm md:text-base">
-            Win your individual 12-team division and take home the official Draft Night Out Mini Title Belt. It is the absolute perfect desk piece to constantly remind your coworkers exactly who dominates the gridiron.
+            Win your individual 12-team online division and take home the official Draft Night Out Mini Title Belt. It is the absolute perfect desk piece to constantly remind your coworkers exactly who dominates the gridiron.
           </p>
           <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-black uppercase tracking-widest shadow-inner">
             <Star size={16} /> 1 Winner Per Division
@@ -79,7 +79,7 @@ export default function PrizesTab() {
       </div>
 
       {/* 3. Grand Prize Bundle */}
-      <div className="relative flex flex-col md:flex-row items-center gap-8 md:gap-12 bg-gradient-to-br from-[#150a1a] to-[#0a0a0a] border border-purple-900/30 rounded-3xl p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden group hover:border-purple-600/50 transition-colors duration-500">
+      <div id="grand-prize" className="relative flex flex-col md:flex-row items-center gap-8 md:gap-12 bg-gradient-to-br from-[#150a1a] to-[#0a0a0a] border border-purple-900/30 rounded-3xl p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden group hover:border-purple-600/50 transition-colors duration-500">
         
         {/* Subtle Background Glow for the Card */}
         <div className="absolute inset-0 bg-gradient-to-r from-purple-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
