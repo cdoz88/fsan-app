@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Ticket, ShieldCheck, Share2, Trophy, ExternalLink, Loader2, Link2, CheckCircle2, Gift, Edit3, X, ArrowLeft, ShoppingCart, Plus, Minus, HeartHandshake, Book, Download, Lock, RefreshCw } from 'lucide-react';
+import { Ticket, ShieldCheck, Share2, Trophy, ExternalLink, Loader2, Link2, CheckCircle2, Gift, Edit3, X, ArrowLeft, ShoppingCart, Plus, Minus, HeartHandshake, Book, Download, Lock, RefreshCw, AlertCircle } from 'lucide-react';
 
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip as ChartTooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
@@ -251,13 +251,14 @@ function DashboardContent() {
             name: l.name,
             total_spots: l.total_rosters || inPool?.total_spots || 12,
             filled_spots: inPool?.filled_spots || l.total_rosters || 12,
-            avatar: l.avatar
+            avatar: l.avatar,
+            pending_join: false
           });
         }
       });
 
       // 4. Smart Fallback for Sleeper Cache Delay
-      // Only add WP-logged leagues if we can explicitly verify they are still on the roster
+      // Verify via Sleeper API users endpoint
       const cacheCheckPromises = [];
       wpJoinedIds.forEach(id => {
          if (!mergedLeaguesMap.has(id) && poolMap[id]) {
@@ -267,15 +268,29 @@ function DashboardContent() {
                .then(users => {
                   if (Array.isArray(users)) {
                      const isStillInLeague = users.some(u => String(u.user_id) === String(userId));
+                     const poolLeague = poolMap[id];
+                     
                      if (isStillInLeague) {
-                        const poolLeague = poolMap[id];
                         mergedLeaguesMap.set(id, {
                            id: poolLeague.id,
                            sleeper_id: poolLeague.id,
                            name: poolLeague.name,
                            total_spots: poolLeague.total_spots || 12,
                            filled_spots: poolLeague.filled_spots || 1,
-                           avatar: null
+                           avatar: null,
+                           pending_join: false
+                        });
+                     } else {
+                        // PENDING JOIN STATE: User spent ticket but hasn't accepted Sleeper invite!
+                        mergedLeaguesMap.set(id, {
+                           id: poolLeague.id,
+                           sleeper_id: poolLeague.id,
+                           name: poolLeague.name,
+                           total_spots: poolLeague.total_spots || 12,
+                           filled_spots: poolLeague.filled_spots || 0,
+                           avatar: null,
+                           pending_join: true,
+                           invite_link: poolLeague.invite_link || poolLeague.inviteLink || poolLeague.sleeper_invite_link || poolLeague.invite
                         });
                      }
                   }
@@ -984,7 +999,7 @@ function DashboardContent() {
                         <h4 className="text-lg font-black italic uppercase text-white mb-1">{league.name}</h4>
                         <p className="text-sm text-gray-400 mb-6">PPR • 12 Team • 17 Rounds</p>
                         
-                        {teamStats && (
+                        {teamStats && !league.pending_join && (
                           <div className="flex items-center justify-between bg-[#151515] p-4 rounded-xl border border-gray-800 mb-6 shadow-inner">
                             <div className="flex flex-col items-center">
                               <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Global Rank</span>
@@ -1006,32 +1021,50 @@ function DashboardContent() {
                       </div>
                       
                       <div className="flex flex-col gap-2 w-full mt-auto">
-                        <a 
-                          href={`https://sleeper.com/leagues/${league.id}`} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="w-full text-center bg-gray-800 hover:bg-gray-700 text-white font-bold uppercase tracking-widest text-[10px] md:text-xs py-3 rounded-xl transition-colors"
-                        >
-                          Go To Draft Room
-                        </a>
+                        {league.pending_join ? (
+                           <div className="flex flex-col gap-2">
+                             <div className="text-amber-400 text-[10px] font-bold uppercase text-center flex items-center justify-center gap-1">
+                               <AlertCircle size={12} /> Pending Sleeper Join
+                             </div>
+                             <a 
+                               href={league.invite_link || `https://sleeper.com/leagues/${league.id}`} 
+                               target="_blank" 
+                               rel="noreferrer"
+                               className="w-full text-center bg-amber-600 hover:bg-amber-500 text-white font-black uppercase tracking-widest text-[10px] md:text-xs py-3 rounded-xl transition-colors shadow-[0_0_15px_rgba(217,119,6,0.3)] animate-pulse"
+                             >
+                               Click Here to Join Draft Room
+                             </a>
+                           </div>
+                        ) : (
+                           <a 
+                             href={`https://sleeper.com/leagues/${league.id}`} 
+                             target="_blank" 
+                             rel="noreferrer"
+                             className="w-full text-center bg-gray-800 hover:bg-gray-700 text-white font-bold uppercase tracking-widest text-[10px] md:text-xs py-3 rounded-xl transition-colors"
+                           >
+                             Go To Draft Room
+                           </a>
+                        )}
                         
-                        <div className="flex gap-2 w-full">
-                          <button 
-                            onClick={() => handleShareRoster(league.id)}
-                            className="flex-1 text-center bg-indigo-900/20 border border-indigo-500/30 hover:bg-indigo-900/40 text-indigo-400 font-bold uppercase tracking-widest text-[10px] md:text-xs py-3 rounded-xl transition-colors"
-                          >
-                            <Share2 size={14} className="inline mr-1 mb-0.5" /> Share
-                          </button>
-                          
-                          {teamStats && (
-                            <button 
-                              onClick={() => handleViewStats(teamStats)} 
-                              className="flex-1 text-center bg-[#1b75bb]/10 border border-[#1b75bb]/30 hover:bg-[#1b75bb]/20 text-[#27d7ff] font-bold uppercase tracking-widest text-[10px] md:text-xs py-3 rounded-xl transition-colors"
-                            >
-                              Detailed Stats
-                            </button>
-                          )}
-                        </div>
+                        {!league.pending_join && (
+                           <div className="flex gap-2 w-full">
+                             <button 
+                               onClick={() => handleShareRoster(league.id)}
+                               className="flex-1 text-center bg-indigo-900/20 border border-indigo-500/30 hover:bg-indigo-900/40 text-indigo-400 font-bold uppercase tracking-widest text-[10px] md:text-xs py-3 rounded-xl transition-colors"
+                             >
+                               <Share2 size={14} className="inline mr-1 mb-0.5" /> Share
+                             </button>
+                             
+                             {teamStats && (
+                               <button 
+                                 onClick={() => handleViewStats(teamStats)} 
+                                 className="flex-1 text-center bg-[#1b75bb]/10 border border-[#1b75bb]/30 hover:bg-[#1b75bb]/20 text-[#27d7ff] font-bold uppercase tracking-widest text-[10px] md:text-xs py-3 rounded-xl transition-colors"
+                               >
+                                 Detailed Stats
+                               </button>
+                             )}
+                           </div>
+                        )}
                       </div>
                     </div>
                   );
