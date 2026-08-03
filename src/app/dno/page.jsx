@@ -200,7 +200,7 @@ function PublicPageContent() {
       });
       const data = await res.json();
       if (data.success) {
-        // Fix: Redirect to the Sleeper invite link!
+        // Redirection Logic 
         if (confirmingLeague.invite_link) {
           window.location.href = confirmingLeague.invite_link;
         } else {
