@@ -199,6 +199,21 @@ function PublicPageContent() {
       });
       const data = await res.json();
       if (data.success) {
+        
+        // BYPASS NEXT.JS API STRIPPING: Fetch the raw invite link directly from WP
+        try {
+          const wpRes = await fetch('https://admin.fsan.com/wp-admin/admin-ajax.php?action=dno_get_leagues_pool');
+          const wpJson = await wpRes.json();
+          if (wpJson.success && wpJson.data?.leagues) {
+            const directLeague = wpJson.data.leagues.find(l => String(l.id) === String(confirmingLeague.id) || String(l.id) === String(confirmingLeague.sleeper_id));
+            if (directLeague && directLeague.invite_link) {
+              setConfirmingLeague(prev => ({ ...prev, invite_link: directLeague.invite_link }));
+            }
+          }
+        } catch (wpErr) {
+          console.warn("Direct WP fetch failed:", wpErr);
+        }
+
         setJoinSuccess(true);
         setIsProcessing(false);
       } else {
