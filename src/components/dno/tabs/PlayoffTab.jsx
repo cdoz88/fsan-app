@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
-import { Lock, Unlock, Swords, Trophy, TrendingUp, ShieldAlert, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
+import { Lock, Unlock, Swords, Trophy, TrendingUp, ShieldAlert, ChevronRight, Gift } from 'lucide-react';
 
 export default function PlayoffTab({ isQualified = false }) {
   return (
@@ -77,7 +78,7 @@ export default function PlayoffTab({ isQualified = false }) {
             </div>
             <h4 className="text-lg font-black text-white uppercase tracking-wider mb-2">2. Maximize Odds</h4>
             <p className="text-xs text-gray-400 leading-relaxed">
-              Want an edge? The more DNO divisions you win, the more entries you get in the Playoff Challenge. Draft more teams to build a postseason powerhouse arsenal.
+              Want an edge? Play in multiple leagues to increase your odds of qualifying for the Playoff Challenge. While you can only secure one entry into the postseason tournament, drafting more teams gives you more paths to a divisional title!
             </p>
           </div>
 
@@ -100,6 +101,23 @@ export default function PlayoffTab({ isQualified = false }) {
         <p className="text-xs text-red-400/80 leading-relaxed">
           <strong>Note:</strong> The Playoff Challenge is an exclusive postseason event. Only users who officially win a verified Draft Night Out league will have their dashboard unlocked. Entering multiple leagues increases your chances of securing a qualifying spot.
         </p>
+      </div>
+
+      {/* Hype / Call to Action */}
+      <div className="flex flex-col items-center justify-center mt-12 mb-4 animate-in fade-in zoom-in duration-500 delay-300">
+        <h3 className="text-xl md:text-2xl font-black text-white uppercase italic tracking-tighter mb-5 text-center drop-shadow-md">
+          What happens if you win it all?
+        </h3>
+        <Link 
+          href="?tab=prizes" 
+          scroll={false} 
+          className="relative group p-[2px] rounded-xl bg-gradient-to-r from-purple-500 to-[#1b75bb] shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-transform hover:-translate-y-1"
+        >
+          <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-8 py-4 flex items-center justify-center gap-3 text-white font-black uppercase tracking-widest text-sm">
+            <Gift size={20} className="text-purple-400 group-hover:text-white transition-colors" /> 
+            See the Grand Prize Package
+          </div>
+        </Link>
       </div>
 
     </div>
