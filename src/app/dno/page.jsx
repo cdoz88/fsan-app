@@ -2,13 +2,14 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { MonitorSmartphone, Trophy, BookOpen, Handshake, ListOrdered, HeartHandshake, Loader2, Users, Plus, Minus, X, ShoppingCart } from 'lucide-react';
+import { MonitorSmartphone, Trophy, BookOpen, Handshake, ListOrdered, HeartHandshake, Loader2, Users, Plus, Minus, X, ShoppingCart, Swords } from 'lucide-react';
 
 // Importing DNO components
 import DNOHeader from '../../components/dno/DNOHeader';
 import DNOAuthModal from '../../components/dno/DNOAuthModal';
 import DraftsTab from '../../components/dno/tabs/DraftsTab';
 import PrizesTab from '../../components/dno/tabs/PrizesTab';
+import PlayoffTab from '../../components/dno/tabs/PlayoffTab';
 import RulesTab from '../../components/dno/tabs/RulesTab';
 import SponsorsTab from '../../components/dno/tabs/SponsorsTab';
 import CharityTab from '../../components/dno/tabs/CharityTab';
@@ -24,7 +25,7 @@ function PublicPageContent() {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [draftView, setDraftView] = useState('online');
   const [showAuthModal, setShowAuthModal] = useState(null); // 'login' or 'register'
-  
+
   const [leagues, setLeagues] = useState([]);
   const [loadingLeagues, setLoadingLeagues] = useState(true);
   const [liveLeaderboard, setLiveLeaderboard] = useState({ teams: [] });
@@ -33,6 +34,7 @@ function PublicPageContent() {
   // State for Purchasing and Joining
   const [ticketsAvailable, setTicketsAvailable] = useState(0);
   const [userJoinedCount, setUserJoinedCount] = useState(0);
+  const [isQualified, setIsQualified] = useState(false);
   const [confirmingLeague, setConfirmingLeague] = useState(null);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [purchaseQuantity, setPurchaseQuantity] = useState(1);
@@ -73,11 +75,11 @@ function PublicPageContent() {
         setTicketsAvailable(Math.max(0, allotted - joined));
         setUserJoinedCount(joined);
       }
-    } catch (err) { 
-      console.warn("Failed syncing live DNO array: ", err); 
-    } finally { 
-      setLoadingLeagues(false); 
-    }
+    } catch (err) {
+       console.warn("Failed syncing live DNO array: ", err);
+     } finally {
+       setLoadingLeagues(false);
+     }
   }, [session]);
 
   // Fetch live leaderboard
@@ -89,10 +91,25 @@ function PublicPageContent() {
         setLiveLeaderboard(json.data);
         if (json.data.season_label) setLiveSeasonLabel(json.data.season_label.toUpperCase());
       }
-    } catch (err) { 
-      console.warn("Failed loading live leaderboard: ", err); 
-    }
+    } catch (err) {
+       console.warn("Failed loading live leaderboard: ", err);
+     }
   }, []);
+
+  // Check if the user is qualified for the Playoff Challenge
+  const loadUserData = useCallback(async () => {
+    if (session?.user?.id) {
+      try {
+        const res = await fetch(`/api/scl?action=dno_get_user_data&user_id=${session.user.id}&t=${Date.now()}`, { cache: 'no-store' });
+        const json = await res.json();
+        if (json.success && json.data) {
+          setIsQualified(json.data.is_qualified || false);
+        }
+      } catch (err) {
+        console.warn("Failed loading user qualification status: ", err);
+      }
+    }
+  }, [session]);
 
   useEffect(() => {
     loadLiveLeaderboard();
@@ -100,7 +117,8 @@ function PublicPageContent() {
 
   useEffect(() => {
     loadDnoPool();
-  }, [loadDnoPool, session]);
+    loadUserData();
+  }, [loadDnoPool, loadUserData, session]);
 
   const sortedLeagues = [...leagues].sort((a, b) => {
     const isFullA = a.filled_spots >= a.total_spots;
@@ -138,6 +156,7 @@ function PublicPageContent() {
           returnUrl: `${window.location.origin}/dno/dashboard`
         })
       });
+
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
@@ -199,8 +218,8 @@ function PublicPageContent() {
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
            <div className="bg-[#151515] p-8 rounded-3xl border border-gray-800 text-center text-white shadow-2xl w-full max-w-md relative overflow-hidden my-auto">
               <button 
-                onClick={() => { setShowPurchaseModal(false); setPurchaseQuantity(1); setDonationAmount(0); setIsAnonymous(false); }} 
-                className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors p-2"
+                 onClick={() => { setShowPurchaseModal(false); setPurchaseQuantity(1); setDonationAmount(0); setIsAnonymous(false); }} 
+                 className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors p-2"
                 disabled={isProcessing}
               >
                  <X size={20} />
@@ -209,7 +228,6 @@ function PublicPageContent() {
               <div className="mx-auto w-12 h-12 bg-[#1b75bb]/20 text-[#1b75bb] rounded-full flex items-center justify-center mb-4">
                  <ShoppingCart size={24} />
               </div>
-
               <h3 className="text-2xl font-black uppercase italic mb-2 tracking-tighter">Get Draft Tickets</h3>
               
               <div className="flex flex-col gap-3 mt-4">
@@ -218,9 +236,10 @@ function PublicPageContent() {
                     <strong className="text-white block mb-1">Standard Entry</strong> 
                     Each ticket is $22 ($2 goes directly to charity).
                   </p>
+                  
                   {ticketsAvailable <= 0 && userJoinedCount === 0 && (
                     <p className="text-xs text-[#f5a623] font-bold mt-3 bg-[#f5a623]/10 p-2 rounded-lg inline-block border border-[#f5a623]/20">
-                      🎁 First-time buyers get a free 1-month trial of FSAN Pro+ automatically applied at checkout!
+                        First-time buyers get a free 1-month trial of FSAN Pro+ automatically applied at checkout!
                     </p>
                   )}
 
@@ -263,6 +282,7 @@ function PublicPageContent() {
                         </button>
                       ))}
                     </div>
+
                     {donationAmount > 0 && (
                       <label className="flex items-center gap-2 cursor-pointer mt-1 group">
                         <input 
@@ -274,6 +294,7 @@ function PublicPageContent() {
                         <span className="text-xs font-medium text-gray-500 group-hover:text-gray-300 transition-colors">Keep my donation anonymous on the Wall of Fame</span>
                       </label>
                     )}
+
                   </div>
                 </div>
 
@@ -340,8 +361,8 @@ function PublicPageContent() {
               )}
 
               <button 
-                onClick={() => setConfirmingLeague(null)} 
-                disabled={isProcessing}
+                 onClick={() => setConfirmingLeague(null)} 
+                 disabled={isProcessing}
                 className="w-full mt-3 px-6 py-3 bg-transparent hover:bg-gray-800 transition-colors text-gray-400 hover:text-white font-bold uppercase tracking-widest text-xs rounded-xl"
               >
                 Cancel
@@ -383,6 +404,7 @@ function PublicPageContent() {
               { id: 'leaderboard', icon: ListOrdered, label: 'Leaderboard' },
               { id: 'charity', icon: HeartHandshake, label: 'Charity' },
               { id: 'prizes', icon: Trophy, label: 'Prizes' },
+              { id: 'playoffs', icon: Swords, label: 'Playoffs' },
               { id: 'rules', icon: BookOpen, label: 'Rules' },
               { id: 'community', icon: Users, label: 'Community' },
               { id: 'sponsors', icon: Handshake, label: 'Sponsor' }
@@ -416,8 +438,8 @@ function PublicPageContent() {
                   } else {
                     setConfirmingLeague(league);
                   }
-                }} 
-              />
+                }}
+               />
             )}
             {activeTab === 'leaderboard' && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -426,6 +448,7 @@ function PublicPageContent() {
             )}
             {activeTab === 'charity' && <CharityTab />}
             {activeTab === 'prizes' && <PrizesTab />}
+            {activeTab === 'playoffs' && <PlayoffTab isQualified={isQualified} />}
             {activeTab === 'rules' && <RulesTab />}
             {activeTab === 'community' && <CommunityTab />}
             {activeTab === 'sponsors' && <SponsorsTab />}
