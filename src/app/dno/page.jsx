@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { MonitorSmartphone, Trophy, BookOpen, Handshake, ListOrdered, HeartHandshake, Loader2, Users, Plus, Minus, X, ShoppingCart, Swords, CheckCircle2, ExternalLink } from 'lucide-react';
+import { MonitorSmartphone, Trophy, BookOpen, Handshake, ListOrdered, HeartHandshake, Loader2, Users, Plus, Minus, X, ShoppingCart, Swords, CheckCircle2, ExternalLink, AlertCircle } from 'lucide-react';
 
 // Importing DNO components
 import DNOHeader from '../../components/dno/DNOHeader';
@@ -59,7 +59,6 @@ function PublicPageContent() {
     router.push(`?${newParams.toString()}`, { scroll: false });
     
     if (targetElementId) {
-      // Give React a tiny fraction of a second to render the new tab content before searching for the ID
       setTimeout(() => {
         const element = document.getElementById(targetElementId);
         if (element) {
@@ -67,7 +66,6 @@ function PublicPageContent() {
         }
       }, 50); 
     } else {
-      // Default: Smoothly scroll to top so the user isn't stuck at the bottom of the page
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -201,7 +199,6 @@ function PublicPageContent() {
       });
       const data = await res.json();
       if (data.success) {
-        // Change to the Success state instead of redirecting so browsers don't block the popup
         setJoinSuccess(true);
         setIsProcessing(false);
       } else {
@@ -214,6 +211,12 @@ function PublicPageContent() {
       setIsProcessing(false);
     }
   };
+
+  // Extract invite link checking all possible key conventions
+  const targetInviteLink = confirmingLeague?.invite_link 
+    || confirmingLeague?.inviteLink 
+    || confirmingLeague?.sleeper_invite_link 
+    || confirmingLeague?.invite;
 
   return (
     <div className="min-h-screen bg-[#09090b] flex flex-col font-sans selection:bg-[#1b75bb] selection:text-white relative">
@@ -405,25 +408,39 @@ function PublicPageContent() {
                     <CheckCircle2 size={32} />
                   </div>
                   <h3 className="text-2xl font-black uppercase italic mb-2 tracking-tighter text-white">Ticket Applied!</h3>
-                  <p className="text-gray-400 mb-6 text-sm leading-relaxed">
-                    Your spot is secured! Click the button below to open Sleeper in a new tab and officially enter the draft room.
-                  </p>
                   
-                  <a 
-                    href={confirmingLeague.invite_link || `https://sleeper.com/leagues/${confirmingLeague.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => {
-                      setConfirmingLeague(null);
-                      setJoinSuccess(false);
-                      window.location.href = '/dno/dashboard';
-                    }}
-                    className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-[0_0_15px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5 block mb-2"
-                  >
-                    <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs gap-2">
-                      Join League on Sleeper <ExternalLink size={16} />
+                  {targetInviteLink ? (
+                    <>
+                      <p className="text-gray-400 mb-6 text-sm leading-relaxed">
+                        Your spot is secured! Click below to open your exclusive Sleeper invite link and join the division.
+                      </p>
+                      
+                      <a 
+                        href={targetInviteLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => {
+                          setConfirmingLeague(null);
+                          setJoinSuccess(false);
+                          window.location.href = '/dno/dashboard';
+                        }}
+                        className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-[0_0_15px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5 block mb-3"
+                      >
+                        <div className="bg-[#151515] group-hover:bg-transparent transition-colors rounded-[10px] px-4 py-3.5 flex items-center justify-center w-full text-white font-black uppercase tracking-widest text-xs gap-2">
+                          Join League on Sleeper <ExternalLink size={16} />
+                        </div>
+                      </a>
+                    </>
+                  ) : (
+                    <div className="bg-amber-900/20 border border-amber-500/30 rounded-xl p-4 mb-6 text-left">
+                      <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider mb-1">
+                        <AlertCircle size={16} /> Sleeper Invite Link Pending
+                      </div>
+                      <p className="text-xs text-gray-300 leading-relaxed">
+                        Your entry was logged! The commissioner has not attached an invite link for this division yet. Please check back shortly in your DNO Locker Room.
+                      </p>
                     </div>
-                  </a>
+                  )}
 
                   <button 
                      onClick={() => {
