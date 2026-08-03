@@ -215,7 +215,13 @@ export default function DraftsTab({
                   const isFull = openSpots === 0;
                   const hasNoEntriesLeft = ticketsAvailable === 0;
                   
-                  const isJoined = mySleeperLeagueIds.has(String(league.id)) || recentlyJoinedLeagues.includes(league.id);
+                  // Safely check if the user is already in this specific league
+                  const safeJoined = recentlyJoinedLeagues ? recentlyJoinedLeagues.map(String) : [];
+                  const isJoined = mySleeperLeagueIds.has(String(league.id)) || 
+                                   mySleeperLeagueIds.has(String(league.sleeper_id)) || 
+                                   safeJoined.includes(String(league.id)) || 
+                                   safeJoined.includes(String(league.sleeper_id));
+
                   const isSlow = league.draft_style === 'slow';
 
                   const formattedDate = league.draft_date ? new Date(`${league.draft_date}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD';
@@ -256,6 +262,8 @@ export default function DraftsTab({
                     );
                   }
 
+                  const targetInviteLink = league.invite_link || league.inviteLink || league.sleeper_invite_link || league.invite;
+
                   return (
                     <div key={league.id} className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md relative overflow-hidden group">
                       <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -273,7 +281,7 @@ export default function DraftsTab({
                       </div>
                       <div className="shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
                         {isJoined ? (
-                          <a href={`https://sleeper.com/leagues/${league.id}`} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-green-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-green-900/50 transition-colors flex items-center justify-center gap-2"><ExternalLink size={14} /> Go to League</a>
+                          <a href={targetInviteLink || `https://sleeper.com/leagues/${league.id}`} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-green-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-green-900/50 transition-colors flex items-center justify-center gap-2"><ExternalLink size={14} /> Go to League</a>
                         ) : (isFull && isSlow && league.draft_id) ? (
                           <a href={`https://sleeper.com/draft/nfl/${league.draft_id}`} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-red-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-red-900/50 transition-colors flex items-center justify-center gap-2">
                             <Eye size={14} /> Watch Draft

@@ -27,6 +27,7 @@ function PublicPageContent() {
   const [showAuthModal, setShowAuthModal] = useState(null); // 'login' or 'register'
 
   const [leagues, setLeagues] = useState([]);
+  const [joinedLeagueIds, setJoinedLeagueIds] = useState([]); // Tracks user's joined leagues
   const [loadingLeagues, setLoadingLeagues] = useState(true);
   const [liveLeaderboard, setLiveLeaderboard] = useState({ teams: [] });
   const [liveSeasonLabel, setLiveSeasonLabel] = useState("2026 SEASON");
@@ -86,6 +87,11 @@ function PublicPageContent() {
         const joined = data.user_joined_count || 0;
         setTicketsAvailable(Math.max(0, allotted - joined));
         setUserJoinedCount(joined);
+        
+        // Populate the joined leagues to gray out buttons
+        if (data.joined_leagues) {
+          setJoinedLeagueIds(data.joined_leagues.map(String));
+        }
       }
     } catch (err) {
        console.warn("Failed syncing live DNO array: ", err);
@@ -200,6 +206,9 @@ function PublicPageContent() {
       const data = await res.json();
       if (data.success) {
         
+        // Add this league to our local joined list immediately
+        setJoinedLeagueIds(prev => [...prev, String(confirmingLeague.id), String(confirmingLeague.sleeper_id)]);
+
         // BYPASS NEXT.JS API STRIPPING: Fetch the raw invite link directly from WP
         try {
           const wpRes = await fetch('https://admin.fsan.com/wp-admin/admin-ajax.php?action=dno_get_leagues_pool');
@@ -435,9 +444,12 @@ function PublicPageContent() {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={() => {
-                          setConfirmingLeague(null);
-                          setJoinSuccess(false);
-                          window.location.href = '/dno/dashboard';
+                          // Allow the mobile OS 1 second to deep link to the Sleeper app before gracefully redirecting the background tab to the Dashboard.
+                          setTimeout(() => {
+                            setConfirmingLeague(null);
+                            setJoinSuccess(false);
+                            window.location.href = '/dno/dashboard';
+                          }, 1000);
                         }}
                         className="w-full relative group p-[2px] rounded-xl bg-gradient-to-r from-teal-400 to-[#1b75bb] shadow-[0_0_15px_rgba(27,117,187,0.2)] transition-transform hover:-translate-y-0.5 block mb-3"
                       >
@@ -533,7 +545,7 @@ function PublicPageContent() {
                 loadingLeagues={loadingLeagues} 
                 leagues={leagues} 
                 sortedLeagues={sortedLeagues} 
-                recentlyJoinedLeagues={[]} 
+                recentlyJoinedLeagues={joinedLeagueIds} 
                 setConfirmingLeague={(league) => {
                   if (status !== 'authenticated') {
                     setShowAuthModal('register');
