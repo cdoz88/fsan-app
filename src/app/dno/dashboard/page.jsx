@@ -1,17 +1,21 @@
 "use client";
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Ticket, ShieldCheck, Share2, Trophy, ExternalLink, Loader2, Link2, CheckCircle2, Gift, Edit3, X, ArrowLeft, ShoppingCart, Plus, Minus, HeartHandshake, Book, Download, Lock, RefreshCw, AlertCircle, UserCog, Key, CreditCard, FileText, LogOut } from 'lucide-react';
+import { Ticket, Share2, Trophy, Loader2, Link2, CheckCircle2, Gift, Edit3, X, ArrowLeft, ShoppingCart, Plus, Minus, HeartHandshake, UserCog } from 'lucide-react';
 
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip as ChartTooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, ChartTooltip, Legend, Filler);
 
+// Importing Modular Components
 import DNOHeader from '../../../components/dno/DNOHeader';
 import GraphicTab from '../../../components/dno/tabs/GraphicTab';
+import MyLeaguesTab from '../../../components/dno/tabs/dashboard/MyLeaguesTab';
+import PerksTab from '../../../components/dno/tabs/dashboard/PerksTab';
+import AccountTab from '../../../components/dno/tabs/dashboard/AccountTab';
 
 // --- AWARD SVGS ---
 const WeeklyScorerSVG = () => (
@@ -57,19 +61,15 @@ function DashboardContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingLeagues, setLoadingLeagues] = useState(false);
 
-  // Determine if they've ever purchased/received a ticket OR are a legacy Canton drafter
   const hasPurchasedTicket = ticketCount > 0 || userJoinedCount > 0 || isLegacyDrafter;
 
-  // Perks State
   const [rookieGuideUrl, setRookieGuideUrl] = useState(null);
   const [guideLoading, setGuideLoading] = useState(true);
 
-  // Stats Modal State
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [modalData, setModalData] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
 
-  // Purchasing & Portal State
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [purchaseQuantity, setPurchaseQuantity] = useState(1);
   const [donationAmount, setDonationAmount] = useState(0);
@@ -77,7 +77,6 @@ function DashboardContent() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
 
-  // Dedicated DNO Sleeper Sync State
   const [sleeperInput, setSleeperInput] = useState('');
   const [livePreviewUser, setLivePreviewUser] = useState(null); 
   const [syncedSleeperUser, setSyncedSleeperUser] = useState(null); 
@@ -88,7 +87,6 @@ function DashboardContent() {
 
   const getDnoStorageKey = (userId) => `dno_dedicated_sleeper_${userId}`;
 
-  // Clean up URL query parameters (e.g. checkout=canceled) on mount
   useEffect(() => {
     const checkoutStatus = searchParams.get('checkout');
     if (checkoutStatus) {
@@ -102,7 +100,6 @@ function DashboardContent() {
     }
   }, [searchParams, activeTab]);
 
-  // Fetch the Rookie Draft Guide PDF URL from GraphQL
   const fetchRookieGuide = useCallback(async () => {
     setGuideLoading(true);
     try {
@@ -133,7 +130,6 @@ function DashboardContent() {
     fetchRookieGuide();
   }, [fetchRookieGuide]);
 
-  // Restore Sleeper Account from local cache initially
   useEffect(() => {
     if (session?.user?.id) {
       const cached = localStorage.getItem(getDnoStorageKey(session.user.id));
@@ -211,7 +207,6 @@ function DashboardContent() {
         return;
       }
 
-      // 1. Fetch DNO Pool AND User's WP-Logged Joined Leagues simultaneously
       const userIdParam = session?.user?.id ? `&user_id=${session.user.id}` : '';
       const pRes = await fetch(`/api/scl?type=dno_pool${userIdParam}&t=${Date.now()}`, { cache: 'no-store' });
       
@@ -219,7 +214,6 @@ function DashboardContent() {
       let wpJoinedIds = new Set();
       let poolMap = {};
 
-      // DIRECT WP FETCH TO ENSURE WE HAVE THE UNSTRIPPED INVITE LINKS
       let directWpLeagues = [];
       try {
           const wpRes = await fetch('https://admin.fsan.com/wp-admin/admin-ajax.php?action=dno_get_leagues_pool');
@@ -245,17 +239,14 @@ function DashboardContent() {
         }
       }
 
-      // 2. Fetch Sleeper Leagues (Bust browser cache)
       const slpLeaguesRes = await fetch(`https://api.sleeper.app/v1/user/${userId}/leagues/nfl/2026?t=${Date.now()}`, { cache: 'no-store' });
       let slpLeagues = [];
       if (slpLeaguesRes.ok) {
          slpLeagues = await slpLeaguesRes.json();
       }
 
-      // 3. Merge Strategy
       const mergedLeaguesMap = new Map();
 
-      // Add Sleeper-confirmed leagues
       slpLeagues.forEach(l => {
         const inPool = poolMap[String(l.league_id)];
         const hasDnoName = l.name && (l.name.toUpperCase().includes('DNO') || l.name.toUpperCase().includes('DRAFT NIGHT OUT'));
@@ -274,8 +265,6 @@ function DashboardContent() {
         }
       });
 
-      // 4. Smart Fallback for Sleeper Cache Delay
-      // Verify via Sleeper API users endpoint
       const cacheCheckPromises = [];
       wpJoinedIds.forEach(id => {
          if (!mergedLeaguesMap.has(id) && poolMap[id]) {
@@ -299,7 +288,6 @@ function DashboardContent() {
                            invite_link: poolLeague.invite_link || poolLeague.inviteLink || poolLeague.sleeper_invite_link || poolLeague.invite
                         });
                      } else {
-                        // PENDING JOIN STATE: User spent ticket but hasn't accepted Sleeper invite!
                         mergedLeaguesMap.set(id, {
                            id: poolLeague.id,
                            sleeper_id: poolLeague.id,
@@ -559,7 +547,6 @@ function DashboardContent() {
     router.push(`?tab=share&leagueId=${leagueId}`, { scroll: false });
   };
 
-  // Dedicated manual refresh function to bust Sleeper Cache without disconnecting
   const handleManualRefresh = async () => {
     setLoadingLeagues(true);
     if (session?.user?.id) {
@@ -992,362 +979,36 @@ function DashboardContent() {
 
       {/* Dynamic Tab Content */}
       <div className="bg-[#151515] border border-gray-800 rounded-3xl min-h-[400px]">
-        
-        {/* TAB 1: MY LEAGUES */}
         {activeTab === 'my-leagues' && (
-          <div className="p-8 relative">
-            
-            {syncedSleeperUser && (
-              <div className="absolute top-4 right-6 md:top-6 md:right-8 z-10">
-                <button 
-                  onClick={handleManualRefresh}
-                  disabled={loadingLeagues || isLoading}
-                  className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors bg-[#111] border border-gray-800 px-3 py-1.5 rounded-lg shadow-inner disabled:opacity-50"
-                >
-                  <RefreshCw size={12} className={(loadingLeagues || isLoading) ? "animate-spin text-[#1b75bb]" : ""} /> 
-                  {(loadingLeagues || isLoading) ? 'Syncing...' : 'Refresh'}
-                </button>
-              </div>
-            )}
-
-            {!syncedSleeperUser ? (
-              <div className="text-center py-20">
-                <Link2 className="w-16 h-16 text-gray-800 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">Connect Sleeper Account</h3>
-                <p className="text-gray-400 max-w-md mx-auto mb-6">Enter your Sleeper username in the card above to automatically pull and display your Draft Night Out leagues here!</p>
-              </div>
-            ) : loadingLeagues ? (
-              <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                <Loader2 className="w-10 h-10 text-[#1b75bb] animate-spin mb-3" />
-                <p className="text-xs font-bold uppercase tracking-widest">Searching Sleeper for your DNO Leagues...</p>
-              </div>
-            ) : myLeagues.length === 0 ? (
-              <div className="text-center py-20">
-                <Trophy className="w-16 h-16 text-gray-800 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">No Leagues Yet</h3>
-                <p className="text-gray-400 max-w-md mx-auto mb-6">You haven't secured a spot in any Draft Night Out leagues yet. Head over to the draft lobby to claim your seat!</p>
-                <a href="/dno" className="inline-block bg-[#1b75bb] hover:bg-teal-500 text-white font-black uppercase tracking-widest text-xs px-6 py-3 rounded-xl transition-colors">
-                  View Available Drafts
-                </a>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                {myLeagues.map((league) => {
-                  
-                  const teamStats = liveLeaderboard?.teams?.find(
-                    t => String(t.leagueId) === String(league.id) && String(t.ownerId) === String(syncedSleeperUser?.sleeper_id)
-                  );
-
-                  const targetInviteLink = league.invite_link || league.inviteLink || league.sleeper_invite_link || league.invite;
-
-                  return (
-                    <div key={league.id} className="bg-[#111] border border-gray-800 rounded-2xl p-6 flex flex-col justify-between hover:border-gray-700 transition-colors">
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[#f5a623] text-[10px] font-bold uppercase tracking-widest bg-[#f5a623]/10 px-2 py-1 rounded-md">Draft Night Out 2026</span>
-                          {league.filled_spots >= league.total_spots ? (
-                            <span className="text-teal-400 text-xs font-bold uppercase tracking-widest flex items-center gap-1"><ShieldCheck size={14}/> Filled</span>
-                          ) : (
-                            <span className="text-gray-500 text-xs font-bold uppercase tracking-widest">{league.filled_spots} / {league.total_spots} Spots</span>
-                          )}
-                        </div>
-                        <h4 className="text-lg font-black italic uppercase text-white mb-1">{league.name}</h4>
-                        <p className="text-sm text-gray-400 mb-6">PPR • 12 Team • 17 Rounds</p>
-                        
-                        {teamStats && !league.pending_join && (
-                          <div className="flex items-center justify-between bg-[#151515] p-4 rounded-xl border border-gray-800 mb-6 shadow-inner">
-                            <div className="flex flex-col items-center">
-                              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Global Rank</span>
-                              <span className="text-white font-black text-xl leading-none">#{teamStats.rank}</span>
-                            </div>
-                            <div className="w-px h-8 bg-gray-800"></div>
-                            <div className="flex flex-col items-center">
-                              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Points</span>
-                              <span className="text-[#27d7ff] font-black text-xl leading-none">{parseFloat(teamStats.totalPoints).toFixed(2)}</span>
-                            </div>
-                            <div className="w-px h-8 bg-gray-800"></div>
-                            <div className="flex flex-col items-center">
-                              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Record</span>
-                              <span className="text-white font-black text-xl leading-none">{teamStats.wins}-{teamStats.losses}</span>
-                            </div>
-                          </div>
-                        )}
-
-                      </div>
-                      
-                      <div className="flex flex-col gap-2 w-full mt-auto">
-                        {league.pending_join ? (
-                           <div className="flex flex-col gap-2">
-                             <div className="text-amber-400 text-[10px] font-bold uppercase text-center flex items-center justify-center gap-1">
-                               <AlertCircle size={12} /> Pending Sleeper Join
-                             </div>
-                             <a 
-                               href={targetInviteLink || `https://sleeper.com/leagues/${league.id}`} 
-                               target="_blank" 
-                               rel="noreferrer"
-                               className="w-full text-center bg-amber-600 hover:bg-amber-500 text-white font-black uppercase tracking-widest text-[10px] md:text-xs py-3 rounded-xl transition-colors shadow-[0_0_15px_rgba(217,119,6,0.3)] animate-pulse"
-                             >
-                               Click Here to Join Draft Room
-                             </a>
-                           </div>
-                        ) : (
-                           <a 
-                             href={targetInviteLink || `https://sleeper.com/leagues/${league.id}`} 
-                             target="_blank" 
-                             rel="noreferrer"
-                             className="w-full text-center bg-gray-800 hover:bg-gray-700 text-white font-bold uppercase tracking-widest text-[10px] md:text-xs py-3 rounded-xl transition-colors"
-                           >
-                             Go To Draft Room
-                           </a>
-                        )}
-                        
-                        {!league.pending_join && (
-                           <div className="flex gap-2 w-full">
-                             <button 
-                               onClick={() => handleShareRoster(league.id)}
-                               className="flex-1 text-center bg-indigo-900/20 border border-indigo-500/30 hover:bg-indigo-900/40 text-indigo-400 font-bold uppercase tracking-widest text-[10px] md:text-xs py-3 rounded-xl transition-colors"
-                             >
-                               <Share2 size={14} className="inline mr-1 mb-0.5" /> Share
-                             </button>
-                             
-                             {teamStats && (
-                               <button 
-                                 onClick={() => handleViewStats(teamStats)} 
-                                 className="flex-1 text-center bg-[#1b75bb]/10 border border-[#1b75bb]/30 hover:bg-[#1b75bb]/20 text-[#27d7ff] font-bold uppercase tracking-widest text-[10px] md:text-xs py-3 rounded-xl transition-colors"
-                               >
-                                 Detailed Stats
-                               </button>
-                             )}
-                           </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <MyLeaguesTab
+            syncedSleeperUser={syncedSleeperUser}
+            handleManualRefresh={handleManualRefresh}
+            loadingLeagues={loadingLeagues}
+            isLoading={isLoading}
+            myLeagues={myLeagues}
+            liveLeaderboard={liveLeaderboard}
+            handleShareRoster={handleShareRoster}
+            handleViewStats={handleViewStats}
+          />
         )}
-
-        {/* TAB 2: SHARE ROSTER */}
         {activeTab === 'share' && (
           <GraphicTab syncedSleeperUser={syncedSleeperUser} />
         )}
-
-        {/* TAB 3: PERKS */}
         {activeTab === 'perks' && (
-          <div className="p-6 md:p-8 animate-in fade-in duration-300">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              
-              {/* Card 1: 1 Free Month of FSAN Pro+ ($7.99 Value) */}
-              <div className="bg-gradient-to-br from-[#111] to-[#151515] border border-[#1b75bb]/40 rounded-3xl p-6 md:p-8 shadow-[0_0_30px_rgba(27,117,187,0.15)] text-center relative overflow-hidden flex flex-col justify-between">
-                <div className="relative z-10 flex flex-col h-full justify-between items-center">
-                  <div>
-                    <div className="w-14 h-14 rounded-2xl bg-[#1b75bb]/10 border border-[#1b75bb]/30 flex items-center justify-center mx-auto mb-6 shadow-inner overflow-hidden p-2">
-                      <img src="/images/dno/FSAN_Logo.png" alt="FSAN" className="w-full h-full object-contain" />
-                    </div>
-                    
-                    <span className="text-[#1b75bb] font-bold uppercase tracking-widest text-xs mb-1 block">
-                      Exclusive DNO Perk
-                    </span>
-                    <span className="inline-block bg-[#1b75bb]/20 border border-[#1b75bb]/40 text-[#27d7ff] text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md mb-3">
-                      $7.99 Value
-                    </span>
-                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tight mb-3">
-                      1 Free Month of FSAN Pro+
-                    </h3>
-                    <p className="text-gray-400 text-sm leading-relaxed mb-4">
-                      As a Draft Night Out participant, your entry includes 1 free month of access to FSAN's premium rankings, trade calculator, trade value charts, and real-time draft advice.
-                    </p>
-                    
-                    {/* Shared Credentials Call-Out */}
-                    <div className="bg-[#1b75bb]/10 border border-[#1b75bb]/30 rounded-xl p-3 mb-6 text-left">
-                      <span className="text-[#27d7ff] text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 mb-1">
-                        <Lock size={12} /> Shared Credentials
-                      </span>
-                      <p className="text-xs text-gray-300 leading-tight">
-                        To claim, log into FSAN.com using your exact <strong>Draft Night Out email and password</strong>. Your accounts are automatically synced!
-                      </p>
-                    </div>
-                  </div>
-
-                  {!hasPurchasedTicket ? (
-                    <button disabled className="w-full bg-[#1a1a1a] border border-gray-700 text-gray-500 font-bold uppercase tracking-widest text-xs py-4 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 shadow-inner">
-                      <Lock size={14} /> Ticket Required
-                    </button>
-                  ) : (
-                    <a 
-                      href="https://fsan.com/dno-welcome" 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="w-full inline-flex items-center justify-center gap-2 bg-[#1b75bb] hover:bg-teal-500 text-white font-black uppercase tracking-widest text-xs px-8 py-4 rounded-xl transition-all shadow-lg hover:scale-[1.02]"
-                    >
-                      Access FSAN Pro+ <ExternalLink size={16} />
-                    </a>
-                  )}
-                </div>
-              </div>
-
-              {/* Card 2: Football Rookie Draft Guide ($9.99 Value) */}
-              <div className="bg-gradient-to-br from-[#301012] to-[#111] border border-red-900/50 rounded-3xl p-6 md:p-8 relative overflow-hidden group hover:border-red-700 transition-all shadow-xl flex flex-col justify-between">
-                <div className="absolute -right-4 -top-4 text-red-500/10 z-0 pointer-events-none group-hover:scale-110 transition-transform duration-500">
-                  <Book size={140} />
-                </div>
-                <div className="relative z-10 flex flex-col h-full justify-between">
-                  <div>
-                    <div className="w-14 h-14 rounded-2xl bg-red-900/20 border border-red-500/30 flex items-center justify-center mb-6 shadow-inner text-red-500">
-                      <Book className="w-7 h-7" />
-                    </div>
-                    <span className="text-red-400 font-bold uppercase tracking-widest text-xs mb-1 block">
-                      Exclusive DNO Perk
-                    </span>
-                    <span className="inline-block bg-red-500/20 border border-red-500/40 text-red-400 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md mb-3">
-                      $9.99 Value
-                    </span>
-                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tight mb-3">
-                      Football Rookie Draft Guide
-                    </h3>
-                    <p className="text-gray-300 text-sm leading-relaxed mb-8">
-                      Download the official FSAN Rookie Guide to dominate your dynasty rookie drafts with exclusive player grades and tape breakdowns.
-                    </p>
-                  </div>
-
-                  {!hasPurchasedTicket ? (
-                    <button disabled className="w-full bg-[#1a1a1a] border border-gray-700 text-gray-500 font-bold uppercase tracking-widest text-xs py-4 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 shadow-inner">
-                      <Lock size={14} /> Ticket Required
-                    </button>
-                  ) : guideLoading ? (
-                    <button disabled className="w-full bg-[#1a1a1a] border border-gray-700 text-gray-500 font-bold uppercase tracking-widest text-xs py-4 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 shadow-inner">
-                      <Loader2 size={16} className="animate-spin" /> Syncing File...
-                    </button>
-                  ) : rookieGuideUrl ? (
-                    <a 
-                      href={rookieGuideUrl} 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="w-full bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest text-xs py-4 rounded-xl transition-all shadow-lg hover:scale-[1.02] flex items-center justify-center gap-2"
-                    >
-                      <Download size={16} /> Download PDF
-                    </a>
-                  ) : (
-                    <button disabled className="w-full bg-[#1a1a1a] border border-gray-700 text-gray-500 font-bold uppercase tracking-widest text-xs py-4 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 shadow-inner">
-                      Not Available
-                    </button>
-                  )}
-                </div>
-              </div>
-
-            </div>
-          </div>
+          <PerksTab
+            hasPurchasedTicket={hasPurchasedTicket}
+            guideLoading={guideLoading}
+            rookieGuideUrl={rookieGuideUrl}
+          />
         )}
-
-        {/* TAB 4: ACCOUNT MANAGEMENT */}
         {activeTab === 'account' && (
-          <div className="p-6 md:p-8 animate-in fade-in duration-300">
-            <div className="max-w-3xl mx-auto space-y-6">
-              
-              {/* Profile Details Section */}
-              <div className="bg-[#111] border border-gray-800 rounded-3xl p-6 md:p-8 shadow-inner relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-[#1b75bb] opacity-5 blur-[60px] rounded-full pointer-events-none"></div>
-                <h3 className="text-xl font-black text-white uppercase italic mb-6 tracking-wide flex items-center gap-2">
-                  <UserCog className="text-[#1b75bb]" size={20} /> Profile Details
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-                  <div className="bg-[#151515] border border-gray-800 p-4 rounded-2xl">
-                    <label className="text-[10px] text-gray-500 uppercase font-black tracking-widest block mb-1">Username</label>
-                    <p className="text-white font-bold text-sm truncate">{session?.user?.name || 'N/A'}</p>
-                  </div>
-                  <div className="bg-[#151515] border border-gray-800 p-4 rounded-2xl">
-                    <label className="text-[10px] text-gray-500 uppercase font-black tracking-widest block mb-1">Email Address</label>
-                    <p className="text-white font-bold text-sm truncate">{session?.user?.email || 'N/A'}</p>
-                  </div>
-                  <div className="bg-[#151515] border border-gray-800 p-4 rounded-2xl">
-                    <label className="text-[10px] text-gray-500 uppercase font-black tracking-widest block mb-1">Total Lifetime Tickets</label>
-                    <p className="text-[#f5a623] font-black text-xl leading-none mt-1">{ticketCount + userJoinedCount}</p>
-                  </div>
-                  <div className="bg-[#151515] border border-gray-800 p-4 rounded-2xl">
-                    <label className="text-[10px] text-gray-500 uppercase font-black tracking-widest block mb-1">Leagues Joined</label>
-                    <p className="text-teal-400 font-black text-xl leading-none mt-1">{userJoinedCount}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Account Actions Section */}
-              <div className="bg-[#111] border border-gray-800 rounded-3xl p-6 md:p-8 shadow-inner">
-                <h3 className="text-xl font-black text-white uppercase italic mb-6 tracking-wide flex items-center gap-2">
-                  <ShieldCheck className="text-teal-400" size={20} /> Account Actions
-                </h3>
-                
-                <div className="space-y-4">
-                  {/* Stripe Billing Portal Button */}
-                  <button 
-                    onClick={handleBillingPortal}
-                    disabled={isPortalLoading}
-                    className="w-full bg-[#151515] hover:bg-[#1a1a1a] border border-gray-800 hover:border-gray-600 transition-colors rounded-2xl p-4 flex items-center justify-between group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-indigo-900/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
-                        <CreditCard size={18} className="text-indigo-400" />
-                      </div>
-                      <div className="text-left">
-                        <span className="block text-white font-bold text-sm uppercase tracking-wide">Purchase History & Billing</span>
-                        <span className="block text-[11px] text-gray-500 font-medium mt-0.5">Manage your cards and view past DNO ticket receipts</span>
-                      </div>
-                    </div>
-                    {isPortalLoading ? <Loader2 size={18} className="text-gray-500 animate-spin shrink-0" /> : <ExternalLink size={18} className="text-gray-500 group-hover:text-white transition-colors shrink-0" />}
-                  </button>
-
-                  {/* Reset Password Link */}
-                  <a 
-                    href="/reset-password"
-                    className="w-full bg-[#151515] hover:bg-[#1a1a1a] border border-gray-800 hover:border-gray-600 transition-colors rounded-2xl p-4 flex items-center justify-between group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-amber-900/20 border border-amber-500/30 flex items-center justify-center shrink-0">
-                        <Key size={18} className="text-amber-400" />
-                      </div>
-                      <div className="text-left">
-                        <span className="block text-white font-bold text-sm uppercase tracking-wide">Reset Password</span>
-                        <span className="block text-[11px] text-gray-500 font-medium mt-0.5">Update your shared FSAN and Draft Night Out login credentials</span>
-                      </div>
-                    </div>
-                    <ExternalLink size={18} className="text-gray-500 group-hover:text-white transition-colors shrink-0" />
-                  </a>
-
-                  {/* Legal Terms Link */}
-                  <a 
-                    href="/dno/agreement"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full bg-[#151515] hover:bg-[#1a1a1a] border border-gray-800 hover:border-gray-600 transition-colors rounded-2xl p-4 flex items-center justify-between group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-gray-800/50 border border-gray-600/50 flex items-center justify-center shrink-0">
-                        <FileText size={18} className="text-gray-400" />
-                      </div>
-                      <div className="text-left">
-                        <span className="block text-white font-bold text-sm uppercase tracking-wide">Terms & Conditions</span>
-                        <span className="block text-[11px] text-gray-500 font-medium mt-0.5">Review the official rules and DNO contest agreement</span>
-                      </div>
-                    </div>
-                    <ExternalLink size={18} className="text-gray-500 group-hover:text-white transition-colors shrink-0" />
-                  </a>
-                </div>
-
-                {/* Sign Out Button */}
-                <div className="mt-8 pt-6 border-t border-gray-800">
-                  <button 
-                    onClick={() => signOut({ callbackUrl: '/' })}
-                    className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 bg-red-900/20 hover:bg-red-900/40 border border-red-500/30 hover:border-red-500/50 transition-colors text-red-400 font-black uppercase tracking-widest text-xs rounded-xl"
-                  >
-                    <LogOut size={16} /> Sign Out of Account
-                  </button>
-                </div>
-
-              </div>
-            </div>
-          </div>
+          <AccountTab
+            session={session}
+            ticketCount={ticketCount}
+            userJoinedCount={userJoinedCount}
+            handleBillingPortal={handleBillingPortal}
+            isPortalLoading={isPortalLoading}
+          />
         )}
       </div>
 
