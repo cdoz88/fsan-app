@@ -1,8 +1,20 @@
 import { headers } from 'next/headers';
 import { AlertTriangle } from 'lucide-react';
-import DNOFooter from '../../components/dno/DNOFooter'; // <-- Import the footer
+import DNOFooter from '../../components/dno/DNOFooter';
+
+// This explicitly overrides the root FSAN metadata for all DNO pages
+export const metadata = {
+  title: 'Draft Night Out | The Biggest Fantasy Hang of the Year',
+  description: 'Secure your seat at one of our live Draft Night Out events, or build your championship roster from home in our exclusive online divisions.',
+  icons: {
+    // This overrides the FSAN favicon with the DNO logo
+    icon: 'https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp',
+    apple: 'https://admin.fsan.com/wp-content/uploads/2026/07/DNO-Logo_Logo.webp',
+  },
+};
 
 export default async function DNOLayout({ children }) {
+  // Await the headers to prevent Next.js dynamic rendering crashes
   const headersList = await headers();
   const isRestricted = headersList.get('x-dno-restricted-state') === 'true';
 
