@@ -660,7 +660,7 @@ function DashboardContent() {
                 <div className="my-3 text-left">
                   <p className="text-[11px] text-gray-500 leading-tight">
                     By proceeding to checkout, you agree to our{' '}
-                    <a href="/rules" target="_blank" rel="noopener noreferrer" className="text-[#1b75bb] underline hover:text-white">
+                    <a href="/dno/agreement" target="_blank" rel="noopener noreferrer" className="text-[#1b75bb] underline hover:text-white">
                       Official Contest Rules & Terms
                     </a>. First-time buyers receive a 30-day free trial of FSAN Pro+, which automatically renews at $7.99/mo thereafter. Cancel anytime in account settings.
                   </p>
