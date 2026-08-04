@@ -1,10 +1,12 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { HeartHandshake, ExternalLink, Users, DollarSign, Loader2, Trophy } from 'lucide-react';
+import DonationModal from '../DonationModal';
 
 export default function CharityTab() {
   const [charityData, setCharityData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showDonationModal, setShowDonationModal] = useState(false);
 
   // Fetch the live charity calculation from the WordPress API
   useEffect(() => {
@@ -144,11 +146,22 @@ export default function CharityTab() {
       {/* WALL OF FAME (Only renders if there are public donors) */}
       {!isLoading && wallOfFame.length > 0 && (
         <div className="bg-gradient-to-b from-[#151515] to-[#111] border border-gray-800 rounded-3xl p-6 md:p-10 shadow-2xl mb-8 relative overflow-hidden">
-          <div className="flex items-center gap-3 mb-2">
-            <Trophy className="text-[#f5a623] w-6 h-6" />
-            <h3 className="text-2xl font-black italic text-white uppercase tracking-tighter">Wall of Fame</h3>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <Trophy className="text-[#f5a623] w-6 h-6" />
+                <h3 className="text-2xl font-black italic text-white uppercase tracking-tighter">Wall of Fame</h3>
+              </div>
+              <p className="text-sm text-gray-400">A huge thank you to the managers who went above and beyond with an extra donation to Mission 22!</p>
+            </div>
+            
+            <button 
+              onClick={() => setShowDonationModal(true)}
+              className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black uppercase tracking-widest text-xs transition-transform hover:-translate-y-0.5 shadow-[0_0_15px_rgba(16,185,129,0.3)] shrink-0"
+            >
+              <HeartHandshake size={16}/> Climb the Board
+            </button>
           </div>
-          <p className="text-sm text-gray-400 mb-6">A huge thank you to the managers who went above and beyond with an extra donation to Mission 22!</p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {wallOfFame.map((donor, index) => (
@@ -163,6 +176,7 @@ export default function CharityTab() {
               </div>
             ))}
           </div>
+          {showDonationModal && <DonationModal onClose={() => setShowDonationModal(false)} />}
         </div>
       )}
       
