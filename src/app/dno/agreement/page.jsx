@@ -54,18 +54,25 @@ export default function DNOTermsPage() {
           {/* Section 1 */}
           <section className="space-y-3">
             <h2 className="text-xl font-black text-white uppercase italic tracking-tight flex items-center gap-2">
-              <ShieldCheck size={20} className="text-[#1b75bb]" /> 1. Eligibility
+              <ShieldCheck size={20} className="text-[#1b75bb]" /> 1. Eligibility & Geolocation Restrictions
             </h2>
             <p>To be eligible to participate in Draft Night Out, you must:</p>
             <ul className="list-disc pl-6 space-y-1 text-gray-400">
               <li>Be a legal resident of the United States or Canada.</li>
               <li>Be 18 years of age or older at the time of entry. (Minors under the age of 18 may only participate with the explicit, verifiable consent of a parent or legal guardian).</li>
-              <li>Not be a resident of a jurisdiction where paid fantasy sports contests are prohibited by law.</li>
               <li>Create and maintain a valid account on Sleeper (the "Host Platform").</li>
             </ul>
+            
             <div className="bg-[#111] border border-gray-800 rounded-xl p-4 mt-3">
               <strong className="text-white block mb-1">1.1 Prize Eligibility and Age Verification:</strong>
               Participants under the age of twenty-one (21) are not eligible to receive physical or monetary prizes unless expressly permitted by the laws of their specific state or jurisdiction of residence. Prize eligibility based on age and local regulations will be strictly reviewed and determined solely by FSAN at the time winners are finalized and prior to any prize distribution. FSAN reserves the right to withhold, void, or offer alternative compensation for prizes if distributing them to a Participant under the age of 21 violates local or federal regulations.
+            </div>
+
+            <div className="bg-amber-900/20 border border-amber-500/30 rounded-xl p-4 mt-3 text-amber-100/80">
+              <strong className="text-amber-400 block mb-1">1.2 Geolocation Restrictions:</strong>
+              Due to state-specific gaming regulations, individuals who are residents of, or physically located within, the following states are strictly prohibited from depositing funds, purchasing tickets, or participating in real-money contests: <strong className="text-amber-300">Washington, Nevada, Montana, Hawaii, Idaho, Louisiana, Arizona, and Iowa.</strong>
+              <br /><br />
+              Users accessing the platform from these restricted jurisdictions are limited to read-only access. Any attempt to circumvent these geographical restrictions, including the use of a VPN or proxy, will result in immediate account termination and forfeiture of any contest entries or potential prizes.
             </div>
           </section>
 
