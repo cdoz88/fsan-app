@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { signOut } from 'next-auth/react';
-import { UserCog, ShieldCheck, CreditCard, ExternalLink, Loader2, Key, FileText, LogOut, CheckCircle2, UserX, AlertTriangle } from 'lucide-react';
+import { UserCog, ShieldCheck, CreditCard, ExternalLink, Loader2, Key, FileText, LogOut, CheckCircle2, UserMinus, AlertTriangle } from 'lucide-react';
 
 export default function AccountTab({
   session,
@@ -10,8 +10,8 @@ export default function AccountTab({
   isPortalLoading
 }) {
   const [resetStatus, setResetStatus] = useState('idle');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
+  const [isDeactivating, setIsDeactivating] = useState(false);
 
   // Trigger WordPress GraphQL to send the secure reset email
   const handlePasswordReset = async () => {
@@ -53,17 +53,37 @@ export default function AccountTab({
     }, 5000);
   };
 
-  const executeAccountDeletion = async () => {
-    setIsDeleting(true);
-    // TODO: Connect to backend deletion endpoint
-    console.log("Initiating account deletion for:", session?.user?.email);
+  // Trigger WordPress REST API to scrub DNO data and deactivate the profile
+  const executeProfileDeactivation = async () => {
+    if (!session?.user?.id) return;
+    setIsDeactivating(true);
     
-    // Simulated delay for UI
-    setTimeout(() => {
-      setIsDeleting(false);
-      setShowDeleteConfirm(false);
-      // signOut({ callbackUrl: '/' });
-    }, 2000);
+    try {
+      const res = await fetch('/api/scl', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'dno_deactivate_profile',
+          user_id: session.user.id
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        // Clear local Sleeper cache
+        localStorage.removeItem(`dno_dedicated_sleeper_${session.user.id}`);
+        // Sign out to clear the session and return to the lobby
+        signOut({ callbackUrl: '/dno' });
+      } else {
+        throw new Error(data.message || "Deactivation failed.");
+      }
+    } catch (err) {
+      console.error("Profile Deactivation Error:", err);
+      alert("Unable to deactivate profile. Please try again.");
+      setIsDeactivating(false);
+      setShowDeactivateConfirm(false);
+    }
   };
 
   return (
@@ -154,7 +174,7 @@ export default function AccountTab({
 
             {/* Legal Terms Link */}
             <a 
-              href="/dno/agreement"
+              href="/rules"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full bg-[#151515] hover:bg-[#1a1a1a] border border-gray-800 hover:border-gray-600 transition-colors rounded-2xl p-4 flex items-center justify-between group"
@@ -172,7 +192,7 @@ export default function AccountTab({
             </a>
           </div>
 
-          {/* Danger Zone: Sign Out & Delete Account */}
+          {/* Danger Zone: Sign Out & Deactivate Profile */}
           <div className="mt-8 pt-6 border-t border-gray-800 flex flex-col sm:flex-row items-center gap-4">
             <button 
               onClick={() => signOut({ callbackUrl: '/' })}
@@ -182,35 +202,35 @@ export default function AccountTab({
             </button>
             
             <div className="w-full sm:w-auto relative">
-              {!showDeleteConfirm ? (
+              {!showDeactivateConfirm ? (
                 <button 
-                  onClick={() => setShowDeleteConfirm(true)}
+                  onClick={() => setShowDeactivateConfirm(true)}
                   className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 bg-transparent hover:bg-red-950/30 text-red-500/70 hover:text-red-500 transition-colors font-black uppercase tracking-widest text-xs rounded-xl"
                 >
-                  <UserX size={16} /> Delete Account
+                  <UserMinus size={16} /> Deactivate DNO Profile
                 </button>
               ) : (
                 <div className="absolute bottom-0 right-0 w-full sm:w-[320px] bg-[#1a1a1a] border border-red-900/50 p-4 rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 z-20">
                   <div className="flex items-start gap-3 mb-4">
                     <AlertTriangle className="text-red-500 shrink-0 mt-0.5" size={20} />
                     <div>
-                      <p className="text-white font-bold text-sm leading-tight mb-1">Are you absolutely sure?</p>
-                      <p className="text-xs text-gray-400 leading-relaxed">This action cannot be undone. You will lose access to all FSAN Pro+ perks and forfeit any unused Draft Night Out tickets.</p>
+                      <p className="text-white font-bold text-sm leading-tight mb-1">Are you sure?</p>
+                      <p className="text-xs text-gray-400 leading-relaxed">This will disconnect your Sleeper account and hide your DNO profile. Your FSAN Pro+ login and subscription will remain fully active.</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <button 
-                      onClick={() => setShowDeleteConfirm(false)}
+                      onClick={() => setShowDeactivateConfirm(false)}
                       className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors"
                     >
                       Cancel
                     </button>
                     <button 
-                      onClick={executeAccountDeletion}
-                      disabled={isDeleting}
+                      onClick={executeProfileDeactivation}
+                      disabled={isDeactivating}
                       className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors flex items-center justify-center"
                     >
-                      {isDeleting ? <Loader2 size={14} className="animate-spin" /> : 'Yes, Delete It'}
+                      {isDeactivating ? <Loader2 size={14} className="animate-spin" /> : 'Yes, Deactivate'}
                     </button>
                   </div>
                 </div>
