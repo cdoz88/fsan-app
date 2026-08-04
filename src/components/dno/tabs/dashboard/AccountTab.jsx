@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { signOut } from 'next-auth/react';
-import { UserCog, ShieldCheck, CreditCard, ExternalLink, Loader2, Key, FileText, LogOut } from 'lucide-react';
+import { UserCog, ShieldCheck, CreditCard, ExternalLink, Loader2, Key, FileText, LogOut, CheckCircle2, UserX, AlertTriangle } from 'lucide-react';
 
 export default function AccountTab({
   session,
@@ -9,6 +9,63 @@ export default function AccountTab({
   handleBillingPortal,
   isPortalLoading
 }) {
+  const [resetStatus, setResetStatus] = useState('idle');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Trigger WordPress GraphQL to send the secure reset email
+  const handlePasswordReset = async () => {
+    if (!session?.user?.email) return;
+    setResetStatus('loading');
+    
+    try {
+      const res = await fetch('https://admin.fsan.com/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: `
+            mutation SendPasswordResetEmail($username: String!) {
+              sendPasswordResetEmail(input: { username: $username }) {
+                user { databaseId }
+              }
+            }
+          `,
+          variables: { username: session.user.email }
+        })
+      });
+      
+      const data = await res.json();
+      
+      if (data?.errors) {
+        console.error("GraphQL Error:", data.errors);
+        setResetStatus('error');
+      } else {
+        setResetStatus('success');
+      }
+    } catch (err) {
+      console.error("Reset Email Error:", err);
+      setResetStatus('error');
+    }
+    
+    // Reset the button state back to normal after 5 seconds
+    setTimeout(() => {
+      setResetStatus('idle');
+    }, 5000);
+  };
+
+  const executeAccountDeletion = async () => {
+    setIsDeleting(true);
+    // TODO: Connect to backend deletion endpoint
+    console.log("Initiating account deletion for:", session?.user?.email);
+    
+    // Simulated delay for UI
+    setTimeout(() => {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+      // signOut({ callbackUrl: '/' });
+    }, 2000);
+  };
+
   return (
     <div className="p-6 md:p-8 animate-in fade-in duration-300">
       <div className="max-w-3xl mx-auto space-y-6">
@@ -65,22 +122,35 @@ export default function AccountTab({
               {isPortalLoading ? <Loader2 size={18} className="text-gray-500 animate-spin shrink-0" /> : <ExternalLink size={18} className="text-gray-500 group-hover:text-white transition-colors shrink-0" />}
             </button>
 
-            {/* Reset Password Link */}
-            <a 
-              href="/reset-password"
-              className="w-full bg-[#151515] hover:bg-[#1a1a1a] border border-gray-800 hover:border-gray-600 transition-colors rounded-2xl p-4 flex items-center justify-between group"
+            {/* Reset Password Button */}
+            <button 
+              onClick={handlePasswordReset}
+              disabled={resetStatus === 'loading' || resetStatus === 'success'}
+              className="w-full bg-[#151515] hover:bg-[#1a1a1a] border border-gray-800 hover:border-gray-600 transition-colors rounded-2xl p-4 flex items-center justify-between group disabled:hover:border-gray-800"
             >
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-amber-900/20 border border-amber-500/30 flex items-center justify-center shrink-0">
                   <Key size={18} className="text-amber-400" />
                 </div>
                 <div className="text-left">
-                  <span className="block text-white font-bold text-sm uppercase tracking-wide">Reset Password</span>
-                  <span className="block text-[11px] text-gray-500 font-medium mt-0.5">Update your shared FSAN and Draft Night Out login credentials</span>
+                  <span className="block text-white font-bold text-sm uppercase tracking-wide">
+                    {resetStatus === 'success' ? 'Reset Email Sent!' : resetStatus === 'error' ? 'Error Sending Email' : 'Reset Password'}
+                  </span>
+                  <span className="block text-[11px] text-gray-500 font-medium mt-0.5">
+                    {resetStatus === 'success' 
+                      ? 'Check your inbox for the secure reset link.' 
+                      : 'Send a secure password reset link to your email address.'}
+                  </span>
                 </div>
               </div>
-              <ExternalLink size={18} className="text-gray-500 group-hover:text-white transition-colors shrink-0" />
-            </a>
+              {resetStatus === 'loading' ? (
+                <Loader2 size={18} className="text-gray-500 animate-spin shrink-0" />
+              ) : resetStatus === 'success' ? (
+                <CheckCircle2 size={18} className="text-green-500 shrink-0" />
+              ) : (
+                <ExternalLink size={18} className="text-gray-500 group-hover:text-white transition-colors shrink-0" />
+              )}
+            </button>
 
             {/* Legal Terms Link */}
             <a 
@@ -102,14 +172,50 @@ export default function AccountTab({
             </a>
           </div>
 
-          {/* Sign Out Button */}
-          <div className="mt-8 pt-6 border-t border-gray-800">
+          {/* Danger Zone: Sign Out & Delete Account */}
+          <div className="mt-8 pt-6 border-t border-gray-800 flex flex-col sm:flex-row items-center gap-4">
             <button 
               onClick={() => signOut({ callbackUrl: '/' })}
-              className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 bg-red-900/20 hover:bg-red-900/40 border border-red-500/30 hover:border-red-500/50 transition-colors text-red-400 font-black uppercase tracking-widest text-xs rounded-xl"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 bg-gray-800 hover:bg-gray-700 transition-colors text-white font-black uppercase tracking-widest text-xs rounded-xl"
             >
-              <LogOut size={16} /> Sign Out of Account
+              <LogOut size={16} /> Sign Out
             </button>
+            
+            <div className="w-full sm:w-auto relative">
+              {!showDeleteConfirm ? (
+                <button 
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 bg-transparent hover:bg-red-950/30 text-red-500/70 hover:text-red-500 transition-colors font-black uppercase tracking-widest text-xs rounded-xl"
+                >
+                  <UserX size={16} /> Delete Account
+                </button>
+              ) : (
+                <div className="absolute bottom-0 right-0 w-full sm:w-[320px] bg-[#1a1a1a] border border-red-900/50 p-4 rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 z-20">
+                  <div className="flex items-start gap-3 mb-4">
+                    <AlertTriangle className="text-red-500 shrink-0 mt-0.5" size={20} />
+                    <div>
+                      <p className="text-white font-bold text-sm leading-tight mb-1">Are you absolutely sure?</p>
+                      <p className="text-xs text-gray-400 leading-relaxed">This action cannot be undone. You will lose access to all FSAN Pro+ perks and forfeit any unused Draft Night Out tickets.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={executeAccountDeletion}
+                      disabled={isDeleting}
+                      className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors flex items-center justify-center"
+                    >
+                      {isDeleting ? <Loader2 size={14} className="animate-spin" /> : 'Yes, Delete It'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
         </div>
