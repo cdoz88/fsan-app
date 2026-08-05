@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { signIn, getSession } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { Loader2, Lock, ArrowRight } from 'lucide-react';
 
@@ -15,7 +15,35 @@ export default function DnoWelcomePage() {
     setLoading(true);
     setError('');
 
-    // 1. Initial Login to authenticate and get the User ID
+    // 🚀 1. SILENT PRE-LOGIN UPGRADE CHECK
+    // We send the email/username to WordPress to instantly upgrade them IF they are a legacy user.
+    // This ensures that when they log in a second later, their session token is perfectly accurate.
+    try {
+      const query = `
+        mutation ClaimLegacyTrial {
+          claimLegacyTrial(
+            input: {
+              identifier: "${email}",
+              secret: "fsan_super_secret_webhook_key_2026"
+            }
+          ) {
+            success
+            message
+          }
+        }
+      `;
+
+      await fetch('https://admin.fsan.com/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+      });
+    } catch (err) {
+      console.warn('Silent legacy trial check failed:', err);
+    }
+
+    // 🚀 2. AUTHENTICATE & REDIRECT
+    // Now that the database is fully prepped, we log them in and mint their cookie.
     const res = await signIn('credentials', {
       redirect: false,
       username: email,
@@ -27,49 +55,7 @@ export default function DnoWelcomePage() {
       setError('Invalid email/username or password. Please try again.');
       setLoading(false);
     } else {
-      // 🚀 SILENT LEGACY TRIAL CHECK & UPGRADE
-      try {
-        const session = await getSession();
-        if (session?.user?.id) {
-          const query = `
-            mutation ClaimLegacyTrial {
-              claimLegacyTrial(
-                input: {
-                  userId: ${session.user.id},
-                  secret: "fsan_super_secret_webhook_key_2026"
-                }
-              ) {
-                success
-                message
-              }
-            }
-          `;
-
-          const mutationRes = await fetch('https://admin.fsan.com/graphql', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query }),
-          });
-
-          const mutationJson = await mutationRes.json();
-
-          // 2. SILENT TOKEN REFRESH
-          // If the backend says we just successfully upgraded them, 
-          // sign them in again silently to instantly refresh the NextAuth cookie with the new role!
-          if (mutationJson?.data?.claimLegacyTrial?.success) {
-            await signIn('credentials', {
-              redirect: false,
-              username: email,
-              email: email,
-              password: password,
-            });
-          }
-        }
-      } catch (err) {
-        console.warn('Silent legacy trial check failed:', err);
-      }
-
-      // 3. Redirect to the account dashboard
+      // Hard redirect to the subscription tab
       window.location.href = '/account#subscription';
     }
   };
