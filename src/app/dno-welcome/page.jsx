@@ -15,20 +15,19 @@ export default function DnoWelcomePage() {
     setLoading(true);
     setError('');
 
-    // Pass both username and email, plus explicit callbackUrl
+    // 1. Initial Login to authenticate and get the User ID
     const res = await signIn('credentials', {
       redirect: false,
       username: email,
       email: email,
       password: password,
-      callbackUrl: '/account#subscription'
     });
 
     if (res?.error) {
       setError('Invalid email/username or password. Please try again.');
       setLoading(false);
     } else {
-      // 🚀 SILENT LEGACY TRIAL CHECK
+      // 🚀 SILENT LEGACY TRIAL CHECK & UPGRADE
       try {
         const session = await getSession();
         if (session?.user?.id) {
@@ -46,17 +45,31 @@ export default function DnoWelcomePage() {
             }
           `;
 
-          await fetch('https://admin.fsan.com/graphql', {
+          const mutationRes = await fetch('https://admin.fsan.com/graphql', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ query }),
           });
+
+          const mutationJson = await mutationRes.json();
+
+          // 2. SILENT TOKEN REFRESH
+          // If the backend says we just successfully upgraded them, 
+          // sign them in again silently to instantly refresh the NextAuth cookie with the new role!
+          if (mutationJson?.data?.claimLegacyTrial?.success) {
+            await signIn('credentials', {
+              redirect: false,
+              username: email,
+              email: email,
+              password: password,
+            });
+          }
         }
       } catch (err) {
         console.warn('Silent legacy trial check failed:', err);
       }
 
-      // Explicitly redirect to the account subscription page
+      // 3. Redirect to the account dashboard
       window.location.href = '/account#subscription';
     }
   };
