@@ -15,12 +15,13 @@ export default function DnoWelcomePage() {
     setLoading(true);
     setError('');
 
-    // Pass both username and email to ensure NextAuth / WordPress gets the required field
+    // Pass both username and email, plus explicit callbackUrl
     const res = await signIn('credentials', {
       redirect: false,
       username: email,
       email: email,
       password: password,
+      callbackUrl: '/account#subscription'
     });
 
     if (res?.error) {
@@ -28,7 +29,6 @@ export default function DnoWelcomePage() {
       setLoading(false);
     } else {
       // 🚀 SILENT LEGACY TRIAL CHECK
-      // If login is successful, grab the new session to get the User ID
       try {
         const session = await getSession();
         if (session?.user?.id) {
@@ -46,7 +46,6 @@ export default function DnoWelcomePage() {
             }
           `;
 
-          // Fire the mutation to our secure WordPress endpoint
           await fetch('https://admin.fsan.com/graphql', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -57,8 +56,8 @@ export default function DnoWelcomePage() {
         console.warn('Silent legacy trial check failed:', err);
       }
 
-      // Redirect to the account dashboard after the check is complete
-      window.location.href = res?.url ? res.url : '/account#subscription';
+      // Explicitly redirect to the account subscription page
+      window.location.href = '/account#subscription';
     }
   };
 
