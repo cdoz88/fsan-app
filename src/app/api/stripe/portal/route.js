@@ -27,7 +27,8 @@ export async function POST(req) {
     // 2. Generate a secure, temporary link to their specific Customer Portal
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/account?checkout=success`, // Drops them back on the subscription tab
+      // Updated to hardcode the proper return destination
+      return_url: 'https://fsan.com/account#subscription', 
     });
 
     return NextResponse.json({ url: portalSession.url });
