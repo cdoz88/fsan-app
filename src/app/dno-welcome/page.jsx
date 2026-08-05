@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { signIn, getSession } from 'next-auth/react';
 import Link from 'next/link';
 import { Loader2, Lock, ArrowRight } from 'lucide-react';
 
@@ -21,17 +21,44 @@ export default function DnoWelcomePage() {
       username: email,
       email: email,
       password: password,
-      callbackUrl: '/account#subscription'
     });
 
     if (res?.error) {
       setError('Invalid email/username or password. Please try again.');
       setLoading(false);
-    } else if (res?.url) {
-      window.location.href = res.url;
     } else {
-      // Fallback redirect if URL isn't returned directly
-      window.location.href = '/account#subscription';
+      // 🚀 SILENT LEGACY TRIAL CHECK
+      // If login is successful, grab the new session to get the User ID
+      try {
+        const session = await getSession();
+        if (session?.user?.id) {
+          const query = `
+            mutation ClaimLegacyTrial {
+              claimLegacyTrial(
+                input: {
+                  userId: ${session.user.id},
+                  secret: "fsan_super_secret_webhook_key_2026"
+                }
+              ) {
+                success
+                message
+              }
+            }
+          `;
+
+          // Fire the mutation to our secure WordPress endpoint
+          await fetch('https://admin.fsan.com/graphql', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query }),
+          });
+        }
+      } catch (err) {
+        console.warn('Silent legacy trial check failed:', err);
+      }
+
+      // Redirect to the account dashboard after the check is complete
+      window.location.href = res?.url ? res.url : '/account#subscription';
     }
   };
 
