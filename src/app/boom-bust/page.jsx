@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Settings, X, Search, Trash2 } from 'lucide-react';
+import { X, Search, Trash2 } from 'lucide-react';
 
 export default function BoomBustStreamTool() {
   // --- STATE ---
@@ -137,7 +137,7 @@ export default function BoomBustStreamTool() {
     });
   };
 
-  // --- DRAG AND DROP LOGIC (WITH REORDERING) ---
+  // --- DRAG AND DROP LOGIC ---
   const handleDragStart = (e, playerId, sourceColId) => {
     e.dataTransfer.setData('playerId', playerId);
     e.dataTransfer.setData('sourceColId', sourceColId);
@@ -220,10 +220,15 @@ export default function BoomBustStreamTool() {
     }
   };
 
-  // Converts text color (text-red-500) to border color (border-red-500)
   const getBorderColor = (textColorClass) => {
-    if (!textColorClass) return 'border-zinc-800';
-    return textColorClass.replace('text-', 'border-');
+    switch (textColorClass) {
+      case 'text-emerald-500': return 'border-emerald-500';
+      case 'text-red-500': return 'border-red-500';
+      case 'text-cyan-500': return 'border-cyan-500';
+      case 'text-amber-500': return 'border-amber-500';
+      case 'text-zinc-500': return 'border-zinc-500';
+      default: return 'border-zinc-800';
+    }
   };
 
   const getESPNHeadshot = (espnId) => `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${espnId}.png&w=350&h=254`;
@@ -236,13 +241,12 @@ export default function BoomBustStreamTool() {
     const firstName = dbPlayer.first_name || "";
     const lastName = dbPlayer.last_name || "";
     const position = dbPlayer.position || "UNK";
-    const team = dbPlayer.team ? dbPlayer.team.toLowerCase() : "fa";
+    const team = dbPlayer.team ? dbPlayer.team.toUpperCase() : "FA";
     
     const posColor = getPosColor(position);
-    // Dynamically match the border color to the column's header color
     const cardBorderColor = getBorderColor(col.color);
     
-    const teamLogo = team !== 'fa' ? `https://sleepercdn.com/images/team_logos/nfl/${team}.png` : null;
+    const teamLogo = team !== 'FA' ? `https://sleepercdn.com/images/team_logos/nfl/${team.toLowerCase()}.png` : null;
     let playerImage = dbPlayer?.espn_id 
       ? getESPNHeadshot(dbPlayer.espn_id) 
       : `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
@@ -263,44 +267,43 @@ export default function BoomBustStreamTool() {
           onDragEnd={handleDragEnd}
           onDragOver={(e) => handleDragOver(e, col.id, playerId)}
           onDrop={(e) => handleDrop(e, col.id)}
-          className={`relative h-[68px] flex items-center p-2 rounded-[14px] border transition-all cursor-grab active:cursor-grabbing shadow-lg overflow-hidden
-            ${isDragging ? 'opacity-40 border-gray-700 bg-black' : `opacity-100 hover:brightness-125 bg-[#111] ${cardBorderColor}`}
+          className={`relative h-[68px] flex items-center rounded-2xl transition-all cursor-grab active:cursor-grabbing shadow-lg
+            ${isDragging ? 'opacity-40 bg-black border border-gray-800' : 'opacity-100 hover:brightness-125 hover:scale-[1.02]'}
           `}
         >
-          {/* Faded Background Team Logo */}
-          {teamLogo && (
-             <div className="absolute right-[-10px] top-1/2 -translate-y-1/2 h-[180%] w-auto opacity-10 pointer-events-none z-0">
-                <img src={teamLogo} className="h-full w-auto object-contain" alt="" onError={(e) => e.target.style.display = 'none'} />
-             </div>
-          )}
-
-          {/* Position Badge */}
-          <div className={`w-[42px] flex justify-center text-[12px] font-black uppercase tracking-widest ${posColor} drop-shadow-md z-10 shrink-0`}>
-            {position}
+          {/* Inner Background & Borders (Overflow Hidden to trap the team logo) */}
+          <div className={`absolute inset-0 rounded-[14px] bg-[#111] border ${cardBorderColor} overflow-hidden pointer-events-none z-0 ${col.title.toUpperCase().includes('POOL') ? 'border-opacity-40' : 'border-opacity-80'}`}>
+             {teamLogo && (
+               <div className="absolute right-[-20px] top-1/2 -translate-y-1/2 h-[160%] w-auto opacity-10 pointer-events-none z-0">
+                  <img src={teamLogo} className="h-full w-auto object-contain" alt="" onError={(e) => e.target.style.display = 'none'} />
+               </div>
+             )}
           </div>
 
-          {/* Headshot Circle */}
-          <div className="w-11 h-11 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center overflow-hidden shrink-0 shadow-inner z-10">
+          {/* Floating Player Image (Z-10 so it breaks out if needed, anchored bottom left) */}
+          <div className="relative z-10 h-[115%] w-14 shrink-0 flex items-end justify-center ml-3 pb-0.5 pointer-events-none">
             <img 
               src={playerImage} 
               alt={lastName}
-              className="w-full h-full object-cover object-top scale-[1.15] translate-y-1"
+              className="w-auto h-full object-contain object-bottom origin-bottom scale-[1.15] drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] filter contrast-110 brightness-110"
               onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
             />
           </div>
 
           {/* Name & Info */}
-          <div className="flex-1 min-w-0 flex flex-col justify-center ml-3 z-10">
+          <div className="relative z-10 flex-1 min-w-0 flex flex-col justify-center ml-2">
             <div className="flex items-baseline truncate">
-              <span className="text-white font-black text-[16px] tracking-wide truncate drop-shadow-md leading-none">
-                {firstName.charAt(0)}. {lastName.toUpperCase()}
-              </span>
+              <span className="text-zinc-400 font-black text-[12px] mr-1 uppercase">{firstName.charAt(0)}.</span>
+              <span className="text-white font-black text-[16px] uppercase tracking-wide truncate drop-shadow-md leading-none">{lastName}</span>
             </div>
-            {team !== 'fa' && (
-              <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">
-                {team}
-              </div>
-            )}
+            <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mt-0.5">
+              {team}
+            </div>
+          </div>
+
+          {/* Position Badge (Right Side) */}
+          <div className={`relative z-10 pr-4 font-black uppercase text-xl tracking-tighter ${posColor} drop-shadow-md shrink-0`}>
+            {position}
           </div>
         </div>
 
@@ -322,11 +325,7 @@ export default function BoomBustStreamTool() {
         {/* Stream Display View */}
         {!showSettings && (
           <div className="flex-1 flex flex-col">
-            <button onClick={() => setShowSettings(true)} className="absolute top-4 right-4 bg-black/50 p-3 rounded-full hover:bg-black/80 text-zinc-400 hover:text-white transition-colors backdrop-blur-md border border-zinc-800">
-              <Settings size={24} />
-            </button>
-
-            <div className={`grid gap-6 flex-1 mt-12 ${layoutMode === '2-col' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-4'}`}>
+            <div className={`grid gap-6 flex-1 mt-6 ${layoutMode === '2-col' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-4'}`}>
               {columns[layoutMode].map((col) => {
                 const colBorderColor = getBorderColor(col.color);
                 
@@ -336,11 +335,20 @@ export default function BoomBustStreamTool() {
                     onDragOver={(e) => handleDragOver(e, col.id)}
                     onDrop={(e) => handleDrop(e, col.id)}
                     className={`bg-black/60 backdrop-blur-xl border-2 ${colBorderColor}/40 rounded-3xl p-5 flex flex-col shadow-2xl transition-colors`}
-                    style={{ minHeight: '70vh' }}
+                    style={{ minHeight: '80vh' }}
                   >
-                    <h2 className={`text-2xl font-black text-center mb-5 uppercase tracking-widest italic drop-shadow-lg ${col.color}`}>
+                    {/* SECRET SETTINGS TRIGGER: Clicking the POOL or STOCK header opens settings */}
+                    <h2 
+                      onClick={() => {
+                        if (col.title.toUpperCase().includes('POOL') || col.title.toUpperCase().includes('STOCK')) {
+                          setShowSettings(true);
+                        }
+                      }}
+                      className={`text-2xl font-black text-center mb-5 uppercase tracking-widest italic drop-shadow-lg ${col.color} select-none`}
+                    >
                       {col.title}
                     </h2>
+
                     <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-1.5 pb-20">
                       {col.players.map(playerId => renderPlayerCard(playerId, col))}
                       {col.players.length === 0 && (
