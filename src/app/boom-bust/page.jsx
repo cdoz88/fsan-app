@@ -290,6 +290,14 @@ export default function BoomBustStreamTool() {
     const showTopIndicator = isOver && dragState.dropEdge === 'top';
     const showBottomIndicator = isOver && dragState.dropEdge === 'bottom';
 
+    // DYNAMIC FONT SIZING FOR LONG NAMES
+    let lastNameSize = "text-[18px] tracking-wide";
+    if (lastName.length > 14) {
+      lastNameSize = "text-[12.5px] tracking-tighter pt-0.5";
+    } else if (lastName.length > 11) {
+      lastNameSize = "text-[15px] tracking-tight pt-0.5";
+    }
+
     return (
       <div key={playerId} className="relative w-full mb-5">
         {/* Drop Indicator (Top) */}
@@ -335,7 +343,7 @@ export default function BoomBustStreamTool() {
             <div className="flex-1 min-w-0 flex flex-col justify-center">
               <div className="flex items-baseline truncate">
                 <span className="text-zinc-300 font-black text-[13px] mr-1.5 uppercase drop-shadow-md">{firstName.charAt(0)}.</span>
-                <span className="text-white font-black text-[18px] uppercase tracking-wide truncate drop-shadow-md leading-none">{lastName}</span>
+                <span className={`text-white font-black uppercase truncate drop-shadow-md leading-none ${lastNameSize}`}>{lastName}</span>
               </div>
               {team !== 'FA' && (
                 <div className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest mt-1 drop-shadow-md">
@@ -397,7 +405,7 @@ export default function BoomBustStreamTool() {
                       {col.title}
                     </h2>
 
-                    {/* Clean Player List Container (Empty Placeholder Removed) */}
+                    {/* Clean Player List Container */}
                     <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-col pb-20 pt-2">
                       {col.players.map(playerId => renderPlayerCard(playerId, col))}
                     </div>
