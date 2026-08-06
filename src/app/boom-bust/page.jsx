@@ -143,7 +143,6 @@ export default function BoomBustStreamTool() {
     e.dataTransfer.setData('sourceColId', sourceColId);
     e.dataTransfer.effectAllowed = "move";
     
-    // Slight delay so the drag ghost image remains solid while the real item fades
     setTimeout(() => {
       setDragState(prev => ({ ...prev, playerId, sourceColId }));
     }, 0);
@@ -159,7 +158,6 @@ export default function BoomBustStreamTool() {
     e.dataTransfer.dropEffect = "move";
 
     if (targetPlayerId && targetPlayerId !== dragState.playerId) {
-      // Calculate top/bottom edge based on mouse position
       const rect = e.currentTarget.getBoundingClientRect();
       const y = e.clientY - rect.top;
       const dropEdge = y < rect.height / 2 ? 'top' : 'bottom';
@@ -168,7 +166,6 @@ export default function BoomBustStreamTool() {
         setDragState(prev => ({ ...prev, overColId: colId, overPlayerId: targetPlayerId, dropEdge }));
       }
     } else {
-      // Hovering over the column background
       if (dragState.overColId !== colId || dragState.overPlayerId !== null) {
         setDragState(prev => ({ ...prev, overColId: colId, overPlayerId: null, dropEdge: null }));
       }
@@ -189,13 +186,10 @@ export default function BoomBustStreamTool() {
       const srcIdx = currentLayoutCols.findIndex(c => c.id === sourceColId);
       const tgtIdx = currentLayoutCols.findIndex(c => c.id === targetColId);
 
-      // If dropping on exactly the same spot, abort to save renders
       if (sourceColId === targetColId && overPlayerId === playerId) return prev;
 
-      // Remove from source array
       currentLayoutCols[srcIdx].players = currentLayoutCols[srcIdx].players.filter(id => id !== playerId);
 
-      // Insert into target array
       if (overPlayerId && overPlayerId !== playerId) {
         const tgtPlayerIdx = currentLayoutCols[tgtIdx].players.indexOf(overPlayerId);
         if (tgtPlayerIdx !== -1) {
@@ -216,20 +210,26 @@ export default function BoomBustStreamTool() {
   };
 
   // --- UI HELPERS ---
-  const getCardStyle = (position) => {
+  const getPosColor = (position) => {
     switch (position) {
-      case 'QB': return { text: 'text-cyan-400' };
-      case 'RB': return { text: 'text-emerald-500' };
-      case 'WR': return { text: 'text-amber-500' };
-      case 'TE': return { text: 'text-red-500' };
-      default: return { text: 'text-zinc-400' };
+      case 'QB': return 'text-cyan-400';
+      case 'RB': return 'text-emerald-500';
+      case 'WR': return 'text-amber-500';
+      case 'TE': return 'text-red-500';
+      default: return 'text-zinc-400';
     }
+  };
+
+  // Converts text color (text-red-500) to border color (border-red-500)
+  const getBorderColor = (textColorClass) => {
+    if (!textColorClass) return 'border-zinc-800';
+    return textColorClass.replace('text-', 'border-');
   };
 
   const getESPNHeadshot = (espnId) => `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${espnId}.png&w=350&h=254`;
 
   // --- RENDER COMPACT PLAYER LIST ITEM ---
-  const renderPlayerCard = (playerId, colId) => {
+  const renderPlayerCard = (playerId, col) => {
     const dbPlayer = playerDB[playerId];
     if (!dbPlayer) return null;
 
@@ -238,8 +238,11 @@ export default function BoomBustStreamTool() {
     const position = dbPlayer.position || "UNK";
     const team = dbPlayer.team ? dbPlayer.team.toLowerCase() : "fa";
     
-    const cardStyle = getCardStyle(position);
+    const posColor = getPosColor(position);
+    // Dynamically match the border color to the column's header color
+    const cardBorderColor = getBorderColor(col.color);
     
+    const teamLogo = team !== 'fa' ? `https://sleepercdn.com/images/team_logos/nfl/${team}.png` : null;
     let playerImage = dbPlayer?.espn_id 
       ? getESPNHeadshot(dbPlayer.espn_id) 
       : `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
@@ -252,59 +255,67 @@ export default function BoomBustStreamTool() {
     return (
       <div key={playerId} className="relative w-full">
         {/* Drop Indicator (Top) */}
-        <div className={`h-1 rounded-full bg-[#1b75bb] transition-all duration-200 ${showTopIndicator ? 'opacity-100 my-1' : 'opacity-0 h-0 my-0'}`} />
+        <div className={`h-[3px] rounded-full bg-[#1b75bb] transition-all duration-200 ${showTopIndicator ? 'opacity-100 my-1' : 'opacity-0 h-0 my-0'}`} />
         
         <div 
           draggable
-          onDragStart={(e) => handleDragStart(e, playerId, colId)}
+          onDragStart={(e) => handleDragStart(e, playerId, col.id)}
           onDragEnd={handleDragEnd}
-          onDragOver={(e) => handleDragOver(e, colId, playerId)}
-          onDrop={(e) => handleDrop(e, colId)}
-          className={`flex items-center gap-3 p-2 rounded-xl border transition-all cursor-grab active:cursor-grabbing shadow-lg
-            ${isDragging ? 'opacity-40 scale-95 border-gray-700 bg-black' : 'opacity-100 hover:scale-[1.02] hover:border-gray-500 bg-gradient-to-r from-zinc-900/95 to-[#151515]/95 border-zinc-700/80'}
+          onDragOver={(e) => handleDragOver(e, col.id, playerId)}
+          onDrop={(e) => handleDrop(e, col.id)}
+          className={`relative h-[68px] flex items-center p-2 rounded-[14px] border transition-all cursor-grab active:cursor-grabbing shadow-lg overflow-hidden
+            ${isDragging ? 'opacity-40 border-gray-700 bg-black' : `opacity-100 hover:brightness-125 bg-[#111] ${cardBorderColor}`}
           `}
         >
+          {/* Faded Background Team Logo */}
+          {teamLogo && (
+             <div className="absolute right-[-10px] top-1/2 -translate-y-1/2 h-[180%] w-auto opacity-10 pointer-events-none z-0">
+                <img src={teamLogo} className="h-full w-auto object-contain" alt="" onError={(e) => e.target.style.display = 'none'} />
+             </div>
+          )}
+
           {/* Position Badge */}
-          <div className={`w-8 flex justify-center text-[10px] font-black uppercase tracking-widest ${cardStyle.text} drop-shadow-md`}>
+          <div className={`w-[42px] flex justify-center text-[12px] font-black uppercase tracking-widest ${posColor} drop-shadow-md z-10 shrink-0`}>
             {position}
           </div>
 
           {/* Headshot Circle */}
-          <div className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-800 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
+          <div className="w-11 h-11 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center overflow-hidden shrink-0 shadow-inner z-10">
             <img 
               src={playerImage} 
               alt={lastName}
-              className="w-full h-full object-cover object-top scale-110 translate-y-1"
+              className="w-full h-full object-cover object-top scale-[1.15] translate-y-1"
               onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
             />
           </div>
 
           {/* Name & Info */}
-          <div className="flex-1 min-w-0 flex flex-col justify-center">
+          <div className="flex-1 min-w-0 flex flex-col justify-center ml-3 z-10">
             <div className="flex items-baseline truncate">
-              <span className="text-zinc-400 font-black text-[11px] mr-1 uppercase">{firstName.charAt(0)}.</span>
-              <span className="text-white font-black text-[14px] uppercase tracking-wide truncate drop-shadow-md leading-none">{lastName}</span>
+              <span className="text-white font-black text-[16px] tracking-wide truncate drop-shadow-md leading-none">
+                {firstName.charAt(0)}. {lastName.toUpperCase()}
+              </span>
             </div>
-            <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">
-              {team}
-            </div>
+            {team !== 'fa' && (
+              <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">
+                {team}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Drop Indicator (Bottom) */}
-        <div className={`h-1 rounded-full bg-[#1b75bb] transition-all duration-200 ${showBottomIndicator ? 'opacity-100 my-1' : 'opacity-0 h-0 my-0'}`} />
+        <div className={`h-[3px] rounded-full bg-[#1b75bb] transition-all duration-200 ${showBottomIndicator ? 'opacity-100 my-1' : 'opacity-0 h-0 my-0'}`} />
       </div>
     );
   };
 
   // --- RENDER PAGE ---
   return (
-    // Fixed inset-0 wrapper forces this to completely cover global headers/footers
     <div className="fixed inset-0 z-[9999] bg-[#09090b] text-gray-300 font-sans overflow-y-auto selection:bg-[#1b75bb] selection:text-white"
          style={{ backgroundImage: bgUrl ? `url('${bgUrl}')` : 'none', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
       
-      {/* Dark Overlay for Readability */}
-      {bgUrl && <div className="absolute inset-0 bg-black/70 backdrop-blur-md pointer-events-none z-0" />}
+      {bgUrl && <div className="absolute inset-0 bg-black/80 backdrop-blur-sm pointer-events-none z-0" />}
 
       <div className="relative z-10 min-h-screen p-4 md:p-8 flex flex-col">
         
@@ -316,34 +327,38 @@ export default function BoomBustStreamTool() {
             </button>
 
             <div className={`grid gap-6 flex-1 mt-12 ${layoutMode === '2-col' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-4'}`}>
-              {columns[layoutMode].map((col) => (
-                <div 
-                  key={col.id}
-                  onDragOver={(e) => handleDragOver(e, col.id)}
-                  onDrop={(e) => handleDrop(e, col.id)}
-                  className="bg-black/50 backdrop-blur-xl border border-zinc-800/80 rounded-3xl p-5 flex flex-col shadow-2xl transition-colors"
-                  style={{ minHeight: '70vh' }}
-                >
-                  <h2 className={`text-2xl font-black text-center mb-5 uppercase tracking-widest italic drop-shadow-lg ${col.color}`}>
-                    {col.title}
-                  </h2>
-                  <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-1.5 pb-20">
-                    {col.players.map(playerId => renderPlayerCard(playerId, col.id))}
-                    {col.players.length === 0 && (
-                      <div className="h-full min-h-[150px] flex items-center justify-center text-zinc-600 font-bold uppercase tracking-widest text-xs text-center border-2 border-dashed border-zinc-800/50 rounded-2xl p-6 pointer-events-none">
-                        Drop Players Here
-                      </div>
-                    )}
+              {columns[layoutMode].map((col) => {
+                const colBorderColor = getBorderColor(col.color);
+                
+                return (
+                  <div 
+                    key={col.id}
+                    onDragOver={(e) => handleDragOver(e, col.id)}
+                    onDrop={(e) => handleDrop(e, col.id)}
+                    className={`bg-black/60 backdrop-blur-xl border-2 ${colBorderColor}/40 rounded-3xl p-5 flex flex-col shadow-2xl transition-colors`}
+                    style={{ minHeight: '70vh' }}
+                  >
+                    <h2 className={`text-2xl font-black text-center mb-5 uppercase tracking-widest italic drop-shadow-lg ${col.color}`}>
+                      {col.title}
+                    </h2>
+                    <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-1.5 pb-20">
+                      {col.players.map(playerId => renderPlayerCard(playerId, col))}
+                      {col.players.length === 0 && (
+                        <div className="h-full min-h-[150px] flex items-center justify-center text-zinc-600 font-bold uppercase tracking-widest text-xs text-center border-2 border-dashed border-zinc-800/50 rounded-2xl p-6 pointer-events-none">
+                          Drop Players Here
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
 
         {/* Dashboard Settings View */}
         {showSettings && (
-          <div className="bg-[#151515] border border-gray-800 rounded-3xl p-8 w-full max-w-5xl mx-auto shadow-2xl animate-in fade-in zoom-in-95">
+          <div className="bg-[#151515] border border-gray-800 rounded-3xl p-8 w-full max-w-5xl mx-auto shadow-2xl animate-in fade-in zoom-in-95 mt-10">
             <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-800">
               <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter">Control Dashboard</h1>
               <button onClick={() => setShowSettings(false)} className="bg-gray-800 p-2 rounded-full hover:bg-gray-700 text-white transition-colors">
@@ -371,7 +386,7 @@ export default function BoomBustStreamTool() {
                         type="text" 
                         value={col.title}
                         onChange={(e) => updateHeader(idx, e.target.value)}
-                        className="w-full bg-black border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#1b75bb] shadow-inner text-sm font-bold"
+                        className={`w-full bg-black border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#1b75bb] shadow-inner text-sm font-bold ${col.color}`}
                       />
                     ))}
                   </div>
