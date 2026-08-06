@@ -306,14 +306,13 @@ export default function BoomBustStreamTool() {
           `}
           style={{ borderColor: isDragging ? undefined : col.color }}
         >
-          {/* Inner Background & Borders (Overflow Hidden to trap the team logo) */}
+          {/* Inner Background & Borders */}
           <div 
             className={`absolute inset-0 rounded-[13px] overflow-hidden pointer-events-none z-0`}
             style={{ 
               background: `linear-gradient(90deg, ${tColors.primary}70 0%, ${tColors.secondary}40 45%, #111111 100%)` 
             }}
           >
-             {/* Faded Background Team Logo (Resized to 150%) */}
              {teamLogo && (
                <div className="absolute right-[5px] top-1/2 -translate-y-1/2 h-[150%] w-auto opacity-[0.15] pointer-events-none z-0">
                   <img src={teamLogo} className="h-full w-auto object-contain" alt="" onError={(e) => e.target.style.display = 'none'} />
@@ -321,7 +320,7 @@ export default function BoomBustStreamTool() {
              )}
           </div>
 
-          {/* Floating Player Image (Z-20, bottom-left anchored, breaks out of top border, 175% height, 120px width) */}
+          {/* Floating Player Image */}
           <div className="absolute bottom-0 left-3 w-[120px] h-[175%] z-20 flex items-end justify-center pointer-events-none">
             <img 
               src={playerImage} 
@@ -331,9 +330,8 @@ export default function BoomBustStreamTool() {
             />
           </div>
 
-          {/* Player Info Content (Z-10) - Pushed left padding to accommodate larger head */}
+          {/* Player Info Content */}
           <div className="absolute inset-0 z-10 flex items-center pr-5 pl-[135px] pointer-events-none">
-            {/* Name & Team */}
             <div className="flex-1 min-w-0 flex flex-col justify-center">
               <div className="flex items-baseline truncate">
                 <span className="text-zinc-300 font-black text-[13px] mr-1.5 uppercase drop-shadow-md">{firstName.charAt(0)}.</span>
@@ -345,8 +343,6 @@ export default function BoomBustStreamTool() {
                 </div>
               )}
             </div>
-
-            {/* Position Badge (Right Side) */}
             <div className={`font-black uppercase text-[22px] tracking-tighter ${posColor} drop-shadow-md shrink-0 ml-4`}>
               {position}
             </div>
@@ -373,6 +369,9 @@ export default function BoomBustStreamTool() {
           <div className="flex-1 flex flex-col">
             <div className={`grid gap-6 flex-1 mt-6 ${layoutMode === '2-col' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-4'}`}>
               {columns[layoutMode].map((col) => {
+                // Determine if this is the target column to open settings based on column ID
+                const isSettingsTrigger = col.id === 'col-2-2' || col.id === 'col-4-1';
+
                 return (
                   <div 
                     key={col.id}
@@ -385,14 +384,14 @@ export default function BoomBustStreamTool() {
                       boxShadow: `0 20px 25px -5px rgba(0,0,0,0.3), 0 0 20px ${col.color}20` 
                     }}
                   >
-                    {/* SECRET SETTINGS TRIGGER: Clicking the POOL or STOCK header opens settings */}
+                    {/* SECRET SETTINGS TRIGGER: Clicking the middle column header opens settings */}
                     <h2 
                       onClick={() => {
-                        if (col.title.toUpperCase().includes('POOL') || col.title.toUpperCase().includes('STOCK')) {
+                        if (isSettingsTrigger) {
                           setShowSettings(true);
                         }
                       }}
-                      className="text-2xl font-black text-center mb-8 mt-2 uppercase tracking-widest italic drop-shadow-lg select-none cursor-pointer"
+                      className={`text-2xl font-black text-center mb-8 mt-2 uppercase tracking-widest italic drop-shadow-lg select-none ${isSettingsTrigger ? 'cursor-pointer' : ''}`}
                       style={{ color: col.color }}
                     >
                       {col.title}
