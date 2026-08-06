@@ -321,8 +321,8 @@ export default function BoomBustStreamTool() {
              )}
           </div>
 
-          {/* Floating Player Image (Z-20, bottom-left anchored, breaks out of top border, 165% height) */}
-          <div className="absolute bottom-0 left-3 w-[100px] h-[165%] z-20 flex items-end justify-center pointer-events-none">
+          {/* Floating Player Image (Z-20, bottom-left anchored, breaks out of top border, 175% height, 120px width) */}
+          <div className="absolute bottom-0 left-3 w-[120px] h-[175%] z-20 flex items-end justify-center pointer-events-none">
             <img 
               src={playerImage} 
               alt={lastName}
@@ -332,7 +332,7 @@ export default function BoomBustStreamTool() {
           </div>
 
           {/* Player Info Content (Z-10) - Pushed left padding to accommodate larger head */}
-          <div className="absolute inset-0 z-10 flex items-center pr-5 pl-[115px] pointer-events-none">
+          <div className="absolute inset-0 z-10 flex items-center pr-5 pl-[135px] pointer-events-none">
             {/* Name & Team */}
             <div className="flex-1 min-w-0 flex flex-col justify-center">
               <div className="flex items-baseline truncate">
