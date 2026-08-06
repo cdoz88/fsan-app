@@ -290,12 +290,12 @@ export default function BoomBustStreamTool() {
     const showTopIndicator = isOver && dragState.dropEdge === 'top';
     const showBottomIndicator = isOver && dragState.dropEdge === 'bottom';
 
-    // DYNAMIC FONT SIZING FOR LONG NAMES
+    // DYNAMIC FONT SIZING FOR LONG NAMES (GENTLER SCALING)
     let lastNameSize = "text-[18px] tracking-wide";
     if (lastName.length > 14) {
-      lastNameSize = "text-[12.5px] tracking-tighter pt-0.5";
+      lastNameSize = "text-[14.5px] tracking-tight pt-[2px]";
     } else if (lastName.length > 11) {
-      lastNameSize = "text-[15px] tracking-tight pt-0.5";
+      lastNameSize = "text-[16px] tracking-tight pt-[1px]";
     }
 
     return (
