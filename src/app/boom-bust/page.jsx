@@ -14,18 +14,18 @@ export default function BoomBustStreamTool() {
   const [searchTerm, setSearchTerm] = useState('');
   const [posFilter, setPosFilter] = useState('ALL');
 
-  // Columns & Selected Players State
+  // Columns & Selected Players State (Now using Hex Colors for the Color Picker)
   const [columns, setColumns] = useState({
     '2-col': [
-      { id: 'col-2-1', title: 'BOOM 🚀', players: [], color: 'text-emerald-500' },
-      { id: 'col-2-2', title: 'POOL', players: [], color: 'text-zinc-500' },
-      { id: 'col-2-3', title: 'BUST 👎', players: [], color: 'text-red-500' }
+      { id: 'col-2-1', title: 'BOOM 🚀', players: [], color: '#10b981' }, // Emerald
+      { id: 'col-2-2', title: 'POOL', players: [], color: '#71717a' },   // Zinc
+      { id: 'col-2-3', title: 'BUST 👎', players: [], color: '#ef4444' } // Red
     ],
     '4-col': [
-      { id: 'col-4-1', title: 'STOCK', players: [], color: 'text-cyan-500' },
-      { id: 'col-4-2', title: 'BUY', players: [], color: 'text-emerald-500' },
-      { id: 'col-4-3', title: 'HOLD', players: [], color: 'text-amber-500' },
-      { id: 'col-4-4', title: 'SELL', players: [], color: 'text-red-500' }
+      { id: 'col-4-1', title: 'STOCK', players: [], color: '#06b6d4' },
+      { id: 'col-4-2', title: 'BUY', players: [], color: '#10b981' },
+      { id: 'col-4-3', title: 'HOLD', players: [], color: '#f59e0b' },
+      { id: 'col-4-4', title: 'SELL', players: [], color: '#ef4444' }
     ]
   });
 
@@ -137,6 +137,14 @@ export default function BoomBustStreamTool() {
     });
   };
 
+  const updateColor = (colIdx, newColor) => {
+    setColumns(prev => {
+      const newCols = { ...prev };
+      newCols[layoutMode][colIdx].color = newColor;
+      return newCols;
+    });
+  };
+
   // --- DRAG AND DROP LOGIC ---
   const handleDragStart = (e, playerId, sourceColId) => {
     e.dataTransfer.setData('playerId', playerId);
@@ -220,17 +228,6 @@ export default function BoomBustStreamTool() {
     }
   };
 
-  const getBorderColor = (textColorClass) => {
-    switch (textColorClass) {
-      case 'text-emerald-500': return 'border-emerald-500';
-      case 'text-red-500': return 'border-red-500';
-      case 'text-cyan-500': return 'border-cyan-500';
-      case 'text-amber-500': return 'border-amber-500';
-      case 'text-zinc-500': return 'border-zinc-500';
-      default: return 'border-zinc-800';
-    }
-  };
-
   const getESPNHeadshot = (espnId) => `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${espnId}.png&w=350&h=254`;
 
   // --- RENDER COMPACT PLAYER LIST ITEM ---
@@ -244,7 +241,6 @@ export default function BoomBustStreamTool() {
     const team = dbPlayer.team ? dbPlayer.team.toUpperCase() : "FA";
     
     const posColor = getPosColor(position);
-    const cardBorderColor = getBorderColor(col.color);
     
     const teamLogo = team !== 'FA' ? `https://sleepercdn.com/images/team_logos/nfl/${team.toLowerCase()}.png` : null;
     let playerImage = dbPlayer?.espn_id 
@@ -257,9 +253,9 @@ export default function BoomBustStreamTool() {
     const showBottomIndicator = isOver && dragState.dropEdge === 'bottom';
 
     return (
-      <div key={playerId} className="relative w-full">
+      <div key={playerId} className="relative w-full mb-3">
         {/* Drop Indicator (Top) */}
-        <div className={`h-[3px] rounded-full bg-[#1b75bb] transition-all duration-200 ${showTopIndicator ? 'opacity-100 my-1' : 'opacity-0 h-0 my-0'}`} />
+        <div className={`absolute top-[-8px] left-0 right-0 h-[3px] rounded-full transition-all duration-200 z-50 ${showTopIndicator ? 'opacity-100 bg-white shadow-[0_0_8px_#fff]' : 'opacity-0'}`} />
         
         <div 
           draggable
@@ -267,48 +263,57 @@ export default function BoomBustStreamTool() {
           onDragEnd={handleDragEnd}
           onDragOver={(e) => handleDragOver(e, col.id, playerId)}
           onDrop={(e) => handleDrop(e, col.id)}
-          className={`relative h-[68px] flex items-center rounded-2xl transition-all cursor-grab active:cursor-grabbing shadow-lg
-            ${isDragging ? 'opacity-40 bg-black border border-gray-800' : 'opacity-100 hover:brightness-125 hover:scale-[1.02]'}
+          className={`relative h-[68px] rounded-[14px] cursor-grab active:cursor-grabbing group
+            ${isDragging ? 'opacity-40' : 'opacity-100'}
           `}
         >
           {/* Inner Background & Borders (Overflow Hidden to trap the team logo) */}
-          <div className={`absolute inset-0 rounded-[14px] bg-[#111] border ${cardBorderColor} overflow-hidden pointer-events-none z-0 ${col.title.toUpperCase().includes('POOL') ? 'border-opacity-40' : 'border-opacity-80'}`}>
+          <div 
+            className="absolute inset-0 rounded-[14px] bg-[#111] border transition-all duration-200 z-0 overflow-hidden group-hover:brightness-125"
+            style={{ borderColor: col.color }}
+          >
+             {/* Faded Background Team Logo (Shifted further left to be fully visible) */}
              {teamLogo && (
-               <div className="absolute right-[-20px] top-1/2 -translate-y-1/2 h-[160%] w-auto opacity-10 pointer-events-none z-0">
+               <div className="absolute right-[15px] top-1/2 -translate-y-1/2 h-[150%] w-auto opacity-[0.12] pointer-events-none z-0">
                   <img src={teamLogo} className="h-full w-auto object-contain" alt="" onError={(e) => e.target.style.display = 'none'} />
                </div>
              )}
           </div>
 
-          {/* Floating Player Image (Z-10 so it breaks out if needed, anchored bottom left) */}
-          <div className="relative z-10 h-[115%] w-14 shrink-0 flex items-end justify-center ml-3 pb-0.5 pointer-events-none">
+          {/* Player Info Content (Z-10) */}
+          <div className="absolute inset-0 z-10 flex items-center pr-5 pl-[85px] pointer-events-none">
+            {/* Name & Team */}
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
+              <div className="flex items-baseline truncate">
+                <span className="text-zinc-400 font-black text-[13px] mr-1.5 uppercase">{firstName.charAt(0)}.</span>
+                <span className="text-white font-black text-[18px] uppercase tracking-wide truncate drop-shadow-md leading-none">{lastName}</span>
+              </div>
+              {team !== 'FA' && (
+                <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">
+                  {team}
+                </div>
+              )}
+            </div>
+
+            {/* Position Badge (Right Side) */}
+            <div className={`font-black uppercase text-[22px] tracking-tighter ${posColor} drop-shadow-md shrink-0 ml-4`}>
+              {position}
+            </div>
+          </div>
+
+          {/* Floating Player Image (Z-20, bottom-left anchored, breaks out of top border) */}
+          <div className="absolute bottom-0 left-3 w-[65px] h-[130%] z-20 flex items-end justify-center pointer-events-none">
             <img 
               src={playerImage} 
               alt={lastName}
-              className="w-auto h-full object-contain object-bottom origin-bottom scale-[1.15] drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] filter contrast-110 brightness-110"
+              className="w-full h-full object-contain object-bottom drop-shadow-[0_4px_10px_rgba(0,0,0,0.7)] filter contrast-110 brightness-110"
               onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
             />
-          </div>
-
-          {/* Name & Info */}
-          <div className="relative z-10 flex-1 min-w-0 flex flex-col justify-center ml-2">
-            <div className="flex items-baseline truncate">
-              <span className="text-zinc-400 font-black text-[12px] mr-1 uppercase">{firstName.charAt(0)}.</span>
-              <span className="text-white font-black text-[16px] uppercase tracking-wide truncate drop-shadow-md leading-none">{lastName}</span>
-            </div>
-            <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mt-0.5">
-              {team}
-            </div>
-          </div>
-
-          {/* Position Badge (Right Side) */}
-          <div className={`relative z-10 pr-4 font-black uppercase text-xl tracking-tighter ${posColor} drop-shadow-md shrink-0`}>
-            {position}
           </div>
         </div>
 
         {/* Drop Indicator (Bottom) */}
-        <div className={`h-[3px] rounded-full bg-[#1b75bb] transition-all duration-200 ${showBottomIndicator ? 'opacity-100 my-1' : 'opacity-0 h-0 my-0'}`} />
+        <div className={`absolute bottom-[-8px] left-0 right-0 h-[3px] rounded-full transition-all duration-200 z-50 ${showBottomIndicator ? 'opacity-100 bg-white shadow-[0_0_8px_#fff]' : 'opacity-0'}`} />
       </div>
     );
   };
@@ -327,15 +332,17 @@ export default function BoomBustStreamTool() {
           <div className="flex-1 flex flex-col">
             <div className={`grid gap-6 flex-1 mt-6 ${layoutMode === '2-col' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-4'}`}>
               {columns[layoutMode].map((col) => {
-                const colBorderColor = getBorderColor(col.color);
-                
                 return (
                   <div 
                     key={col.id}
                     onDragOver={(e) => handleDragOver(e, col.id)}
                     onDrop={(e) => handleDrop(e, col.id)}
-                    className={`bg-black/60 backdrop-blur-xl border-2 ${colBorderColor}/40 rounded-3xl p-5 flex flex-col shadow-2xl transition-colors`}
-                    style={{ minHeight: '80vh' }}
+                    className="bg-black/60 backdrop-blur-xl border-2 rounded-3xl p-5 flex flex-col transition-colors"
+                    style={{ 
+                      minHeight: '80vh', 
+                      borderColor: `${col.color}80`, // Hex color with ~50% opacity
+                      boxShadow: `0 20px 25px -5px rgba(0,0,0,0.3), 0 0 20px ${col.color}20` 
+                    }}
                   >
                     {/* SECRET SETTINGS TRIGGER: Clicking the POOL or STOCK header opens settings */}
                     <h2 
@@ -344,15 +351,16 @@ export default function BoomBustStreamTool() {
                           setShowSettings(true);
                         }
                       }}
-                      className={`text-2xl font-black text-center mb-5 uppercase tracking-widest italic drop-shadow-lg ${col.color} select-none`}
+                      className="text-2xl font-black text-center mb-6 uppercase tracking-widest italic drop-shadow-lg select-none cursor-pointer"
+                      style={{ color: col.color }}
                     >
                       {col.title}
                     </h2>
 
-                    <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-1.5 pb-20">
+                    <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-col pb-20">
                       {col.players.map(playerId => renderPlayerCard(playerId, col))}
                       {col.players.length === 0 && (
-                        <div className="h-full min-h-[150px] flex items-center justify-center text-zinc-600 font-bold uppercase tracking-widest text-xs text-center border-2 border-dashed border-zinc-800/50 rounded-2xl p-6 pointer-events-none">
+                        <div className="h-full min-h-[150px] flex items-center justify-center text-zinc-600 font-bold uppercase tracking-widest text-xs text-center border-2 border-dashed border-zinc-800/50 rounded-2xl p-6 pointer-events-none mt-2">
                           Drop Players Here
                         </div>
                       )}
@@ -386,16 +394,25 @@ export default function BoomBustStreamTool() {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-1">Column Headers</label>
+                  <label className="block text-[11px] font-black text-gray-500 uppercase tracking-widest mb-3 ml-1">Column Colors & Headers</label>
                   <div className="space-y-3">
                     {columns[layoutMode].map((col, idx) => (
-                      <input 
-                        key={`input-${col.id}`}
-                        type="text" 
-                        value={col.title}
-                        onChange={(e) => updateHeader(idx, e.target.value)}
-                        className={`w-full bg-black border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#1b75bb] shadow-inner text-sm font-bold ${col.color}`}
-                      />
+                      <div key={`input-${col.id}`} className="flex gap-2">
+                        {/* Dynamic Color Picker */}
+                        <input 
+                          type="color" 
+                          value={col.color}
+                          onChange={(e) => updateColor(idx, e.target.value)}
+                          className="w-12 h-11 p-1 bg-black border border-gray-800 rounded-xl cursor-pointer shrink-0"
+                        />
+                        <input 
+                          type="text" 
+                          value={col.title}
+                          onChange={(e) => updateHeader(idx, e.target.value)}
+                          style={{ color: col.color }}
+                          className="w-full bg-black border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#1b75bb] shadow-inner text-sm font-bold"
+                        />
+                      </div>
                     ))}
                   </div>
                 </div>
