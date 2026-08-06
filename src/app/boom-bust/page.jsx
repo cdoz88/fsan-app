@@ -384,7 +384,7 @@ export default function BoomBustStreamTool() {
                       boxShadow: `0 20px 25px -5px rgba(0,0,0,0.3), 0 0 20px ${col.color}20` 
                     }}
                   >
-                    {/* SECRET SETTINGS TRIGGER: Clicking the middle column header opens settings */}
+                    {/* SECRET SETTINGS TRIGGER: Clicking the designated header opens settings */}
                     <h2 
                       onClick={() => {
                         if (isSettingsTrigger) {
@@ -397,13 +397,9 @@ export default function BoomBustStreamTool() {
                       {col.title}
                     </h2>
 
+                    {/* Clean Player List Container (Empty Placeholder Removed) */}
                     <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-col pb-20 pt-2">
                       {col.players.map(playerId => renderPlayerCard(playerId, col))}
-                      {col.players.length === 0 && (
-                        <div className="h-full min-h-[150px] flex items-center justify-center text-zinc-600 font-bold uppercase tracking-widest text-xs text-center border-2 border-dashed border-zinc-800/50 rounded-2xl p-6 pointer-events-none mt-2">
-                          Drop Players Here
-                        </div>
-                      )}
                     </div>
                   </div>
                 );
