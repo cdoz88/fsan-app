@@ -29,9 +29,17 @@ export default function BoomBustStreamTool() {
     ]
   });
 
+  // Drag and Drop Indicator State
+  const [dragState, setDragState] = useState({
+    playerId: null,
+    sourceColId: null,
+    overColId: null,
+    overPlayerId: null,
+    dropEdge: null // 'top' or 'bottom'
+  });
+
   // --- INITIALIZATION & LOCAL STORAGE ---
   useEffect(() => {
-    // Load saved data from local storage on mount
     const savedCols = localStorage.getItem('bb_columns');
     const savedMode = localStorage.getItem('bb_mode');
     const savedBg = localStorage.getItem('bb_bg');
@@ -40,7 +48,6 @@ export default function BoomBustStreamTool() {
     if (savedMode) setLayoutMode(savedMode);
     if (savedBg) setBgUrl(savedBg);
 
-    // Fetch Player Databases (Matches DNO Graphic Logic)
     const loadPlayerDatabases = async () => {
       try {
         let customMap = {};
@@ -67,7 +74,6 @@ export default function BoomBustStreamTool() {
           
           setPlayerDB(mergedDB);
           
-          // Generate Top 400 for Dashboard
           const relevantPositions = ['QB', 'RB', 'WR', 'TE'];
           const top = Object.values(mergedDB)
             .filter(p => p.active && p.team && relevantPositions.includes(p.position) && p.search_rank)
@@ -86,32 +92,28 @@ export default function BoomBustStreamTool() {
     loadPlayerDatabases();
   }, []);
 
-  // Save to local storage whenever critical state changes
   useEffect(() => {
     localStorage.setItem('bb_columns', JSON.stringify(columns));
     localStorage.setItem('bb_mode', layoutMode);
     localStorage.setItem('bb_bg', bgUrl);
   }, [columns, layoutMode, bgUrl]);
 
-  // --- LOGIC ---
+  // --- DASHBOARD LOGIC ---
   const handlePlayerToggle = (playerId) => {
     setColumns(prev => {
       const newCols = { ...prev };
       
-      // Check if player is already in the current layout
       let exists = false;
       newCols[layoutMode].forEach(col => {
         if (col.players.includes(playerId)) exists = true;
       });
 
       if (exists) {
-        // Remove from all columns in current layout
         newCols[layoutMode] = newCols[layoutMode].map(col => ({
           ...col,
           players: col.players.filter(id => id !== playerId)
         }));
       } else {
-        // Add to the middle/first pool column by default
         const targetColIdx = layoutMode === '2-col' ? 1 : 0; 
         newCols[layoutMode][targetColIdx].players.push(playerId);
       }
@@ -135,59 +137,98 @@ export default function BoomBustStreamTool() {
     });
   };
 
-  // --- DRAG AND DROP ---
+  // --- DRAG AND DROP LOGIC (WITH REORDERING) ---
   const handleDragStart = (e, playerId, sourceColId) => {
     e.dataTransfer.setData('playerId', playerId);
     e.dataTransfer.setData('sourceColId', sourceColId);
-    e.target.style.opacity = '0.5';
+    e.dataTransfer.effectAllowed = "move";
+    
+    // Slight delay so the drag ghost image remains solid while the real item fades
+    setTimeout(() => {
+      setDragState(prev => ({ ...prev, playerId, sourceColId }));
+    }, 0);
   };
 
-  const handleDragEnd = (e) => {
-    e.target.style.opacity = '1';
+  const handleDragEnd = () => {
+    setDragState({ playerId: null, sourceColId: null, overColId: null, overPlayerId: null, dropEdge: null });
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault(); // Necessary to allow dropping
+  const handleDragOver = (e, colId, targetPlayerId = null) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+
+    if (targetPlayerId && targetPlayerId !== dragState.playerId) {
+      // Calculate top/bottom edge based on mouse position
+      const rect = e.currentTarget.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const dropEdge = y < rect.height / 2 ? 'top' : 'bottom';
+
+      if (dragState.overColId !== colId || dragState.overPlayerId !== targetPlayerId || dragState.dropEdge !== dropEdge) {
+        setDragState(prev => ({ ...prev, overColId: colId, overPlayerId: targetPlayerId, dropEdge }));
+      }
+    } else {
+      // Hovering over the column background
+      if (dragState.overColId !== colId || dragState.overPlayerId !== null) {
+        setDragState(prev => ({ ...prev, overColId: colId, overPlayerId: null, dropEdge: null }));
+      }
+    }
   };
 
   const handleDrop = (e, targetColId) => {
     e.preventDefault();
-    const playerId = e.dataTransfer.getData('playerId');
-    const sourceColId = e.dataTransfer.getData('sourceColId');
-    
-    if (sourceColId === targetColId) return;
+    e.stopPropagation();
+
+    const { playerId, sourceColId, overPlayerId, dropEdge } = dragState;
+    if (!playerId || !sourceColId) return;
 
     setColumns(prev => {
       const newCols = { ...prev };
-      const currentLayoutCols = [...newCols[layoutMode]];
+      const currentLayoutCols = [...newCols[layoutMode]].map(col => ({ ...col, players: [...col.players] }));
       
       const srcIdx = currentLayoutCols.findIndex(c => c.id === sourceColId);
       const tgtIdx = currentLayoutCols.findIndex(c => c.id === targetColId);
 
-      // Remove from source
+      // If dropping on exactly the same spot, abort to save renders
+      if (sourceColId === targetColId && overPlayerId === playerId) return prev;
+
+      // Remove from source array
       currentLayoutCols[srcIdx].players = currentLayoutCols[srcIdx].players.filter(id => id !== playerId);
-      // Add to target
-      currentLayoutCols[tgtIdx].players.push(playerId);
+
+      // Insert into target array
+      if (overPlayerId && overPlayerId !== playerId) {
+        const tgtPlayerIdx = currentLayoutCols[tgtIdx].players.indexOf(overPlayerId);
+        if (tgtPlayerIdx !== -1) {
+          const insertIdx = dropEdge === 'top' ? tgtPlayerIdx : tgtPlayerIdx + 1;
+          currentLayoutCols[tgtIdx].players.splice(insertIdx, 0, playerId);
+        } else {
+          currentLayoutCols[tgtIdx].players.push(playerId);
+        }
+      } else {
+        currentLayoutCols[tgtIdx].players.push(playerId);
+      }
 
       newCols[layoutMode] = currentLayoutCols;
       return newCols;
     });
+
+    handleDragEnd(); 
   };
 
   // --- UI HELPERS ---
   const getCardStyle = (position) => {
     switch (position) {
-      case 'QB': return { border: 'border-cyan-500/60 shadow-[0_0_20px_rgba(6,182,212,0.15)]', gradient: 'from-cyan-950/40 to-black', text: 'text-cyan-400' };
-      case 'RB': return { border: 'border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]', gradient: 'from-emerald-950/40 to-black', text: 'text-emerald-500' };
-      case 'WR': return { border: 'border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.15)]', gradient: 'from-amber-900/40 to-black', text: 'text-amber-500' };
-      case 'TE': return { border: 'border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.15)]', gradient: 'from-red-950/40 to-black', text: 'text-red-500' };
-      default: return { border: 'border-zinc-500/60 shadow-[0_0_20px_rgba(113,113,122,0.15)]', gradient: 'from-zinc-800/40 to-black', text: 'text-zinc-400' };
+      case 'QB': return { text: 'text-cyan-400' };
+      case 'RB': return { text: 'text-emerald-500' };
+      case 'WR': return { text: 'text-amber-500' };
+      case 'TE': return { text: 'text-red-500' };
+      default: return { text: 'text-zinc-400' };
     }
   };
 
   const getESPNHeadshot = (espnId) => `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${espnId}.png&w=350&h=254`;
 
-  // --- RENDER PLAYER CARD ---
+  // --- RENDER COMPACT PLAYER LIST ITEM ---
   const renderPlayerCard = (playerId, colId) => {
     const dbPlayer = playerDB[playerId];
     if (!dbPlayer) return null;
@@ -198,67 +239,73 @@ export default function BoomBustStreamTool() {
     const team = dbPlayer.team ? dbPlayer.team.toLowerCase() : "fa";
     
     const cardStyle = getCardStyle(position);
-    const teamLogo = team !== 'fa' ? `https://sleepercdn.com/images/team_logos/nfl/${team}.png` : null;
     
     let playerImage = dbPlayer?.espn_id 
       ? getESPNHeadshot(dbPlayer.espn_id) 
       : `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
 
+    const isDragging = dragState.playerId === playerId;
+    const isOver = dragState.overPlayerId === playerId;
+    const showTopIndicator = isOver && dragState.dropEdge === 'top';
+    const showBottomIndicator = isOver && dragState.dropEdge === 'bottom';
+
     return (
-      <div 
-        key={playerId} 
-        draggable
-        onDragStart={(e) => handleDragStart(e, playerId, colId)}
-        onDragEnd={handleDragEnd}
-        className="relative w-full h-[150px] flex flex-col justify-end group shadow-xl cursor-grab active:cursor-grabbing mb-4 transition-transform hover:scale-[1.02]"
-      >
-        <div className={`absolute inset-0 rounded-2xl bg-gradient-to-b ${cardStyle.gradient} backdrop-blur-md border-2 ${cardStyle.border} overflow-hidden`}>
-            {teamLogo && (
-              <div className="absolute inset-x-0 top-0 z-0 flex items-start justify-center opacity-[0.25] pointer-events-none">
-                <img src={teamLogo} className="w-[120%] max-w-none h-auto object-contain -translate-y-4 mix-blend-screen" alt="" onError={(e) => e.target.style.display = 'none'} />
-              </div>
-            )}
-        </div>
+      <div key={playerId} className="relative w-full">
+        {/* Drop Indicator (Top) */}
+        <div className={`h-1 rounded-full bg-[#1b75bb] transition-all duration-200 ${showTopIndicator ? 'opacity-100 my-1' : 'opacity-0 h-0 my-0'}`} />
+        
+        <div 
+          draggable
+          onDragStart={(e) => handleDragStart(e, playerId, colId)}
+          onDragEnd={handleDragEnd}
+          onDragOver={(e) => handleDragOver(e, colId, playerId)}
+          onDrop={(e) => handleDrop(e, colId)}
+          className={`flex items-center gap-3 p-2 rounded-xl border transition-all cursor-grab active:cursor-grabbing shadow-lg
+            ${isDragging ? 'opacity-40 scale-95 border-gray-700 bg-black' : 'opacity-100 hover:scale-[1.02] hover:border-gray-500 bg-gradient-to-r from-zinc-900/95 to-[#151515]/95 border-zinc-700/80'}
+          `}
+        >
+          {/* Position Badge */}
+          <div className={`w-8 flex justify-center text-[10px] font-black uppercase tracking-widest ${cardStyle.text} drop-shadow-md`}>
+            {position}
+          </div>
 
-        <div className="absolute top-2 left-2 z-40">
-            <span className="bg-black/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">
-              {position}
-            </span>
-        </div>
-
-        <div className="absolute inset-x-0 bottom-0 flex items-end justify-center z-10 pointer-events-none h-[130%]">
+          {/* Headshot Circle */}
+          <div className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-800 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
             <img 
               src={playerImage} 
-              className="w-auto h-full object-contain object-bottom drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] filter contrast-110 brightness-110 origin-bottom" 
-              alt="" 
+              alt={lastName}
+              className="w-full h-full object-cover object-top scale-110 translate-y-1"
               onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
             />
+          </div>
+
+          {/* Name & Info */}
+          <div className="flex-1 min-w-0 flex flex-col justify-center">
+            <div className="flex items-baseline truncate">
+              <span className="text-zinc-400 font-black text-[11px] mr-1 uppercase">{firstName.charAt(0)}.</span>
+              <span className="text-white font-black text-[14px] uppercase tracking-wide truncate drop-shadow-md leading-none">{lastName}</span>
+            </div>
+            <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">
+              {team}
+            </div>
+          </div>
         </div>
 
-        <div className="absolute inset-x-0 bottom-0 h-[50%] bg-gradient-to-t from-black via-black/90 to-transparent z-20 rounded-b-2xl pointer-events-none" />
-
-        <div className="relative z-30 px-3 pb-2 pt-2 mt-auto flex flex-col items-center text-center bg-transparent pointer-events-none w-full min-w-0">
-            <div className={`text-[10px] font-bold tracking-widest uppercase leading-tight mb-0.5 ${cardStyle.text} drop-shadow-md`}>
-              {firstName}
-            </div>
-            <div className="text-xl font-black text-white tracking-tight truncate w-full drop-shadow-lg leading-none">
-              {lastName}
-            </div>
-        </div>
+        {/* Drop Indicator (Bottom) */}
+        <div className={`h-1 rounded-full bg-[#1b75bb] transition-all duration-200 ${showBottomIndicator ? 'opacity-100 my-1' : 'opacity-0 h-0 my-0'}`} />
       </div>
     );
   };
 
-  // --- RENDER ---
+  // --- RENDER PAGE ---
   return (
-    // The fixed inset-0 wrapper forces this page to completely cover headers, footers, and global layouts!
+    // Fixed inset-0 wrapper forces this to completely cover global headers/footers
     <div className="fixed inset-0 z-[9999] bg-[#09090b] text-gray-300 font-sans overflow-y-auto selection:bg-[#1b75bb] selection:text-white"
          style={{ backgroundImage: bgUrl ? `url('${bgUrl}')` : 'none', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
       
-      {/* Dark Overlay for Readability if Background is set */}
-      {bgUrl && <div className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-none z-0" />}
+      {/* Dark Overlay for Readability */}
+      {bgUrl && <div className="absolute inset-0 bg-black/70 backdrop-blur-md pointer-events-none z-0" />}
 
-      {/* Main Content Area */}
       <div className="relative z-10 min-h-screen p-4 md:p-8 flex flex-col">
         
         {/* Stream Display View */}
@@ -269,20 +316,21 @@ export default function BoomBustStreamTool() {
             </button>
 
             <div className={`grid gap-6 flex-1 mt-12 ${layoutMode === '2-col' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-4'}`}>
-              {columns[layoutMode].map((col, idx) => (
+              {columns[layoutMode].map((col) => (
                 <div 
                   key={col.id}
-                  onDragOver={handleDragOver}
+                  onDragOver={(e) => handleDragOver(e, col.id)}
                   onDrop={(e) => handleDrop(e, col.id)}
-                  className="bg-black/40 backdrop-blur-md border border-zinc-800/80 rounded-3xl p-4 flex flex-col shadow-2xl transition-colors"
+                  className="bg-black/50 backdrop-blur-xl border border-zinc-800/80 rounded-3xl p-5 flex flex-col shadow-2xl transition-colors"
+                  style={{ minHeight: '70vh' }}
                 >
-                  <h2 className={`text-2xl font-black text-center mb-6 uppercase tracking-widest italic drop-shadow-lg ${col.color}`}>
+                  <h2 className={`text-2xl font-black text-center mb-5 uppercase tracking-widest italic drop-shadow-lg ${col.color}`}>
                     {col.title}
                   </h2>
-                  <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                  <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-1.5 pb-20">
                     {col.players.map(playerId => renderPlayerCard(playerId, col.id))}
                     {col.players.length === 0 && (
-                      <div className="h-full flex items-center justify-center text-zinc-600 font-bold uppercase tracking-widest text-xs text-center border-2 border-dashed border-zinc-800 rounded-2xl p-6">
+                      <div className="h-full min-h-[150px] flex items-center justify-center text-zinc-600 font-bold uppercase tracking-widest text-xs text-center border-2 border-dashed border-zinc-800/50 rounded-2xl p-6 pointer-events-none">
                         Drop Players Here
                       </div>
                     )}
@@ -360,7 +408,7 @@ export default function BoomBustStreamTool() {
                       className="w-full bg-[#151515] border border-gray-800 rounded-xl pl-10 pr-4 py-3 text-white focus:outline-none focus:border-[#1b75bb] text-sm"
                     />
                   </div>
-                  <div className="flex bg-[#151515] border border-gray-800 rounded-xl p-1">
+                  <div className="flex bg-[#151515] border border-gray-800 rounded-xl p-1 overflow-x-auto custom-scrollbar">
                     {['ALL', 'QB', 'RB', 'WR', 'TE'].map(pos => (
                       <button 
                         key={pos}
@@ -373,7 +421,7 @@ export default function BoomBustStreamTool() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[500px] overflow-y-auto custom-scrollbar pr-2 pb-6">
                   {dbLoading ? (
                     <div className="col-span-full text-center py-12 text-zinc-500 font-bold uppercase tracking-widest text-xs">Loading Databases...</div>
                   ) : (
@@ -381,7 +429,6 @@ export default function BoomBustStreamTool() {
                       .filter(p => posFilter === 'ALL' || p.position === posFilter)
                       .filter(p => !searchTerm || p.full_name.toLowerCase().includes(searchTerm.toLowerCase()))
                       .map(player => {
-                        // Check if player is selected in current layout
                         let isSelected = false;
                         columns[layoutMode].forEach(col => {
                           if (col.players.includes(player.player_id)) isSelected = true;
@@ -391,7 +438,7 @@ export default function BoomBustStreamTool() {
                           <div 
                             key={player.player_id}
                             onClick={() => handlePlayerToggle(player.player_id)}
-                            className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer border transition-colors ${isSelected ? 'bg-[#1b75bb]/20 border-[#1b75bb]/50' : 'bg-[#151515] border-gray-800 hover:border-gray-600'}`}
+                            className={`flex items-center gap-3 p-2.5 rounded-xl cursor-pointer border transition-all ${isSelected ? 'bg-[#1b75bb]/20 border-[#1b75bb]/50 shadow-inner' : 'bg-[#151515] border-gray-800 hover:border-gray-600 shadow-md'}`}
                           >
                             <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 border ${isSelected ? 'bg-[#1b75bb] border-[#1b75bb]' : 'bg-black border-gray-700'}`}>
                               {isSelected && <div className="w-2 h-2 bg-white rounded-sm" />}
@@ -413,7 +460,7 @@ export default function BoomBustStreamTool() {
       </div>
 
       <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
