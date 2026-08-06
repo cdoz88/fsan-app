@@ -14,12 +14,12 @@ export default function BoomBustStreamTool() {
   const [searchTerm, setSearchTerm] = useState('');
   const [posFilter, setPosFilter] = useState('ALL');
 
-  // Columns & Selected Players State (Now using Hex Colors for the Color Picker)
+  // Columns & Selected Players State
   const [columns, setColumns] = useState({
     '2-col': [
-      { id: 'col-2-1', title: 'BOOM 🚀', players: [], color: '#10b981' }, // Emerald
-      { id: 'col-2-2', title: 'POOL', players: [], color: '#71717a' },   // Zinc
-      { id: 'col-2-3', title: 'BUST 👎', players: [], color: '#ef4444' } // Red
+      { id: 'col-2-1', title: 'BOOM 🚀', players: [], color: '#10b981' }, 
+      { id: 'col-2-2', title: 'POOL', players: [], color: '#71717a' },   
+      { id: 'col-2-3', title: 'BUST 👎', players: [], color: '#ef4444' } 
     ],
     '4-col': [
       { id: 'col-4-1', title: 'STOCK', players: [], color: '#06b6d4' },
@@ -35,7 +35,7 @@ export default function BoomBustStreamTool() {
     sourceColId: null,
     overColId: null,
     overPlayerId: null,
-    dropEdge: null // 'top' or 'bottom'
+    dropEdge: null 
   });
 
   // --- INITIALIZATION & LOCAL STORAGE ---
@@ -253,9 +253,9 @@ export default function BoomBustStreamTool() {
     const showBottomIndicator = isOver && dragState.dropEdge === 'bottom';
 
     return (
-      <div key={playerId} className="relative w-full mb-3">
+      <div key={playerId} className="relative w-full mb-5">
         {/* Drop Indicator (Top) */}
-        <div className={`absolute top-[-8px] left-0 right-0 h-[3px] rounded-full transition-all duration-200 z-50 ${showTopIndicator ? 'opacity-100 bg-white shadow-[0_0_8px_#fff]' : 'opacity-0'}`} />
+        <div className={`absolute top-[-11px] left-0 right-0 h-[3px] rounded-full transition-all duration-200 z-50 ${showTopIndicator ? 'opacity-100 bg-white shadow-[0_0_8px_#fff]' : 'opacity-0'}`} />
         
         <div 
           draggable
@@ -263,25 +263,33 @@ export default function BoomBustStreamTool() {
           onDragEnd={handleDragEnd}
           onDragOver={(e) => handleDragOver(e, col.id, playerId)}
           onDrop={(e) => handleDrop(e, col.id)}
-          className={`relative h-[68px] rounded-[14px] cursor-grab active:cursor-grabbing group
-            ${isDragging ? 'opacity-40' : 'opacity-100'}
+          className={`relative h-[68px] flex items-center p-2 rounded-[14px] border transition-all cursor-grab active:cursor-grabbing group
+            ${isDragging ? 'opacity-40 bg-black border border-gray-800' : 'opacity-100 hover:brightness-125'}
           `}
+          style={{ borderColor: isDragging ? undefined : col.color }}
         >
           {/* Inner Background & Borders (Overflow Hidden to trap the team logo) */}
-          <div 
-            className="absolute inset-0 rounded-[14px] bg-[#111] border transition-all duration-200 z-0 overflow-hidden group-hover:brightness-125"
-            style={{ borderColor: col.color }}
-          >
-             {/* Faded Background Team Logo (Shifted further left to be fully visible) */}
+          <div className={`absolute inset-0 rounded-[13px] bg-[#111] overflow-hidden pointer-events-none z-0`}>
+             {/* Faded Background Team Logo (Shifted left and resized to 130%) */}
              {teamLogo && (
-               <div className="absolute right-[15px] top-1/2 -translate-y-1/2 h-[150%] w-auto opacity-[0.12] pointer-events-none z-0">
+               <div className="absolute right-[5px] top-1/2 -translate-y-1/2 h-[130%] w-auto opacity-[0.12] pointer-events-none z-0">
                   <img src={teamLogo} className="h-full w-auto object-contain" alt="" onError={(e) => e.target.style.display = 'none'} />
                </div>
              )}
           </div>
 
+          {/* Floating Player Image (Z-20, bottom-left anchored, breaks out of top border) */}
+          <div className="absolute bottom-0 left-3 w-[70px] h-[130%] z-20 flex items-end justify-center pointer-events-none">
+            <img 
+              src={playerImage} 
+              alt={lastName}
+              className="w-full h-full object-contain object-bottom drop-shadow-[0_4px_10px_rgba(0,0,0,0.7)] filter contrast-110 brightness-110 mb-[1.5px]"
+              onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
+            />
+          </div>
+
           {/* Player Info Content (Z-10) */}
-          <div className="absolute inset-0 z-10 flex items-center pr-5 pl-[85px] pointer-events-none">
+          <div className="absolute inset-0 z-10 flex items-center pr-5 pl-[90px] pointer-events-none">
             {/* Name & Team */}
             <div className="flex-1 min-w-0 flex flex-col justify-center">
               <div className="flex items-baseline truncate">
@@ -300,20 +308,10 @@ export default function BoomBustStreamTool() {
               {position}
             </div>
           </div>
-
-          {/* Floating Player Image (Z-20, bottom-left anchored, breaks out of top border) */}
-          <div className="absolute bottom-0 left-3 w-[65px] h-[130%] z-20 flex items-end justify-center pointer-events-none">
-            <img 
-              src={playerImage} 
-              alt={lastName}
-              className="w-full h-full object-contain object-bottom drop-shadow-[0_4px_10px_rgba(0,0,0,0.7)] filter contrast-110 brightness-110"
-              onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
-            />
-          </div>
         </div>
 
         {/* Drop Indicator (Bottom) */}
-        <div className={`absolute bottom-[-8px] left-0 right-0 h-[3px] rounded-full transition-all duration-200 z-50 ${showBottomIndicator ? 'opacity-100 bg-white shadow-[0_0_8px_#fff]' : 'opacity-0'}`} />
+        <div className={`absolute bottom-[-11px] left-0 right-0 h-[3px] rounded-full transition-all duration-200 z-50 ${showBottomIndicator ? 'opacity-100 bg-white shadow-[0_0_8px_#fff]' : 'opacity-0'}`} />
       </div>
     );
   };
@@ -351,13 +349,13 @@ export default function BoomBustStreamTool() {
                           setShowSettings(true);
                         }
                       }}
-                      className="text-2xl font-black text-center mb-6 uppercase tracking-widest italic drop-shadow-lg select-none cursor-pointer"
+                      className="text-2xl font-black text-center mb-8 mt-2 uppercase tracking-widest italic drop-shadow-lg select-none cursor-pointer"
                       style={{ color: col.color }}
                     >
                       {col.title}
                     </h2>
 
-                    <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-col pb-20">
+                    <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-col pb-20 pt-2">
                       {col.players.map(playerId => renderPlayerCard(playerId, col))}
                       {col.players.length === 0 && (
                         <div className="h-full min-h-[150px] flex items-center justify-center text-zinc-600 font-bold uppercase tracking-widest text-xs text-center border-2 border-dashed border-zinc-800/50 rounded-2xl p-6 pointer-events-none mt-2">
