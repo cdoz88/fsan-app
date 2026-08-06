@@ -21,9 +21,9 @@ const nextConfig = {
         destination: '/:sport/home',
         permanent: false,
       },
-      // FIX: Added 'agreement' to the protected regex list so it doesn't get hijacked by the article redirect
+      // FIX: Added 'agreement' and 'feed' to the protected regex list so they don't get hijacked
       {
-        source: '/:slug((?!api|football|basketball|baseball|all|subscribe|scores|reset-password|player|admin|account|rankings|login|home|articles|videos|podcasts|search|teams|dno|dashboard|agreement)[a-zA-Z0-9-]+)',
+        source: '/:slug((?!api|football|basketball|baseball|all|subscribe|scores|reset-password|player|admin|account|rankings|login|home|articles|videos|podcasts|search|teams|dno|dashboard|agreement|feed)[a-zA-Z0-9-]+)',
         destination: '/football/articles/:slug',
         permanent: true,
       }
