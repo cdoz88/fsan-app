@@ -2,6 +2,43 @@
 import React, { useState, useEffect } from 'react';
 import { X, Search, Trash2 } from 'lucide-react';
 
+// NFL Team Colors (Primary & Secondary) for Dynamic Gradients
+const NFL_COLORS = {
+  ARI: { primary: '#97233F', secondary: '#000000' },
+  ATL: { primary: '#A71930', secondary: '#000000' },
+  BAL: { primary: '#241773', secondary: '#9E7C0C' },
+  BUF: { primary: '#00338D', secondary: '#C60C30' },
+  CAR: { primary: '#0085CA', secondary: '#101820' },
+  CHI: { primary: '#0B162A', secondary: '#C83803' },
+  CIN: { primary: '#FB4F14', secondary: '#000000' },
+  CLE: { primary: '#311D00', secondary: '#FF3C00' },
+  DAL: { primary: '#003594', secondary: '#041E42' },
+  DEN: { primary: '#FB4F14', secondary: '#002244' },
+  DET: { primary: '#0076B6', secondary: '#B0B7BC' },
+  GB:  { primary: '#203731', secondary: '#FFB612' },
+  HOU: { primary: '#03202F', secondary: '#A71930' },
+  IND: { primary: '#002C5F', secondary: '#A2AAAD' },
+  JAX: { primary: '#101820', secondary: '#D7A22A' },
+  KC:  { primary: '#E31837', secondary: '#FFB81C' },
+  LV:  { primary: '#000000', secondary: '#A5ACAF' },
+  LAC: { primary: '#0080C6', secondary: '#FFC20E' },
+  LAR: { primary: '#003594', secondary: '#FFA300' },
+  MIA: { primary: '#008E97', secondary: '#FC4C02' },
+  MIN: { primary: '#4F2683', secondary: '#FFC62F' },
+  NE:  { primary: '#002244', secondary: '#C60C30' },
+  NO:  { primary: '#D3BC8D', secondary: '#101820' },
+  NYG: { primary: '#0B2265', secondary: '#A71930' },
+  NYJ: { primary: '#125740', secondary: '#000000' },
+  PHI: { primary: '#004C54', secondary: '#A5ACAF' },
+  PIT: { primary: '#101820', secondary: '#FFB612' },
+  SF:  { primary: '#AA0000', secondary: '#B3995D' },
+  SEA: { primary: '#002244', secondary: '#69BE28' },
+  TB:  { primary: '#D50A0A', secondary: '#FF7900' },
+  TEN: { primary: '#0C2340', secondary: '#4B92DB' },
+  WAS: { primary: '#5A1414', secondary: '#FFB612' },
+  FA:  { primary: '#3f3f46', secondary: '#18181b' } 
+};
+
 export default function BoomBustStreamTool() {
   // --- STATE ---
   const [showSettings, setShowSettings] = useState(false);
@@ -241,6 +278,7 @@ export default function BoomBustStreamTool() {
     const team = dbPlayer.team ? dbPlayer.team.toUpperCase() : "FA";
     
     const posColor = getPosColor(position);
+    const tColors = NFL_COLORS[team] || NFL_COLORS['FA'];
     
     const teamLogo = team !== 'FA' ? `https://sleepercdn.com/images/team_logos/nfl/${team.toLowerCase()}.png` : null;
     let playerImage = dbPlayer?.espn_id 
@@ -269,35 +307,40 @@ export default function BoomBustStreamTool() {
           style={{ borderColor: isDragging ? undefined : col.color }}
         >
           {/* Inner Background & Borders (Overflow Hidden to trap the team logo) */}
-          <div className={`absolute inset-0 rounded-[13px] bg-[#111] overflow-hidden pointer-events-none z-0`}>
-             {/* Faded Background Team Logo (Shifted left and resized to 130%) */}
+          <div 
+            className={`absolute inset-0 rounded-[13px] overflow-hidden pointer-events-none z-0`}
+            style={{ 
+              background: `linear-gradient(90deg, ${tColors.primary}70 0%, ${tColors.secondary}40 45%, #111111 100%)` 
+            }}
+          >
+             {/* Faded Background Team Logo (Resized to 140%) */}
              {teamLogo && (
-               <div className="absolute right-[5px] top-1/2 -translate-y-1/2 h-[130%] w-auto opacity-[0.12] pointer-events-none z-0">
+               <div className="absolute right-[5px] top-1/2 -translate-y-1/2 h-[140%] w-auto opacity-[0.15] pointer-events-none z-0">
                   <img src={teamLogo} className="h-full w-auto object-contain" alt="" onError={(e) => e.target.style.display = 'none'} />
                </div>
              )}
           </div>
 
           {/* Floating Player Image (Z-20, bottom-left anchored, breaks out of top border) */}
-          <div className="absolute bottom-0 left-3 w-[70px] h-[130%] z-20 flex items-end justify-center pointer-events-none">
+          <div className="absolute bottom-0 left-3 w-[85px] h-[145%] z-20 flex items-end justify-center pointer-events-none">
             <img 
               src={playerImage} 
               alt={lastName}
-              className="w-full h-full object-contain object-bottom drop-shadow-[0_4px_10px_rgba(0,0,0,0.7)] filter contrast-110 brightness-110 mb-[1.5px]"
+              className="w-full h-full object-contain object-bottom drop-shadow-[0_4px_10px_rgba(0,0,0,0.7)] filter contrast-110 brightness-110 mb-[1px]"
               onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
             />
           </div>
 
           {/* Player Info Content (Z-10) */}
-          <div className="absolute inset-0 z-10 flex items-center pr-5 pl-[90px] pointer-events-none">
+          <div className="absolute inset-0 z-10 flex items-center pr-5 pl-[100px] pointer-events-none">
             {/* Name & Team */}
             <div className="flex-1 min-w-0 flex flex-col justify-center">
               <div className="flex items-baseline truncate">
-                <span className="text-zinc-400 font-black text-[13px] mr-1.5 uppercase">{firstName.charAt(0)}.</span>
+                <span className="text-zinc-300 font-black text-[13px] mr-1.5 uppercase drop-shadow-md">{firstName.charAt(0)}.</span>
                 <span className="text-white font-black text-[18px] uppercase tracking-wide truncate drop-shadow-md leading-none">{lastName}</span>
               </div>
               {team !== 'FA' && (
-                <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">
+                <div className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest mt-1 drop-shadow-md">
                   {team}
                 </div>
               )}
@@ -338,7 +381,7 @@ export default function BoomBustStreamTool() {
                     className="bg-black/60 backdrop-blur-xl border-2 rounded-3xl p-5 flex flex-col transition-colors"
                     style={{ 
                       minHeight: '80vh', 
-                      borderColor: `${col.color}80`, // Hex color with ~50% opacity
+                      borderColor: `${col.color}80`, 
                       boxShadow: `0 20px 25px -5px rgba(0,0,0,0.3), 0 0 20px ${col.color}20` 
                     }}
                   >
