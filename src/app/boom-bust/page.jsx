@@ -313,16 +313,16 @@ export default function BoomBustStreamTool() {
               background: `linear-gradient(90deg, ${tColors.primary}70 0%, ${tColors.secondary}40 45%, #111111 100%)` 
             }}
           >
-             {/* Faded Background Team Logo (Resized to 140%) */}
+             {/* Faded Background Team Logo (Resized to 150%) */}
              {teamLogo && (
-               <div className="absolute right-[5px] top-1/2 -translate-y-1/2 h-[140%] w-auto opacity-[0.15] pointer-events-none z-0">
+               <div className="absolute right-[5px] top-1/2 -translate-y-1/2 h-[150%] w-auto opacity-[0.15] pointer-events-none z-0">
                   <img src={teamLogo} className="h-full w-auto object-contain" alt="" onError={(e) => e.target.style.display = 'none'} />
                </div>
              )}
           </div>
 
-          {/* Floating Player Image (Z-20, bottom-left anchored, breaks out of top border) */}
-          <div className="absolute bottom-0 left-3 w-[85px] h-[145%] z-20 flex items-end justify-center pointer-events-none">
+          {/* Floating Player Image (Z-20, bottom-left anchored, breaks out of top border, 165% height) */}
+          <div className="absolute bottom-0 left-3 w-[100px] h-[165%] z-20 flex items-end justify-center pointer-events-none">
             <img 
               src={playerImage} 
               alt={lastName}
@@ -331,8 +331,8 @@ export default function BoomBustStreamTool() {
             />
           </div>
 
-          {/* Player Info Content (Z-10) */}
-          <div className="absolute inset-0 z-10 flex items-center pr-5 pl-[100px] pointer-events-none">
+          {/* Player Info Content (Z-10) - Pushed left padding to accommodate larger head */}
+          <div className="absolute inset-0 z-10 flex items-center pr-5 pl-[115px] pointer-events-none">
             {/* Name & Team */}
             <div className="flex-1 min-w-0 flex flex-col justify-center">
               <div className="flex items-baseline truncate">
