@@ -21,9 +21,9 @@ const nextConfig = {
         destination: '/:sport/home',
         permanent: false,
       },
-      // FIX: Added 'boom-bust' to the protected regex list so it doesn't get hijacked by the article redirect
+      // FIX: Added 'stream-dashboard' and 'stream-remote' to the protected regex list
       {
-        source: '/:slug((?!api|football|basketball|baseball|all|subscribe|scores|reset-password|player|admin|account|rankings|login|home|articles|videos|podcasts|search|teams|dno|dashboard|agreement|feed|boom-bust)[a-zA-Z0-9-]+)',
+        source: '/:slug((?!api|football|basketball|baseball|all|subscribe|scores|reset-password|player|admin|account|rankings|login|home|articles|videos|podcasts|search|teams|dno|dashboard|agreement|feed|boom-bust|stream-dashboard|stream-remote)[a-zA-Z0-9-]+)',
         destination: '/football/articles/:slug',
         permanent: true,
       }
@@ -31,12 +31,10 @@ const nextConfig = {
   },
   async rewrites() {
     return [
-      // Routes /home, /articles, /videos, /podcasts, /rankings, /search to the 'all' sport folder
       {
         source: '/:view(home|articles|videos|podcasts|rankings|search)',
         destination: '/all/:view',
       },
-      // Routes direct article/video/podcast URLs to the 'all' sport folder
       {
         source: '/:view(articles|videos|podcasts|search)/:slug',
         destination: '/all/:view/:slug',

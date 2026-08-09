@@ -141,18 +141,25 @@ export default function BoomBustStreamTool() {
       const newCols = { ...prev };
       
       let exists = false;
-      newCols[layoutMode].forEach(col => {
+      prev[layoutMode].forEach(col => {
         if (col.players.includes(playerId)) exists = true;
       });
 
       if (exists) {
-        newCols[layoutMode] = newCols[layoutMode].map(col => ({
+        // Safe Immutable Removal
+        newCols[layoutMode] = prev[layoutMode].map(col => ({
           ...col,
           players: col.players.filter(id => id !== playerId)
         }));
       } else {
+        // Safe Immutable Addition
         const targetColIdx = layoutMode === '2-col' ? 1 : 0; 
-        newCols[layoutMode][targetColIdx].players.push(playerId);
+        newCols[layoutMode] = prev[layoutMode].map((col, idx) => {
+          if (idx === targetColIdx) {
+            return { ...col, players: [...col.players, playerId] };
+          }
+          return col;
+        });
       }
       return newCols;
     });
@@ -161,7 +168,7 @@ export default function BoomBustStreamTool() {
   const handleClearAll = () => {
     setColumns(prev => {
       const newCols = { ...prev };
-      newCols[layoutMode] = newCols[layoutMode].map(col => ({ ...col, players: [] }));
+      newCols[layoutMode] = prev[layoutMode].map(col => ({ ...col, players: [] }));
       return newCols;
     });
   };
@@ -169,7 +176,9 @@ export default function BoomBustStreamTool() {
   const updateHeader = (colIdx, newTitle) => {
     setColumns(prev => {
       const newCols = { ...prev };
-      newCols[layoutMode][colIdx].title = newTitle;
+      newCols[layoutMode] = prev[layoutMode].map((col, idx) => 
+        idx === colIdx ? { ...col, title: newTitle } : col
+      );
       return newCols;
     });
   };
@@ -177,7 +186,9 @@ export default function BoomBustStreamTool() {
   const updateColor = (colIdx, newColor) => {
     setColumns(prev => {
       const newCols = { ...prev };
-      newCols[layoutMode][colIdx].color = newColor;
+      newCols[layoutMode] = prev[layoutMode].map((col, idx) => 
+        idx === colIdx ? { ...col, color: newColor } : col
+      );
       return newCols;
     });
   };
@@ -226,7 +237,7 @@ export default function BoomBustStreamTool() {
 
     setColumns(prev => {
       const newCols = { ...prev };
-      const currentLayoutCols = [...newCols[layoutMode]].map(col => ({ ...col, players: [...col.players] }));
+      const currentLayoutCols = [...prev[layoutMode]].map(col => ({ ...col, players: [...col.players] }));
       
       const srcIdx = currentLayoutCols.findIndex(c => c.id === sourceColId);
       const tgtIdx = currentLayoutCols.findIndex(c => c.id === targetColId);
