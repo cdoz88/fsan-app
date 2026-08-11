@@ -377,9 +377,11 @@ export default function StreamDashboardPage() {
           if (data.activeGif) {
             if (gifTimeoutRef.current) clearTimeout(gifTimeoutRef.current);
             setActiveGifUrl(data.activeGif);
+            
+            // Auto-hide GIF after 2.5 seconds (2500ms)
             gifTimeoutRef.current = setTimeout(() => {
               setActiveGifUrl(null);
-            }, 5000);
+            }, 2500);
           }
         }
 
