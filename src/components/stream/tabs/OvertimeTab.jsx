@@ -1,9 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Settings, X, Image as ImageIcon, MessageCircle, RefreshCw, Info, Search, User, RotateCcw, Calendar, History, Loader2, Plus, Play, Pause } from 'lucide-react';
+import { MessageSquare, Settings, X, Image as ImageIcon, MessageCircle, RefreshCw, Info, Search, User, RotateCcw, Calendar, History, Loader2, Plus, Play, Pause, Zap } from 'lucide-react';
 
-// --- FIREBASE IMPORTS ---
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase'; 
 
 const NFL_COLORS = {
@@ -42,61 +41,43 @@ const NFL_COLORS = {
   FA:  { primary: '#3f3f46', secondary: '#18181b' } 
 };
 
+const DRAFT_PICKS = [
+  { player_id: 'pick_2025_1', full_name: '2025 1st Round Pick', position: 'PICK', team: 'DRAFT', year: '2025', round: '1st' },
+  { player_id: 'pick_2025_2', full_name: '2025 2nd Round Pick', position: 'PICK', team: 'DRAFT', year: '2025', round: '2nd' },
+  { player_id: 'pick_2025_3', full_name: '2025 3rd Round Pick', position: 'PICK', team: 'DRAFT', year: '2025', round: '3rd' },
+  { player_id: 'pick_2026_1', full_name: '2026 1st Round Pick', position: 'PICK', team: 'DRAFT', year: '2026', round: '1st' },
+  { player_id: 'pick_2026_2', full_name: '2026 2nd Round Pick', position: 'PICK', team: 'DRAFT', year: '2026', round: '2nd' },
+  { player_id: 'pick_2026_3', full_name: '2026 3rd Round Pick', position: 'PICK', team: 'DRAFT', year: '2026', round: '3rd' },
+  { player_id: 'pick_2027_1', full_name: '2027 1st Round Pick', position: 'PICK', team: 'DRAFT', year: '2027', round: '1st' },
+  { player_id: 'pick_2027_2', full_name: '2027 2nd Round Pick', position: 'PICK', team: 'DRAFT', year: '2027', round: '2nd' },
+  { player_id: 'pick_2027_3', full_name: '2027 3rd Round Pick', position: 'PICK', team: 'DRAFT', year: '2027', round: '3rd' },
+  { player_id: 'pick_2028_1', full_name: '2028 1st Round Pick', position: 'PICK', team: 'DRAFT', year: '2028', round: '1st' },
+  { player_id: 'pick_2028_2', full_name: '2028 2nd Round Pick', position: 'PICK', team: 'DRAFT', year: '2028', round: '2nd' },
+  { player_id: 'pick_2028_3', full_name: '2028 3rd Round Pick', position: 'PICK', team: 'DRAFT', year: '2028', round: '3rd' }
+];
+
 const MOCK_CAREER_STATS = [
-  { year: '2025', team: 'BUF', g: 17, passCmpAtt: '319/460', passYds: '3668', passTd: 25, int: 10, rushYds: 579, rushTd: 14, fpts: 368.6 }
+  { year: '2025', team: 'BUF', g: 17, passCmpAtt: '319/460', passYds: '3668', passTd: 25, int: 10, rushYds: 579, rushTd: 14, fpts: 368.6 },
+  { year: '2024', team: 'BUF', g: 17, passCmpAtt: '307/483', passYds: '3731', passTd: 28, int: 6, rushYds: 531, rushTd: 12, fpts: 374.3 },
+  { year: '2023', team: 'BUF', g: 17, passCmpAtt: '385/579', passYds: '4306', passTd: 29, int: 18, rushYds: 524, rushTd: 15, fpts: 394.6 },
+  { year: '2022', team: 'BUF', g: 16, passCmpAtt: '359/567', passYds: '4283', passTd: 35, int: 14, rushYds: 762, rushTd: 7, fpts: 401.5 }
 ];
 
 const MOCK_WEEKLY_STATS = [
   { passCmpAtt: "21/32", passYds: "254", passTd: "2", int: "0", rushYds: "22", rushTd: "1", fpts: "26.3" }
 ];
 
-const DUMMY_SUPERCHATS = [
-  { 
-    id: 1, 
-    user: "TradeMaster2026", 
-    avatar: "https://placehold.co/100x100/1b75bb/white?text=TM", 
-    text: "Blockbuster trade! Do I send JJ and CMC for CeeDee, Gibbs, and Sun God??", 
-    amount: "$50.00",
-    color: "bg-blue-600 border-blue-400 text-white",
-    type: "trade", 
-    sideA: ["6801", "4984"], 
-    sideB: ["6794", "9221", "7525"] 
-  },
-  { 
-    id: 2, 
-    user: "FantasyFootballJunkie", 
-    avatar: "https://placehold.co/100x100/10b981/white?text=FF", 
-    text: "Pick 3 WRs out of these 5 in full PPR: Chase, Jefferson, Lamb, Sun God, or AJ Brown?", 
-    amount: "$20.00",
-    color: "bg-emerald-500 border-emerald-300 text-black",
-    type: "start", 
-    sideA: ["7564", "6801", "6794", "7525", "5859"] 
-  },
-  { 
-    id: 3, 
-    user: "GridironGuru99", 
-    avatar: "https://placehold.co/100x100/f59e0b/white?text=GG", 
-    text: "Need to start 2 in full PPR: Waddle, Devonta Smith, or Achane?", 
-    amount: "$5.00",
-    color: "bg-amber-500 border-amber-300 text-black",
-    type: "start", 
-    sideA: ["7526", "7547", "9226"] 
-  },
-  { 
-    id: 4, 
-    user: "casual_fan_12", 
-    avatar: "https://placehold.co/100x100/ef4444/white?text=CF", 
-    text: "Corey, you're crazy for that take on the Cowboys lol", 
-    amount: "$2.00",
-    color: "bg-cyan-500 border-cyan-300 text-black",
-    type: "chat", 
-    sideA: [] 
-  }
-];
-
-export default function OvertimeTab() {
-  const [streamUrl, setStreamUrl] = useState('');
-  
+// 🚀 FIXED: Accepting the props passed down from page.jsx
+export default function OvertimeTab({
+  streamUrl,
+  setStreamUrl,
+  isConnected,
+  setIsConnected,
+  connectionStatus,
+  allChats,
+  playerDB,
+  updateFirebaseState
+}) {
   // --- OVERTIME COUNTDOWN STATE ---
   const [timeLeft, setTimeLeft] = useState(120); // 2 minutes
   const [isClockRunning, setIsClockRunning] = useState(false);
@@ -107,16 +88,16 @@ export default function OvertimeTab() {
   const [showGraphic, setShowGraphic] = useState(false);
   const [customPlayerLists, setCustomPlayerLists] = useState(null);
   const [disabledPlayers, setDisabledPlayers] = useState({});
-  
-  const [isConnected, setIsConnected] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [playerDB, setPlayerDB] = useState({});
 
   const [playerSearch, setPlayerSearch] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [infoPlayerId, setInfoPlayerId] = useState(null);
   const [infoLoading, setInfoLoading] = useState(false);
   const [playerSchedule, setPlayerSchedule] = useState([]);
+
+  // 🚀 FIXED: Filter out the live chat to only grab Super Chats!
+  const superChats = allChats.filter(chat => chat.amount);
 
   // --- FIREBASE COLLABORATION LISTENER ---
   useEffect(() => {
@@ -158,25 +139,59 @@ export default function OvertimeTab() {
     return () => clearInterval(interval);
   }, [isClockRunning, targetEndTime]);
 
-  const updateFirebaseOT = async (updates) => {
-    try {
-      await setDoc(doc(db, 'stream_state', 'live'), updates, { merge: true });
-    } catch (err) {
-      console.error("Failed to sync OT to Firebase:", err);
-    }
-  };
+  // ESPN Stats Fetcher
+  useEffect(() => {
+    if (!infoPlayerId || !playerDB[infoPlayerId]) return;
+    
+    const player = playerDB[infoPlayerId];
+    const teamAbbr = player.team ? player.team.toLowerCase() : 'fa';
 
-  // Manual Clock Controls (Still available just in case)
+    const fetchESPNSchedule = async () => {
+      setInfoLoading(true);
+      let schedule = [];
+
+      try {
+        if (teamAbbr !== 'fa') {
+          const schedRes = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/${teamAbbr}/schedule?seasontype=2`);
+          if (schedRes.ok) {
+            const schedData = await schedRes.json();
+            if (schedData.events) {
+              schedule = schedData.events.map(evt => {
+                const comp = evt.competitions?.[0];
+                const weekNum = evt.week?.number || '-';
+                const homeComp = comp?.competitors?.find(c => c.homeAway === 'home');
+                const awayComp = comp?.competitors?.find(c => c.homeAway === 'away');
+                const isHome = homeComp?.team?.abbreviation?.toLowerCase() === teamAbbr;
+                const oppComp = isHome ? awayComp : homeComp;
+                const oppTeam = oppComp?.team?.abbreviation || 'BYE';
+                const oppLogo = oppComp?.team?.logos?.[0]?.href || `https://sleepercdn.com/images/team_logos/nfl/${oppTeam.toLowerCase()}.png`;
+
+                return { week: weekNum, opp: oppTeam, oppLogo, isHome };
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("ESPN Fetch Error:", err);
+      } finally {
+        setPlayerSchedule(schedule);
+        setInfoLoading(false);
+      }
+    };
+    fetchESPNSchedule();
+  }, [infoPlayerId, playerDB]);
+
+  // Manual Clock Controls
   const handleToggleClock = () => {
     if (isClockRunning) {
-      updateFirebaseOT({ ot_isClockRunning: false, ot_timeLeft: timeLeft });
+      updateFirebaseState({ ot_isClockRunning: false, ot_timeLeft: timeLeft });
     } else {
-      updateFirebaseOT({ ot_isClockRunning: true, ot_targetEndTime: Date.now() + (timeLeft * 1000) });
+      updateFirebaseState({ ot_isClockRunning: true, ot_targetEndTime: Date.now() + (timeLeft * 1000) });
     }
   };
 
   const handleResetClock = () => {
-    updateFirebaseOT({ ot_isClockRunning: true, ot_timeLeft: 120, ot_targetEndTime: Date.now() + 120000 });
+    updateFirebaseState({ ot_isClockRunning: true, ot_timeLeft: 120, ot_targetEndTime: Date.now() + 120000 });
   };
 
   const formatTime = (seconds) => {
@@ -184,34 +199,6 @@ export default function OvertimeTab() {
     const s = seconds % 60;
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
-
-  useEffect(() => {
-    const loadPlayerDatabases = async () => {
-      try {
-        let customMap = {};
-        try {
-          const res = await fetch('/api/dynasty-players');
-          if (res.ok) {
-            const data = await res.json();
-            if (data.success && data.players) {
-              data.players.forEach(p => { if (p.sleeper_id) customMap[String(p.sleeper_id)] = p; });
-            }
-          }
-        } catch(e) {}
-
-        const slpRes = await fetch('https://api.sleeper.app/v1/players/nfl');
-        if (slpRes.ok) {
-          const slpData = await slpRes.json();
-          const mergedDB = { ...slpData };
-          Object.keys(customMap).forEach(key => {
-             if (mergedDB[key]) mergedDB[key] = { ...mergedDB[key], ...customMap[key] };
-          });
-          setPlayerDB(mergedDB);
-        }
-      } catch (err) {}
-    };
-    loadPlayerDatabases();
-  }, []);
 
   // --- AUTOMATED CLOCK LOGIC (When chat is pushed to screen) ---
   const handleSelectDisplay = (chatItem, isGraphic) => {
@@ -221,7 +208,7 @@ export default function OvertimeTab() {
     setDisabledPlayers({});
     
     // AUTOMATION: Pause the clock and reset it to 2:00 because we are actively answering
-    updateFirebaseOT({
+    updateFirebaseState({
       ot_activeChat: chatItem,
       ot_showGraphic: isGraphic,
       ot_customPlayerLists: null,
@@ -239,7 +226,7 @@ export default function OvertimeTab() {
     setDisabledPlayers({});
     
     // AUTOMATION: The screen is empty, so immediately start the 2:00 Sudden Death countdown!
-    updateFirebaseOT({
+    updateFirebaseState({
       ot_activeChat: null,
       ot_showGraphic: false,
       ot_customPlayerLists: null,
@@ -253,14 +240,14 @@ export default function OvertimeTab() {
   const handleResetGraphic = () => {
     setCustomPlayerLists(null);
     setDisabledPlayers({});
-    updateFirebaseOT({ ot_customPlayerLists: null, ot_disabledPlayers: {} });
+    updateFirebaseState({ ot_customPlayerLists: null, ot_disabledPlayers: {} });
   };
 
   const togglePlayerDisabled = (playerId, e) => {
     if (e) e.stopPropagation();
     const newState = { ...disabledPlayers, [playerId]: !disabledPlayers[playerId] };
     setDisabledPlayers(newState);
-    updateFirebaseOT({ ot_disabledPlayers: newState });
+    updateFirebaseState({ ot_disabledPlayers: newState });
   };
 
   const handlePlayerSelect = (newPlayerId) => {
@@ -289,7 +276,7 @@ export default function OvertimeTab() {
     setCustomPlayerLists(newLists);
     setPlayerSearch(null);
     setSearchQuery('');
-    updateFirebaseOT({ ot_customPlayerLists: newLists });
+    updateFirebaseState({ ot_customPlayerLists: newLists });
   };
 
   const getESPNHeadshot = (espnId) => `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${espnId}.png&w=350&h=254`;
@@ -305,6 +292,36 @@ export default function OvertimeTab() {
   };
 
   const renderDNOLandscapeCard = (playerId, side = 'sideA') => {
+    if (playerId.startsWith('pick_')) {
+      const pickData = DRAFT_PICKS.find(p => p.player_id === playerId) || { year: 'Unknown', round: 'Pick' };
+      const isGrayedOut = !!disabledPlayers[playerId];
+      const cardStyle = { border: 'border-yellow-500/80 shadow-[0_0_15px_rgba(234,179,8,0.25)]', text: 'text-yellow-500' };
+
+      return (
+        <div key={playerId} className={`relative h-[135px] w-[210px] flex flex-col justify-center items-center shadow-2xl rounded-[18px] overflow-hidden border-2 transition-all duration-300 shrink-0 animate-in zoom-in-95 group ${isGrayedOut ? 'border-red-600/80 opacity-35 grayscale' : `${cardStyle.border}`}`} style={{ background: `linear-gradient(180deg, #27272a 0%, #000000 100%)` }}>
+          {isGrayedOut && (
+            <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-[2px] flex items-center justify-center pointer-events-none animate-in fade-in duration-200">
+              <div className="bg-red-600 text-white rounded-full p-2.5 shadow-2xl border-2 border-white/90"><X size={32} strokeWidth={3.5} /></div>
+            </div>
+          )}
+
+          <div className="absolute inset-0 z-40 bg-black/80 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2 p-2">
+            <button onClick={(e) => togglePlayerDisabled(playerId, e)} className="p-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-lg transition-transform hover:scale-110 flex items-center justify-center"><X size={18} strokeWidth={3} /></button>
+            <button onClick={(e) => { e.stopPropagation(); setPlayerSearch({ type: 'swap', oldPlayerId: playerId, side }); }} className="p-2.5 bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-600 rounded-xl shadow-lg transition-transform hover:scale-110 flex items-center justify-center"><RefreshCw size={18} /></button>
+          </div>
+
+          <div className="absolute top-2 left-2 z-20"><span className="bg-black/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">PICK</span></div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <span className="text-5xl font-black text-white/5 absolute top-2">{pickData.year}</span>
+            <div className="z-10 flex flex-col items-center mt-3">
+              <span className="text-3xl font-black text-yellow-500 uppercase leading-none drop-shadow-md">{pickData.round}</span>
+              <span className="text-[11px] font-bold text-zinc-300 uppercase tracking-widest mt-1">Round Pick</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     const dbPlayer = playerDB[playerId];
     if (!dbPlayer) return null;
 
@@ -318,35 +335,20 @@ export default function OvertimeTab() {
     const tColors = NFL_COLORS[team] || NFL_COLORS['FA'];
     const teamLogo = team !== 'FA' ? `https://sleepercdn.com/images/team_logos/nfl/${team.toLowerCase()}.png` : null;
 
-    let playerImage = dbPlayer?.espn_id 
-      ? getESPNHeadshot(dbPlayer.espn_id) 
-      : `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
+    let playerImage = dbPlayer?.espn_id ? getESPNHeadshot(dbPlayer.espn_id) : `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
 
     return (
-      <div 
-        key={playerId} 
-        className={`relative h-[135px] w-[210px] flex flex-col justify-end shadow-2xl rounded-[18px] overflow-hidden border-2 transition-all duration-300 shrink-0 animate-in zoom-in-95 group
-          ${isGrayedOut ? 'border-red-600/80 opacity-35 grayscale' : `${cardStyle.border}`}
-        `}
-        style={{ background: `linear-gradient(180deg, ${tColors.primary}90 0%, ${tColors.secondary}95 65%, #000000 100%)` }}
-      >
+      <div key={playerId} className={`relative h-[135px] w-[210px] flex flex-col justify-end shadow-2xl rounded-[18px] overflow-hidden border-2 transition-all duration-300 shrink-0 animate-in zoom-in-95 group ${isGrayedOut ? 'border-red-600/80 opacity-35 grayscale' : `${cardStyle.border}`}`} style={{ background: `linear-gradient(180deg, ${tColors.primary}90 0%, ${tColors.secondary}95 65%, #000000 100%)` }}>
         {isGrayedOut && (
           <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-[2px] flex items-center justify-center pointer-events-none animate-in fade-in duration-200">
             <div className="bg-red-600 text-white rounded-full p-2.5 shadow-2xl border-2 border-white/90"><X size={32} strokeWidth={3.5} /></div>
           </div>
         )}
 
-        {/* 3-BUTTON HOVER OVERLAY */}
         <div className="absolute inset-0 z-40 bg-black/80 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2 p-2">
-          <button onClick={(e) => togglePlayerDisabled(playerId, e)} className="p-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-lg transition-transform hover:scale-110 flex items-center justify-center">
-            <X size={18} strokeWidth={3} />
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); setInfoPlayerId(playerId); }} className="p-2.5 bg-[#1b75bb] hover:bg-[#155e96] text-white rounded-xl shadow-lg transition-transform hover:scale-110 flex items-center justify-center">
-            <Info size={18} />
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); setPlayerSearch({ type: 'swap', oldPlayerId: playerId, side }); }} className="p-2.5 bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-600 rounded-xl shadow-lg transition-transform hover:scale-110 flex items-center justify-center">
-            <RefreshCw size={18} />
-          </button>
+          <button onClick={(e) => togglePlayerDisabled(playerId, e)} className="p-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-lg transition-transform hover:scale-110 flex items-center justify-center"><X size={18} strokeWidth={3} /></button>
+          <button onClick={(e) => { e.stopPropagation(); setInfoPlayerId(playerId); }} className="p-2.5 bg-[#1b75bb] hover:bg-[#155e96] text-white rounded-xl shadow-lg transition-transform hover:scale-110 flex items-center justify-center"><Info size={18} /></button>
+          <button onClick={(e) => { e.stopPropagation(); setPlayerSearch({ type: 'swap', oldPlayerId: playerId, side }); }} className="p-2.5 bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-600 rounded-xl shadow-lg transition-transform hover:scale-110 flex items-center justify-center"><RefreshCw size={18} /></button>
         </div>
 
         {teamLogo && (
@@ -355,18 +357,12 @@ export default function OvertimeTab() {
           </div>
         )}
 
-        <div className="absolute top-2 left-2 z-20">
-          <span className="bg-black/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">{position}</span>
-        </div>
-        <div className="absolute top-2 right-2 z-20">
-          <span className="bg-black/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">{team}</span>
-        </div>
-
+        <div className="absolute top-2 left-2 z-20"><span className="bg-black/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">{position}</span></div>
+        <div className="absolute top-2 right-2 z-20"><span className="bg-black/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-black tracking-widest text-zinc-200 border border-zinc-700/50 shadow-md uppercase">{team}</span></div>
         <div className="absolute inset-x-0 top-0 bottom-3 flex items-center justify-center z-10 pointer-events-none overflow-hidden">
           <img src={playerImage} className="w-full h-auto object-cover object-top scale-150 -translate-y-1 drop-shadow-[0_8px_16px_rgba(0,0,0,0.95)] filter contrast-110 brightness-110" alt={lastName} onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }} />
         </div>
         <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black via-black/85 to-transparent z-20 pointer-events-none" />
-
         <div className="relative z-20 px-2 pb-2 pt-1 text-center pointer-events-none w-full truncate">
           <div className={`text-[10px] font-bold tracking-widest uppercase leading-none ${cardStyle.text} drop-shadow-md mb-0.5`}>{firstName}</div>
           <div className="text-xl font-black text-white tracking-tight truncate w-full drop-shadow-lg leading-none uppercase">{lastName}</div>
@@ -376,17 +372,16 @@ export default function OvertimeTab() {
   };
 
   const renderAddPlayerButton = (side) => (
-    <button 
-      onClick={() => setPlayerSearch({ type: 'add', side })}
-      className="h-[135px] w-[60px] flex items-center justify-center border-2 border-dashed border-zinc-700 hover:border-[#1b75bb] hover:bg-[#1b75bb]/10 rounded-[18px] transition-all group shrink-0 animate-in zoom-in-95"
-      title="Add Player"
-    >
+    <button onClick={() => setPlayerSearch({ type: 'add', side })} className="h-[135px] w-[60px] flex items-center justify-center border-2 border-dashed border-zinc-700 hover:border-[#1b75bb] hover:bg-[#1b75bb]/10 rounded-[18px] transition-all group shrink-0 animate-in zoom-in-95" title="Add Player">
       <Plus size={24} className="text-zinc-600 group-hover:text-[#1b75bb] transition-colors" />
     </button>
   );
 
   const searchResults = searchQuery.trim().length > 1
-    ? Object.values(playerDB).filter(p => p.full_name && p.full_name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 8)
+    ? [
+        ...DRAFT_PICKS.filter(p => p.full_name.toLowerCase().includes(searchQuery.toLowerCase())),
+        ...Object.values(playerDB).filter(p => p.full_name && p.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
+      ].slice(0, 8)
     : [];
 
   const selectedInfoPlayer = infoPlayerId ? playerDB[infoPlayerId] : null;
@@ -394,13 +389,15 @@ export default function OvertimeTab() {
   const currentSideB = customPlayerLists ? customPlayerLists.sideB : (activeChat?.sideB || []);
 
   return (
-    <div className="flex h-full w-full gap-4 p-4 overflow-hidden relative">
+    // 🚀 FIXED: Added min-h-0 to the outer wrapper
+    <div className="flex h-full w-full gap-4 p-4 overflow-hidden relative min-h-0">
       
       {/* 1. LEFT SIDE: Main Broadcast Stage */}
-      <div className="flex-1 bg-[#0e0e11] border border-zinc-800 rounded-2xl shadow-2xl relative overflow-hidden flex flex-col">
+      {/* 🚀 FIXED: Added min-h-0 */}
+      <div className="flex-1 bg-[#0e0e11] border border-zinc-800 rounded-2xl shadow-2xl relative overflow-hidden flex flex-col min-h-0">
         
         {/* OVERTIME COUNTDOWN HEADER */}
-        <div className="p-3 px-5 border-b border-zinc-800/80 bg-[#141418] flex justify-between items-center z-10 shadow-md">
+        <div className="p-3 px-5 border-b border-zinc-800/80 bg-[#141418] flex justify-between items-center z-10 shadow-md shrink-0">
           <div className="flex items-center gap-6">
             <div className="font-mono text-red-500 text-5xl font-black tracking-wider drop-shadow-[0_0_15px_rgba(239,68,68,0.3)] leading-none w-[120px]">
               {formatTime(timeLeft)}
@@ -423,7 +420,7 @@ export default function OvertimeTab() {
           </div>
         </div>
 
-        <div className="p-2 px-3 border-b border-zinc-800/60 bg-black/40 flex justify-between items-center z-10 min-h-[36px]">
+        <div className="p-2 px-3 border-b border-zinc-800/60 bg-black/40 flex justify-between items-center z-10 min-h-[36px] shrink-0">
           {activeChat ? (
             <button onClick={handleResetGraphic} className="p-1 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors">
               <RotateCcw size={16} />
@@ -437,12 +434,13 @@ export default function OvertimeTab() {
         </div>
 
         {!activeChat ? (
-          <div className="flex-1 flex flex-col items-center justify-center opacity-30">
+          <div className="flex-1 flex flex-col items-center justify-center opacity-30 min-h-0">
             <MessageSquare size={48} className="text-zinc-600 mb-4" />
             <h2 className="text-xl font-black text-zinc-500 uppercase tracking-widest italic">Waiting for Super Chat...</h2>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col p-6 overflow-hidden">
+          // 🚀 FIXED: Added min-h-0 
+          <div className="flex-1 flex flex-col p-6 overflow-hidden min-h-0">
             
             <div className={`bg-gradient-to-r ${activeChat.color.replace('text-white', '').replace('text-black', '')} p-0.5 rounded-2xl shadow-xl mb-4 shrink-0 animate-in slide-in-from-top-3 duration-300`}>
               <div className="bg-[#111114] rounded-[14px] p-4 flex gap-4 items-center relative overflow-hidden">
@@ -458,7 +456,8 @@ export default function OvertimeTab() {
             </div>
 
             {showGraphic && (currentSideA.length > 0 || currentSideB.length > 0) && (
-              <div className="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+              // 🚀 FIXED: Added min-h-0 
+              <div className="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar min-h-0">
                 {activeChat.type === 'trade' || currentSideB.length > 0 ? (
                   <div className="flex items-center justify-center gap-6 max-w-full">
                     <div className="flex flex-wrap items-center justify-center gap-3 max-w-[460px]">
@@ -485,9 +484,10 @@ export default function OvertimeTab() {
       </div>
 
       {/* 2. RIGHT SIDEBAR: Super Chat Feed */}
-      <div className="w-80 lg:w-88 bg-[#0e0e11] border border-zinc-800 rounded-2xl flex flex-col shadow-2xl flex-shrink-0">
+      {/* 🚀 FIXED: Added min-h-0 */}
+      <div className="w-80 lg:w-88 bg-[#0e0e11] border border-zinc-800 rounded-2xl flex flex-col shadow-2xl flex-shrink-0 min-h-0">
         
-        <div className="p-3 border-b border-zinc-800 bg-black/50 rounded-t-2xl flex items-center justify-between">
+        <div className="p-3 border-b border-zinc-800 bg-black/50 rounded-t-2xl flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-xs font-black text-amber-500 uppercase tracking-widest">Super Chats</span>
             <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-600'}`}></span>
@@ -498,8 +498,9 @@ export default function OvertimeTab() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-2.5 space-y-2.5">
-          {DUMMY_SUPERCHATS.map((chat) => (
+        {/* 🚀 FIXED: Render the REAL live Super Chats array and added min-h-0! */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-2.5 space-y-2.5 min-h-0">
+          {superChats.map((chat) => (
             <div 
               key={chat.id}
               className={`p-0.5 rounded-xl transition-all flex flex-col gap-2 
@@ -538,6 +539,16 @@ export default function OvertimeTab() {
               </div>
             </div>
           ))}
+
+          {superChats.length === 0 && (
+            <div className="h-full flex flex-col items-center justify-center text-zinc-500 font-black uppercase tracking-widest text-xs py-10 px-6 text-center gap-2">
+              {connectionStatus && connectionStatus.includes('⚠️') ? (
+                <span className="text-red-500">{connectionStatus}</span>
+              ) : (
+                "Waiting for Super Chats..."
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -553,7 +564,7 @@ export default function OvertimeTab() {
             </div>
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
-              <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search player name..." className="w-full bg-black border border-zinc-700 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-zinc-400 text-xs" autoFocus />
+              <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search player or pick (e.g. '2026')..." className="w-full bg-black border border-zinc-700 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-zinc-400 text-xs" autoFocus />
             </div>
             <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
               {searchResults.map(p => (
@@ -568,6 +579,9 @@ export default function OvertimeTab() {
                   <span className={`text-[10px] text-white px-2 py-1 rounded-md font-black uppercase transition-colors ${playerSearch.type === 'swap' ? 'bg-[#1b75bb] group-hover:bg-[#155e96]' : 'bg-emerald-600 group-hover:bg-emerald-500'}`}>Select</span>
                 </div>
               ))}
+              {searchQuery.length > 1 && searchResults.length === 0 && (
+                <div className="text-center py-6 text-zinc-500 text-xs font-bold">No results found</div>
+              )}
             </div>
           </div>
         </div>
@@ -587,6 +601,122 @@ export default function OvertimeTab() {
                     <div className="text-xs font-bold text-[#1b75bb] uppercase tracking-wider mt-1">{selectedInfoPlayer.position} • {selectedInfoPlayer.team || 'Free Agent'} • #{selectedInfoPlayer.number || '00'}</div>
                   </div>
                 </div>
+                <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end bg-zinc-900/50 sm:bg-transparent p-3 sm:p-0 rounded-lg sm:mr-8 border border-zinc-800 sm:border-0">
+                  <div className="flex flex-col items-center sm:items-end">
+                    <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Age</span>
+                    <span className="text-sm font-bold text-white">{selectedInfoPlayer.age || 'N/A'}</span>
+                  </div>
+                  <div className="flex flex-col items-center sm:items-end">
+                    <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Exp</span>
+                    <span className="text-sm font-bold text-white">{selectedInfoPlayer.years_exp ? `${selectedInfoPlayer.years_exp} Yrs` : 'Rookie'}</span>
+                  </div>
+                  <div className="flex flex-col items-center sm:items-end">
+                    <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">College</span>
+                    <span className="text-sm font-bold text-zinc-300 truncate max-w-[120px]">{selectedInfoPlayer.college || 'N/A'}</span>
+                  </div>
+                  <div className="flex flex-col items-center sm:items-end">
+                    <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Status</span>
+                    <span className="text-sm font-bold text-emerald-400 uppercase">{selectedInfoPlayer.status || 'Active'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2026 GAME LOG & SCHEDULE TABLE */}
+              <div className="bg-black/40 p-3.5 rounded-xl border border-zinc-800">
+                <div className="text-[10px] text-zinc-400 font-black uppercase tracking-widest mb-3 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5"><Calendar size={13} className="text-[#1b75bb]" /> 2026 Game Log & Schedule</span>
+                  {infoLoading && <Loader2 size={12} className="animate-spin text-zinc-500" />}
+                </div>
+
+                {infoLoading ? (
+                  <div className="flex items-center justify-center py-6 text-xs text-zinc-500 font-bold uppercase tracking-widest gap-2">
+                    <Loader2 size={16} className="animate-spin text-[#1b75bb]" /> Fetching Schedule...
+                  </div>
+                ) : playerSchedule.length > 0 ? (
+                  <div className="overflow-x-auto rounded-lg border border-zinc-800 bg-black/60 max-h-56 custom-scrollbar relative">
+                    <table className="w-full text-left text-xs whitespace-nowrap">
+                      <thead className="bg-zinc-900 text-[10px] text-zinc-400 font-black uppercase border-b border-zinc-800 sticky top-0 z-10 shadow-sm">
+                        <tr>
+                          <th className="p-2.5">WK</th>
+                          <th className="p-2.5">OPP</th>
+                          <th className="p-2.5 text-center">CMP/ATT</th>
+                          <th className="p-2.5 text-center">PASS YDS</th>
+                          <th className="p-2.5 text-center">PASS TD</th>
+                          <th className="p-2.5 text-center">INT</th>
+                          <th className="p-2.5 text-center">RUSH YDS</th>
+                          <th className="p-2.5 text-center">RUSH TD</th>
+                          <th className="p-2.5 text-center">FPTS</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-800/60 font-bold text-white">
+                        {playerSchedule.map((game, idx) => {
+                          const mockStat = MOCK_WEEKLY_STATS[idx];
+                          return (
+                            <tr key={idx} className="hover:bg-zinc-800/50 transition-colors">
+                              <td className="p-2.5 text-zinc-400">{game.week}</td>
+                              <td className="p-2.5 flex items-center gap-2">
+                                <span className="text-zinc-500 text-[10px]">{game.isHome ? 'VS' : '@'}</span>
+                                <img src={game.oppLogo} alt="" className="w-5 h-5 object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
+                                {game.opp}
+                              </td>
+                              <td className="p-2.5 text-center">{mockStat ? mockStat.passCmpAtt : '-'}</td>
+                              <td className="p-2.5 text-center">{mockStat ? mockStat.passYds : '-'}</td>
+                              <td className="p-2.5 text-center text-emerald-400">{mockStat ? mockStat.passTd : '-'}</td>
+                              <td className="p-2.5 text-center text-red-400">{mockStat ? mockStat.int : '-'}</td>
+                              <td className="p-2.5 text-center">{mockStat ? mockStat.rushYds : '-'}</td>
+                              <td className="p-2.5 text-center text-emerald-400">{mockStat ? mockStat.rushTd : '-'}</td>
+                              <td className="p-2.5 text-center text-[#1b75bb]">{mockStat ? mockStat.fpts : '-'}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-xs text-zinc-500 font-bold">Schedule unavailable for Free Agents.</div>
+                )}
+              </div>
+
+              {/* CAREER SEASON TOTALS TABLE */}
+              <div className="bg-black/40 p-3.5 rounded-xl border border-zinc-800 mb-2">
+                <div className="text-[10px] text-zinc-400 font-black uppercase tracking-widest flex items-center gap-1.5 mb-3 shrink-0">
+                  <History size={13} className="text-[#1b75bb]" /> Career Season Totals
+                </div>
+                
+                <div className="overflow-x-auto rounded-lg border border-zinc-800 bg-black/60 max-h-48 custom-scrollbar relative">
+                  <table className="w-full text-left text-xs whitespace-nowrap">
+                    <thead className="bg-zinc-900 text-[10px] text-zinc-400 font-black uppercase border-b border-zinc-800 sticky top-0 z-10 shadow-sm">
+                      <tr>
+                        <th className="p-2.5">YEAR</th>
+                        <th className="p-2.5">TEAM</th>
+                        <th className="p-2.5 text-center">G</th>
+                        <th className="p-2.5 text-center">CMP/ATT</th>
+                        <th className="p-2.5 text-center">PASS YDS</th>
+                        <th className="p-2.5 text-center">PASS TD</th>
+                        <th className="p-2.5 text-center">INT</th>
+                        <th className="p-2.5 text-center">RUSH YDS</th>
+                        <th className="p-2.5 text-center">RUSH TD</th>
+                        <th className="p-2.5 text-center">FPTS</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-800/60 font-bold text-white">
+                      {MOCK_CAREER_STATS.map((yr, i) => (
+                        <tr key={i} className="hover:bg-zinc-800/50 transition-colors">
+                          <td className="p-2.5 text-zinc-400">{yr.year}</td>
+                          <td className="p-2.5">{yr.team}</td>
+                          <td className="p-2.5 text-center text-zinc-400">{yr.g}</td>
+                          <td className="p-2.5 text-center">{yr.passCmpAtt}</td>
+                          <td className="p-2.5 text-center">{yr.passYds}</td>
+                          <td className="p-2.5 text-center text-emerald-400">{yr.passTd}</td>
+                          <td className="p-2.5 text-center text-red-400">{yr.int}</td>
+                          <td className="p-2.5 text-center">{yr.rushYds}</td>
+                          <td className="p-2.5 text-center text-emerald-400">{yr.rushTd}</td>
+                          <td className="p-2.5 text-center text-[#1b75bb]">{yr.fpts}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
@@ -604,9 +734,26 @@ export default function OvertimeTab() {
             <div className="space-y-4">
               <div>
                 <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">YouTube URL</label>
-                <input type="text" value={streamUrl} onChange={(e) => setStreamUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." className="w-full bg-black border border-zinc-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-zinc-400 text-xs" />
+                <input 
+                  type="text" 
+                  value={streamUrl} 
+                  onChange={(e) => {
+                    setStreamUrl(e.target.value);
+                    updateFirebaseState({ qa_streamUrl: e.target.value });
+                  }} 
+                  placeholder="https://www.youtube.com/watch?v=..." 
+                  className="w-full bg-black border border-zinc-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-zinc-400 text-xs" 
+                />
               </div>
-              <button onClick={() => { setIsConnected(!isConnected); setShowSettings(false); }} className={`w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${isConnected ? 'bg-red-600 text-white' : 'bg-emerald-600 text-white'}`}>
+              <button 
+                onClick={() => { 
+                  const newStatus = !isConnected;
+                  setIsConnected(newStatus); 
+                  updateFirebaseState({ qa_isConnected: newStatus });
+                  setShowSettings(false); 
+                }} 
+                className={`w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${isConnected ? 'bg-red-600 text-white' : 'bg-emerald-600 text-white'}`}
+              >
                 {isConnected ? 'Disconnect Stream' : 'Connect Stream'}
               </button>
             </div>

@@ -14,7 +14,9 @@ import RulesTab from '../../components/dno/tabs/RulesTab';
 import SponsorsTab from '../../components/dno/tabs/SponsorsTab';
 import CharityTab from '../../components/dno/tabs/CharityTab';
 import CommunityTab from '../../components/dno/tabs/CommunityTab';
-import Leaderboard from '../../components/dno/Leaderboard';
+
+// 🚀 FIXED: Updated import path and component name
+import DNOLeaderboard from '../../components/dno/DNOLeaderboard';
 
 function PublicPageContent() {
   const { data: session, status } = useSession();
@@ -557,7 +559,8 @@ function PublicPageContent() {
             )}
             {activeTab === 'leaderboard' && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <Leaderboard initialLeaderboard={liveLeaderboard} overrideSeasonLabel={liveSeasonLabel} />
+                {/* 🚀 FIXED: Replaced <Leaderboard> with <DNOLeaderboard> */}
+                <DNOLeaderboard initialLeaderboard={liveLeaderboard} overrideSeasonLabel={liveSeasonLabel} />
               </div>
             )}
             {activeTab === 'charity' && <CharityTab />}

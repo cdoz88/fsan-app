@@ -1,9 +1,11 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 
 // 🚀 FIXED: Added "export" so other API routes can securely reference authOptions
 export const authOptions = {
   providers: [
+    // 1. YOUR EXISTING WORDPRESS PROVIDER
     CredentialsProvider({
       name: "WordPress",
       credentials: {
@@ -78,12 +80,33 @@ export const authOptions = {
         
         return null;
       }
+    }),
+    
+    // 2. THE NEW GOOGLE PROVIDER (For YouTube Dashboard)
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      authorization: {
+        params: {
+          scope: "openid email profile https://www.googleapis.com/auth/youtube.readonly",
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      }
     })
   ],
   callbacks: {
-    // 🚀 FIX: Intercept "update" triggers and fetch fresh roles from WordPress
-    async jwt({ token, user, trigger }) {
-      if (user) {
+    // 🚀 FIX: Intercept "update" triggers and fetch fresh roles from WordPress, and manage Google tokens
+    async jwt({ token, user, account, trigger }) {
+      
+      // If logging in via Google, grab the YouTube token
+      if (account?.provider === "google") {
+        token.googleAccessToken = account.access_token;
+      }
+
+      // If logging in via WordPress, grab the WP data
+      if (user && account?.provider === "credentials") {
         token.wpToken = user.token;
         token.wpUserId = user.id; 
         token.wpGlobalId = user.globalId;
@@ -92,7 +115,7 @@ export const authOptions = {
         token.sleeperId = user.sleeperId;
       }
 
-      if (trigger === "update") {
+      if (trigger === "update" && token.wpUserId) {
         try {
           const query = `
             query GetUserFreshRoles($id: ID!) {
@@ -138,12 +161,21 @@ export const authOptions = {
       return token;
     },
     async session({ session, token }) {
-      session.user.token = token.wpToken;
-      session.user.id = token.wpUserId; 
-      session.user.globalId = token.wpGlobalId;
-      session.user.tier = token.tier;   
-      session.user.roles = token.roles;
-      session.user.sleeperId = token.sleeperId; 
+      // Pass the Google token to the session if it exists (for the YouTube API route)
+      if (token.googleAccessToken) {
+        session.accessToken = token.googleAccessToken;
+      }
+
+      // Pass the WordPress data to the session if it exists
+      if (token.wpToken && session.user) {
+        session.user.token = token.wpToken;
+        session.user.id = token.wpUserId; 
+        session.user.globalId = token.wpGlobalId;
+        session.user.tier = token.tier;   
+        session.user.roles = token.roles;
+        session.user.sleeperId = token.sleeperId; 
+      }
+      
       return session;
     }
   },

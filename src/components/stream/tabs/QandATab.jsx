@@ -1,9 +1,8 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageSquare, Settings, X, Image as ImageIcon, MessageCircle, RefreshCw, Info, Search, User, RotateCcw, Calendar, History, Loader2, Plus, Zap } from 'lucide-react';
 
-// --- FIREBASE IMPORTS ---
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase'; 
 
 const NFL_COLORS = {
@@ -42,7 +41,6 @@ const NFL_COLORS = {
   FA:  { primary: '#3f3f46', secondary: '#18181b' } 
 };
 
-// --- CUSTOM DRAFT PICK DATABASE ---
 const DRAFT_PICKS = [
   { player_id: 'pick_2025_1', full_name: '2025 1st Round Pick', position: 'PICK', team: 'DRAFT', year: '2025', round: '1st' },
   { player_id: 'pick_2025_2', full_name: '2025 2nd Round Pick', position: 'PICK', team: 'DRAFT', year: '2025', round: '2nd' },
@@ -69,7 +67,6 @@ const MOCK_WEEKLY_STATS = [
   { passCmpAtt: "21/32", passYds: "254", passTd: "2", int: "0", rushYds: "22", rushTd: "1", fpts: "26.3" }
 ];
 
-// Helper to ensure Firebase overwrites nested keys instead of retaining old ones
 const formatChatForFirebase = (chat) => {
   if (!chat) return null;
   return {
@@ -85,181 +82,36 @@ const formatChatForFirebase = (chat) => {
   };
 };
 
-// Maps YouTube's color tier (1-7) to our Tailwind styles
-const getSuperChatStyle = (tier) => {
-  switch(Number(tier)) {
-    case 1: return "bg-blue-600 border-blue-400 text-white";
-    case 2: return "bg-cyan-500 border-cyan-300 text-black";
-    case 3: return "bg-emerald-500 border-emerald-300 text-black";
-    case 4: return "bg-yellow-500 border-yellow-300 text-black";
-    case 5: return "bg-orange-500 border-orange-300 text-black";
-    case 6: return "bg-pink-500 border-pink-300 text-white";
-    case 7: return "bg-red-600 border-red-400 text-white";
-    default: return "bg-amber-500 border-amber-300 text-black";
-  }
-};
-
-// Extracts the raw video ID from any standard YouTube URL
-const extractVideoId = (url) => {
-  if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|live\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[2].length === 11) ? match[2] : null;
-};
-
-export default function QandATab() {
-  const [streamUrl, setStreamUrl] = useState('');
-  const [isConnected, setIsConnected] = useState(false);
+export default function QandATab({
+  streamUrl,
+  setStreamUrl,
+  isConnected,
+  setIsConnected,
+  connectionStatus,
+  allChats,
+  priorityQueue,
+  setPriorityQueue,
+  playerDB,
+  updateFirebaseState
+}) {
   const [showSettings, setShowSettings] = useState(false);
+  const [activeSidebarTab, setActiveSidebarTab] = useState('live'); 
   
-  // LIVE CHAT DATA STATES
-  const [allChats, setAllChats] = useState([]);
-  const [priorityQueue, setPriorityQueue] = useState([]);
-  
-  // POLLING REFS
-  const pageTokenRef = useRef("");
-  const pollingTimeoutRef = useRef(null);
-  
-  // Q&A STAGE VARIABLES
   const [activeChat, setActiveChat] = useState(null);
   const [showGraphic, setShowGraphic] = useState(false);
   const [customPlayerLists, setCustomPlayerLists] = useState(null);
   const [disabledPlayers, setDisabledPlayers] = useState({});
-  const [playerDB, setPlayerDB] = useState({});
   
-  // Ref for accessing playerDB inside the polling loop without stale data
-  const playerDBRef = useRef({});
-
-  // Unified Search Modal State 
   const [playerSearch, setPlayerSearch] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  
   const [infoPlayerId, setInfoPlayerId] = useState(null);
   const [infoLoading, setInfoLoading] = useState(false);
   const [playerSchedule, setPlayerSchedule] = useState([]);
 
-  // Sidebar Tab State ('live' or 'super')
-  const [activeSidebarTab, setActiveSidebarTab] = useState('super');
-
-  // Splitting feeds based on presence of "amount"
   const regularChats = allChats.filter(chat => !chat.amount);
   const superChats = allChats.filter(chat => chat.amount);
   const currentChatList = activeSidebarTab === 'live' ? regularChats : superChats;
 
-  useEffect(() => {
-    playerDBRef.current = playerDB;
-  }, [playerDB]);
-
-  // --- NAME TO SLEEPER ID RESOLVER ---
-  const resolveNameToId = (name) => {
-    if (!name) return null;
-    const cleanName = name.toLowerCase().trim();
-    
-    // 1. Check Draft Picks first
-    const pickMatch = DRAFT_PICKS.find(p => p.full_name.toLowerCase() === cleanName);
-    if (pickMatch) return pickMatch.player_id;
-
-    // 2. Check Player DB for Exact Match
-    const db = playerDBRef.current;
-    let exactMatch = Object.values(db).find(p => p.full_name && p.full_name.toLowerCase() === cleanName);
-    if (exactMatch) return String(exactMatch.player_id);
-
-    // 3. Fallback: Search inside partial names
-    let partialMatch = Object.values(db).find(p => 
-      (p.full_name && p.full_name.toLowerCase().includes(cleanName)) || 
-      (p.last_name && p.last_name.toLowerCase() === cleanName)
-    );
-    if (partialMatch) return String(partialMatch.player_id);
-
-    return null;
-  };
-
-  // --- YOUTUBE POLLING ENGINE & AI PARSER ---
-  useEffect(() => {
-    const fetchChat = async () => {
-      const videoId = extractVideoId(streamUrl);
-      if (!videoId) return;
-
-      try {
-        let url = `/api/youtube-chat?videoId=${videoId}`;
-        if (pageTokenRef.current) url += `&pageToken=${pageTokenRef.current}`;
-        
-        const res = await fetch(url);
-        const data = await res.json();
-        
-        if (data.messages && data.messages.length > 0) {
-          
-          // AI PARSING BATCH RUN
-          const parsedMessages = await Promise.all(data.messages.map(async (msg) => {
-            let parsedType = "chat";
-            let sideA_Ids = [];
-            let sideB_Ids = [];
-
-            try {
-              const aiRes = await fetch('/api/parse-chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: msg.text })
-              });
-              const aiData = await aiRes.json();
-              
-              if (aiData && !aiData.error) {
-                parsedType = aiData.type || "chat";
-                if (aiData.sideA) sideA_Ids = aiData.sideA.map(resolveNameToId).filter(id => id !== null);
-                if (aiData.sideB) sideB_Ids = aiData.sideB.map(resolveNameToId).filter(id => id !== null);
-              }
-            } catch(e) {
-              console.error("Failed to parse chat via Gemini:", e);
-            }
-
-            return {
-              id: msg.id,
-              user: msg.user,
-              avatar: msg.avatar,
-              text: msg.text,
-              amount: msg.amount,
-              color: msg.isSuperChat ? getSuperChatStyle(msg.youtubeColorTier) : null,
-              type: parsedType,
-              sideA: sideA_Ids,
-              sideB: sideB_Ids
-            };
-          }));
-
-          // Add to local main feed
-          setAllChats(prev => [...parsedMessages, ...prev].slice(0, 100)); // Keep max 100 in memory
-          
-          // If any of these are Super Chats, push them to the Priority Queue and sync to Firebase!
-          const newSupers = parsedMessages.filter(m => m.amount);
-          if (newSupers.length > 0) {
-            setPriorityQueue(prev => {
-              const updatedQueue = [...prev, ...newSupers];
-              updateFirebaseQA({ qa_priorityQueue: updatedQueue });
-              return updatedQueue;
-            });
-          }
-        }
-
-        // Setup the next poll based on YouTube's requested interval
-        pageTokenRef.current = data.nextPageToken || pageTokenRef.current;
-        const nextPollInterval = data.pollingIntervalMillis || 5000;
-        pollingTimeoutRef.current = setTimeout(fetchChat, nextPollInterval);
-
-      } catch (err) {
-        console.error("Polling error:", err);
-        pollingTimeoutRef.current = setTimeout(fetchChat, 10000); // Wait 10s if something breaks
-      }
-    };
-
-    if (isConnected && streamUrl) {
-      fetchChat();
-    } else {
-      clearTimeout(pollingTimeoutRef.current);
-    }
-
-    return () => clearTimeout(pollingTimeoutRef.current);
-  }, [isConnected, streamUrl]);
-
-  // --- FIREBASE COLLABORATION LISTENER ---
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'stream_state', 'live'), (docSnap) => {
       if (docSnap.exists()) {
@@ -268,46 +120,9 @@ export default function QandATab() {
         if (data.qa_showGraphic !== undefined) setShowGraphic(data.qa_showGraphic);
         if (data.qa_customPlayerLists !== undefined) setCustomPlayerLists(data.qa_customPlayerLists);
         if (data.qa_disabledPlayers !== undefined) setDisabledPlayers(data.qa_disabledPlayers);
-        if (data.qa_priorityQueue !== undefined) setPriorityQueue(data.qa_priorityQueue);
       }
     });
     return () => unsub();
-  }, []);
-
-  const updateFirebaseQA = async (updates) => {
-    try {
-      await setDoc(doc(db, 'stream_state', 'live'), updates, { merge: true });
-    } catch (err) {
-      console.error("Failed to sync Q&A to Firebase:", err);
-    }
-  };
-
-  useEffect(() => {
-    const loadPlayerDatabases = async () => {
-      try {
-        let customMap = {};
-        try {
-          const res = await fetch('/api/dynasty-players');
-          if (res.ok) {
-            const data = await res.json();
-            if (data.success && data.players) {
-              data.players.forEach(p => { if (p.sleeper_id) customMap[String(p.sleeper_id)] = p; });
-            }
-          }
-        } catch(e) {}
-
-        const slpRes = await fetch('https://api.sleeper.app/v1/players/nfl');
-        if (slpRes.ok) {
-          const slpData = await slpRes.json();
-          const mergedDB = { ...slpData };
-          Object.keys(customMap).forEach(key => {
-             if (mergedDB[key]) mergedDB[key] = { ...mergedDB[key], ...customMap[key] };
-          });
-          setPlayerDB(mergedDB);
-        }
-      } catch (err) {}
-    };
-    loadPlayerDatabases();
   }, []);
 
   useEffect(() => {
@@ -364,7 +179,7 @@ export default function QandATab() {
     setCustomPlayerLists(null);
     setDisabledPlayers({});
     
-    updateFirebaseQA({
+    updateFirebaseState({
       qa_activeChat: formattedChat,
       qa_showGraphic: isGraphic,
       qa_customPlayerLists: null,
@@ -382,7 +197,7 @@ export default function QandATab() {
     setCustomPlayerLists(null);
     setDisabledPlayers({});
     
-    updateFirebaseQA({
+    updateFirebaseState({
       qa_priorityQueue: newQueue,
       qa_activeChat: formattedChat,
       qa_showGraphic: isGraphic,
@@ -397,7 +212,7 @@ export default function QandATab() {
     setCustomPlayerLists(null);
     setDisabledPlayers({});
     
-    updateFirebaseQA({
+    updateFirebaseState({
       qa_activeChat: null,
       qa_showGraphic: false,
       qa_customPlayerLists: null,
@@ -409,7 +224,7 @@ export default function QandATab() {
     setCustomPlayerLists(null);
     setDisabledPlayers({});
     
-    updateFirebaseQA({
+    updateFirebaseState({
       qa_customPlayerLists: null,
       qa_disabledPlayers: {}
     });
@@ -421,7 +236,7 @@ export default function QandATab() {
     const newState = { ...disabledPlayers, [playerId]: !disabledPlayers[playerId] };
     setDisabledPlayers(newState);
     
-    updateFirebaseQA({ qa_disabledPlayers: newState });
+    updateFirebaseState({ qa_disabledPlayers: newState });
   };
 
   const handlePlayerSelect = (newPlayerId) => {
@@ -463,7 +278,7 @@ export default function QandATab() {
     setPlayerSearch(null);
     setSearchQuery('');
     
-    updateFirebaseQA({ qa_customPlayerLists: newLists });
+    updateFirebaseState({ qa_customPlayerLists: newLists });
   };
 
   const getESPNHeadshot = (espnId) => `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${espnId}.png&w=350&h=254`;
@@ -657,14 +472,16 @@ export default function QandATab() {
   const currentSideB = customPlayerLists ? customPlayerLists.sideB : (activeChat?.sideB || []);
 
   return (
-    <div className="flex h-full w-full gap-4 p-4 overflow-hidden relative">
+    // 🚀 FIXED: Added min-h-0 to lock the root container size
+    <div className="flex h-full w-full gap-4 p-4 overflow-hidden relative min-h-0">
       
       {/* 1. LEFT SIDE: Main Broadcast Stage */}
-      <div className="flex-1 bg-[#0e0e11] border border-zinc-800 rounded-2xl shadow-2xl relative overflow-hidden flex flex-col">
+      {/* 🚀 FIXED: Added min-h-0 to stop the stage from blowing out */}
+      <div className="flex-1 bg-[#0e0e11] border border-zinc-800 rounded-2xl shadow-2xl relative overflow-hidden flex flex-col min-h-0">
         
         {/* PRIORITY SUPER CHAT QUEUE */}
         {priorityQueue.length > 0 && (
-          <div className="bg-[#141418] border-b border-amber-500/30 p-3 shadow-md flex flex-col gap-2 relative overflow-hidden">
+          <div className="bg-[#141418] border-b border-amber-500/30 p-3 shadow-md flex flex-col gap-2 relative overflow-hidden shrink-0">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500"></div>
             
             <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-2 px-1">
@@ -691,9 +508,13 @@ export default function QandATab() {
                   <button onClick={() => handleSelectPriorityDisplay(priorityQueue[0], false)} className="bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] font-black uppercase tracking-widest py-2 px-3 rounded-lg transition-colors flex items-center gap-1.5 border border-zinc-700">
                     <MessageCircle size={12} /> Show Chat
                   </button>
-                  <button onClick={() => handleSelectPriorityDisplay(priorityQueue[0], true)} className="bg-zinc-700 hover:bg-zinc-600 text-white text-[10px] font-black uppercase tracking-widest py-2 px-3 rounded-lg transition-colors flex items-center gap-1.5 border border-zinc-500 shadow-md">
-                    <ImageIcon size={12} /> Show Graphic
-                  </button>
+                  
+                  {/* Conditional Graphic Button */}
+                  {(priorityQueue[0].sideA?.length > 0 || priorityQueue[0].sideB?.length > 0) && (
+                    <button onClick={() => handleSelectPriorityDisplay(priorityQueue[0], true)} className="bg-zinc-700 hover:bg-zinc-600 text-white text-[10px] font-black uppercase tracking-widest py-2 px-3 rounded-lg transition-colors flex items-center gap-1.5 border border-zinc-500 shadow-md">
+                      <ImageIcon size={12} /> Visual
+                    </button>
+                  )}
                 </div>
 
               </div>
@@ -701,7 +522,7 @@ export default function QandATab() {
           </div>
         )}
 
-        <div className="p-2 px-3 border-b border-zinc-800/60 bg-black/40 flex justify-between items-center z-10 min-h-[36px]">
+        <div className="p-2 px-3 border-b border-zinc-800/60 bg-black/40 flex justify-between items-center z-10 min-h-[36px] shrink-0">
           {activeChat ? (
             <button 
               onClick={handleResetGraphic}
@@ -724,12 +545,13 @@ export default function QandATab() {
         </div>
 
         {!activeChat ? (
-          <div className="flex-1 flex flex-col items-center justify-center opacity-30">
+          <div className="flex-1 flex flex-col items-center justify-center opacity-30 min-h-0">
             <MessageSquare size={48} className="text-zinc-600 mb-4" />
-            <h2 className="text-xl font-black text-zinc-500 uppercase tracking-widest italic">Stage Clear</h2>
+            <h2 className="text-xl font-black text-zinc-500 uppercase tracking-widest italic">   </h2>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col p-6 overflow-hidden">
+          // 🚀 FIXED: Added min-h-0 to the inner stage so graphics can scroll independently
+          <div className="flex-1 flex flex-col p-6 overflow-hidden min-h-0">
             
             {/* Conditional Styling based on if it's a Super Chat */}
             {activeChat.amount ? (
@@ -758,7 +580,7 @@ export default function QandATab() {
             )}
 
             {showGraphic && (currentSideA.length > 0 || currentSideB.length > 0) && (
-              <div className="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+              <div className="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar min-h-0">
                 
                 {activeChat.type === 'trade' || currentSideB.length > 0 ? (
                   <div className="flex items-center justify-center gap-6 max-w-full">
@@ -789,7 +611,8 @@ export default function QandATab() {
       </div>
 
       {/* 2. RIGHT SIDEBAR: Tabbed Live Chat Feed */}
-      <div className="w-80 lg:w-88 bg-[#0e0e11] border border-zinc-800 rounded-2xl flex flex-col shadow-2xl flex-shrink-0">
+      {/* 🚀 FIXED: Added min-h-0 to the sidebar so the scrolling feed stays confined inside it */}
+      <div className="w-80 lg:w-88 bg-[#0e0e11] border border-zinc-800 rounded-2xl flex flex-col shadow-2xl flex-shrink-0 min-h-0">
         
         {/* Split Tabs Header */}
         <div className="flex bg-[#141418] border-b border-zinc-800 rounded-t-2xl overflow-hidden p-1.5 gap-1.5 shrink-0">
@@ -818,7 +641,8 @@ export default function QandATab() {
         </div>
 
         {/* Tab Content List */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-2.5 space-y-2.5">
+        {/* 🚀 FIXED: Added min-h-0 here as the final lock for the scrollbar container */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-2.5 space-y-2.5 min-h-0">
           {currentChatList.map((chat) => (
             chat.amount ? (
               // SUPER CHAT STYLING
@@ -838,9 +662,13 @@ export default function QandATab() {
                     <button onClick={() => handleSelectDisplay(chat, false)} className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-700">
                       <MessageCircle size={11} /> Show Chat
                     </button>
-                    <button onClick={() => handleSelectDisplay(chat, true)} className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-500">
-                      <ImageIcon size={11} /> Show Graphic
-                    </button>
+                    
+                    {/* Conditional Graphic Button */}
+                    {(chat.sideA?.length > 0 || chat.sideB?.length > 0) && (
+                      <button onClick={() => handleSelectDisplay(chat, true)} className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-500">
+                        <ImageIcon size={11} /> Visual
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -858,16 +686,25 @@ export default function QandATab() {
                   <button onClick={() => handleSelectDisplay(chat, false)} className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-700">
                     <MessageCircle size={11} /> Show Chat
                   </button>
-                  <button onClick={() => handleSelectDisplay(chat, true)} className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-500">
-                    <ImageIcon size={11} /> Show Graphic
-                  </button>
+                  
+                  {/* Conditional Graphic Button */}
+                  {(chat.sideA?.length > 0 || chat.sideB?.length > 0) && (
+                    <button onClick={() => handleSelectDisplay(chat, true)} className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-500">
+                      <ImageIcon size={11} /> Visual
+                    </button>
+                  )}
                 </div>
               </div>
             )
           ))}
+          
           {currentChatList.length === 0 && (
-            <div className="h-full flex items-center justify-center text-zinc-600 font-black uppercase tracking-widest text-xs py-10">
-              Waiting for stream connection...
+            <div className="h-full flex flex-col items-center justify-center text-zinc-500 font-black uppercase tracking-widest text-xs py-10 px-6 text-center gap-2">
+              {connectionStatus ? (
+                <span className={connectionStatus.includes('⚠️') ? 'text-red-500' : ''}>{connectionStatus}</span>
+              ) : (
+                "No chats yet."
+              )}
             </div>
           )}
         </div>
@@ -1118,7 +955,10 @@ export default function QandATab() {
                 <input 
                   type="text" 
                   value={streamUrl}
-                  onChange={(e) => setStreamUrl(e.target.value)}
+                  onChange={(e) => {
+                    setStreamUrl(e.target.value);
+                    updateFirebaseState({ qa_streamUrl: e.target.value });
+                  }}
                   placeholder="https://www.youtube.com/watch?v=..." 
                   className="w-full bg-black border border-zinc-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-zinc-400 text-xs"
                 />
@@ -1126,10 +966,12 @@ export default function QandATab() {
 
               <button 
                 onClick={() => {
-                  setIsConnected(!isConnected);
+                  const newStatus = !isConnected;
+                  setIsConnected(newStatus);
+                  updateFirebaseState({ qa_isConnected: newStatus });
                   setShowSettings(false);
                 }}
-                className={`w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${isConnected ? 'bg-red-600 text-white' : 'bg-emerald-600 text-white'}`}
+                className={`w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${isConnected ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}
               >
                 {isConnected ? 'Disconnect Stream' : 'Connect Stream'}
               </button>

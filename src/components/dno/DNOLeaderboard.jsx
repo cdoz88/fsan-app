@@ -33,7 +33,10 @@ const Club200SVG = () => (
   </svg>
 );
 
-export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams: [], available_weeks: [], winners_registry: {} } }, overrideSeasonLabel }) {
+// Define default object outside to prevent infinite loops
+const DEFAULT_LEADERBOARD = { data: { teams: [], available_weeks: [], winners_registry: {} } };
+
+export default function DNOLeaderboard({ initialLeaderboard = DEFAULT_LEADERBOARD, overrideSeasonLabel }) {
   const [overallTeams, setOverallTeams] = useState(initialLeaderboard.data?.teams || []);
   const [activeTeams, setActiveTeams] = useState(initialLeaderboard.data?.teams || []);
   const [winnersRegistry, setWinnersRegistry] = useState(initialLeaderboard.data?.winners_registry || {});
@@ -140,7 +143,6 @@ export default function NapkinLeaderboard({ initialLeaderboard = { data: { teams
         </div>
       </div>
 
-      {/* UPDATED: COMPACT PILL-STYLE AWARDS KEY */}
       <div className="bg-[#111] px-6 py-5 border-b border-gray-800 flex flex-col gap-3">
         <span className="text-gray-500 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest">
            <Info size={14} className="text-blue-500" /> Click an award to view history:

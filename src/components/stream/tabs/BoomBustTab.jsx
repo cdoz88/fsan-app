@@ -79,7 +79,7 @@ export default function BoomBustTab() {
   const [columns, setColumns] = useState({
     '2-col': [
       { id: 'col-2-1', title: 'BOOM 🚀', players: [], color: '#10b981' }, 
-      { id: 'col-2-2', title: 'POOL', players: [], color: '#71717a' },   
+      { id: 'col-2-2', title: 'PLAYERS', players: [], color: '#71717a' },   
       { id: 'col-2-3', title: 'BUST 👎', players: [], color: '#ef4444' } 
     ],
     '4-col': [
