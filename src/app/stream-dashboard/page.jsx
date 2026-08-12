@@ -89,6 +89,7 @@ export default function StreamDashboardPage() {
   const isFetchingRef = useRef(false);
   const parsedCacheRef = useRef({});
   const isFirstFetchRef = useRef(true);
+  const allChatsRef = useRef([]);
 
   useEffect(() => {
     playerDBRef.current = playerDB;
@@ -97,6 +98,10 @@ export default function StreamDashboardPage() {
   useEffect(() => {
     isDbLoadedRef.current = isDbLoaded;
   }, [isDbLoaded]);
+
+  useEffect(() => {
+    allChatsRef.current = allChats;
+  }, [allChats]);
 
   useEffect(() => {
     const loadPlayerDatabases = async () => {
@@ -243,14 +248,25 @@ export default function StreamDashboardPage() {
         if (data.messages && data.messages.length > 0) {
           const messagesToParse = data.messages.slice(-10);
           const parsedMessages = [];
+          
+          const existingFirebaseMap = new Map((allChatsRef.current || []).map(item => [item.id, item]));
+          let firebaseNeedsUpdate = false;
 
           for (const msg of messagesToParse) {
             
+            // 1. Check if already parsed and stored in Firebase/local state
+            if (existingFirebaseMap.has(msg.id)) {
+              parsedMessages.push(existingFirebaseMap.get(msg.id));
+              continue;
+            }
+
+            // 2. Check local memory cache
             if (parsedCacheRef.current[msg.id]) {
               parsedMessages.push(parsedCacheRef.current[msg.id]);
               continue; 
             }
 
+            // 3. New Message: Parse with Gemini AI
             let parsedType = "chat";
             let sideA_Ids = [];
             let sideB_Ids = [];
@@ -295,23 +311,30 @@ export default function StreamDashboardPage() {
 
             parsedCacheRef.current[msg.id] = finalMsg;
             parsedMessages.push(finalMsg);
+            firebaseNeedsUpdate = true;
           }
 
           isFirstFetchRef.current = false;
 
-          setAllChats(prev => {
-            const merged = [...parsedMessages, ...prev];
-            const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
-            return unique.slice(0, 100);
-          }); 
-          
+          const currentList = allChatsRef.current || [];
+          const merged = [...parsedMessages, ...currentList];
+          const unique = Array.from(new Map(merged.map(item => [item.id, item])).values()).slice(0, 100);
+
+          setAllChats(unique);
+          allChatsRef.current = unique;
+
+          // Centralize parsed chat into Firebase so other hosts get it instantly
+          if (firebaseNeedsUpdate) {
+            updateFirebaseState({ qa_allChats: unique });
+          }
+
           const newSupers = parsedMessages.filter(m => m.amount);
           if (newSupers.length > 0) {
             setPriorityQueue(prev => {
-              const merged = [...prev, ...newSupers];
-              const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
-              updateFirebaseState({ qa_priorityQueue: unique });
-              return unique;
+              const mergedSupers = [...prev, ...newSupers];
+              const uniqueSupers = Array.from(new Map(mergedSupers.map(item => [item.id, item])).values());
+              updateFirebaseState({ qa_priorityQueue: uniqueSupers });
+              return uniqueSupers;
             });
           }
         }
@@ -388,6 +411,15 @@ export default function StreamDashboardPage() {
         if (data.qa_streamUrl !== undefined) setStreamUrl(data.qa_streamUrl);
         if (data.qa_isConnected !== undefined) setIsConnected(data.qa_isConnected);
         if (data.qa_priorityQueue !== undefined) setPriorityQueue(data.qa_priorityQueue);
+
+        // --- CENTRALIZED PARSED CHAT LISTENER ---
+        if (data.qa_allChats !== undefined && Array.isArray(data.qa_allChats)) {
+          setAllChats(data.qa_allChats);
+          allChatsRef.current = data.qa_allChats;
+          data.qa_allChats.forEach(m => {
+            parsedCacheRef.current[m.id] = m;
+          });
+        }
       }
     });
 
