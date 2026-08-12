@@ -13,13 +13,17 @@ export async function GET(request) {
   }
 
   if (!videoId && !liveChatId) {
-    return NextResponse.json({ error: "Missing videoId parameter." }, { status: 400 });
+    return NextResponse.json({ error: "Missing videoId or liveChatId parameter." }, { status: 400 });
   }
 
   try {
+    // 1. Resolve liveChatId if not provided by the client
     if (!liveChatId) {
-      const videoUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,liveStreamingDetails&id=${videoId}&key=${API_KEY}`;
-      const videoRes = await fetch(videoUrl);
+      // Only request 'liveStreamingDetails' (cuts API unit cost in half)
+      const videoUrl = `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${API_KEY}`;
+      
+      // Cache the video-to-chatId resolution for 30 minutes (1800s) across serverless function invocations
+      const videoRes = await fetch(videoUrl, { next: { revalidate: 1800 } });
       const videoData = await videoRes.json();
 
       if (videoData.error) {
@@ -37,20 +41,22 @@ export async function GET(request) {
       }
     }
 
+    // 2. Fetch Chat Messages (1 quota unit)
     let chatUrl = `https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${liveChatId}&part=snippet,authorDetails&maxResults=200&key=${API_KEY}`;
     
     if (pageToken) {
       chatUrl += `&pageToken=${pageToken}`;
     }
 
-    const chatRes = await fetch(chatUrl);
+    // Bypasses caching for live chat messages
+    const chatRes = await fetch(chatUrl, { cache: 'no-store' });
     const chatData = await chatRes.json();
 
     if (chatData.error) {
        return NextResponse.json({ error: `Chat Fetch Error: ${chatData.error.message}` }, { status: chatData.error.code || 500 });
     }
 
-    const formattedMessages = chatData.items.map(item => {
+    const formattedMessages = (chatData.items || []).map(item => {
       const snippet = item.snippet;
       const author = item.authorDetails;
       
@@ -58,7 +64,7 @@ export async function GET(request) {
       let amount = null;
       let color = null;
 
-      if (isSuperChat) {
+      if (isSuperChat && snippet.superChatDetails) {
         amount = snippet.superChatDetails.displayString;
         const tier = snippet.superChatDetails.tier; 
         color = `tier-${tier}`; 
