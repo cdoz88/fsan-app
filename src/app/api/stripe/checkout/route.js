@@ -11,20 +11,41 @@ export async function POST(req) {
     // Securely get the user session on the server
     const session = await getServerSession(authOptions);
     
-    if (!session || !session.user || !session.user.id) {
+    if (!session || !session.user || !session.user.email) {
       return NextResponse.json({ error: 'Unauthorized. Please log in.' }, { status: 401 });
     }
 
     const body = await req.json();
     
-    // NEW: Extract charity parameters
-    const { priceId, type, returnUrl, quantity = 1, donationAmount = 0, isAnonymous = false } = body;
+    // Extract parameters
+    let { priceId, type, returnUrl, quantity = 1, donationAmount = 0, isAnonymous = false } = body;
 
     // Enforce a valid integer quantity (at least 1)
     const ticketQty = Math.max(1, parseInt(quantity, 10) || 1);
     
     // Parse the donation amount safely
     const parsedDonation = parseFloat(donationAmount) || 0;
+
+    // --- 🚀 NEW: BULLETPROOF STRIPE SUBSCRIPTION CHECK ---
+    // If the frontend asks for a bundle, verify they don't already have an active subscription.
+    // If they do, Stripe Checkout will block them (due to 1-subscription limits).
+    if (type === 'dno_bundle') {
+      try {
+        const existingCustomers = await stripe.customers.list({ email: session.user.email, limit: 1 });
+        if (existingCustomers.data.length > 0) {
+          const customerId = existingCustomers.data[0].id;
+          const subscriptions = await stripe.subscriptions.list({ customer: customerId, status: 'active', limit: 1 });
+          
+          if (subscriptions.data.length > 0) {
+            // User already has an active subscription in Stripe! 
+            // Downgrade to standard one-time ticket so Stripe doesn't block them.
+            type = 'dno_extra_ticket';
+          }
+        }
+      } catch (stripeErr) {
+        console.warn('Failed to check existing Stripe subscriptions:', stripeErr);
+      }
+    }
 
     let line_items = [];
     let mode = 'payment';
@@ -83,7 +104,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Valid priceId or type is required' }, { status: 400 });
     }
 
-    // 🚀 NEW LOGIC: Inject custom inline Charity item if applicable
+    // Inject custom inline Charity item if applicable
     if (parsedDonation > 0) {
       line_items.push({
         price_data: {
@@ -124,8 +145,8 @@ export async function POST(req) {
         wpUserId: String(session.user.id), 
         purchaseType: purchaseType,
         ticketQuantity: String(ticketQty),
-        donationAmount: String(parsedDonation), // NEW: Send to webhook
-        isAnonymous: String(isAnonymous)        // NEW: Send to webhook
+        donationAmount: String(parsedDonation), 
+        isAnonymous: String(isAnonymous)        
       }
     };
 
