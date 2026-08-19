@@ -443,8 +443,14 @@ function DashboardContent() {
   const executeStripeCheckout = async () => {
     setIsProcessing(true);
     try {
+      // Check if user is already a paid FSAN member via their session
+      const isExistingMember = session?.user?.role === 'pro' || session?.user?.role === 'pro_plus';
+      
       const isFirstTicket = ticketCount <= 0 && userJoinedCount === 0;
-      const purchaseType = isFirstTicket ? 'dno_bundle' : 'dno_extra_ticket';
+      
+      // If they are already a member, DO NOT give them the bundle trial.
+      // Force them to the standard 'extra ticket' checkout.
+      const purchaseType = (isFirstTicket && !isExistingMember) ? 'dno_bundle' : 'dno_extra_ticket';
 
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
