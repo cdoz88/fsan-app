@@ -7,7 +7,15 @@ import { RefreshCw, ChevronDown, ChevronUp, Info } from 'lucide-react';
 export default function OmfgTable({ visibleData, isHistorical, isSyncing }) {
   const [expandedRows, setExpandedRows] = useState(new Set());
 
-  const colSpanCount = isHistorical ? 9 : 10;
+  // --- Dynamic Macro vs Micro Detection ---
+  const samplePlayer = visibleData && visibleData.length > 0 ? visibleData[0] : {};
+  const isWeekly = 'Projected Fantasy Points' in samplePlayer || 'Matchup Score' in samplePlayer || 'Opponent' in samplePlayer;
+
+  // Adapt data keys based on spreadsheet format
+  const omfgKey = 'OMFG Score' in samplePlayer ? 'OMFG Score' : ('Preseason OMFG' in samplePlayer ? 'Preseason OMFG' : 'In-Season OMFG Score');
+  const ppgKey = 'Projected PPG' in samplePlayer ? 'Projected PPG' : ('Projected Fantasy Points' in samplePlayer ? 'Projected Fantasy Points' : 'Actual Fantasy Points');
+
+  const colSpanCount = isWeekly ? 8 : (isHistorical ? 9 : 10);
 
   const toggleRow = (playerId) => {
     setExpandedRows(prev => {
@@ -113,37 +121,37 @@ export default function OmfgTable({ visibleData, isHistorical, isSyncing }) {
       stats = [
         { label: 'Pass Att', val: getStat(player, 'Pass Attempts'), key: k('Pass Attempts') },
         { label: 'Pass Yds', val: getStat(player, 'Pass Yards'), key: k('Pass Yards') },
-        { label: 'Pass TD', val: getStat(player, 'Pass TDs'), key: k('Pass TDs') },
+        { label: 'Pass TD', val: getStat(player, 'Pass TDs') ?? getStat(player, 'Pass TD'), key: k('Pass TDs') },
         { label: 'INTs', val: getStat(player, 'Interceptions'), key: k('Interceptions') },
         { label: 'Rush Att', val: getStat(player, 'Rush Attempts'), key: k('Rush Attempts') },
         { label: 'Rush Yds', val: getStat(player, 'Rush Yards'), key: k('Rush Yards') },
-        { label: 'Rush TD', val: getStat(player, 'Rush TDs'), key: k('Rush TDs') },
-        { label: 'Total TD', val: getStat(player, 'Total TDs'), key: k('Total TDs') },
+        { label: 'Rush TD', val: getStat(player, 'Rush TDs') ?? getStat(player, 'Rush TD'), key: k('Rush TDs') },
+        { label: 'Total TD', val: getStat(player, 'Total TDs') ?? getStat(player, 'Total TD'), key: k('Total TDs') },
       ];
     } else if (pos === 'RB') {
       stats = [
         { label: 'Rush Att', val: getStat(player, 'Rush Attempts'), key: k('Rush Attempts') },
         { label: 'Rush Yds', val: getStat(player, 'Rush Yards'), key: k('Rush Yards') },
-        { label: 'Rush TD', val: getStat(player, 'Rush TDs'), key: k('Rush TDs') },
+        { label: 'Rush TD', val: getStat(player, 'Rush TDs') ?? getStat(player, 'Rush TD'), key: k('Rush TDs') },
         { label: 'Targets', val: getStat(player, 'Targets'), key: k('Targets') },
         { label: 'Recs', val: getStat(player, 'Receptions'), key: k('Receptions') },
         { label: 'Rec Yds', val: getStat(player, 'Receiving Yards'), key: k('Receiving Yards') },
-        { label: 'Rec TD', val: getStat(player, 'Receiving TDs'), key: k('Receiving TDs') },
-        { label: '1st Reads', val: getStat(player, 'First Read Targets'), key: k('First Read Targets') },
+        { label: 'Rec TD', val: getStat(player, 'Receiving TDs') ?? getStat(player, 'Receiving TD'), key: k('Receiving TDs') },
+        { label: '1st Reads', val: getStat(player, 'First-Read Targets') ?? getStat(player, 'First Read Targets'), key: k('First-Read Targets') },
         { label: 'Scrim Yds', val: getStat(player, 'Scrimmage Yards'), key: k('Scrimmage Yards') },
-        { label: 'Total TD', val: getStat(player, 'Total TDs'), key: k('Total TDs') },
+        { label: 'Total TD', val: getStat(player, 'Total TDs') ?? getStat(player, 'Total TD'), key: k('Total TDs') },
       ];
     } else if (pos === 'WR' || pos === 'TE') {
       stats = [
         { label: 'Targets', val: getStat(player, 'Targets'), key: k('Targets') },
         { label: 'Recs', val: getStat(player, 'Receptions'), key: k('Receptions') },
         { label: 'Rec Yds', val: getStat(player, 'Receiving Yards'), key: k('Receiving Yards') },
-        { label: 'Rec TD', val: getStat(player, 'Receiving TDs'), key: k('Receiving TDs') },
+        { label: 'Rec TD', val: getStat(player, 'Receiving TDs') ?? getStat(player, 'Receiving TD'), key: k('Receiving TDs') },
         { label: 'Air Yds', val: getStat(player, 'Air Yards'), key: k('Air Yards') },
-        { label: '1st Reads', val: getStat(player, 'First Read Targets'), key: k('First Read Targets') },
-        { label: 'EZ Tgts', val: getStat(player, 'End Zone Targets'), key: k('End Zone Targets') },
+        { label: '1st Reads', val: getStat(player, 'First-Read Targets') ?? getStat(player, 'First Read Targets'), key: k('First-Read Targets') },
+        { label: 'EZ Tgts', val: getStat(player, 'End-Zone Targets') ?? getStat(player, 'End Zone Targets'), key: k('End-Zone Targets') },
         { label: '1st Downs', val: getStat(player, 'Receiving First Downs'), key: k('Receiving First Downs') },
-        { label: 'Total TD', val: getStat(player, 'Total TDs'), key: k('Total TDs') },
+        { label: 'Total TD', val: getStat(player, 'Total TDs') ?? getStat(player, 'Total TD'), key: k('Total TDs') },
       ];
     } else if (pos === 'K') {
       stats = [
@@ -211,11 +219,9 @@ export default function OmfgTable({ visibleData, isHistorical, isSyncing }) {
 
       const playerUrl = `/player/${player.Player?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`;
 
-      const rank = player['Overall Rank'] ?? player['Overall Result Rank'];
-      const posRank = player['Position Rank'] ?? player['Actual Position Finish'];
-      const games = player['Projected Games'] ?? player['Games'];
-      const ppg = player['Projected PPG'] ?? player['Actual PPG'];
-      const ppgKey = isHistorical ? 'Actual PPG' : 'Projected PPG';
+      const rank = player['Rank'] ?? player['Overall Rank'] ?? player['Overall Result Rank'] ?? '-';
+      const posRank = player['Position Rank'] ?? player['Actual Position Finish'] ?? player['Rank'] ?? '-';
+      const games = player['Projected Games'] ?? player['Games'] ?? 1;
 
       rows.push(
         <tr 
@@ -223,7 +229,7 @@ export default function OmfgTable({ visibleData, isHistorical, isSyncing }) {
           onClick={() => toggleRow(playerId)}
           className="hover:bg-[#151515] transition-colors group cursor-pointer border-b border-gray-800/30"
         >
-          <td className="px-2 py-1.5">
+          <td className="px-2 py-1.5 w-10 text-center">
             <div className="w-6 h-6 mx-auto rounded-full flex items-center justify-center text-[10px] font-black shrink-0 bg-gray-800 text-gray-300 border border-gray-700 shadow-inner group-hover:bg-gray-700 group-hover:text-white transition-colors">
               {rank}
             </div>
@@ -235,12 +241,20 @@ export default function OmfgTable({ visibleData, isHistorical, isSyncing }) {
              </span>
           </td>
 
-          {isHistorical && (
-            <td className="px-2 py-1.5 text-center">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                {player['SOS Rank'] ? `${player.Position}${player['SOS Rank']}` : '-'}
-              </span>
-            </td>
+          {isWeekly ? (
+             <td className="px-2 py-1.5 text-center">
+               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                 {player.Opponent ?? '-'}
+               </span>
+             </td>
+          ) : (
+             isHistorical && (
+               <td className="px-2 py-1.5 text-center">
+                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                   {player['SOS Rank'] ? `${player.Position}${player['SOS Rank']}` : '-'}
+                 </span>
+               </td>
+             )
           )}
 
           <td className="px-2 py-1.5">
@@ -260,28 +274,40 @@ export default function OmfgTable({ visibleData, isHistorical, isSyncing }) {
           </td>
 
           <td className="px-2 py-1.5 text-center bg-red-900/10 border-x border-gray-800/50">
-             <div className={`text-[13px] ${getHeatmapClasses(player['OMFG Score'], 'OMFG Score', false)}`}>
-               {formatNumber(player['OMFG Score'])}
+             <div className={`text-[13px] ${getHeatmapClasses(player[omfgKey], omfgKey, false)}`}>
+               {formatNumber(player[omfgKey])}
              </div>
           </td>
 
-          <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-400">{formatNumber(games, 0)}</td>
-          
-          <td className="px-2 py-1.5 text-center">
-             <span className={`text-[11px] ${getHeatmapClasses(ppg, ppgKey, false)}`}>
-               {formatNumber(ppg)}
-             </span>
-          </td>
-          
-          {isHistorical ? (
+          {isWeekly ? (
             <>
-              <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-400 bg-gray-800/20">{formatNumber(player['Actual Fantasy Points'])}</td>
+              <td className="px-2 py-1.5 text-center">
+                <span className={`text-[11px] ${getHeatmapClasses(player[ppgKey], ppgKey, false)}`}>
+                  {formatNumber(player[ppgKey])}
+                </span>
+              </td>
+              <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-400 bg-gray-800/20">
+                {formatNumber(player['Matchup Score'])}
+              </td>
             </>
           ) : (
             <>
-              <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-500">{formatNumber(player['Floor (P25)'])}</td>
-              <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-400 bg-gray-800/20">{formatNumber(player['Base (P50)'])}</td>
-              <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-300">{formatNumber(player['Ceiling (P75)'])}</td>
+              <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-400">{formatNumber(games, 0)}</td>
+              <td className="px-2 py-1.5 text-center">
+                 <span className={`text-[11px] ${getHeatmapClasses(player[ppgKey], ppgKey, false)}`}>
+                   {formatNumber(player[ppgKey])}
+                 </span>
+              </td>
+              
+              {isHistorical ? (
+                <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-400 bg-gray-800/20">{formatNumber(player['Actual Fantasy Points'])}</td>
+              ) : (
+                <>
+                  <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-500">{formatNumber(player['Floor (P25)'])}</td>
+                  <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-400 bg-gray-800/20">{formatNumber(player['Base (P50)'])}</td>
+                  <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-300">{formatNumber(player['Ceiling (P75)'])}</td>
+                </>
+              )}
             </>
           )}
           
@@ -316,54 +342,64 @@ export default function OmfgTable({ visibleData, isHistorical, isSyncing }) {
               <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest w-10 text-center">Rk</th>
               <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">Pos</th>
               
-              {isHistorical && (
-                <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">SOS</th>
+              {isWeekly ? (
+                <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">Opp</th>
+              ) : (
+                isHistorical && <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">SOS</th>
               )}
 
               <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest">Player</th>
 
               <th className="px-2 py-2 text-[9px] font-black text-red-500 uppercase tracking-widest text-center bg-red-900/10 border-x border-gray-800">OMFG</th>
-              <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">G</th>
-              <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">PPG</th>
               
-              {isHistorical ? (
+              {isWeekly ? (
                 <>
-                  <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center bg-gray-800/20">Total Pts</th>
+                  <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">Proj Pts</th>
+                  <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center bg-gray-800/20">Matchup</th>
                 </>
               ) : (
                 <>
-                  <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center relative group cursor-help hover:bg-gray-800/40 transition-colors">
-                    <div className="flex items-center justify-center gap-1">
-                      Floor (P25)
-                      <Info size={10} className="text-gray-400 group-hover:text-white transition-colors" />
-                    </div>
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-[#1a1a1a] border border-gray-700 text-gray-300 text-[10px] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] font-medium normal-case tracking-normal whitespace-nowrap pointer-events-none origin-bottom">
-                      Twenty-fifth-percentile season fantasy-point projection.
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-700"></div>
-                    </div>
-                  </th>
+                  <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">G</th>
+                  <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">PPG</th>
                   
-                  <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center bg-gray-800/20 relative group cursor-help hover:bg-gray-800/40 transition-colors">
-                    <div className="flex items-center justify-center gap-1">
-                      Base (P50)
-                      <Info size={10} className="text-gray-400 group-hover:text-white transition-colors" />
-                    </div>
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-[#1a1a1a] border border-gray-700 text-gray-300 text-[10px] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] font-medium normal-case tracking-normal whitespace-nowrap pointer-events-none origin-bottom">
-                      Median season fantasy-point projection.
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-700"></div>
-                    </div>
-                  </th>
-                  
-                  <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center relative group cursor-help hover:bg-gray-800/40 transition-colors">
-                    <div className="flex items-center justify-center gap-1">
-                      Ceiling (P75)
-                      <Info size={10} className="text-gray-400 group-hover:text-white transition-colors" />
-                    </div>
-                    <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-[#1a1a1a] border border-gray-700 text-gray-300 text-[10px] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] font-medium normal-case tracking-normal whitespace-nowrap pointer-events-none origin-bottom-right">
-                      Seventy-fifth-percentile season fantasy-point projection.
-                      <div className="absolute top-full right-4 border-4 border-transparent border-t-gray-700"></div>
-                    </div>
-                  </th>
+                  {isHistorical ? (
+                    <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center bg-gray-800/20">Total Pts</th>
+                  ) : (
+                    <>
+                      <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center relative group cursor-help hover:bg-gray-800/40 transition-colors">
+                        <div className="flex items-center justify-center gap-1">
+                          Floor (P25)
+                          <Info size={10} className="text-gray-400 group-hover:text-white transition-colors" />
+                        </div>
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-[#1a1a1a] border border-gray-700 text-gray-300 text-[10px] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] font-medium normal-case tracking-normal whitespace-nowrap pointer-events-none origin-bottom">
+                          Twenty-fifth-percentile season fantasy-point projection.
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-700"></div>
+                        </div>
+                      </th>
+                      
+                      <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center bg-gray-800/20 relative group cursor-help hover:bg-gray-800/40 transition-colors">
+                        <div className="flex items-center justify-center gap-1">
+                          Base (P50)
+                          <Info size={10} className="text-gray-400 group-hover:text-white transition-colors" />
+                        </div>
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-[#1a1a1a] border border-gray-700 text-gray-300 text-[10px] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] font-medium normal-case tracking-normal whitespace-nowrap pointer-events-none origin-bottom">
+                          Median season fantasy-point projection.
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-700"></div>
+                        </div>
+                      </th>
+                      
+                      <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center relative group cursor-help hover:bg-gray-800/40 transition-colors">
+                        <div className="flex items-center justify-center gap-1">
+                          Ceiling (P75)
+                          <Info size={10} className="text-gray-400 group-hover:text-white transition-colors" />
+                        </div>
+                        <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-[#1a1a1a] border border-gray-700 text-gray-300 text-[10px] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] font-medium normal-case tracking-normal whitespace-nowrap pointer-events-none origin-bottom-right">
+                          Seventy-fifth-percentile season fantasy-point projection.
+                          <div className="absolute top-full right-4 border-4 border-transparent border-t-gray-700"></div>
+                        </div>
+                      </th>
+                    </>
+                  )}
                 </>
               )}
 
