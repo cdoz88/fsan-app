@@ -236,13 +236,31 @@ export default function DraftsTab({
                   const styleLabel = isSlow ? 'Slow Draft' : 'Live / Fast';
                   const styleIcon = isSlow ? '🐢' : '⚡️';
 
+                  const statusStr = String(league.status || league.sleeper_status || league.draft_status || '').toLowerCase();
+                  const isCompleted = ['in_season', 'post_season', 'complete', 'completed', 'drafted', 'post_draft'].includes(statusStr);
+                  const isDrafting = !isCompleted && (statusStr === 'drafting' || (isSlow && isFull && !statusStr));
+
                   let timeDisplay;
-                  if (isSlow) {
+                  if (isCompleted) {
+                    timeDisplay = (
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-950/40 px-2 py-1 rounded border border-emerald-900/50 shadow-inner">
+                        <Trophy size={12} className="text-emerald-500" />
+                        <span>Draft Completed</span>
+                      </div>
+                    );
+                  } else if (isDrafting) {
+                    timeDisplay = (
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-red-400 uppercase tracking-widest bg-red-950/40 px-2 py-1 rounded border border-red-900/50 shadow-inner animate-pulse">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                        <span>Drafting Live</span>
+                      </div>
+                    );
+                  } else if (isSlow) {
                     if (isFull) {
                       timeDisplay = (
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-red-400 uppercase tracking-widest bg-red-950/40 px-2 py-1 rounded border border-red-900/50 shadow-inner animate-pulse">
-                          <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                          <span>Drafting Live</span>
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-amber-400 uppercase tracking-widest bg-amber-950/40 px-2 py-1 rounded border border-amber-900/50 shadow-inner">
+                          <Hourglass size={12} className="text-amber-500" />
+                          <span>Starting Soon</span>
                         </div>
                       );
                     } else {
@@ -282,9 +300,9 @@ export default function DraftsTab({
                       <div className="shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
                         {isJoined ? (
                           <a href={targetInviteLink || `https://sleeper.com/leagues/${league.id}`} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-green-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-green-900/50 transition-colors flex items-center justify-center gap-2"><ExternalLink size={14} /> Go to League</a>
-                        ) : (isFull && isSlow && league.draft_id) ? (
-                          <a href={`https://sleeper.com/draft/nfl/${league.draft_id}`} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-red-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-red-900/50 transition-colors flex items-center justify-center gap-2">
-                            <Eye size={14} /> Watch Draft
+                        ) : (isFull && league.draft_id) ? (
+                          <a href={`https://sleeper.com/draft/nfl/${league.draft_id}`} target="_blank" rel="noopener noreferrer" className={`w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 font-black uppercase tracking-widest text-xs py-3 rounded-xl border transition-colors flex items-center justify-center gap-2 ${isCompleted ? 'text-emerald-500 border-emerald-900/50' : 'text-red-500 border-red-900/50'}`}>
+                            <Eye size={14} /> {isCompleted ? 'View Draftboard' : 'Watch Draft'}
                           </a>
                         ) : isFull ? (
                           <button disabled className="w-full sm:w-auto px-6 bg-gray-800 text-gray-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-gray-700 cursor-not-allowed">League Full</button>
