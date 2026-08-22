@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { RefreshCw, Search } from 'lucide-react';
+import { RefreshCw, Search, Info } from 'lucide-react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
 
-// --- Tooltip for Scatter Chart ---
 const RadarTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -40,10 +39,9 @@ const getMedian = (arr) => {
   return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 };
 
-export default function OmfgRadar({ visibleData, isHistorical, isSyncing }) {
+export default function SeasonRadar({ visibleData, isHistorical, isSyncing }) {
   const [searchQuery, setSearchQuery] = useState('');
 
-  // --- RADAR CHART DATA PREP & RELEVANCE FILTER ---
   const radarChartData = useMemo(() => {
     const validData = visibleData.filter(p => {
       const omfg = Number(p['OMFG Score']);
@@ -63,20 +61,20 @@ export default function OmfgRadar({ visibleData, isHistorical, isSyncing }) {
       const omfg = Number(p['OMFG Score']);
       const ppg = isHistorical ? Number(p['Actual PPG']) : Number(p['Projected PPG']);
       
-      let fill = '#4b5563'; // neutral gray
+      let fill = '#4b5563'; 
       let label = 'Expected Output';
       let colorClass = 'text-gray-400';
 
       if (omfg > medOmfg && ppg < medPpg) {
-        fill = '#10b981'; // green (Buy Low)
+        fill = '#10b981'; 
         label = 'Buy Low / Positive Regression';
         colorClass = 'text-emerald-400';
       } else if (omfg < medOmfg && ppg > medPpg) {
-        fill = '#ef4444'; // red (Sell High)
+        fill = '#ef4444'; 
         label = 'Sell High / Negative Regression';
         colorClass = 'text-red-400';
       } else if (omfg > medOmfg && ppg > medPpg) {
-        fill = '#3b82f6'; // blue (Elite)
+        fill = '#3b82f6'; 
         label = 'Elite Usage & Production';
         colorClass = 'text-blue-400';
       }
@@ -105,27 +103,35 @@ export default function OmfgRadar({ visibleData, isHistorical, isSyncing }) {
       {/* Top Header: Search & Quadrant Legend */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 relative z-20">
         
-        {/* Search Bar */}
-        <div className="relative w-full sm:w-64">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Highlight Player..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#1a1a1a] border border-gray-800 text-white text-xs rounded-xl py-2 pl-9 pr-3 focus:outline-none focus:border-red-500 transition-colors font-medium placeholder:text-gray-500"
-          />
-          {searchQuery && (
-            <button 
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white text-xs font-bold"
-            >
-              ✕
-            </button>
-          )}
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Highlight Player..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-[#1a1a1a] border border-gray-800 text-white text-xs rounded-xl py-2 pl-9 pr-3 focus:outline-none focus:border-red-500 transition-colors font-medium placeholder:text-gray-500"
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white text-xs font-bold"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          
+          <div className="relative group cursor-help flex items-center justify-center">
+            <Info size={18} className="text-gray-500 hover:text-white transition-colors" />
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-4 py-3 bg-[#1a1a1a] border border-gray-700 text-gray-300 text-[11px] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] w-64 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed">
+              Plots Usage (OMFG) against actual fantasy production. Look for 'Buy Low' regression candidates in the bottom right (great historical profile, but lower projected output due to variance) and 'Sell High' fades in the top left.
+              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-700"></div>
+            </div>
+          </div>
         </div>
 
-        {/* Quadrant Legend */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 bg-[#1a1a1a] px-3 py-1.5 rounded-xl border border-gray-800 shadow-xl">
             <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
@@ -154,7 +160,6 @@ export default function OmfgRadar({ visibleData, isHistorical, isSyncing }) {
             <ScatterChart margin={{ top: 20, right: 30, bottom: 25, left: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#222" />
               
-              {/* X Axis with Larger Labels & Ticks */}
               <XAxis 
                 type="number" 
                 dataKey="omfg" 
@@ -173,7 +178,6 @@ export default function OmfgRadar({ visibleData, isHistorical, isSyncing }) {
                 }}
               />
               
-              {/* Y Axis with Larger Labels & Ticks */}
               <YAxis 
                 type="number" 
                 dataKey="ppg" 
@@ -195,7 +199,6 @@ export default function OmfgRadar({ visibleData, isHistorical, isSyncing }) {
 
               <RechartsTooltip content={<RadarTooltip />} cursor={{ stroke: '#555', strokeDasharray: '3 3' }} />
               
-              {/* The Median Crosshairs */}
               <ReferenceLine x={radarChartData.medOmfg} stroke="#666" strokeWidth={2} strokeDasharray="4 4" />
               <ReferenceLine y={radarChartData.medPpg} stroke="#666" strokeWidth={2} strokeDasharray="4 4" />
               
@@ -204,7 +207,6 @@ export default function OmfgRadar({ visibleData, isHistorical, isSyncing }) {
                   const isSearching = searchQuery.trim().length > 0;
                   const isMatch = entry.isSearchMatch;
 
-                  // Dim non-matching dots when searching
                   let opacity = isSearching ? (isMatch ? 1 : 0.15) : 0.85;
                   let radius = isMatch ? 9 : 6;
                   let stroke = isMatch ? '#ffffff' : 'none';

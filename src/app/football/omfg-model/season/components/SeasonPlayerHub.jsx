@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { RefreshCw, Search, TrendingUp, Activity, AlertCircle } from 'lucide-react';
+import { RefreshCw, Search, TrendingUp, Activity, AlertCircle, Info } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
 
 // --- NFL Team Primary Colors ---
@@ -55,7 +55,7 @@ const ArcTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-export default function OmfgPlayerHub({ availableModels }) {
+export default function SeasonPlayerHub({ availableModels }) {
   const [playerDB, setPlayerDB] = useState({});
   const [historicalData, setHistoricalData] = useState({});
   const [isBuildingHistory, setIsBuildingHistory] = useState(true);
@@ -329,9 +329,18 @@ export default function OmfgPlayerHub({ availableModels }) {
           )}
         </div>
         
-        <div className="text-right hidden md:block">
-          <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Career Arc</h2>
-          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Year-Over-Year Utilization</p>
+        <div className="text-right hidden md:flex items-center gap-3">
+          <div className="relative group cursor-help">
+            <Info size={18} className="text-gray-500 hover:text-white transition-colors" />
+            <div className="absolute bottom-full right-0 mb-3 px-4 py-3 bg-[#1a1a1a] border border-gray-700 text-gray-300 text-[11px] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] w-64 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed">
+              Fantasy production is sticky. Reviewing a player's previous seasonal profiles helps us predict what information will carry into the next season.
+              <div className="absolute top-full right-1 border-4 border-transparent border-t-gray-700"></div>
+            </div>
+          </div>
+          <div>
+            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Career Arc</h2>
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Year-Over-Year Utilization</p>
+          </div>
         </div>
       </div>
 

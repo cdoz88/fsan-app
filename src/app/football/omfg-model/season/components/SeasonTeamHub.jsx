@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { RefreshCw, ChevronDown, Target, Crosshair } from 'lucide-react';
+import { RefreshCw, ChevronDown, Target, Crosshair, Info } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 
 // --- NFL Team Primary Colors ---
@@ -25,15 +25,6 @@ const hexToRgba = (hex, alpha) => {
   const g = (num >> 8) & 255;
   const b = num & 255;
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
-
-// --- Helper: Get Headshot URL ---
-const getHeadshotUrl = (playerId, fullName) => {
-  if (playerId && String(playerId).length > 3) {
-    return `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${playerId}.png&w=350&h=254`;
-  }
-  const cleanName = fullName.toLowerCase().replace(/[^a-z0-9]/g, '');
-  return `https://sleepercdn.com/content/nfl/players/thumb/${cleanName}.jpg`;
 };
 
 // --- Custom Headshot X-Axis Component ---
@@ -249,7 +240,6 @@ export default function OmfgTeamHub({ visibleData, isHistorical, isSyncing }) {
 
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [donutMetric, setDonutMetric] = useState('First Read Targets');
-  const [teamPosition, setTeamPosition] = useState('All'); // NEW: Positional filter state
 
   useEffect(() => {
     if (availableTeams.length > 0 && (!selectedTeam || !availableTeams.includes(selectedTeam))) {
@@ -257,29 +247,25 @@ export default function OmfgTeamHub({ visibleData, isHistorical, isSyncing }) {
     }
   }, [availableTeams, selectedTeam]);
 
-  const getStat = (player, statName) => Number(player[`Projected ${statName}`] ?? player[statName] ?? 0);
+  const getStat = (player, statName) => {
+     const hyphenated = statName.replace(' ', '-');
+     return Number(
+       player[`Projected ${statName}`] ?? 
+       player[statName] ?? 
+       player[`Actual ${statName}`] ?? 
+       player[hyphenated] ?? 
+       player[`Projected ${hyphenated}`] ?? 
+       0
+     );
+  };
 
   const activeColor = selectedTeam && teamColors[selectedTeam] ? teamColors[selectedTeam] : '#1b75bb';
-
-  const generatePalette = (hex, count) => {
-    const palette = [
-      hex, 
-      '#f5a623', 
-      '#10b981', 
-      '#8b5cf6', 
-      '#ec4899', 
-      '#f43f5e', 
-      '#64748b'  
-    ];
-    return palette.slice(0, count);
-  };
 
   // --- PREP DATA FOR ALPHA BAR CHART (Top 5 OMFG) ---
   const alphaData = useMemo(() => {
     if (!selectedTeam) return [];
     
-    // Filter by team AND selected position
-    const teamPlayers = visibleData.filter(p => p.Team === selectedTeam && (teamPosition === 'All' || p.Position === teamPosition));
+    const teamPlayers = visibleData.filter(p => p.Team === selectedTeam);
     
     return teamPlayers
       .map(p => ({
@@ -292,14 +278,13 @@ export default function OmfgTeamHub({ visibleData, isHistorical, isSyncing }) {
       .filter(p => p.omfg > 0)
       .sort((a, b) => b.omfg - a.omfg)
       .slice(0, 5); 
-  }, [visibleData, selectedTeam, teamPosition]);
+  }, [visibleData, selectedTeam]);
 
   // --- PREP DATA FOR DONUT CHART (Monochromatic Opacities) ---
   const donutData = useMemo(() => {
     if (!selectedTeam) return [];
 
-    // Filter by team AND selected position
-    const teamPlayers = visibleData.filter(p => p.Team === selectedTeam && (teamPosition === 'All' || p.Position === teamPosition));
+    const teamPlayers = visibleData.filter(p => p.Team === selectedTeam);
 
     let mapped = teamPlayers.map(p => ({
       name: p.Player.split(' ').pop(),
@@ -315,22 +300,19 @@ export default function OmfgTeamHub({ visibleData, isHistorical, isSyncing }) {
       mapped = [...top6, { name: 'Others', fullName: 'Other Players', value: othersVal, pos: 'MIX', playerId: null }];
     }
 
-    // Monochromatic Opacities (1.0 down to 0.18)
     const opacities = [1.0, 0.82, 0.65, 0.50, 0.38, 0.27, 0.18];
 
     return mapped.map((item, index) => ({
       ...item,
       fill: hexToRgba(activeColor, opacities[index] || 0.2)
     }));
-  }, [visibleData, selectedTeam, donutMetric, activeColor, isHistorical, teamPosition]);
+  }, [visibleData, selectedTeam, donutMetric, activeColor]);
 
   const metricLabels = {
     'First Read Targets': 'First Read',
     'End Zone Targets': 'End Zone',
     'Rush Attempts': 'Rush'
   };
-
-  const positions = ['All', 'QB', 'RB', 'WR', 'TE'];
 
   if (isSyncing || dbLoading) {
     return (
@@ -361,28 +343,20 @@ export default function OmfgTeamHub({ visibleData, isHistorical, isSyncing }) {
             value={selectedTeam} 
             onChange={setSelectedTeam} 
           />
-          
-          {/* Positional Filters for Team Hub */}
-          <div className="flex flex-wrap bg-[#1a1a1a] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit shrink-0">
-            {positions.map(pos => (
-              <button
-                key={pos}
-                onClick={() => setTeamPosition(pos)}
-                className={`px-3 py-1.5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${
-                  teamPosition === pos 
-                  ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' 
-                  : 'text-gray-500 hover:text-white hover:bg-[#252525]'
-                }`}
-              >
-                {pos}
-              </button>
-            ))}
-          </div>
         </div>
         
-        <div className="text-right hidden xl:block">
-          <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Team Utilization</h2>
-          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Target High-Value Opportunities</p>
+        <div className="text-right hidden xl:flex items-center gap-3">
+          <div className="relative group cursor-help">
+            <Info size={18} className="text-gray-500 hover:text-white transition-colors" />
+            <div className="absolute bottom-full right-0 mb-3 px-4 py-3 bg-[#1a1a1a] border border-gray-700 text-gray-300 text-[11px] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] w-64 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed">
+              Visualize how a team's total offense is distributed. Use the Donut Chart to see which players dominate their team's high-value scoring and volume opportunities.
+              <div className="absolute top-full right-1 border-4 border-transparent border-t-gray-700"></div>
+            </div>
+          </div>
+          <div>
+            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Team Utilization</h2>
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Target High-Value Opportunities</p>
+          </div>
         </div>
       </div>
 
@@ -395,8 +369,8 @@ export default function OmfgTeamHub({ visibleData, isHistorical, isSyncing }) {
               <Target size={16} />
             </div>
             <div>
-              <h3 className="text-sm font-black text-white uppercase tracking-widest leading-none">Top Utilization</h3>
-              <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1">Highest OMFG Scores</p>
+              <h3 className="text-sm font-black text-white uppercase tracking-widest leading-none">Top Season Utilization</h3>
+              <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1">Highest SOS OMFG Scores</p>
             </div>
           </div>
 
@@ -425,13 +399,18 @@ export default function OmfgTeamHub({ visibleData, isHistorical, isSyncing }) {
                     animationDuration={1000}
                   >
                     {alphaData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index === 0 ? activeColor : hexToRgba(activeColor, 0.55)} />
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={index === 0 ? activeColor : hexToRgba(activeColor, 0.55)} 
+                      />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xs font-bold uppercase">No Players Found for {teamPosition}</div>
+              <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xs font-bold uppercase">
+                No Players Found
+              </div>
             )}
           </div>
         </div>
@@ -468,8 +447,12 @@ export default function OmfgTeamHub({ visibleData, isHistorical, isSyncing }) {
           <div className="flex-1 w-full min-h-[300px] relative flex items-center justify-center">
             {donutData.length > 0 && (
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
-                <span className="text-3xl font-black text-white leading-none">{Number(donutData[0]?.value || 0).toFixed(1)}</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mt-1">Team High</span>
+                <span className="text-3xl font-black text-white leading-none">
+                  {Number(donutData[0]?.value || 0).toFixed(1)}
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mt-1">
+                  Team High
+                </span>
               </div>
             )}
             
@@ -488,14 +471,21 @@ export default function OmfgTeamHub({ visibleData, isHistorical, isSyncing }) {
                     animationDuration={1000}
                   >
                     {donutData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} className="hover:opacity-80 transition-opacity" style={{ cursor: 'pointer' }} />
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.fill} 
+                        className="hover:opacity-80 transition-opacity" 
+                        style={{ cursor: 'pointer' }} 
+                      />
                     ))}
                   </Pie>
                   <RechartsTooltip content={<DonutTooltip playerDB={playerDB} />} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xs font-bold uppercase">No Stats Found</div>
+              <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xs font-bold uppercase">
+                No Stats Found
+              </div>
             )}
           </div>
 
