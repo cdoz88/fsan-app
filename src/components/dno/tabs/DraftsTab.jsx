@@ -45,6 +45,69 @@ export default function DraftsTab({
   const [statusFilter, setStatusFilter] = useState('all');
   const [styleFilter, setStyleFilter] = useState('all');
   const [mySleeperLeagueIds, setMySleeperLeagueIds] = useState(new Set());
+  const [liveDraftStatuses, setLiveDraftStatuses] = useState({});
+
+  // Dynamically fetch live draft statuses from Sleeper API for full leagues
+  useEffect(() => {
+    const fetchLiveStatuses = async () => {
+      // Find full leagues to check if they are drafting or completed
+      const fullLeagues = leagues.filter(l => {
+        return Math.max(0, l.total_spots - l.filled_spots) === 0;
+      });
+
+      if (fullLeagues.length === 0) return;
+
+      const newStatuses = {};
+      
+      await Promise.all(
+        fullLeagues.map(async (league) => {
+          try {
+            let draftId = league.draft_id;
+            let leagueStatus = league.status || '';
+
+            // If we don't have the draft ID in the DB, fetch the league to get it
+            if (!draftId) {
+              const targetId = league.sleeper_id || league.id;
+              const lgRes = await fetch(`https://api.sleeper.app/v1/league/${targetId}`);
+              if (lgRes.ok) {
+                const lgData = await lgRes.json();
+                if (lgData) {
+                  draftId = lgData.draft_id;
+                  leagueStatus = lgData.status || '';
+                }
+              }
+            }
+
+            let draftStatus = '';
+            // Now fetch the actual draft object to get its live status
+            if (draftId) {
+              const drRes = await fetch(`https://api.sleeper.app/v1/draft/${draftId}`);
+              if (drRes.ok) {
+                const drData = await drRes.json();
+                if (drData && drData.status) {
+                  draftStatus = drData.status;
+                }
+              }
+            }
+
+            // Save the dynamic statuses to state so the UI updates instantly
+            newStatuses[league.id] = {
+              status: (draftStatus || leagueStatus).toLowerCase(),
+              draft_id: draftId
+            };
+          } catch (e) {
+            console.warn(`Could not fetch Sleeper status for ${league.id}`);
+          }
+        })
+      );
+      
+      if (Object.keys(newStatuses).length > 0) {
+        setLiveDraftStatuses(newStatuses);
+      }
+    };
+
+    fetchLiveStatuses();
+  }, [leagues]);
 
   // Fetch connected Sleeper user's leagues automatically on load
   useEffect(() => {
@@ -236,9 +299,16 @@ export default function DraftsTab({
                   const styleLabel = isSlow ? 'Slow Draft' : 'Live / Fast';
                   const styleIcon = isSlow ? '🐢' : '⚡️';
 
-                  const statusStr = String(league.status || league.sleeper_status || league.draft_status || '').toLowerCase();
+                  // Dynamic API Status Logic
+                  const apiData = liveDraftStatuses[league.id] || {};
+                  const activeDraftId = apiData.draft_id || league.draft_id;
+                  const apiStatus = apiData.status;
+
+                  const statusStr = String(apiStatus || league.status || league.sleeper_status || league.draft_status || '').toLowerCase();
+                  
+                  // In Sleeper, if it hits in_season or post_draft, the draft is done
                   const isCompleted = ['in_season', 'post_season', 'complete', 'completed', 'drafted', 'post_draft'].includes(statusStr);
-                  const isDrafting = !isCompleted && (statusStr === 'drafting' || (isSlow && isFull && !statusStr));
+                  const isDrafting = !isCompleted && (statusStr === 'drafting' || statusStr === 'paused');
 
                   let timeDisplay;
                   if (isCompleted) {
@@ -300,8 +370,8 @@ export default function DraftsTab({
                       <div className="shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
                         {isJoined ? (
                           <a href={targetInviteLink || `https://sleeper.com/leagues/${league.id}`} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 text-green-500 font-black uppercase tracking-widest text-xs py-3 rounded-xl border border-green-900/50 transition-colors flex items-center justify-center gap-2"><ExternalLink size={14} /> Go to League</a>
-                        ) : (isFull && league.draft_id) ? (
-                          <a href={`https://sleeper.com/draft/nfl/${league.draft_id}`} target="_blank" rel="noopener noreferrer" className={`w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 font-black uppercase tracking-widest text-xs py-3 rounded-xl border transition-colors flex items-center justify-center gap-2 ${isCompleted ? 'text-emerald-500 border-emerald-900/50' : 'text-red-500 border-red-900/50'}`}>
+                        ) : (isFull && activeDraftId) ? (
+                          <a href={`https://sleeper.com/draft/nfl/${activeDraftId}`} target="_blank" rel="noopener noreferrer" className={`w-full sm:w-auto px-6 bg-transparent hover:bg-gray-800 font-black uppercase tracking-widest text-xs py-3 rounded-xl border transition-colors flex items-center justify-center gap-2 ${isCompleted ? 'text-emerald-500 border-emerald-900/50' : 'text-red-500 border-red-900/50'}`}>
                             <Eye size={14} /> {isCompleted ? 'View Draftboard' : 'Watch Draft'}
                           </a>
                         ) : isFull ? (
