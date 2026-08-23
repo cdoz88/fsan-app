@@ -56,7 +56,8 @@ function compile() {
   const compiledPlayers = [];
   const dataDir = path.join(__dirname, 'Data');
 
-  const parsePositionFile = (filename, position, fromLine, rowCallback) => {
+  // 🛡️ REWRITTEN: Bulletproof parser that automatically finds headers and adapts to structural changes
+  const parsePositionFile = (filename, position, rowCallback) => {
     const filePath = path.join(dataDir, filename);
     if (!fs.existsSync(filePath)) {
       console.log(`⚠️ File not found: ${filename}. Skipping ${position}...`);
@@ -65,45 +66,87 @@ function compile() {
 
     const fileContent = fs.readFileSync(filePath, 'utf-8');
     
-    const dynamicColumns = (headers) => {
-        const counts = {};
-        return headers.map(h => {
-            const cleanH = h ? h.trim() : 'UNKNOWN';
-            if (counts[cleanH]) {
-                counts[cleanH] += 1;
-                return `${cleanH}_${counts[cleanH]}`;
-            }
-            counts[cleanH] = 1;
-            return cleanH;
-        });
-    };
-
-    const records = parse(fileContent, {
-      columns: dynamicColumns,
+    // Parse ALL rows as raw arrays first, relaxing limits to avoid crashing on misaligned data
+    const rawRecords = parse(fileContent, {
+      columns: false,
       skip_empty_lines: true,
-      from_line: fromLine
+      relax_column_count: true
     });
 
-    records.forEach(row => {
-      if (!row.Player || row.Player.trim() === '' || row.Player === 'Player') return;
-      const { name, team } = cleanNameAndTeam(row.Player, position === 'DST');
+    // 1. Auto-detect the header row (look for 'Player')
+    let headerRowIndex = -1;
+    for (let i = 0; i < rawRecords.length; i++) {
+        if (rawRecords[i].some(cell => typeof cell === 'string' && cell.trim() === 'Player')) {
+            headerRowIndex = i;
+            break;
+        }
+    }
+
+    if (headerRowIndex === -1) {
+        console.log(`⚠️ Header row not found in ${filename}`);
+        return;
+    }
+
+    const rawHeaders = rawRecords[headerRowIndex].map(h => h ? h.trim() : 'UNKNOWN');
+    
+    // 2. De-duplicate headers (e.g., YDS becomes YDS_2 for rushing)
+    const counts = {};
+    const dynamicHeaders = rawHeaders.map(h => {
+        if (counts[h]) {
+            counts[h] += 1;
+            return `${h}_${counts[h]}`;
+        }
+        counts[h] = 1;
+        return h;
+    });
+
+    // 3. Process the data rows
+    let loadedCount = 0;
+    for (let i = headerRowIndex + 1; i < rawRecords.length; i++) {
+        const rowArr = rawRecords[i];
+        if (rowArr.length < 3) continue; // Skip junk rows
+        
+        // Convert array to object using our dynamic headers
+        const row = {};
+        dynamicHeaders.forEach((h, idx) => {
+            row[h] = rowArr[idx];
+        });
+
+        if (!row.Player || row.Player.trim() === '') continue;
+        
+        // 4. Handle both OLD and NEW CSV formats
+        let playerName = row.Player;
+        let team = 'fa';
+
+        if (row.Team) {
+            team = row.Team.toLowerCase();
+            playerName = playerName.trim(); 
+        } else {
+            const extracted = cleanNameAndTeam(row.Player, position === 'DST');
+            playerName = extracted.name;
+            team = extracted.team;
+        }
       
-      const playerObj = {
-        name, team, position,
-        pass_yds: 0, pass_tds: 0, ints: 0,
-        rush_yds: 0, rush_tds: 0,
-        receptions: 0, rec_yds: 0, rec_tds: 0,
-        fumbles: 0, age: 26, years_exp: 3 
-      };
+        const playerObj = {
+          name: playerName, 
+          team: team, 
+          position,
+          pass_yds: 0, pass_tds: 0, ints: 0,
+          rush_yds: 0, rush_tds: 0,
+          receptions: 0, rec_yds: 0, rec_tds: 0,
+          fumbles: 0, age: 26, years_exp: 3 
+        };
 
-      rowCallback(row, playerObj);
-      compiledPlayers.push(playerObj);
-    });
-    console.log(`✅ Loaded ${records.length} items from ${filename}`);
+        rowCallback(row, playerObj);
+        compiledPlayers.push(playerObj);
+        loadedCount++;
+    }
+
+    console.log(`✅ Loaded ${loadedCount} items from ${filename}`);
   };
 
   // 1. QBs
-  parsePositionFile('QB 2026 Proj Stats.csv', 'QB', 2, (row, obj) => {
+  parsePositionFile('QB 2026 Proj Stats.csv', 'QB', (row, obj) => {
     obj.pass_yds = cleanNum(row.YDS);
     obj.pass_tds = cleanNum(row.TDS);
     obj.ints = cleanNum(row.INTS);
@@ -113,7 +156,7 @@ function compile() {
   });
 
   // 2. RBs
-  parsePositionFile('RB 2026 Proj Stats.csv', 'RB', 2, (row, obj) => {
+  parsePositionFile('RB 2026 Proj Stats.csv', 'RB', (row, obj) => {
     obj.rush_yds = cleanNum(row.YDS);
     obj.rush_tds = cleanNum(row.TDS);
     obj.receptions = cleanNum(row.REC);
@@ -123,7 +166,7 @@ function compile() {
   });
 
   // 3. WRs
-  parsePositionFile('WR 2026 Proj Stats.csv', 'WR', 2, (row, obj) => {
+  parsePositionFile('WR 2026 Proj Stats.csv', 'WR', (row, obj) => {
     obj.receptions = cleanNum(row.REC);
     obj.rec_yds = cleanNum(row.YDS);
     obj.rec_tds = cleanNum(row.TDS);
@@ -133,7 +176,7 @@ function compile() {
   });
 
   // 4. TEs
-  parsePositionFile('TE 2026 Proj Stats.csv', 'TE', 2, (row, obj) => {
+  parsePositionFile('TE 2026 Proj Stats.csv', 'TE', (row, obj) => {
     obj.receptions = cleanNum(row.REC);
     obj.rec_yds = cleanNum(row.YDS);
     obj.rec_tds = cleanNum(row.TDS);
@@ -141,14 +184,14 @@ function compile() {
   });
 
   // 5. Kickers 
-  parsePositionFile('K 2026 Proj Stats.csv', 'K', 1, (row, obj) => {
+  parsePositionFile('K 2026 Proj Stats.csv', 'K', (row, obj) => {
     obj.fg_made = cleanNum(row.FG);
     obj.fg_att = cleanNum(row.FGA);
     obj.xp_made = cleanNum(row.XPT);
   });
 
   // 6. Defenses 
-  parsePositionFile('DST 2026 Proj Stats.csv', 'DST', 1, (row, obj) => {
+  parsePositionFile('DST 2026 Proj Stats.csv', 'DST', (row, obj) => {
     obj.dst_sacks = cleanNum(row.SACK);
     obj.dst_ints = cleanNum(row.INT);
     obj.dst_fumbles_rec = cleanNum(row.FR);
@@ -163,7 +206,7 @@ function compile() {
   if (fs.existsSync(adpFilePath)) {
     const adpContent = fs.readFileSync(adpFilePath, 'utf-8');
     
-    // FIX: Added 'relax_column_count: true' to ignore blank rows at the bottom of the CSV
+    // Auto-detect ADP format dynamically 
     const adpRecords = parse(adpContent, {
       columns: headers => headers.map(h => h ? h.trim() : ''), 
       skip_empty_lines: true,
@@ -171,12 +214,12 @@ function compile() {
     });
 
     adpRecords.forEach(row => {
-      // 1. Look for either the old 'Player' column or the new 'Player (Bye)' column
+      // Check for 'Player' or the new 'Player (Bye)' column
       let playerName = row.Player || row['Player (Bye)'];
       const adpVal = row.AVG || row.ADP;
 
       if (playerName && adpVal) {
-        // 2. If it's the new format, strip off the "   TEAM (BYE)" using the triple-space divider
+        // Strip off the "   TEAM (BYE)" using the triple-space divider (New Format)
         if (playerName.includes('   ')) {
            playerName = playerName.split('   ')[0].trim();
         } else {
