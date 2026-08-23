@@ -171,12 +171,20 @@ function compile() {
     });
 
     adpRecords.forEach(row => {
-      // Check for 'Player' and 'AVG' (or 'ADP' just in case)
-      const playerName = row.Player;
+      // 1. Look for either the old 'Player' column or the new 'Player (Bye)' column
+      let playerName = row.Player || row['Player (Bye)'];
       const adpVal = row.AVG || row.ADP;
 
       if (playerName && adpVal) {
-        // Run the ADP name through the Normalizer
+        // 2. If it's the new format, strip off the "   TEAM (BYE)" using the triple-space divider
+        if (playerName.includes('   ')) {
+           playerName = playerName.split('   ')[0].trim();
+        } else {
+           // Fallback regex to clean the team/bye just in case it exports with single spaces
+           playerName = playerName.replace(/\s+[A-Z]{2,3}\s+\(\d+\)$/i, '').trim();
+        }
+
+        // Run the clean ADP name through the Normalizer
         const cleanName = normalizeName(playerName);
         marketData[cleanName] = parseFloat(adpVal) || 300;
       }
