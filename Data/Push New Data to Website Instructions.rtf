@@ -1,0 +1,27 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fswiss\fcharset0 Helvetica-Bold;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f0\fs24 \cf0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Here is what you need to do:\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\b \cf0 1. Run the Compiler
+\f0\b0 \
+Open your terminal, navigate to the root directory of your project (where compileProjections.js is located), and run this command:\
+\pard\pardeftab720\partightenfactor0
+\cf0 Bash\
+\
+node compileProjections.js\
+\pard\pardeftab720\sa240\partightenfactor0
+\cf0 This script will parse all your new CSVs, normalize the names, attach the ADP values, and write a fresh database directly into src/utils/offseasonData.js. You should see a success message in your terminal telling you how many items were loaded.\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\b \cf0 2. Push to Production
+\f0\b0  Because the offseasonData.js file is statically bundled into your Next.js build, you need to make sure the newly generated src/utils/offseasonData.js file is committed to your repository and pushed to GitHub.\
+Once Vercel receives that commit, it will trigger a new build and your updated projections and rankings will instantly go live across the site!\
+}
