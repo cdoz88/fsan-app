@@ -33,7 +33,20 @@ export default function Header({ activeSport }) {
   const [suggestions, setSuggestions] = useState([]);
   
   const { data: session, status } = useSession();
-  
+
+  // Determine user tier based on session roles or tier property
+  let userTier = 'free';
+  if (session?.user) {
+      const roles = session.user.roles || [];
+      const isStaff = roles.some(r => r.includes('administrator') || r.includes('editor') || r.includes('author'));
+      
+      if (isStaff) {
+        userTier = 'pro-plus';
+      } else if (session.user.tier) {
+        userTier = session.user.tier.replace('_', '-');
+      }
+  }
+
   const pathname = usePathname() || '';
   const router = useRouter();
   const pathParts = pathname.split('/').filter(Boolean);
@@ -355,7 +368,21 @@ export default function Header({ activeSport }) {
 
                     {/* FREEMIUM & MANAGEMENT BUTTON */}
                     <div className="px-4 py-4 border-t border-gray-800 mt-2 text-center">
-                      {currentSportLeagues.length === 0 ? (
+                      {!session ? (
+                         <>
+                          <p className="text-xs text-gray-400 mb-3">Login required to sync leagues.</p>
+                          <button onClick={() => { setIsLeagueDropdownOpen(false); openLogin(); }} className="inline-block w-full bg-[#252525] hover:bg-gray-700 border border-gray-700 text-white font-bold text-[10px] uppercase tracking-widest py-2 rounded-lg transition-colors shadow-inner">
+                              Log In to Sync
+                          </button>
+                         </>
+                      ) : userTier === 'free' ? (
+                         <>
+                          <p className="text-xs text-gray-400 mb-3">Pro subscription required.</p>
+                          <Link href="/subscribe" onClick={() => setIsLeagueDropdownOpen(false)} className="inline-block w-full bg-gradient-to-r from-[#e42d38] to-[#8a1a20] hover:from-[#f03a45] hover:to-[#a3222a] text-white font-bold text-[10px] uppercase tracking-widest py-2 rounded-lg transition-colors shadow-lg">
+                              Upgrade to Sync
+                          </Link>
+                         </>
+                      ) : currentSportLeagues.length === 0 ? (
                         <>
                           <p className="text-xs text-gray-400 mb-3">No {activeSport} leagues synced.</p>
                           <Link href="/account#synced-leagues" onClick={() => setIsLeagueDropdownOpen(false)} className="inline-block w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-[10px] uppercase tracking-widest py-2 rounded-lg transition-colors">
