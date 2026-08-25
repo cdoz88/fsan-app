@@ -149,6 +149,93 @@ export default function OmfgTradeValueClient() {
     return 1.0;
   };
 
+  // 🎯 STRATEGY-AWARE ACTION BADGE ENGINE
+  const getActionBadge = (player, format, strategy) => {
+    const { position, age, SOS_OMFG, OMFG_Edge, P50 } = player;
+    const edgeMult = 1.0 + (OMFG_Edge / 100);
+
+    // Redraft Mode: Driven by OMFG Edge & Usage vs Production
+    if (format === 'redraft') {
+      if (edgeMult > 1.05) {
+        return { text: 'BUY: Undervalued', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+      }
+      if (edgeMult < 0.95) {
+        return { text: 'SELL: Volatile Profile', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
+      }
+      return { text: 'FAIR VALUE', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
+    }
+
+    // Dynasty Mode: Cross-references Age + OMFG Profile + Selected Strategy
+    const pos = position === 'WR/TE' ? 'TE' : position;
+    const playerAge = age || 25;
+
+    let youngAge = 24;
+    let primeAge = 26;
+    let oldAge = 28;
+
+    if (pos === 'WR') {
+      youngAge = 24; primeAge = 27; oldAge = 29;
+    } else if (pos === 'QB') {
+      youngAge = 26; primeAge = 32; oldAge = 35;
+    } else if (pos === 'TE') {
+      youngAge = 25; primeAge = 28; oldAge = 31;
+    }
+
+    if (strategy === 'build') {
+      // Rebuild Mode: Target young studs, sell/exit older veterans
+      if (playerAge >= oldAge) {
+        return { text: 'EXIT STRATEGY', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
+      }
+      if (playerAge >= primeAge) {
+        if (P50 > 150 || SOS_OMFG > 80) {
+          return { text: 'SELL HIGH', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
+        }
+        return { text: 'EXIT STRATEGY', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
+      }
+      if (playerAge <= youngAge) {
+        if (SOS_OMFG >= 75 || edgeMult > 1.02) {
+          return { text: 'ACQUISITION TARGET', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+        }
+        return { text: 'BUY LOW', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+      }
+    } else if (strategy === 'win_now') {
+      // Win Now Mode: Target high-volume producers regardless of age, sell unproven youth
+      if (playerAge >= primeAge && (P50 > 150 || SOS_OMFG >= 80)) {
+        return { text: 'ACQUISITION TARGET', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+      }
+      if (playerAge >= oldAge && SOS_OMFG >= 70) {
+        return { text: 'BUY LOW', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+      }
+      if (playerAge <= youngAge && SOS_OMFG < 65 && P50 < 120) {
+        return { text: 'SELL HIGH', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
+      }
+    } else {
+      // Balanced Strategy: Equilibrium between age and OMFG Edge
+      if (playerAge <= youngAge && (SOS_OMFG >= 80 || edgeMult > 1.05)) {
+        return { text: 'ACQUISITION TARGET', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+      }
+      if (playerAge <= youngAge && edgeMult > 1.00) {
+        return { text: 'BUY LOW', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+      }
+      if (playerAge >= oldAge && SOS_OMFG < 75) {
+        return { text: 'EXIT STRATEGY', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
+      }
+      if (playerAge >= primeAge && SOS_OMFG >= 85 && edgeMult < 0.98) {
+        return { text: 'SELL HIGH', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
+      }
+    }
+
+    // Default Fallbacks
+    if (edgeMult > 1.05) {
+      return { text: 'BUY LOW', color: 'text-teal-400 bg-teal-950/30 border-teal-800/40' };
+    }
+    if (edgeMult < 0.95) {
+      return { text: 'SELL HIGH', color: 'text-rose-400 bg-rose-950/30 border-rose-800/40' };
+    }
+
+    return { text: 'FAIR VALUE', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
+  };
+
   // ⚡ DYNAMIC RECALCULATION ENGINE
   const processedRankings = useMemo(() => {
     const remainingWeeks = Math.max(1, 18 - activeWeekNum);
@@ -245,16 +332,7 @@ export default function OmfgTradeValueClient() {
 
     recalculated.forEach(player => {
         player.trade_value = Math.round((player.rawValue / maxRawValue) * 1000);
-        
-        let actionBadge = { text: 'FAIR VALUE', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
-        const edgeMult = 1.0 + (player.OMFG_Edge / 100);
-        
-        if (edgeMult > 1.05) {
-            actionBadge = { text: 'BUY: Undervalued', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
-        } else if (edgeMult < 0.95) {
-            actionBadge = { text: 'SELL: Volatile Profile', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
-        }
-        player.actionBadge = actionBadge;
+        player.actionBadge = getActionBadge(player, formatMode, dynastyStrategy);
     });
 
     recalculated.sort((a, b) => b.trade_value - a.trade_value);
@@ -311,8 +389,6 @@ export default function OmfgTradeValueClient() {
   };
 
   const renderCareerArc = (player) => {
-    // 💡 TO-DO: Replace these mock y1/y2 variables with actual API data (e.g., player.omfg_2024, player.omfg_2025)
-    // Using a deterministic hash based on the player's name length so the mock data stays perfectly stable on screen for testing!
     const hash = player.name.charCodeAt(0) + player.name.charCodeAt(player.name.length - 1);
     const diff1 = (hash % 15) - 5; 
     const diff2 = ((hash * 2) % 10) - 3; 
@@ -504,7 +580,7 @@ export default function OmfgTradeValueClient() {
           </div>
         </div>
 
-        {/* Custom Scoring Panel (Updated for v2.0) */}
+        {/* Custom Scoring Panel */}
         {showSettings && !activeLeague && (
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 mb-8 shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
             <h3 className="text-sm font-black text-white uppercase tracking-wider mb-6">
@@ -534,7 +610,6 @@ export default function OmfgTradeValueClient() {
                 </div>
               </div>
 
-              {/* V2.0 ADDITION: Passing TDs Toggle */}
               <div className="flex flex-col gap-3">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Passing TDs</span>
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
