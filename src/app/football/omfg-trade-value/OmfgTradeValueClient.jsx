@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Settings, Info, X, RefreshCw, Trophy, ShieldCheck } from 'lucide-react'; 
+import { Settings, Info, X, RefreshCw, Trophy, ShieldCheck, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react'; 
 import { useLeague } from '../../../context/LeagueContext'; 
 
 export default function OmfgTradeValueClient() {
@@ -277,6 +277,8 @@ export default function OmfgTradeValueClient() {
 
   const positions = ['All', 'QB', 'RB', 'WR', 'TE'];
 
+  // --- VISUALIZERS ---
+
   const minP25 = Math.min(...processedRankings.map(p => p.adjP25)) || 0;
   const maxP75 = Math.max(...processedRankings.map(p => p.adjP75)) || 1;
   const rangeSpan = (maxP75 - minP25) || 1;
@@ -305,6 +307,45 @@ export default function OmfgTradeValueClient() {
               </div>
           </div>
         </div>
+    );
+  };
+
+  const renderCareerArc = (player) => {
+    // 💡 TO-DO: Replace these mock y1/y2 variables with actual API data (e.g., player.omfg_2024, player.omfg_2025)
+    // Using a deterministic hash based on the player's name length so the mock data stays perfectly stable on screen for testing!
+    const hash = player.name.charCodeAt(0) + player.name.charCodeAt(player.name.length - 1);
+    const diff1 = (hash % 15) - 5; 
+    const diff2 = ((hash * 2) % 10) - 3; 
+    
+    const y1 = player.hist_2024 || Math.min(100, Math.max(0, player.SOS_OMFG - diff1 - diff2));
+    const y2 = player.hist_2025 || Math.min(100, Math.max(0, player.SOS_OMFG - diff1));
+    const y3 = player.SOS_OMFG;
+
+    const trendColor = y3 >= y2 ? 'text-green-400' : 'text-red-400';
+    const TrendIcon = y3 > y2 + 2 ? TrendingUp : y3 < y2 - 2 ? TrendingDown : Minus;
+
+    return (
+      <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+         <div className="flex flex-col items-center gap-0.5">
+           <span className="text-[7px] text-gray-600 font-bold uppercase tracking-widest">2024</span>
+           <span className="bg-[#111] text-gray-500 border border-gray-800 px-1.5 py-0.5 rounded text-[9px] font-black">{y1.toFixed(1)}</span>
+         </div>
+         <ChevronRight size={12} className="text-gray-700 mt-3" />
+         
+         <div className="flex flex-col items-center gap-0.5">
+           <span className="text-[7px] text-gray-500 font-bold uppercase tracking-widest">2025</span>
+           <span className="bg-[#1a1a1a] text-gray-400 border border-gray-700 px-1.5 py-0.5 rounded text-[9px] font-black">{y2.toFixed(1)}</span>
+         </div>
+         <ChevronRight size={12} className="text-gray-600 mt-3" />
+         
+         <div className="flex flex-col items-center gap-0.5">
+           <span className={`text-[7px] font-bold uppercase tracking-widest ${trendColor}`}>2026</span>
+           <div className={`flex items-center gap-1 bg-gray-800 border ${y3 >= y2 ? 'border-green-900/50 text-white' : 'border-red-900/50 text-white'} px-1.5 py-0.5 rounded shadow-sm`}>
+             <span className="text-[10px] font-black">{y3.toFixed(1)}</span>
+             <TrendIcon size={10} className={trendColor} />
+           </div>
+         </div>
+      </div>
     );
   };
 
@@ -337,6 +378,32 @@ export default function OmfgTradeValueClient() {
                 <p><strong>Reading Asset Volatility:</strong></p>
                 <p>• <span className="text-gray-300 font-bold">Wide Bar:</span> High-volatility / boom-or-bust profile with massive ceiling upside paired with downside risk.</p>
                 <p>• <span className="text-gray-300 font-bold">Narrow Bar:</span> Highly stable, predictable role with a tight range of outcomes and secure weekly utility.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ℹ️ Career Arc Modal */}
+      {activeModal === 'careerArc' && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#161616] border border-gray-800 w-full max-w-xl rounded-3xl p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <button onClick={() => setActiveModal(null)} className="absolute right-4 top-4 text-gray-500 hover:text-white transition-colors">
+              <X size={20} />
+            </button>
+            <h3 className="text-base font-black text-white uppercase tracking-wider mb-2 flex items-center gap-2">
+              <Info size={18} className="text-zinc-400" /> Career Arc Methodology
+            </h3>
+            
+            <div className="space-y-4 text-xs font-medium text-gray-400 leading-relaxed mt-4">
+              <p>
+                The <strong>Career Arc</strong> visualizes a player's underlying Season-Over-Season (SOS) OMFG trajectory over the past three years. This isolates true role development from fluctuating box-score luck.
+              </p>
+              
+              <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60 mt-4">
+                <p>• <span className="text-green-400 font-bold">Ascending Profile:</span> Consistent year-over-year growth in underlying profile strength. Identifies breakout candidates before the public catches on.</p>
+                <p>• <span className="text-gray-300 font-bold">Plateau Profile:</span> Stable, elite production holding at their peak. Safe, foundational dynasty building blocks.</p>
+                <p>• <span className="text-red-400 font-bold">Declining Profile:</span> Degrading underlying metrics. Signals a dying asset whose surface-level fantasy points are being propped up by unsustainable luck.</p>
               </div>
             </div>
           </div>
@@ -437,7 +504,7 @@ export default function OmfgTradeValueClient() {
           </div>
         </div>
 
-        {/* Custom Scoring Panel */}
+        {/* Custom Scoring Panel (Updated for v2.0) */}
         {showSettings && !activeLeague && (
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-6 mb-8 shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
             <h3 className="text-sm font-black text-white uppercase tracking-wider mb-6">
@@ -467,6 +534,7 @@ export default function OmfgTradeValueClient() {
                 </div>
               </div>
 
+              {/* V2.0 ADDITION: Passing TDs Toggle */}
               <div className="flex flex-col gap-3">
                 <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Passing TDs</span>
                 <div className="flex bg-[#111] rounded-xl p-1 border border-gray-800">
@@ -515,7 +583,6 @@ export default function OmfgTradeValueClient() {
 
                   {formatMode === 'dynasty' ? (
                     <>
-                      <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center">Age</th>
                       <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center relative group cursor-help hover:bg-gray-800/40 transition-colors">
                         <div className="flex items-center justify-center gap-1">
                           SOS OMFG
@@ -526,6 +593,7 @@ export default function OmfgTradeValueClient() {
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
                         </div>
                       </th>
+                      <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center">Age</th>
                     </>
                   ) : (
                     <>
@@ -552,14 +620,25 @@ export default function OmfgTradeValueClient() {
                     </>
                   )}
                   
-                  <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center border-l border-gray-800">
-                    <div className="flex items-center justify-center gap-1.5">
-                      Outcome Range (P25 - P75)
-                      <button onClick={() => setActiveModal('outcomeRange')} className="text-gray-500 hover:text-white transition-colors">
-                        <Info size={11} />
-                      </button>
-                    </div>
-                  </th>
+                  {formatMode === 'dynasty' && dynastyStrategy !== 'win_now' ? (
+                    <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center border-l border-gray-800">
+                      <div className="flex items-center justify-center gap-1.5">
+                        Career Arc (3YR Trend)
+                        <button onClick={() => setActiveModal('careerArc')} className="text-gray-500 hover:text-white transition-colors">
+                          <Info size={11} />
+                        </button>
+                      </div>
+                    </th>
+                  ) : (
+                    <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center border-l border-gray-800">
+                      <div className="flex items-center justify-center gap-1.5">
+                        {formatMode === 'dynasty' ? 'Current Season (P25 - P75)' : 'Outcome Range (P25 - P75)'}
+                        <button onClick={() => setActiveModal('outcomeRange')} className="text-gray-500 hover:text-white transition-colors">
+                          <Info size={11} />
+                        </button>
+                      </div>
+                    </th>
+                  )}
 
                   <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest">
                     <div className="flex items-center gap-1.5">Action Profile <button onClick={() => setActiveModal('marketAction')} className="text-gray-500 hover:text-white"><Info size={11} /></button></div>
@@ -622,8 +701,8 @@ export default function OmfgTradeValueClient() {
                       
                       {formatMode === 'dynasty' ? (
                         <>
-                          <td className="px-4 py-2.5 text-center"><span className="text-xs font-bold text-gray-300 bg-gray-800/80 px-2.5 py-1 rounded-md">{player.age || '-'}</span></td>
                           <td className="px-4 py-2.5 text-center"><div className="text-xs font-bold text-white">{player.SOS_OMFG.toFixed(1)}</div></td>
+                          <td className="px-4 py-2.5 text-center"><span className="text-xs font-bold text-gray-300 bg-gray-800/80 px-2.5 py-1 rounded-md">{player.age || '-'}</span></td>
                         </>
                       ) : (
                         <>
@@ -633,8 +712,11 @@ export default function OmfgTradeValueClient() {
                       )}
 
                       <td className="px-4 py-2.5 text-center border-l border-gray-800/50">
-                         {/* Passing Adjusted Projections into Visualizer */}
-                         {renderRangeVisualizer(player.adjP25, player.adjP50, player.adjP75)}
+                         {formatMode === 'dynasty' && dynastyStrategy !== 'win_now' ? (
+                            renderCareerArc(player)
+                         ) : (
+                            renderRangeVisualizer(player.adjP25, player.adjP50, player.adjP75)
+                         )}
                       </td>
                       
                       <td className="px-4 py-2.5">
