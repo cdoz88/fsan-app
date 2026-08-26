@@ -190,11 +190,11 @@ export default function WeeklyClient() {
 
         {/* Dynamic View Selector */}
         {viewMode === 'radar' ? (
-          <WeeklyRadar visibleData={playersData} isSyncing={isSyncing} />
+          <WeeklyRadar visibleData={playersData} isSyncing={isSyncing} currentPosition={currentPosition} />
         ) : viewMode === 'team' ? (
           <WeeklyTeamHub visibleData={playersData} isSyncing={isSyncing} />
         ) : viewMode === 'player' ? (
-          <WeeklyPlayerHub visibleData={playersData} isSyncing={isSyncing} />
+          <WeeklyPlayerHub availableModels={availableModels} visibleData={playersData} isSyncing={isSyncing} />
         ) : (
           <WeeklyTable visibleData={visibleData} isHistorical={isHistorical} isSyncing={isSyncing} />
         )}

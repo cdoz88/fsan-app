@@ -39,11 +39,18 @@ const getMedian = (arr) => {
   return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 };
 
-export default function WeeklyRadar({ visibleData, isHistorical, isSyncing }) {
+export default function WeeklyRadar({ visibleData, isHistorical, isSyncing, currentPosition }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const radarChartData = useMemo(() => {
-    const validData = visibleData.filter(p => {
+    // FIX: Filter by active position explicitly!
+    const positionFilteredData = visibleData.filter(p => {
+        if (currentPosition === 'All') return true;
+        if (p.Position === 'WR/TE') return currentPosition === 'WR' || currentPosition === 'TE';
+        return p.Position === currentPosition;
+    });
+
+    const validData = positionFilteredData.filter(p => {
       const matchup = Number(p['Matchup Score'] ?? p['Opportunity Factor'] ?? 50);
       const ppg = isHistorical ? Number(p['Actual Fantasy Points']) : Number(p['Projected Fantasy Points']);
       return !isNaN(matchup) && !isNaN(ppg) && ppg > 0;
@@ -95,7 +102,7 @@ export default function WeeklyRadar({ visibleData, isHistorical, isSyncing }) {
     });
 
     return { data, medMatchup, medPpg };
-  }, [visibleData, isHistorical, searchQuery]);
+  }, [visibleData, isHistorical, searchQuery, currentPosition]);
 
   return (
     <div className="bg-[#111] rounded-2xl shadow-2xl border border-gray-800 animate-in fade-in duration-500 relative min-h-[540px] p-6 pt-10">

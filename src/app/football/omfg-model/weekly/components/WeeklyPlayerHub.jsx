@@ -94,11 +94,13 @@ export default function WeeklyPlayerHub({ availableModels }) {
 
   useEffect(() => {
     async function fetchYearlyHistory() {
+      // FIX: Strict check ensuring we only process if selectedYear is active
       if (!selectedYear || availableModels.length === 0) return;
       
       setIsBuildingHistory(true);
       try {
-        const weeklyModels = availableModels.filter(m => m.week !== 'Season' && String(m.year) === selectedYear);
+        // FIX: Filters specifically to the year selected to prevent over-fetching
+        const weeklyModels = availableModels.filter(m => m.week !== 'Season' && String(m.year) === String(selectedYear));
         
         const fetchPromises = weeklyModels.map(m => 
           fetch(`/api/omfg-data?year=${m.year}&week=${m.week}`).then(r => r.json())
