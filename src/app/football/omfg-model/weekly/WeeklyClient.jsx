@@ -78,8 +78,15 @@ export default function WeeklyClient() {
           setAvailableModels(data.available_models);
           const activeWeekly = data.available_models.filter(m => m.week !== 'Season');
           if (activeWeekly.length > 0) {
-            setSelectedYear(String(activeWeekly[0].year));
-            setSelectedWeek(activeWeekly[0].week);
+            // FIX: Explicitly sort all returned models to guarantee the newest Year and Week are selected
+            const sortedModels = activeWeekly.sort((a, b) => {
+              if (b.year !== a.year) return Number(b.year) - Number(a.year);
+              const numA = parseInt(a.week.replace(/\D/g, '')) || 0;
+              const numB = parseInt(b.week.replace(/\D/g, '')) || 0;
+              return numB - numA;
+            });
+            setSelectedYear(String(sortedModels[0].year));
+            setSelectedWeek(sortedModels[0].week);
           }
         }
       } catch (err) {
@@ -110,7 +117,15 @@ export default function WeeklyClient() {
   const handleYearChange = (newYear) => {
     setSelectedYear(newYear);
     const validWeeks = Array.from(new Set(weeklyModels.filter(m => String(m.year) === newYear).map(m => m.week)));
-    if (validWeeks.length > 0) setSelectedWeek(validWeeks[0]);
+    // FIX: Ensure week stays valid when switching years
+    if (validWeeks.length > 0) {
+      const sortedWeeks = validWeeks.sort((a, b) => {
+          const numA = parseInt(a.replace(/\D/g, '')) || 0;
+          const numB = parseInt(b.replace(/\D/g, '')) || 0;
+          return numB - numA;
+      });
+      setSelectedWeek(sortedWeeks[0]);
+    }
   };
 
   const visibleData = useMemo(() => {

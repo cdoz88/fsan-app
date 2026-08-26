@@ -81,6 +81,24 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
 
   const getStat = (player, statName) => player[`Projected ${statName}`] ?? player[statName];
 
+  const getFlexibleValue = (player, matchRules) => {
+    if (!player) return null;
+    const normalize = (str) => String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
+    for (const [key, value] of Object.entries(player)) {
+      if (value === undefined || value === null || value === '') continue;
+      const normKey = normalize(key);
+      for (const rule of matchRules) {
+        if (Array.isArray(rule)) {
+          if (rule.every(sub => normKey.includes(normalize(sub)))) return value;
+        } else {
+          const normRule = normalize(rule);
+          if (normKey === normRule || normKey.includes(normRule)) return value;
+        }
+      }
+    }
+    return null;
+  };
+
   const renderExpandedStats = (player) => {
     const pos = player.Position;
     let stats = [];
@@ -89,25 +107,27 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
       stats = [
         { label: 'Pass Att', val: getStat(player, 'Pass Attempts'), key: 'Projected Pass Attempts' },
         { label: 'Pass Yds', val: getStat(player, 'Pass Yards'), key: 'Projected Pass Yards' },
-        { label: 'Pass TD', val: getStat(player, 'Pass TDs') ?? getStat(player, 'Pass TD'), key: 'Projected Pass TDs' },
+        { label: 'Pass TD', val: getFlexibleValue(player, ['Pass Td', 'Pass TD']), key: 'Projected Pass TDs' },
         { label: 'Rush Att', val: getStat(player, 'Rush Attempts'), key: 'Projected Rush Attempts' },
         { label: 'Rush Yds', val: getStat(player, 'Rush Yards'), key: 'Projected Rush Yards' },
-        { label: 'Rush TD', val: getStat(player, 'Rush TDs') ?? getStat(player, 'Rush TD'), key: 'Projected Rush TDs' },
+        { label: 'Rush TD', val: getFlexibleValue(player, ['Rush Td', 'Rush TD']), key: 'Projected Rush TDs' },
       ];
     } else if (pos === 'RB') {
       stats = [
         { label: 'Rush Att', val: getStat(player, 'Rush Attempts'), key: 'Projected Rush Attempts' },
         { label: 'Rush Yds', val: getStat(player, 'Rush Yards'), key: 'Projected Rush Yards' },
-        { label: 'Rush TD', val: getStat(player, 'Rush TDs') ?? getStat(player, 'Rush TD'), key: 'Projected Rush TDs' },
+        { label: 'Rush TD', val: getFlexibleValue(player, ['Rush Td', 'Rush TD']), key: 'Projected Rush TDs' },
         { label: 'Targets', val: getStat(player, 'Targets'), key: 'Projected Targets' },
         { label: 'Recs', val: getStat(player, 'Receptions'), key: 'Projected Receptions' },
         { label: 'Rec Yds', val: getStat(player, 'Receiving Yards'), key: 'Projected Receiving Yards' },
+        { label: 'Rec TD', val: getFlexibleValue(player, ['Receiving Td', 'Receiving TD', 'Rec Td']), key: 'Projected Receiving Td' },
       ];
     } else if (pos === 'WR' || pos === 'TE') {
       stats = [
         { label: 'Targets', val: getStat(player, 'Targets'), key: 'Projected Targets' },
         { label: 'Recs', val: getStat(player, 'Receptions'), key: 'Projected Receptions' },
         { label: 'Rec Yds', val: getStat(player, 'Receiving Yards'), key: 'Projected Receiving Yards' },
+        { label: 'Rec TD', val: getFlexibleValue(player, ['Receiving Td', 'Receiving TD', 'Rec Td']), key: 'Projected Receiving Td' },
         { label: 'Air Yds', val: getStat(player, 'Air Yards'), key: 'Projected Air Yards' },
         { label: '1st Reads', val: getStat(player, 'First-Read Targets') ?? getStat(player, 'First Read Targets'), key: 'Projected First Read Targets' },
         { label: 'EZ Tgts', val: getStat(player, 'End-Zone Targets') ?? getStat(player, 'End Zone Targets'), key: 'Projected End Zone Targets' },
@@ -228,7 +248,7 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
                 const rank = player['Overall Rank'] ?? player['Overall Result Rank'] ?? '-';
                 const posRank = player['Position Rank'] ?? player['Actual Position Finish'] ?? '-';
                 const tier = player['Tier'] ?? null;
-                const rankGap = player['Rank Gap'];
+                const rankGap = getFlexibleValue(player, ['Consensus Rank Gap', 'Rank Gap', ['rank', 'gap'], 'Edge', 'OMFG Edge']);
 
                 return (
                   <React.Fragment key={playerId}>
@@ -286,11 +306,10 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
                           <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-300">{formatNumber(player['Ceiling (P75)'])}</td>
                           
                           <td className="px-2 py-1.5 text-center">
-                            {rankGap !== undefined && rankGap !== null && rankGap !== '' ? (
-                              <div className={`inline-flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm ${Number(rankGap) > 0 ? 'bg-emerald-900/40 text-emerald-400' : Number(rankGap) < 0 ? 'bg-red-900/40 text-red-400' : 'bg-gray-800 text-gray-400'}`}>
-                                {Number(rankGap) > 0 ? <TrendingUp size={10} /> : Number(rankGap) < 0 ? <TrendingDown size={10} /> : null}
-                                {Number(rankGap) > 0 ? `+${rankGap}` : rankGap}
-                              </div>
+                            {rankGap !== null && rankGap !== '' ? (
+                              <span className={`inline-flex items-center gap-0.5 text-[10px] font-black uppercase tracking-widest ${Number(rankGap) > 0 ? 'text-emerald-400 bg-emerald-900/20 px-2 py-0.5 rounded' : Number(rankGap) < 0 ? 'text-red-400 bg-red-900/20 px-2 py-0.5 rounded' : 'text-gray-500 bg-gray-800 px-2 py-0.5 rounded'}`}>
+                                {Number(rankGap) > 0 ? `↗ +${Number(rankGap)}` : Number(rankGap) < 0 ? `↘ ${Number(rankGap)}` : '0'}
+                              </span>
                             ) : '-'}
                           </td>
                         </>

@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { RefreshCw, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Info } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp, Info } from 'lucide-react';
 
 export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
   const [expandedRows, setExpandedRows] = useState(new Set());
@@ -25,8 +25,23 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
   };
 
   const formatPct = (val) => {
-    if (val === null || val === undefined || val === '' || isNaN(val)) return '-';
-    return `${(Number(val) * 100).toFixed(0)}%`;
+    if (val === null || val === undefined || val === '') return '-';
+    const cleanVal = String(val).replace('%', '').trim();
+    let num = Number(cleanVal);
+    if (isNaN(num)) return '-';
+    if (num <= 1 && num > 0) num = num * 100;
+    return `${Math.round(num)}%`;
+  };
+
+  const getProbColor = (val) => {
+    if (val === null || val === undefined || val === '') return 'text-gray-600';
+    const cleanVal = String(val).replace('%', '').trim();
+    let num = Number(cleanVal);
+    if (isNaN(num)) return 'text-gray-600';
+    const pct = (num <= 1 && num > 0) ? num * 100 : num;
+    if (pct >= 60) return 'text-blue-400';
+    if (pct >= 30) return 'text-blue-600';
+    return 'text-gray-600';
   };
 
   const inverseStats = new Set(['Interceptions', 'Fumbles']);
@@ -90,6 +105,25 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
     return player[`Projected ${statName}`] ?? player[statName] ?? player[`Actual ${statName}`] ?? player[hyphenated] ?? player[`Projected ${hyphenated}`] ?? null;
   };
 
+  const getFlexibleValue = (player, matchRules) => {
+    if (!player) return null;
+    const normalize = (str) => String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
+    
+    for (const [key, value] of Object.entries(player)) {
+      if (value === undefined || value === null || value === '') continue;
+      const normKey = normalize(key);
+      for (const rule of matchRules) {
+        if (Array.isArray(rule)) {
+          if (rule.every(sub => normKey.includes(normalize(sub)))) return value;
+        } else {
+          const normRule = normalize(rule);
+          if (normKey === normRule || normKey.includes(normRule)) return value;
+        }
+      }
+    }
+    return null;
+  };
+
   const renderExpandedStats = (player) => {
     const pos = player.Position;
     let stats = [];
@@ -98,24 +132,28 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
       stats = [
         { label: 'Pass Att', val: formatNumber(getStat(player, 'Pass Attempts')), key: 'Pass Attempts' },
         { label: 'Pass Yds', val: formatNumber(getStat(player, 'Pass Yards')), key: 'Pass Yards' },
-        { label: 'Pass TD', val: formatNumber(getStat(player, 'Pass TDs') ?? getStat(player, 'Pass TD')), key: 'Pass TDs' },
+        { label: 'Pass TD', val: formatNumber(getFlexibleValue(player, ['Pass Td', 'Pass TD'])), key: 'Pass Td' },
         { label: 'INTs', val: formatNumber(getStat(player, 'Interceptions')), key: 'Interceptions' },
         { label: 'Rush Att', val: formatNumber(getStat(player, 'Rush Attempts')), key: 'Rush Attempts' },
         { label: 'Rush Yds', val: formatNumber(getStat(player, 'Rush Yards')), key: 'Rush Yards' },
+        { label: 'Rush TD', val: formatNumber(getFlexibleValue(player, ['Rush Td', 'Rush TD'])), key: 'Rush Td' },
       ];
     } else if (pos === 'RB') {
       stats = [
         { label: 'Rush Att', val: formatNumber(getStat(player, 'Rush Attempts')), key: 'Rush Attempts' },
         { label: 'Rush Yds', val: formatNumber(getStat(player, 'Rush Yards')), key: 'Rush Yards' },
+        { label: 'Rush TD', val: formatNumber(getFlexibleValue(player, ['Rush Td', 'Rush TD'])), key: 'Rush Td' },
         { label: 'Targets', val: formatNumber(getStat(player, 'Targets')), key: 'Targets' },
         { label: 'Recs', val: formatNumber(getStat(player, 'Receptions')), key: 'Receptions' },
         { label: 'Rec Yds', val: formatNumber(getStat(player, 'Receiving Yards')), key: 'Receiving Yards' },
+        { label: 'Rec TD', val: formatNumber(getFlexibleValue(player, ['Receiving Td', 'Receiving TD', 'Rec Td'])), key: 'Receiving Td' },
       ];
     } else if (pos === 'WR' || pos === 'TE') {
       stats = [
         { label: 'Targets', val: formatNumber(getStat(player, 'Targets')), key: 'Targets' },
         { label: 'Recs', val: formatNumber(getStat(player, 'Receptions')), key: 'Receptions' },
         { label: 'Rec Yds', val: formatNumber(getStat(player, 'Receiving Yards')), key: 'Receiving Yards' },
+        { label: 'Rec TD', val: formatNumber(getFlexibleValue(player, ['Receiving Td', 'Receiving TD', 'Rec Td'])), key: 'Receiving Td' },
         { label: 'Air Yds', val: formatNumber(getStat(player, 'Air Yards')), key: 'Air Yards' },
         { label: '1st Reads', val: formatNumber(getStat(player, 'First Read Targets')), key: 'First-Read Targets' },
         { label: 'EZ Tgts', val: formatNumber(getStat(player, 'End Zone Targets')), key: 'End-Zone Targets' },
@@ -136,6 +174,10 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
       </div>
     );
   };
+
+  const currentPos = visibleData && visibleData.length > 0 ? visibleData[0]?.Position : 'ALL';
+  const prob1Header = (currentPos === 'QB' || currentPos === 'TE') ? 'TOP 6' : 'TOP 12';
+  const prob2Header = (currentPos === 'QB' || currentPos === 'TE') ? 'TOP 12' : 'TOP 24';
 
   return (
     <div className="bg-[#111] rounded-2xl shadow-2xl border border-gray-800 animate-in fade-in slide-in-from-bottom-4 duration-700 relative min-h-[400px] overflow-visible">
@@ -174,22 +216,22 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
 
               <th className="px-2 py-2 text-[9px] font-black text-[#1b75bb] uppercase tracking-widest text-center bg-[#0f446e]/20 border-x border-gray-800 relative group cursor-help hover:bg-[#0f446e]/40 transition-colors">
                 <div className="flex items-center justify-center gap-1">
-                  Top 12
+                  {prob1Header}
                   <Info size={10} className="text-[#1b75bb]/60 group-hover:text-[#1b75bb] transition-colors" />
                 </div>
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                  The model's probability that this player finishes inside the Top 12 at their position this week.
+                  The model's probability that this player finishes inside the {prob1Header} at their position this week.
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
                 </div>
               </th>
 
               <th className="px-2 py-2 text-[9px] font-black text-[#1b75bb] uppercase tracking-widest text-center bg-[#0f446e]/20 border-r border-gray-800 relative group cursor-help hover:bg-[#0f446e]/40 transition-colors">
                 <div className="flex items-center justify-center gap-1">
-                  Top 24
+                  {prob2Header}
                   <Info size={10} className="text-[#1b75bb]/60 group-hover:text-[#1b75bb] transition-colors" />
                 </div>
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                  The model's probability that this player finishes inside the Top 24 at their position this week.
+                  The model's probability that this player finishes inside the {prob2Header} at their position this week.
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
                 </div>
               </th>
@@ -236,9 +278,16 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
                 const tier = player['Tier'] ?? null;
                 const omfgVal = player['Preseason OMFG'] ?? player['In-Season OMFG Score'] ?? player['OMFG Score'];
                 const ptsVal = isHistorical ? player['Actual Fantasy Points'] : player['Projected Fantasy Points'];
-                const top12 = player['Top 12 Probability'];
-                const top24 = player['Top 24 Probability'];
-                const rankGap = player['Rank Gap'];
+                
+                const prob1 = (currentPos === 'QB' || currentPos === 'TE') 
+                   ? getFlexibleValue(player, ['Top 6 Probability', ['prob', 'top6'], 'Top 6', ['prob', 'top5'], 'Top 5'])
+                   : getFlexibleValue(player, ['Top 12 Probability', ['prob', 'top12'], 'Top 12']);
+                
+                const prob2 = (currentPos === 'QB' || currentPos === 'TE') 
+                   ? getFlexibleValue(player, ['Top 12 Probability', ['prob', 'top12'], 'Top 12'])
+                   : getFlexibleValue(player, ['Top 24 Probability', ['prob', 'top24'], 'Top 24', ['prob', 'top20'], 'Top 20']);
+  
+                const rankGap = getFlexibleValue(player, ['Consensus Rank Gap', 'Rank Gap', ['rank', 'gap'], 'Edge', 'OMFG Edge']);
 
                 return (
                   <React.Fragment key={playerId}>
@@ -265,7 +314,7 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
 
                       <td className="px-2 py-1.5 text-center">
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                          {player.Opponent ?? '-'}
+                          {player.Opponent ?? player.Opp ?? '-'}
                         </span>
                       </td>
 
@@ -293,22 +342,22 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
                       </td>
                       
                       <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-400">
-                         {formatNumber(player['Matchup Score'])}
+                         {formatNumber(player['Matchup Score'] ?? player['Opportunity Factor'])}
                       </td>
 
-                      <td className="px-2 py-1.5 text-center text-[11px] font-bold text-[#60a5fa] bg-[#0f446e]/20 border-x border-gray-800/50">
-                         {formatPct(top12)}
+                      <td className="px-2 py-1.5 text-center text-[11px] font-bold bg-[#0f446e]/20 border-x border-gray-800/50">
+                         <span className={getProbColor(prob1)}>{formatPct(prob1)}</span>
                       </td>
-                      <td className="px-2 py-1.5 text-center text-[11px] font-bold text-[#93c5fd] bg-[#0f446e]/20 border-r border-gray-800/50">
-                         {formatPct(top24)}
+                      
+                      <td className="px-2 py-1.5 text-center text-[11px] font-bold bg-[#0f446e]/20 border-r border-gray-800/50">
+                         <span className={getProbColor(prob2)}>{formatPct(prob2)}</span>
                       </td>
 
-                      <td className="px-2 py-1.5 text-center">
-                        {rankGap !== undefined && rankGap !== null && rankGap !== '' ? (
-                          <div className={`inline-flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm ${Number(rankGap) > 0 ? 'bg-emerald-900/40 text-emerald-400' : Number(rankGap) < 0 ? 'bg-red-900/40 text-red-400' : 'bg-gray-800 text-gray-400'}`}>
-                            {Number(rankGap) > 0 ? <TrendingUp size={10} /> : Number(rankGap) < 0 ? <TrendingDown size={10} /> : null}
-                            {Number(rankGap) > 0 ? `+${rankGap}` : rankGap}
-                          </div>
+                      <td className="px-2 py-1.5 text-center border-r border-gray-800/50">
+                        {rankGap !== null && rankGap !== '' ? (
+                          <span className={`inline-flex items-center gap-0.5 text-[10px] font-black uppercase tracking-widest ${Number(rankGap) > 0 ? 'text-emerald-400 bg-emerald-900/20 px-2 py-0.5 rounded' : Number(rankGap) < 0 ? 'text-red-400 bg-red-900/20 px-2 py-0.5 rounded' : 'text-gray-500 bg-gray-800 px-2 py-0.5 rounded'}`}>
+                            {Number(rankGap) > 0 ? `↗ +${Number(rankGap)}` : Number(rankGap) < 0 ? `↘ ${Number(rankGap)}` : '0'}
+                          </span>
                         ) : '-'}
                       </td>
                       
