@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { ChevronDown, BarChart2, LayoutList, Target, Users, User, Info, X } from 'lucide-react'; 
 import WeeklyTable from './components/WeeklyTable';
 import WeeklyRadar from './components/WeeklyRadar';
@@ -78,7 +79,6 @@ export default function WeeklyClient() {
           setAvailableModels(data.available_models);
           const activeWeekly = data.available_models.filter(m => m.week !== 'Season');
           if (activeWeekly.length > 0) {
-            // FIX: Explicitly sort all returned models to guarantee the newest Year and Week are selected
             const sortedModels = activeWeekly.sort((a, b) => {
               if (b.year !== a.year) return Number(b.year) - Number(a.year);
               const numA = parseInt(a.week.replace(/\D/g, '')) || 0;
@@ -117,7 +117,6 @@ export default function WeeklyClient() {
   const handleYearChange = (newYear) => {
     setSelectedYear(newYear);
     const validWeeks = Array.from(new Set(weeklyModels.filter(m => String(m.year) === newYear).map(m => m.week)));
-    // FIX: Ensure week stays valid when switching years
     if (validWeeks.length > 0) {
       const sortedWeeks = validWeeks.sort((a, b) => {
           const numA = parseInt(a.replace(/\D/g, '')) || 0;
@@ -139,14 +138,15 @@ export default function WeeklyClient() {
   return (
     <div className="w-full animate-in fade-in duration-500 pb-24 relative z-0">
       
-      {/* Hero Banner */}
+      {/* Hero Banner with Embedded Glassmorphism Switcher */}
       <div className="relative w-full min-h-[220px] md:h-[280px] flex items-end overflow-hidden rounded-2xl mb-8 mt-6 shadow-2xl">
         <div className="absolute inset-0 opacity-80 z-0 bg-gradient-to-br from-[#e42d38] to-[#8a1a20]" />
         <img src="https://admin.fsan.com/wp-content/uploads/2026/04/NFL-Logo.webp" alt="Football Background" className="absolute -right-[10%] md:-right-10 top-1/2 transform -translate-y-1/2 h-[200%] w-auto opacity-20 pointer-events-none z-0" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/80 to-[#121212]/20 z-0" />
         
-        <div className="relative z-10 w-full flex flex-col md:flex-row items-start md:items-end justify-between h-full px-6 md:px-10 pb-8 gap-4 pt-16 md:pt-0">
-          <div className="max-w-4xl">
+        <div className="relative z-10 w-full flex flex-col md:flex-row items-start md:items-end justify-between h-full px-6 md:px-10 pb-8 gap-6 pt-16 md:pt-0">
+          
+          <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest mb-3 shadow-inner backdrop-blur-sm">
               <BarChart2 size={12} /> Week-Over-Week Models
             </div>
@@ -166,6 +166,20 @@ export default function WeeklyClient() {
               </button>
             </div>
           </div>
+
+          {/* 🌟 HERO-EMBEDDED MODEL SWITCHER 🌟 */}
+          <div className="flex bg-black/40 backdrop-blur-md border border-white/15 p-1 rounded-2xl shadow-2xl w-fit shrink-0 overflow-x-auto scrollbar-hide self-start md:self-end">
+            <Link href="/football/omfg-model/weekly" className="px-4 py-2 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all bg-white text-black shadow-lg">
+              WoW Model
+            </Link>
+            <Link href="/football/omfg-model/season" className="px-4 py-2 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all text-gray-300 hover:text-white">
+              SoS Model
+            </Link>
+            <Link href="/football/omfg-model/rest-of-season" className="px-4 py-2 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all text-gray-400 hover:text-white pointer-events-none opacity-50">
+              RoS Model (Soon)
+            </Link>
+          </div>
+
         </div>
       </div>
 
