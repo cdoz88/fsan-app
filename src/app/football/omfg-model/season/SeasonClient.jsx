@@ -22,13 +22,13 @@ function CustomDropdown({ options, value, onChange }) {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button onClick={() => setIsOpen(!isOpen)} className="bg-[#111] border border-gray-800 text-white font-bold text-[11px] uppercase tracking-widest rounded-xl py-2 pl-3 pr-8 flex items-center justify-between gap-2 shadow-inner hover:border-gray-600 transition-colors cursor-pointer min-w-[110px]">
+      <button onClick={() => setIsOpen(!isOpen)} className="bg-[#111] border border-gray-800 text-white font-bold text-[11px] uppercase tracking-widest rounded-xl py-1.5 pl-3 pr-7 flex items-center justify-between gap-1.5 shadow-inner hover:border-gray-600 transition-colors cursor-pointer min-w-[90px]">
         <span>{value || 'Select'}</span>
-        <ChevronDown size={14} className={`absolute right-3 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown size={14} className={`absolute right-2 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-full min-w-[130px] bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl py-1 z-[120] max-h-60 overflow-y-auto scrollbar-hide animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute top-full left-0 mt-1 w-full min-w-[100px] bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl py-1 z-[120] max-h-60 overflow-y-auto scrollbar-hide animate-in fade-in zoom-in-95 duration-150">
           {options.map((opt) => (
             <button key={opt} onClick={() => { onChange(opt); setIsOpen(false); }} className={`w-full text-left px-3 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors ${value === opt ? 'bg-red-600/20 text-red-500 border-l-2 border-red-500' : 'text-gray-300 hover:bg-[#252525] hover:text-white'}`}>
               {opt}
@@ -60,7 +60,7 @@ export default function SeasonClient() {
     async function loadOmfgData() {
       setIsSyncing(true);
       try {
-        const res = await fetch(`/api/omfg-data?year=${selectedYear}&week=Season`);
+        const res = await fetch(`/api/omfg-data?year=${selectedYear}&week=Season&_t=${new Date().getTime()}`, { cache: 'no-store' });
         const data = await res.json();
         
         if (data.available_models) {
@@ -104,7 +104,6 @@ export default function SeasonClient() {
   return (
     <div className="w-full animate-in fade-in duration-500 pb-24 relative z-0">
       
-      {/* Hero Section with Embedded Glassmorphism Switcher */}
       <div className="relative w-full min-h-[260px] md:min-h-[320px] flex items-end overflow-hidden rounded-2xl mb-8 mt-0 shadow-2xl">
         <div className="absolute inset-0 opacity-80 z-0 bg-gradient-to-br from-[#e42d38] to-[#8a1a20]" />
         <img src="https://admin.fsan.com/wp-content/uploads/2026/04/NFL-Logo.webp" alt="Football Background" className="absolute -right-[10%] md:-right-10 top-1/2 transform -translate-y-1/2 h-[200%] w-auto opacity-20 pointer-events-none z-0" />
@@ -133,7 +132,6 @@ export default function SeasonClient() {
             </div>
           </div>
 
-          {/* 🌟 HERO-EMBEDDED MODEL SWITCHER 🌟 */}
           <div className="flex bg-black/40 backdrop-blur-md border border-white/15 p-1 rounded-2xl shadow-2xl w-fit shrink-0 overflow-x-auto scrollbar-hide self-start md:self-end">
             <Link href="/football/omfg-model/weekly" className="px-4 py-2 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all text-gray-300 hover:text-white">
               WoW Model
@@ -150,41 +148,45 @@ export default function SeasonClient() {
       </div>
 
       <div className="w-full relative z-10">
-        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6">
-          <div className="flex flex-wrap gap-3 items-center w-full xl:w-auto">
-            
+        
+        {/* 🌟 100% WIDTH FLEX CONTAINER 🌟 */}
+        <div className="flex flex-wrap items-center justify-between w-full gap-y-3 gap-x-2 mb-6">
+          
+          {/* Left Group: Date Selector + Position Selector attached together */}
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             {viewMode !== 'player' && (
               <CustomDropdown options={seasonYears} value={selectedYear} onChange={setSelectedYear} />
             )}
 
-            <div className="flex flex-wrap bg-[#1a1a1a] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit md:ml-2">
-              <button onClick={() => setViewMode('table')} className={`px-4 py-1.5 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === 'table' ? 'bg-gray-800 text-white shadow-md' : 'text-gray-500 hover:text-white hover:bg-[#252525]'}`}>
-                <LayoutList size={14} /> Season Table
-              </button>
-              <button onClick={() => setViewMode('radar')} className={`px-4 py-1.5 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === 'radar' ? 'bg-gray-800 text-white shadow-md' : 'text-gray-500 hover:text-white hover:bg-[#252525]'}`}>
-                <Target size={14} /> Value Radar
-              </button>
-              <button onClick={() => setViewMode('team')} className={`px-4 py-1.5 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === 'team' ? 'bg-gray-800 text-white shadow-md' : 'text-gray-500 hover:text-white hover:bg-[#252525]'}`}>
-                <Users size={14} /> Team Utilization
-              </button>
-              <button onClick={() => setViewMode('player')} className={`px-4 py-1.5 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === 'player' ? 'bg-gray-800 text-white shadow-md' : 'text-gray-500 hover:text-white hover:bg-[#252525]'}`}>
-                <User size={14} /> Career Arc
-              </button>
-            </div>
-
             {viewMode !== 'team' && viewMode !== 'player' && (
-              <div className="flex flex-wrap gap-1.5 bg-[#1a1a1a] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit">
+              <div className="flex flex-wrap items-center gap-1 bg-[#1a1a1a] p-1 rounded-2xl shadow-inner border border-gray-800">
                  {positions.map(pos => (
-                    <button key={pos} onClick={() => setCurrentPosition(pos)} className={`px-3 py-1 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all ${currentPosition === pos ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'text-gray-500 hover:text-white hover:bg-[#252525]'}`}>
+                    <button key={pos} onClick={() => setCurrentPosition(pos)} className={`px-2.5 py-1.5 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all ${currentPosition === pos ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'text-gray-500 hover:text-white hover:bg-[#252525]'}`}>
                        {pos}
                     </button>
                  ))}
               </div>
             )}
           </div>
+
+          {/* Right Group: Tool Selector */}
+          <div className="flex flex-wrap items-center bg-[#1a1a1a] p-1 rounded-2xl shadow-inner border border-gray-800 shrink-0">
+            <button onClick={() => setViewMode('table')} className={`px-3 py-1.5 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all flex items-center gap-1.5 ${viewMode === 'table' ? 'bg-gray-800 text-white shadow-md' : 'text-gray-500 hover:text-white hover:bg-[#252525]'}`}>
+              <LayoutList size={14} /> Season Table
+            </button>
+            <button onClick={() => setViewMode('radar')} className={`px-3 py-1.5 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all flex items-center gap-1.5 ${viewMode === 'radar' ? 'bg-gray-800 text-white shadow-md' : 'text-gray-500 hover:text-white hover:bg-[#252525]'}`}>
+              <Target size={14} /> Value Radar
+            </button>
+            <button onClick={() => setViewMode('team')} className={`px-3 py-1.5 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all flex items-center gap-1.5 ${viewMode === 'team' ? 'bg-gray-800 text-white shadow-md' : 'text-gray-500 hover:text-white hover:bg-[#252525]'}`}>
+              <Users size={14} /> Team Utilization
+            </button>
+            <button onClick={() => setViewMode('player')} className={`px-3 py-1.5 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all flex items-center gap-1.5 ${viewMode === 'player' ? 'bg-gray-800 text-white shadow-md' : 'text-gray-500 hover:text-white hover:bg-[#252525]'}`}>
+              <User size={14} /> Career Arc
+            </button>
+          </div>
+
         </div>
 
-        {/* Dynamic Modular Renderer */}
         {viewMode === 'radar' ? (
           <SeasonRadar visibleData={visibleData} isHistorical={isHistorical} isSyncing={isSyncing} />
         ) : viewMode === 'team' ? (
@@ -197,7 +199,6 @@ export default function SeasonClient() {
 
       </div>
 
-      {/* Explainer Modal */}
       {showModal && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-[#151515] border border-gray-700 rounded-2xl p-6 md:p-8 max-w-2xl w-full shadow-2xl relative">

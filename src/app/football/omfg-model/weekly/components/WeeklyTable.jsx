@@ -7,7 +7,8 @@ import { RefreshCw, ChevronDown, ChevronUp, Info } from 'lucide-react';
 export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
   const [expandedRows, setExpandedRows] = useState(new Set());
   
-  const colSpanCount = 11;
+  // Dynamically adjust column span for the loading/empty state blocks
+  const colSpanCount = isHistorical ? 6 : 11;
 
   const toggleRow = (playerId) => {
     setExpandedRows(prev => {
@@ -111,13 +112,19 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
     
     for (const [key, value] of Object.entries(player)) {
       if (value === undefined || value === null || value === '') continue;
+      
       const normKey = normalize(key);
+      
       for (const rule of matchRules) {
         if (Array.isArray(rule)) {
-          if (rule.every(sub => normKey.includes(normalize(sub)))) return value;
+          if (rule.every(sub => normKey.includes(normalize(sub)))) {
+            return value;
+          }
         } else {
           const normRule = normalize(rule);
-          if (normKey === normRule || normKey.includes(normRule)) return value;
+          if (normKey === normRule || normKey.includes(normRule)) {
+            return value;
+          }
         }
       }
     }
@@ -175,6 +182,7 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
     );
   };
 
+  // Determine Position context for headers
   const currentPos = visibleData && visibleData.length > 0 ? visibleData[0]?.Position : 'ALL';
   const prob1Header = (currentPos === 'QB' || currentPos === 'TE') ? 'TOP 6' : 'TOP 12';
   const prob2Header = (currentPos === 'QB' || currentPos === 'TE') ? 'TOP 12' : 'TOP 24';
@@ -187,7 +195,11 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
             <tr>
               <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest w-12 text-center">Rk</th>
               <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">Pos</th>
-              <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">Opp</th>
+              
+              {!isHistorical && (
+                <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">Opp</th>
+              )}
+
               <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest">Player</th>
               
               <th className="px-2 py-2 text-[9px] font-black text-red-500 uppercase tracking-widest text-center bg-red-900/10 border-x border-gray-800 relative group cursor-help hover:bg-red-900/30 transition-colors">
@@ -203,49 +215,53 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
 
               <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">{isHistorical ? 'Actual Pts' : 'Proj Pts'}</th>
               
-              <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center relative group cursor-help hover:bg-gray-800/40 transition-colors">
-                <div className="flex items-center justify-center gap-1">
-                  Matchup
-                  <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
-                </div>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                  Opponent Difficulty rating on a 0-100 scale. Higher scores mean an easier positional matchup.
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
-                </div>
-              </th>
+              {!isHistorical && (
+                <>
+                  <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center relative group cursor-help hover:bg-gray-800/40 transition-colors">
+                    <div className="flex items-center justify-center gap-1">
+                      Matchup
+                      <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
+                      Opponent Difficulty rating on a 0-100 scale. Higher scores mean an easier positional matchup.
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
+                    </div>
+                  </th>
 
-              <th className="px-2 py-2 text-[9px] font-black text-[#1b75bb] uppercase tracking-widest text-center bg-[#0f446e]/20 border-x border-gray-800 relative group cursor-help hover:bg-[#0f446e]/40 transition-colors">
-                <div className="flex items-center justify-center gap-1">
-                  {prob1Header}
-                  <Info size={10} className="text-[#1b75bb]/60 group-hover:text-[#1b75bb] transition-colors" />
-                </div>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                  The model's probability that this player finishes inside the {prob1Header} at their position this week.
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
-                </div>
-              </th>
+                  <th className="px-2 py-2 text-[9px] font-black text-[#1b75bb] uppercase tracking-widest text-center bg-[#0f446e]/20 border-x border-gray-800 relative group cursor-help hover:bg-[#0f446e]/40 transition-colors">
+                    <div className="flex items-center justify-center gap-1">
+                      {prob1Header}
+                      <Info size={10} className="text-[#1b75bb]/60 group-hover:text-[#1b75bb] transition-colors" />
+                    </div>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
+                      The model's probability that this player finishes inside the {prob1Header} at their position this week.
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
+                    </div>
+                  </th>
 
-              <th className="px-2 py-2 text-[9px] font-black text-[#1b75bb] uppercase tracking-widest text-center bg-[#0f446e]/20 border-r border-gray-800 relative group cursor-help hover:bg-[#0f446e]/40 transition-colors">
-                <div className="flex items-center justify-center gap-1">
-                  {prob2Header}
-                  <Info size={10} className="text-[#1b75bb]/60 group-hover:text-[#1b75bb] transition-colors" />
-                </div>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                  The model's probability that this player finishes inside the {prob2Header} at their position this week.
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
-                </div>
-              </th>
+                  <th className="px-2 py-2 text-[9px] font-black text-[#1b75bb] uppercase tracking-widest text-center bg-[#0f446e]/20 border-r border-gray-800 relative group cursor-help hover:bg-[#0f446e]/40 transition-colors">
+                    <div className="flex items-center justify-center gap-1">
+                      {prob2Header}
+                      <Info size={10} className="text-[#1b75bb]/60 group-hover:text-[#1b75bb] transition-colors" />
+                    </div>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
+                      The model's probability that this player finishes inside the {prob2Header} at their position this week.
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
+                    </div>
+                  </th>
 
-              <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center relative group cursor-help hover:bg-gray-800/40 transition-colors">
-                <div className="flex items-center justify-center gap-1">
-                  Edge
-                  <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
-                </div>
-                <div className="absolute top-full right-0 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                  Difference between OMFG rank and industry consensus. A positive (+) number means the model ranks them higher than the market.
-                  <div className="absolute bottom-full right-4 border-4 border-transparent border-b-gray-600"></div>
-                </div>
-              </th>
+                  <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center relative group cursor-help hover:bg-gray-800/40 transition-colors">
+                    <div className="flex items-center justify-center gap-1">
+                      Edge
+                      <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="absolute top-full right-0 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
+                      Difference between OMFG rank and industry consensus. A positive (+) number means the model ranks them higher than the market.
+                      <div className="absolute bottom-full right-4 border-4 border-transparent border-b-gray-600"></div>
+                    </div>
+                  </th>
+                </>
+              )}
 
               <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">Stats</th>
             </tr>
@@ -279,6 +295,7 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
                 const omfgVal = player['Preseason OMFG'] ?? player['In-Season OMFG Score'] ?? player['OMFG Score'];
                 const ptsVal = isHistorical ? player['Actual Fantasy Points'] : player['Projected Fantasy Points'];
                 
+                // Smart Fuzzy Extracts (Arrays trigger "Contains BOTH substrings" logic)
                 const prob1 = (currentPos === 'QB' || currentPos === 'TE') 
                    ? getFlexibleValue(player, ['Top 6 Probability', ['prob', 'top6'], 'Top 6', ['prob', 'top5'], 'Top 5'])
                    : getFlexibleValue(player, ['Top 12 Probability', ['prob', 'top12'], 'Top 12']);
@@ -312,11 +329,13 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
                         </span>
                       </td>
 
-                      <td className="px-2 py-1.5 text-center">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                          {player.Opponent ?? player.Opp ?? '-'}
-                        </span>
-                      </td>
+                      {!isHistorical && (
+                        <td className="px-2 py-1.5 text-center">
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                            {player.Opponent ?? player.Opp ?? '-'}
+                          </span>
+                        </td>
+                      )}
 
                       <td className="px-2 py-1.5">
                         <div className="flex items-center gap-2">
@@ -341,25 +360,29 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
                         </span>
                       </td>
                       
-                      <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-400">
-                         {formatNumber(player['Matchup Score'] ?? player['Opportunity Factor'])}
-                      </td>
+                      {!isHistorical && (
+                        <>
+                          <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-400">
+                             {formatNumber(player['Matchup Score'] ?? player['Opportunity Factor'])}
+                          </td>
 
-                      <td className="px-2 py-1.5 text-center text-[11px] font-bold bg-[#0f446e]/20 border-x border-gray-800/50">
-                         <span className={getProbColor(prob1)}>{formatPct(prob1)}</span>
-                      </td>
-                      
-                      <td className="px-2 py-1.5 text-center text-[11px] font-bold bg-[#0f446e]/20 border-r border-gray-800/50">
-                         <span className={getProbColor(prob2)}>{formatPct(prob2)}</span>
-                      </td>
+                          <td className="px-2 py-1.5 text-center text-[11px] font-bold bg-[#0f446e]/20 border-x border-gray-800/50">
+                             <span className={getProbColor(prob1)}>{formatPct(prob1)}</span>
+                          </td>
+                          
+                          <td className="px-2 py-1.5 text-center text-[11px] font-bold bg-[#0f446e]/20 border-r border-gray-800/50">
+                             <span className={getProbColor(prob2)}>{formatPct(prob2)}</span>
+                          </td>
 
-                      <td className="px-2 py-1.5 text-center border-r border-gray-800/50">
-                        {rankGap !== null && rankGap !== '' ? (
-                          <span className={`inline-flex items-center gap-0.5 text-[10px] font-black uppercase tracking-widest ${Number(rankGap) > 0 ? 'text-emerald-400 bg-emerald-900/20 px-2 py-0.5 rounded' : Number(rankGap) < 0 ? 'text-red-400 bg-red-900/20 px-2 py-0.5 rounded' : 'text-gray-500 bg-gray-800 px-2 py-0.5 rounded'}`}>
-                            {Number(rankGap) > 0 ? `↗ +${Number(rankGap)}` : Number(rankGap) < 0 ? `↘ ${Number(rankGap)}` : '0'}
-                          </span>
-                        ) : '-'}
-                      </td>
+                          <td className="px-2 py-1.5 text-center border-r border-gray-800/50">
+                            {rankGap !== null && rankGap !== '' ? (
+                              <span className={`inline-flex items-center gap-0.5 text-[10px] font-black uppercase tracking-widest ${Number(rankGap) > 0 ? 'text-emerald-400 bg-emerald-900/20 px-2 py-0.5 rounded' : Number(rankGap) < 0 ? 'text-red-400 bg-red-900/20 px-2 py-0.5 rounded' : 'text-gray-500 bg-gray-800 px-2 py-0.5 rounded'}`}>
+                                {Number(rankGap) > 0 ? `↗ +${Number(rankGap)}` : Number(rankGap) < 0 ? `↘ ${Number(rankGap)}` : '0'}
+                              </span>
+                            ) : '-'}
+                          </td>
+                        </>
+                      )}
                       
                       <td className="px-2 py-1.5 text-center text-gray-500">
                         {isExpanded ? <ChevronUp size={16} className="mx-auto" /> : <ChevronDown size={16} className="mx-auto" />}

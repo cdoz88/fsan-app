@@ -23,7 +23,7 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
     return isNaN(num) ? '-' : num.toFixed(decimals);
   };
 
-  const inverseStats = new Set(['Projected Interceptions', 'Interceptions', 'Projected Fumbles', 'Fumbles']);
+  const inverseStats = new Set(['Projected Interceptions', 'Interceptions', 'Actual Interceptions', 'Projected Fumbles', 'Fumbles', 'Actual Fumbles']);
 
   const statThresholds = useMemo(() => {
     if (!visibleData || visibleData.length === 0) return {};
@@ -79,7 +79,7 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
     }
   };
 
-  const getStat = (player, statName) => player[`Projected ${statName}`] ?? player[statName];
+  const getStat = (player, statName) => player[`Projected ${statName}`] ?? player[`Actual ${statName}`] ?? player[statName];
 
   const getFlexibleValue = (player, matchRules) => {
     if (!player) return null;
@@ -105,32 +105,32 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
 
     if (pos === 'QB') {
       stats = [
-        { label: 'Pass Att', val: getStat(player, 'Pass Attempts'), key: 'Projected Pass Attempts' },
-        { label: 'Pass Yds', val: getStat(player, 'Pass Yards'), key: 'Projected Pass Yards' },
-        { label: 'Pass TD', val: getFlexibleValue(player, ['Pass Td', 'Pass TD']), key: 'Projected Pass TDs' },
-        { label: 'Rush Att', val: getStat(player, 'Rush Attempts'), key: 'Projected Rush Attempts' },
-        { label: 'Rush Yds', val: getStat(player, 'Rush Yards'), key: 'Projected Rush Yards' },
-        { label: 'Rush TD', val: getFlexibleValue(player, ['Rush Td', 'Rush TD']), key: 'Projected Rush TDs' },
+        { label: 'Pass Att', val: getStat(player, 'Pass Attempts'), key: isHistorical ? 'Actual Pass Attempts' : 'Projected Pass Attempts' },
+        { label: 'Pass Yds', val: getStat(player, 'Pass Yards'), key: isHistorical ? 'Actual Pass Yards' : 'Projected Pass Yards' },
+        { label: 'Pass TD', val: getFlexibleValue(player, ['Pass Td', 'Pass TD', 'Projected Pass TDs', 'Actual Pass TDs']), key: isHistorical ? 'Actual Pass TDs' : 'Projected Pass TDs' },
+        { label: 'Rush Att', val: getStat(player, 'Rush Attempts'), key: isHistorical ? 'Actual Rush Attempts' : 'Projected Rush Attempts' },
+        { label: 'Rush Yds', val: getStat(player, 'Rush Yards'), key: isHistorical ? 'Actual Rush Yards' : 'Projected Rush Yards' },
+        { label: 'Rush TD', val: getFlexibleValue(player, ['Rush Td', 'Rush TD', 'Projected Rush TDs', 'Actual Rush TDs']), key: isHistorical ? 'Actual Rush TDs' : 'Projected Rush TDs' },
       ];
     } else if (pos === 'RB') {
       stats = [
-        { label: 'Rush Att', val: getStat(player, 'Rush Attempts'), key: 'Projected Rush Attempts' },
-        { label: 'Rush Yds', val: getStat(player, 'Rush Yards'), key: 'Projected Rush Yards' },
-        { label: 'Rush TD', val: getFlexibleValue(player, ['Rush Td', 'Rush TD']), key: 'Projected Rush TDs' },
-        { label: 'Targets', val: getStat(player, 'Targets'), key: 'Projected Targets' },
-        { label: 'Recs', val: getStat(player, 'Receptions'), key: 'Projected Receptions' },
-        { label: 'Rec Yds', val: getStat(player, 'Receiving Yards'), key: 'Projected Receiving Yards' },
-        { label: 'Rec TD', val: getFlexibleValue(player, ['Receiving Td', 'Receiving TD', 'Rec Td']), key: 'Projected Receiving Td' },
+        { label: 'Rush Att', val: getStat(player, 'Rush Attempts'), key: isHistorical ? 'Actual Rush Attempts' : 'Projected Rush Attempts' },
+        { label: 'Rush Yds', val: getStat(player, 'Rush Yards'), key: isHistorical ? 'Actual Rush Yards' : 'Projected Rush Yards' },
+        { label: 'Rush TD', val: getFlexibleValue(player, ['Rush Td', 'Rush TD', 'Projected Rush TDs', 'Actual Rush TDs']), key: isHistorical ? 'Actual Rush TDs' : 'Projected Rush TDs' },
+        { label: 'Targets', val: getStat(player, 'Targets'), key: isHistorical ? 'Actual Targets' : 'Projected Targets' },
+        { label: 'Recs', val: getStat(player, 'Receptions'), key: isHistorical ? 'Actual Receptions' : 'Projected Receptions' },
+        { label: 'Rec Yds', val: getStat(player, 'Receiving Yards'), key: isHistorical ? 'Actual Receiving Yards' : 'Projected Receiving Yards' },
+        { label: 'Rec TD', val: getFlexibleValue(player, ['Receiving Td', 'Receiving TD', 'Rec Td', 'Projected Receiving Td', 'Actual Receiving Td']), key: isHistorical ? 'Actual Receiving Td' : 'Projected Receiving Td' },
       ];
     } else if (pos === 'WR' || pos === 'TE') {
       stats = [
-        { label: 'Targets', val: getStat(player, 'Targets'), key: 'Projected Targets' },
-        { label: 'Recs', val: getStat(player, 'Receptions'), key: 'Projected Receptions' },
-        { label: 'Rec Yds', val: getStat(player, 'Receiving Yards'), key: 'Projected Receiving Yards' },
-        { label: 'Rec TD', val: getFlexibleValue(player, ['Receiving Td', 'Receiving TD', 'Rec Td']), key: 'Projected Receiving Td' },
-        { label: 'Air Yds', val: getStat(player, 'Air Yards'), key: 'Projected Air Yards' },
-        { label: '1st Reads', val: getStat(player, 'First-Read Targets') ?? getStat(player, 'First Read Targets'), key: 'Projected First Read Targets' },
-        { label: 'EZ Tgts', val: getStat(player, 'End-Zone Targets') ?? getStat(player, 'End Zone Targets'), key: 'Projected End Zone Targets' },
+        { label: 'Targets', val: getStat(player, 'Targets'), key: isHistorical ? 'Actual Targets' : 'Projected Targets' },
+        { label: 'Recs', val: getStat(player, 'Receptions'), key: isHistorical ? 'Actual Receptions' : 'Projected Receptions' },
+        { label: 'Rec Yds', val: getStat(player, 'Receiving Yards'), key: isHistorical ? 'Actual Receiving Yards' : 'Projected Receiving Yards' },
+        { label: 'Rec TD', val: getFlexibleValue(player, ['Receiving Td', 'Receiving TD', 'Rec Td', 'Projected Receiving Td', 'Actual Receiving Td']), key: isHistorical ? 'Actual Receiving Td' : 'Projected Receiving Td' },
+        { label: 'Air Yds', val: getStat(player, 'Air Yards'), key: isHistorical ? 'Actual Air Yards' : 'Projected Air Yards' },
+        { label: '1st Reads', val: getStat(player, 'First-Read Targets') ?? getStat(player, 'First Read Targets'), key: isHistorical ? 'Actual First Read Targets' : 'Projected First Read Targets' },
+        { label: 'EZ Tgts', val: getStat(player, 'End-Zone Targets') ?? getStat(player, 'End Zone Targets'), key: isHistorical ? 'Actual End Zone Targets' : 'Projected End Zone Targets' },
       ];
     }
 
@@ -203,7 +203,7 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
                       <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
                     </div>
                     <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                      A reasonable upside outcome (75th percentile expectation). Ideal for chasing high-ceiling targets.
+                      An optimistic but realistic outcome that the player reaches or exceeds approximately 25% of the time.
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
                     </div>
                   </th>
@@ -250,6 +250,10 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
                 const tier = player['Tier'] ?? null;
                 const rankGap = getFlexibleValue(player, ['Consensus Rank Gap', 'Rank Gap', ['rank', 'gap'], 'Edge', 'OMFG Edge']);
 
+                // Find correct PPG metric (Actual vs Projected)
+                const ppgKey = player['Actual PPG'] ? 'Actual PPG' : (player['Projected PPG'] ? 'Projected PPG' : 'PPG');
+                const ppgVal = player['Actual PPG'] ?? player['Projected PPG'] ?? player['PPG'];
+
                 return (
                   <React.Fragment key={playerId}>
                     <tr onClick={() => toggleRow(playerId)} className="hover:bg-[#151515] transition-colors group cursor-pointer border-b border-gray-800/30">
@@ -290,10 +294,11 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
                         </div>
                       </td>
 
-                      <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-400">{formatNumber(player['Projected Games'] ?? player['Games'], 0)}</td>
+                      <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-400">{formatNumber(player['Actual Games'] ?? player['Projected Games'] ?? player['Games'], 0)}</td>
+                      
                       <td className="px-2 py-1.5 text-center">
-                        <span className={`text-[11px] ${getHeatmapClasses(player['Projected PPG'], 'Projected PPG', false)}`}>
-                          {formatNumber(player['Projected PPG'])}
+                        <span className={`text-[11px] ${getHeatmapClasses(ppgVal, ppgKey, false)}`}>
+                          {formatNumber(ppgVal)}
                         </span>
                       </td>
 
