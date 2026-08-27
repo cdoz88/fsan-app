@@ -2,11 +2,13 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { RefreshCw, ChevronDown, ChevronUp, Info, TrendingUp, TrendingDown } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp, Info } from 'lucide-react';
 
 export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
   const [expandedRows, setExpandedRows] = useState(new Set());
-  const colSpanCount = isHistorical ? 9 : 11;
+  
+  // Adjusted col span: Edge column is removed, so non-historical uses 10
+  const colSpanCount = isHistorical ? 8 : 10;
 
   const toggleRow = (playerId) => {
     setExpandedRows(prev => {
@@ -207,16 +209,6 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
                     </div>
                   </th>
-                  <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center relative group cursor-help hover:bg-gray-800/40 transition-colors">
-                    <div className="flex items-center justify-center gap-1">
-                      Edge
-                      <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
-                    </div>
-                    <div className="absolute top-full right-0 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                      Difference between OMFG rank and industry consensus ADP. A positive (+) number means the model values them higher than the market.
-                      <div className="absolute bottom-full right-4 border-4 border-transparent border-b-gray-600"></div>
-                    </div>
-                  </th>
                 </>
               )}
               <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">Stats</th>
@@ -248,9 +240,7 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
                 const rank = player['Overall Rank'] ?? player['Overall Result Rank'] ?? '-';
                 const posRank = player['Position Rank'] ?? player['Actual Position Finish'] ?? '-';
                 const tier = player['Tier'] ?? null;
-                const rankGap = getFlexibleValue(player, ['Consensus Rank Gap', 'Rank Gap', ['rank', 'gap'], 'Edge', 'OMFG Edge']);
 
-                // Find correct PPG metric (Actual vs Projected)
                 const ppgKey = player['Actual PPG'] ? 'Actual PPG' : (player['Projected PPG'] ? 'Projected PPG' : 'PPG');
                 const ppgVal = player['Actual PPG'] ?? player['Projected PPG'] ?? player['PPG'];
 
@@ -309,14 +299,6 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
                           <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-500">{formatNumber(player['Floor (P25)'])}</td>
                           <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-400 bg-gray-800/20">{formatNumber(player['Base (P50)'])}</td>
                           <td className="px-2 py-1.5 text-center text-[11px] font-bold text-gray-300">{formatNumber(player['Ceiling (P75)'])}</td>
-                          
-                          <td className="px-2 py-1.5 text-center">
-                            {rankGap !== null && rankGap !== '' ? (
-                              <span className={`inline-flex items-center gap-0.5 text-[10px] font-black uppercase tracking-widest ${Number(rankGap) > 0 ? 'text-emerald-400 bg-emerald-900/20 px-2 py-0.5 rounded' : Number(rankGap) < 0 ? 'text-red-400 bg-red-900/20 px-2 py-0.5 rounded' : 'text-gray-500 bg-gray-800 px-2 py-0.5 rounded'}`}>
-                                {Number(rankGap) > 0 ? `↗ +${Number(rankGap)}` : Number(rankGap) < 0 ? `↘ ${Number(rankGap)}` : '0'}
-                              </span>
-                            ) : '-'}
-                          </td>
                         </>
                       )}
 

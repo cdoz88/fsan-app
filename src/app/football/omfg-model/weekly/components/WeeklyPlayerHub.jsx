@@ -61,9 +61,18 @@ export default function WeeklyPlayerHub({ availableModels }) {
 
   const searchRef = useRef(null);
 
+  // Helper to ensure strict lowercase string comparisons
+  function strToLower(str) { return String(str || '').toLowerCase(); }
+
   const availableYears = useMemo(() => {
     if (!availableModels) return [];
-    const years = Array.from(new Set(availableModels.filter(m => m.week !== 'Season').map(m => String(m.year))));
+    // 🌟 FIX: Strictly filter out BOTH 'Season' and 'Rest of Season' models 🌟
+    const weeklyOnly = availableModels.filter(m => 
+      m.week !== 'Season' && 
+      !strToLower(m.week).includes('rest of season') && 
+      !strToLower(m.week).includes('ros')
+    );
+    const years = Array.from(new Set(weeklyOnly.map(m => String(m.year))));
     return years.sort((a, b) => Number(b) - Number(a));
   }, [availableModels]);
 
@@ -94,13 +103,17 @@ export default function WeeklyPlayerHub({ availableModels }) {
 
   useEffect(() => {
     async function fetchYearlyHistory() {
-      // FIX: Strict check ensuring we only process if selectedYear is active
       if (!selectedYear || availableModels.length === 0) return;
       
       setIsBuildingHistory(true);
       try {
-        // FIX: Filters specifically to the year selected to prevent over-fetching
-        const weeklyModels = availableModels.filter(m => m.week !== 'Season' && String(m.year) === String(selectedYear));
+        // 🌟 FIX: Also strictly filter out 'Rest of Season' when fetching historical week blocks 🌟
+        const weeklyModels = availableModels.filter(m => 
+          m.week !== 'Season' && 
+          !strToLower(m.week).includes('rest of season') && 
+          !strToLower(m.week).includes('ros') &&
+          String(m.year) === String(selectedYear)
+        );
         
         const fetchPromises = weeklyModels.map(m => 
           fetch(`/api/omfg-data?year=${m.year}&week=${m.week}`).then(r => r.json())

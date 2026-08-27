@@ -139,8 +139,8 @@ export default function SeasonClient() {
             <Link href="/football/omfg-model/season" className="px-4 py-2 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all bg-white text-black shadow-lg">
               SoS Model
             </Link>
-            <Link href="/football/omfg-model/rest-of-season" className="px-4 py-2 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all text-gray-400 hover:text-white pointer-events-none opacity-50">
-              RoS Model (Soon)
+            <Link href="/football/omfg-model/rest-of-season" className="px-4 py-2 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all text-gray-300 hover:text-white">
+              RoS Model
             </Link>
           </div>
 
@@ -149,10 +149,8 @@ export default function SeasonClient() {
 
       <div className="w-full relative z-10">
         
-        {/* 🌟 100% WIDTH FLEX CONTAINER 🌟 */}
         <div className="flex flex-wrap items-center justify-between w-full gap-y-3 gap-x-2 mb-6">
           
-          {/* Left Group: Date Selector + Position Selector attached together */}
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             {viewMode !== 'player' && (
               <CustomDropdown options={seasonYears} value={selectedYear} onChange={setSelectedYear} />
@@ -169,7 +167,6 @@ export default function SeasonClient() {
             )}
           </div>
 
-          {/* Right Group: Tool Selector */}
           <div className="flex flex-wrap items-center bg-[#1a1a1a] p-1 rounded-2xl shadow-inner border border-gray-800 shrink-0">
             <button onClick={() => setViewMode('table')} className={`px-3 py-1.5 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all flex items-center gap-1.5 ${viewMode === 'table' ? 'bg-gray-800 text-white shadow-md' : 'text-gray-500 hover:text-white hover:bg-[#252525]'}`}>
               <LayoutList size={14} /> Season Table
