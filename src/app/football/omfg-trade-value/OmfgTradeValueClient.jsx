@@ -14,20 +14,22 @@ export default function OmfgTradeValueClient() {
   const activeLeague = getActiveLeagueData('football');
 
   // --- UI State Variables ---
-  const [currentPosition, setCurrentPosition] = useState('All');
+  const [currentPosition, setCurrentPosition] = useState('QB');
   const [showSettings, setShowSettings] = useState(false);
   const [activeModal, setActiveModal] = useState(null); 
   
   // Format toggles
-  const [formatMode, setFormatMode] = useState('dynasty'); 
+  const [formatMode, setFormatMode] = useState('redraft'); 
   const [dynastyStrategy, setDynastyStrategy] = useState('balanced'); 
+  const [tradeDeadline, setTradeDeadline] = useState('Week 10'); 
+  const [isDeadlineDropdownOpen, setIsDeadlineDropdownOpen] = useState(false); 
 
   // Automated Behind-the-Scenes Week Logic
   const [activeWeekNum, setActiveWeekNum] = useState(1); 
 
   // Manual Scoring Format Settings
   const [manualIsSuperflex, setManualIsSuperflex] = useState(false); 
-  const [manualPprValue, setManualPprValue] = useState(1);       
+  const [manualPprValue, setManualPprValue] = useState(0.5); 
   const [manualPassTdValue, setManualPassTdValue] = useState(4); 
   const [manualTePremium, setManualTePremium] = useState(0);     
 
@@ -65,17 +67,22 @@ export default function OmfgTradeValueClient() {
             }
         }
 
-        // 3. Fetch Season-Over-Season (SOS) Data
-        const sosRes = await fetch(`/api/omfg-data?year=${latestYear}&week=Season`);
+        // 3. Fetch Season, WoW, and Rest of Season Data
+        const [sosRes, wowRes, rosRes] = await Promise.all([
+          fetch(`/api/omfg-data?year=${latestYear}&week=Season`),
+          fetch(`/api/omfg-data?year=${latestYear}&week=${latestWeek}`),
+          fetch(`/api/omfg-data?year=${latestYear}&week=${encodeURIComponent('Rest of Season')}`)
+        ]);
+
         const sosJson = await sosRes.json();
-        const sosPlayers = sosJson.success && sosJson.players ? sosJson.players : [];
-
-        // 4. Fetch Week-Over-Week (WOW) Data
-        const wowRes = await fetch(`/api/omfg-data?year=${latestYear}&week=${latestWeek}`);
         const wowJson = await wowRes.json();
-        const wowPlayers = wowJson.success && wowJson.players ? wowJson.players : [];
+        const rosJson = await rosRes.json();
 
-        // 5. Merge Data by Normalized Name
+        const sosPlayers = sosJson.success && sosJson.players ? sosJson.players : [];
+        const wowPlayers = wowJson.success && wowJson.players ? wowJson.players : [];
+        const rosPlayers = rosJson.success && rosJson.players ? rosJson.players : [];
+
+        // 4. Merge Data by Normalized Name
         const normalizeName = (name) => {
             if (!name) return '';
             return name.toLowerCase().replace(/[^a-z0-9]/g, '').replace(/(jr|sr|ii|iii|iv|v)$/, '');
@@ -91,30 +98,49 @@ export default function OmfgTradeValueClient() {
             if (p.Player) wowMap[normalizeName(p.Player)] = p;
         });
 
+        const rosMap = {};
+        rosPlayers.forEach(p => {
+            if (p.Player) rosMap[normalizeName(p.Player)] = p;
+        });
+
         const merged = basePlayers.map(p => {
             const cleanName = normalizeName(p.name);
             const sData = sosMap[cleanName] || {};
             const wData = wowMap[cleanName] || {};
+            const rData = rosMap[cleanName] || {};
             
             const SOS_OMFG = Number(sData['OMFG Score']) || 50;
             const WOW_OMFG = Number(wData['In-Season OMFG Score'] ?? wData['Preseason OMFG'] ?? wData['OMFG Score']) || SOS_OMFG;
             
-            const P25 = Number(sData['Floor (P25)']) || 0;
-            const P50 = Number(sData['Base (P50)']) || 0;
-            const P75 = Number(sData['Ceiling (P75)']) || 0;
+            const ROS_OMFG = Number(rData['OMFG Score'] ?? rData['ROS OMFG'] ?? rData['Preseason OMFG']) || SOS_OMFG;
+            
+            // Outcome Range from RoS
+            const P25 = Number(rData['Floor (P25)'] ?? sData['Floor (P25)']) || 0;
+            const P50 = Number(rData['Base (P50)'] ?? sData['Base (P50)']) || 0;
+            const P75 = Number(rData['Ceiling (P75)'] ?? sData['Ceiling (P75)']) || 0;
             
             const weekly_proj_pts = Number(wData['Projected Fantasy Points']) || (P50 / 17) || 0;
-            const OMFG_Edge = Number(sData['Rank Gap'] ?? wData['Rank Gap']) || 0;
-
+            
+            // On-the-fly Edge Calculation
+            const cRank = Number(wData['Consensus Rank'] ?? sData['Consensus Rank']);
+            const mRank = Number(wData['Rank'] ?? wData['SOS Rank'] ?? sData['Rank'] ?? sData['SOS Rank']);
+            
+            let OMFG_Edge = 0;
+            if (!isNaN(cRank) && cRank > 0 && !isNaN(mRank) && mRank > 0) {
+                OMFG_Edge = cRank - mRank; 
+            } else {
+                OMFG_Edge = Number(wData['Consensus Rank Gap'] ?? wData['Rank Gap'] ?? sData['Consensus Rank Gap'] ?? sData['Rank Gap']) || 0;
+            }
+            
             // Dynamic Scoring Stats Extraction
-            const pass_tds_season = Number(sData['Pass TD'] ?? sData['PASS TDS']) || 0;
-            const receptions_season = Number(sData['Receptions'] ?? sData['REC']) || 0;
-            const pass_tds_week = Number(wData['Pass TD'] ?? wData['PASS TDS']) || (pass_tds_season / 17) || 0;
+            const pass_tds_season = Number(rData['Pass Td'] ?? sData['Pass Td'] ?? sData['Pass TD'] ?? sData['PASS TDS']) || 0;
+            const receptions_season = Number(rData['Receptions'] ?? rData['Rec'] ?? sData['Receptions'] ?? sData['REC']) || 0;
+            const pass_tds_week = Number(wData['Pass Td'] ?? wData['Pass TD'] ?? wData['PASS TDS']) || (pass_tds_season / 17) || 0;
             const receptions_week = Number(wData['Receptions'] ?? wData['REC']) || (receptions_season / 17) || 0;
 
             return {
                 ...p,
-                SOS_OMFG, WOW_OMFG, P25, P50, P75, weekly_proj_pts, OMFG_Edge,
+                SOS_OMFG, WOW_OMFG, ROS_OMFG, P25, P50, P75, weekly_proj_pts, OMFG_Edge,
                 pass_tds_season, receptions_season, pass_tds_week, receptions_week
             };
         }).filter(p => p.P50 > 0 || p.weekly_proj_pts > 0);
@@ -157,10 +183,10 @@ export default function OmfgTradeValueClient() {
     // Redraft Mode: Driven by OMFG Edge & Usage vs Production
     if (format === 'redraft') {
       if (edgeMult > 1.05) {
-        return { text: 'BUY: Undervalued', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
+        return { text: 'BUY: UNDERVALUED', color: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40' };
       }
       if (edgeMult < 0.95) {
-        return { text: 'SELL: Volatile Profile', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
+        return { text: 'SELL: VOLATILE PROFILE', color: 'text-red-400 bg-red-950/30 border-red-800/40' };
       }
       return { text: 'FAIR VALUE', color: 'text-zinc-400 bg-zinc-800/30 border-zinc-700/50' };
     }
@@ -241,17 +267,17 @@ export default function OmfgTradeValueClient() {
     const remainingWeeks = Math.max(1, 18 - activeWeekNum);
 
     const recalculated = (playersData || []).map(player => {
-        const { SOS_OMFG, WOW_OMFG, P25, P50, P75, weekly_proj_pts, OMFG_Edge, age, position } = player;
+        const { SOS_OMFG, WOW_OMFG, ROS_OMFG, P25, P50, P75, weekly_proj_pts, OMFG_Edge, age, position } = player;
         const isTE = (position === 'TE' || position === 'WR/TE');
 
         // STEP 1: Calculate Dynamic Scoring Adjustments
         const delta_pass_tds_season = player.pass_tds_season * (currentPassTdValue - 4);
-        const delta_ppr_season = player.receptions_season * currentPprValue;
+        const delta_ppr_season = player.receptions_season * (currentPprValue - 0.5); 
         const delta_tep_season = isTE ? (player.receptions_season * currentTePremium) : 0;
         const delta_total_season = delta_pass_tds_season + delta_ppr_season + delta_tep_season;
 
         const delta_pass_tds_week = player.pass_tds_week * (currentPassTdValue - 4);
-        const delta_ppr_week = player.receptions_week * currentPprValue;
+        const delta_ppr_week = player.receptions_week * (currentPprValue - 0.5); 
         const delta_tep_week = isTE ? (player.receptions_week * currentTePremium) : 0;
         const delta_total_week = delta_pass_tds_week + delta_ppr_week + delta_tep_week;
 
@@ -263,13 +289,44 @@ export default function OmfgTradeValueClient() {
         // STEP 2: Calculate OMFG-Weighted Points
         const pts_wow = weekly_proj_pts_adj * (1 + ((WOW_OMFG - 50) / 100));
         const pts_sos = p50_adj + ((p75_adj - p50_adj) * (SOS_OMFG / 100));
+        const pts_ros = p50_adj + ((p75_adj - p50_adj) * (ROS_OMFG / 100)); 
 
         // STEP 3 & 4: Apply Selected Format & Strategy Formulas
         let rawValue = 0;
         let finalEdgeMult = 1.0 + (OMFG_Edge / 100);
 
+        const currentWeek = activeWeekNum || 1;
+        const deadlineWeek = tradeDeadline === 'None' ? 14 : (parseInt(tradeDeadline.replace(/\D/g, '')) || 10);
+        const isPastDeadline = currentWeek >= deadlineWeek;
+
         if (formatMode === 'redraft') {
-            const pts_redraft = (0.75 * (pts_sos * (remainingWeeks / 17))) + (0.25 * (pts_wow * remainingWeeks));
+            let sos_w = 0;
+            let wow_w = 0;
+            let ros_w = 0;
+
+            if (currentWeek <= 4) {
+               // Early Season: High SOS, building WOW, low ROS
+               sos_w = Math.max(0.40, 0.75 - (currentWeek * 0.08)); 
+               wow_w = 0.20 + (currentWeek * 0.04);
+               ros_w = 1.0 - sos_w - wow_w;
+            } else if (!isPastDeadline) {
+               // Mid Season: SOS fades, ROS and WOW become dominant
+               sos_w = Math.max(0.10, 0.40 - ((currentWeek - 4) * 0.05));
+               wow_w = 0.30;
+               ros_w = 1.0 - sos_w - wow_w;
+            } else {
+               // Trade Deadline Push & Beyond: ROS is everything
+               sos_w = 0.05;
+               wow_w = 0.15;
+               ros_w = 0.80;
+            }
+
+            // Blended Equation utilizing dynamic weights
+            const pts_redraft = 
+               (sos_w * (pts_sos * (remainingWeeks / 17))) + 
+               (wow_w * (pts_wow * remainingWeeks)) + 
+               (ros_w * (pts_ros * (remainingWeeks / 17)));
+
             rawValue = pts_redraft * finalEdgeMult * 1.5;
         } else {
             const baseAgeMult = getBaseAgeMultiplier(position, age, dynastyStrategy);
@@ -284,11 +341,16 @@ export default function OmfgTradeValueClient() {
                 gatedAgeMult = 1.0 - (penaltyFactor * (1.0 - (SOS_OMFG / 100)));
             }
 
+            // DYNASTY ROS INTEGRATION with Trade Deadline
             if (dynastyStrategy === 'win_now') {
-                const pts_win_now = (0.40 * (pts_wow * 17)) + (0.60 * pts_sos);
+                const ros_w = isPastDeadline ? 0.45 : 0.35;
+                const sos_w = isPastDeadline ? 0.30 : 0.40;
+                const pts_win_now = (ros_w * pts_ros) + (0.25 * (pts_wow * 17)) + (sos_w * pts_sos);
                 rawValue = pts_win_now * finalEdgeMult * 2.5;
             } else if (dynastyStrategy === 'balanced') {
-                const pts_balanced = (0.20 * (pts_wow * 17)) + (0.80 * pts_sos);
+                const ros_w = isPastDeadline ? 0.25 : 0.15;
+                const sos_w = isPastDeadline ? 0.60 : 0.70;
+                const pts_balanced = (ros_w * pts_ros) + (0.15 * (pts_wow * 17)) + (sos_w * pts_sos);
                 rawValue = pts_balanced * gatedAgeMult * finalEdgeMult * 2.5;
             } else if (dynastyStrategy === 'build') {
                 rawValue = pts_sos * gatedAgeMult * finalEdgeMult * 2.5;
@@ -301,7 +363,7 @@ export default function OmfgTradeValueClient() {
             if (currentIsSuperflex) {
                 sf_mult = 1.0 + (SOS_OMFG / 300.0); 
             } else {
-                sf_mult = 0.50;
+                sf_mult = 0.75; 
             }
         }
         rawValue = rawValue * sf_mult;
@@ -345,7 +407,7 @@ export default function OmfgTradeValueClient() {
       
       return { ...player, overallRank: index + 1, posRank: `${pos}${posCounters[pos]}` };
     });
-  }, [playersData, formatMode, dynastyStrategy, currentIsSuperflex, currentPprValue, currentPassTdValue, currentTePremium, activeWeekNum]); 
+  }, [playersData, formatMode, dynastyStrategy, tradeDeadline, currentIsSuperflex, currentPprValue, currentPassTdValue, currentTePremium, activeWeekNum]); 
 
   const visibleData = processedRankings.filter((player) => {
     if (currentPosition === 'All') return true;
@@ -353,7 +415,8 @@ export default function OmfgTradeValueClient() {
     return player.position === currentPosition;
   });
 
-  const positions = ['All', 'QB', 'RB', 'WR', 'TE'];
+  // 🌟 FIX: Added 'K' and 'DST' to the available positions filters
+  const positions = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
 
   // --- VISUALIZERS ---
 
@@ -428,9 +491,8 @@ export default function OmfgTradeValueClient() {
   return (
     <div className="w-full animate-in fade-in duration-500 pb-24 relative">
       
-      {/* ℹ️ Outcome Range Modal */}
       {activeModal === 'outcomeRange' && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-[#161616] border border-gray-800 w-full max-w-xl rounded-3xl p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
             <button onClick={() => setActiveModal(null)} className="absolute right-4 top-4 text-gray-500 hover:text-white transition-colors">
               <X size={20} />
@@ -460,9 +522,8 @@ export default function OmfgTradeValueClient() {
         </div>
       )}
 
-      {/* ℹ️ Career Arc Modal */}
       {activeModal === 'careerArc' && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-[#161616] border border-gray-800 w-full max-w-xl rounded-3xl p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
             <button onClick={() => setActiveModal(null)} className="absolute right-4 top-4 text-gray-500 hover:text-white transition-colors">
               <X size={20} />
@@ -486,9 +547,8 @@ export default function OmfgTradeValueClient() {
         </div>
       )}
 
-      {/* ℹ️ Market Recommendation Modal */}
       {activeModal === 'marketAction' && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-[#161616] border border-gray-800 w-full max-w-xl rounded-3xl p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
             <button onClick={() => setActiveModal(null)} className="absolute right-4 top-4 text-gray-500 hover:text-white transition-colors">
               <X size={20} />
@@ -498,27 +558,38 @@ export default function OmfgTradeValueClient() {
             </h3>
             
             <div className="space-y-4 text-xs font-medium text-gray-400 leading-relaxed mt-4">
-              <p>
-                <strong>Dynasty Formats:</strong> Dynamically adjusts based on your selected Team Strategy (Build, Balanced, Win Now). It surfaces action markers by identifying inefficiencies between a player's age-adjusted value and their current production volume.
-              </p>
-              <p>
-                <strong>Redraft Formats:</strong> Currently in Offseason mode. During the season, this will surface actionable insights (e.g., triggering a "Buy Low" recommendation on an underperforming high-volume asset).
-              </p>
-              
-              <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60 mt-4">
-                <p>• <span className="text-emerald-400 font-bold">Acquisition Target:</span> Deep inefficiencies identified between production volume and market perception. Strong buy recommendation.</p>
-                <p>• <span className="text-teal-400 font-bold">Buy Low:</span> Price point optimization window opened due to macro roster trends or strategic mismatch.</p>
-                <p>• <span className="text-zinc-400 font-bold">Fair Value:</span> Valued completely accurately on standard baseline equilibrium metrics.</p>
-                <p>• <span className="text-rose-400 font-bold">Sell High:</span> Asset valuation apex. Historical models indicate exchanging for future values right now optimizes returns.</p>
-                <p>• <span className="text-red-400 font-bold">Exit Strategy:</span> High value erosion risk. Rapid asset degradation threshold approaching. Divestment advised.</p>
-              </div>
+              {formatMode === 'dynasty' ? (
+                <>
+                  <p>
+                    <strong>Dynasty Formats:</strong> Dynamically adjusts based on your selected Team Strategy (Build, Balanced, Win Now). It surfaces action markers by identifying inefficiencies between a player's age-adjusted value and their current production volume.
+                  </p>
+                  <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60 mt-4">
+                    <p>• <span className="text-emerald-400 font-bold">Acquisition Target:</span> Deep inefficiencies identified between production volume and market perception. Strong buy recommendation.</p>
+                    <p>• <span className="text-teal-400 font-bold">Buy Low:</span> Price point optimization window opened due to macro roster trends or strategic mismatch.</p>
+                    <p>• <span className="text-zinc-400 font-bold">Fair Value:</span> Valued completely accurately on standard baseline equilibrium metrics.</p>
+                    <p>• <span className="text-rose-400 font-bold">Sell High:</span> Asset valuation apex. Historical models indicate exchanging for future values right now optimizes returns.</p>
+                    <p>• <span className="text-red-400 font-bold">Exit Strategy:</span> High value erosion risk. Rapid asset degradation threshold approaching. Divestment advised.</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p>
+                    <strong>Redraft Formats:</strong> Action profiles trigger when a player's raw projected output diverges significantly from their public Consensus Value.
+                  </p>
+                  <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60 mt-4">
+                    <p>• <span className="text-emerald-400 font-bold">BUY: UNDERVALUED:</span> Deep inefficiencies identified between high opportunity volume and market perception. Strong buy recommendation.</p>
+                    <p>• <span className="text-zinc-400 font-bold">FAIR VALUE:</span> Valued completely accurately on standard baseline equilibrium metrics.</p>
+                    <p>• <span className="text-red-400 font-bold">SELL: VOLATILE PROFILE:</span> High value erosion risk. Surface-level production is completely disconnected from underlying opportunity. Divestment advised.</p>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
       )}
 
       {/* Hero Section */}
-      <div className="relative w-full h-[220px] md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-8 mt-6 shadow-2xl">
+      <div className="relative w-full h-[220px] md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-8 shadow-2xl">
         <div className="absolute inset-0 opacity-80 z-0" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }} />
         <img src={bgImage} alt="Football Background" className="absolute -right-[10%] md:-right-10 top-1/2 transform -translate-y-1/2 h-[200%] w-auto opacity-20 pointer-events-none z-0" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent z-0" />
@@ -535,25 +606,54 @@ export default function OmfgTradeValueClient() {
               Market-implied asset valuations. Evaluate assets using our OMFG-gated age decay matrix and projected output ranges.
             </p>
           </div>
+
+          <div className="flex bg-black/40 backdrop-blur-md p-1 rounded-full border border-white/10 shadow-2xl shrink-0 mt-4 md:mt-0">
+            <button onClick={() => setFormatMode('redraft')} className={`px-5 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all ${formatMode === 'redraft' ? 'bg-white text-black shadow-md' : 'text-gray-400 hover:text-white'}`}>Redraft</button>
+            <button onClick={() => setFormatMode('dynasty')} className={`px-5 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all ${formatMode === 'dynasty' ? 'bg-white text-black shadow-md' : 'text-gray-400 hover:text-white'}`}>Dynasty</button>
+          </div>
         </div>
       </div>
 
       <div className="w-full">
         {/* Controls Row */}
-        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6">
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6 relative z-[100]">
           
-          {/* Tighter Non-Wrapping Flex Container */}
-          <div className="flex flex-row items-center gap-2 xl:gap-4 overflow-x-auto scrollbar-hide w-full whitespace-nowrap pb-2 -mb-2">
+          <div className="flex flex-row flex-wrap items-center gap-2 xl:gap-4 w-full pb-2 -mb-2">
             
-            <div className="flex bg-[#111] p-1 rounded-2xl shadow-inner border border-gray-800 w-fit shrink-0">
-              <button onClick={() => setFormatMode('redraft')} className={`px-4 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${formatMode === 'redraft' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-white'}`}>Redraft</button>
-              <button onClick={() => setFormatMode('dynasty')} className={`px-4 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${formatMode === 'dynasty' ? 'bg-zinc-700 text-white shadow-md' : 'text-gray-500 hover:text-white'}`}>Dynasty</button>
-            </div>
-
             <div className="flex bg-[#1a1a1a] p-1 rounded-2xl shadow-inner border border-gray-800 w-fit shrink-0">
                {positions.map(pos => (
                   <button key={pos} onClick={() => setCurrentPosition(pos)} className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${currentPosition === pos ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'text-gray-500 hover:text-white hover:bg-[#252525]'}`}>{pos}</button>
                ))}
+            </div>
+
+            <div className="flex items-center bg-[#111] p-1 rounded-2xl border border-gray-800 w-fit shrink-0">
+              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest pl-3 pr-2">Trade Deadline:</span>
+              
+              <div className="relative" tabIndex={0} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsDeadlineDropdownOpen(false); }}>
+                <button
+                  type="button"
+                  onClick={() => setIsDeadlineDropdownOpen(!isDeadlineDropdownOpen)}
+                  className={`flex items-center justify-between gap-2 bg-[#1a1a1a] text-white text-[10px] font-bold uppercase tracking-wider py-1.5 px-3 rounded-xl border transition-all ${isDeadlineDropdownOpen ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-700 hover:border-gray-500'}`}
+                >
+                  <span>{tradeDeadline === 'None' ? 'None' : tradeDeadline.replace('Week ', 'Wk ')}</span>
+                  <ChevronRight size={12} className={`transform transition-transform text-gray-400 ${isDeadlineDropdownOpen ? '-rotate-90 text-blue-400' : 'rotate-90'}`} />
+                </button>
+                
+                {isDeadlineDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-32 bg-[#181818] border border-gray-700/80 rounded-2xl shadow-2xl overflow-hidden z-[150] animate-in fade-in slide-in-from-top-2 duration-150">
+                    {['Week 10', 'Week 11', 'Week 12', 'None'].map(dl => (
+                      <button
+                        key={dl}
+                        type="button"
+                        onClick={() => { setTradeDeadline(dl); setIsDeadlineDropdownOpen(false); }}
+                        className={`w-full text-left px-3.5 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all border-l-2 ${tradeDeadline === dl ? 'bg-red-950/40 text-red-500 border-red-500' : 'text-gray-300 border-transparent hover:bg-[#222] hover:text-white'}`}
+                      >
+                        {dl}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {formatMode === 'dynasty' && (
@@ -660,7 +760,7 @@ export default function OmfgTradeValueClient() {
                     <>
                       <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center relative group cursor-help hover:bg-gray-800/40 transition-colors">
                         <div className="flex items-center justify-center gap-1">
-                          SOS OMFG
+                          SOS
                           <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
                         </div>
                         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
@@ -674,7 +774,7 @@ export default function OmfgTradeValueClient() {
                     <>
                       <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center relative group cursor-help hover:bg-gray-800/40 transition-colors">
                         <div className="flex items-center justify-center gap-1">
-                          SOS OMFG
+                          SOS
                           <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
                         </div>
                         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
@@ -684,11 +784,21 @@ export default function OmfgTradeValueClient() {
                       </th>
                       <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center relative group cursor-help hover:bg-gray-800/40 transition-colors">
                         <div className="flex items-center justify-center gap-1">
-                          WOW OMFG
+                          WOW
                           <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
                         </div>
                         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
                           Week-Over-Week Overall Metric Fantasy Grade. Analyzes recent volume and high-value opportunities to predict what could happen next.
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
+                        </div>
+                      </th>
+                      <th className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center relative group cursor-help hover:bg-gray-800/40 transition-colors">
+                        <div className="flex items-center justify-center gap-1">
+                          ROS
+                          <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
+                        </div>
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
+                          Rest of Season Overall Metric Fantasy Grade. Rates the strength of the player's underlying projected role across remaining games.
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
                         </div>
                       </th>
@@ -707,7 +817,7 @@ export default function OmfgTradeValueClient() {
                   ) : (
                     <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center border-l border-gray-800">
                       <div className="flex items-center justify-center gap-1.5">
-                        {formatMode === 'dynasty' ? 'Current Season (P25 - P75)' : 'Outcome Range (P25 - P75)'}
+                        Outcome Range (P25 - P75)
                         <button onClick={() => setActiveModal('outcomeRange')} className="text-gray-500 hover:text-white transition-colors">
                           <Info size={11} />
                         </button>
@@ -783,6 +893,7 @@ export default function OmfgTradeValueClient() {
                         <>
                           <td className="px-4 py-2.5 text-center"><div className="text-xs font-bold text-white">{player.SOS_OMFG.toFixed(1)}</div></td>
                           <td className="px-4 py-2.5 text-center"><div className="text-xs font-bold text-gray-400">{player.WOW_OMFG.toFixed(1)}</div></td>
+                          <td className="px-4 py-2.5 text-center"><div className="text-xs font-bold text-gray-400">{player.ROS_OMFG.toFixed(1)}</div></td>
                         </>
                       )}
 
