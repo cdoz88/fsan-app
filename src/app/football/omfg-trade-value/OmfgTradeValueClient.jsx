@@ -415,7 +415,6 @@ export default function OmfgTradeValueClient() {
     return player.position === currentPosition;
   });
 
-  // 🌟 FIX: Added 'K' and 'DST' to the available positions filters
   const positions = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
 
   // --- VISUALIZERS ---
@@ -589,13 +588,13 @@ export default function OmfgTradeValueClient() {
       )}
 
       {/* Hero Section */}
-      <div className="relative w-full h-[220px] md:h-[260px] flex items-end overflow-hidden rounded-2xl mb-8 shadow-2xl">
+      <div className="relative w-full h-[220px] md:h-[260px] flex items-center overflow-hidden rounded-2xl mb-8 shadow-2xl">
         <div className="absolute inset-0 opacity-80 z-0" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }} />
         <img src={bgImage} alt="Football Background" className="absolute -right-[10%] md:-right-10 top-1/2 transform -translate-y-1/2 h-[200%] w-auto opacity-20 pointer-events-none z-0" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent z-0" />
         
-        <div className="relative z-10 w-full flex flex-col md:flex-row items-start md:items-end justify-between h-full px-6 md:px-10 pb-8 gap-4">
-          <div>
+        <div className="relative z-10 w-full flex flex-col md:flex-row items-center justify-between h-full px-6 md:px-10 pb-4 sm:pb-0 gap-4">
+          <div className="max-w-2xl w-full">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest mb-3 shadow-inner backdrop-blur-sm">
               <ShieldCheck size={12} /> OMFG-Powered Valuations
             </div>
@@ -607,7 +606,7 @@ export default function OmfgTradeValueClient() {
             </p>
           </div>
 
-          <div className="flex bg-black/40 backdrop-blur-md p-1 rounded-full border border-white/10 shadow-2xl shrink-0 mt-4 md:mt-0">
+          <div className="flex bg-black/40 backdrop-blur-md p-1 rounded-full border border-white/10 shadow-2xl shrink-0 mt-4 md:mt-0 self-start md:self-end md:mb-8">
             <button onClick={() => setFormatMode('redraft')} className={`px-5 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all ${formatMode === 'redraft' ? 'bg-white text-black shadow-md' : 'text-gray-400 hover:text-white'}`}>Redraft</button>
             <button onClick={() => setFormatMode('dynasty')} className={`px-5 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all ${formatMode === 'dynasty' ? 'bg-white text-black shadow-md' : 'text-gray-400 hover:text-white'}`}>Dynasty</button>
           </div>
