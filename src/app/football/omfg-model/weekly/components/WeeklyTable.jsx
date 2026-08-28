@@ -7,7 +7,6 @@ import { RefreshCw, ChevronDown, ChevronUp, Info } from 'lucide-react';
 export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
   const [expandedRows, setExpandedRows] = useState(new Set());
   
-  // Dynamically adjust column span for the loading/empty state blocks
   const colSpanCount = isHistorical ? 6 : 11;
 
   const toggleRow = (playerId) => {
@@ -45,7 +44,12 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
     return 'text-gray-600';
   };
 
-  const inverseStats = new Set(['Interceptions', 'Fumbles']);
+  const inverseStats = new Set([
+    'Projected Interceptions', 'Interceptions', 'Actual Interceptions', 'INT',
+    'Projected Fumbles', 'Fumbles', 'Actual Fumbles', 'FUM',
+    'Projected Points Allowed', 'Points Allowed', 'Actual Points Allowed', 'Pts Agn', 'PTS AGN',
+    'Projected Yards Allowed', 'Yards Allowed', 'Actual Yards Allowed', 'Yds Agn', 'YDS AGN'
+  ]);
 
   const statThresholds = useMemo(() => {
     if (!visibleData || visibleData.length === 0) return {};
@@ -101,30 +105,47 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
     }
   };
 
-  const getStat = (player, statName) => {
-    const hyphenated = statName.replace(' ', '-');
-    return player[`Projected ${statName}`] ?? player[statName] ?? player[`Actual ${statName}`] ?? player[hyphenated] ?? player[`Projected ${hyphenated}`] ?? null;
-  };
-
   const getFlexibleValue = (player, matchRules) => {
     if (!player) return null;
     const normalize = (str) => String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
     
-    for (const [key, value] of Object.entries(player)) {
-      if (value === undefined || value === null || value === '') continue;
-      
-      const normKey = normalize(key);
-      
-      for (const rule of matchRules) {
+    // Phase 1: EXACT MATCHES
+    for (const rule of matchRules) {
+      if (Array.isArray(rule)) continue;
+      const normRule = normalize(rule);
+      for (const [key, value] of Object.entries(player)) {
+        if (value === undefined || value === null || value === '') continue;
+        if (normalize(key) === normRule) return value;
+      }
+    }
+
+    // Phase 1.5: EXACT MATCHES ignoring "Projected" or "Actual" prefixes
+    for (const rule of matchRules) {
+      if (Array.isArray(rule)) continue;
+      const normRule = normalize(rule);
+      for (const [key, value] of Object.entries(player)) {
+        if (value === undefined || value === null || value === '') continue;
+        const strippedKey = normalize(key).replace(/^projected/, '').replace(/^actual/, '');
+        if (strippedKey === normRule) return value;
+      }
+    }
+    
+    // Phase 2: PARTIAL MATCHES (Safeguarded)
+    for (const rule of matchRules) {
+      for (const [key, value] of Object.entries(player)) {
+        if (value === undefined || value === null || value === '') continue;
+        const normKey = normalize(key);
         if (Array.isArray(rule)) {
-          if (rule.every(sub => normKey.includes(normalize(sub)))) {
-            return value;
-          }
+          if (rule.every(sub => normKey.includes(normalize(sub)))) return value;
         } else {
           const normRule = normalize(rule);
-          if (normKey === normRule || normKey.includes(normRule)) {
-            return value;
-          }
+          
+          // Anti-Collision Safeguard for Kicker Stats
+          if (!normRule.includes('40') && normKey.includes('40')) continue;
+          if (!normRule.includes('50') && normKey.includes('50')) continue;
+          if (!normRule.includes('plus') && normKey.includes('plus')) continue;
+
+          if (normKey.includes(normRule)) return value;
         }
       }
     }
@@ -137,33 +158,53 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
 
     if (pos === 'QB') {
       stats = [
-        { label: 'Pass Att', val: formatNumber(getStat(player, 'Pass Attempts')), key: 'Pass Attempts' },
-        { label: 'Pass Yds', val: formatNumber(getStat(player, 'Pass Yards')), key: 'Pass Yards' },
-        { label: 'Pass TD', val: formatNumber(getFlexibleValue(player, ['Pass Td', 'Pass TD'])), key: 'Pass Td' },
-        { label: 'INTs', val: formatNumber(getStat(player, 'Interceptions')), key: 'Interceptions' },
-        { label: 'Rush Att', val: formatNumber(getStat(player, 'Rush Attempts')), key: 'Rush Attempts' },
-        { label: 'Rush Yds', val: formatNumber(getStat(player, 'Rush Yards')), key: 'Rush Yards' },
-        { label: 'Rush TD', val: formatNumber(getFlexibleValue(player, ['Rush Td', 'Rush TD'])), key: 'Rush Td' },
+        { label: 'Pass Att', val: getFlexibleValue(player, ['Pass Attempts', 'Pass Att']), key: 'Pass Attempts' },
+        { label: 'Pass Yds', val: getFlexibleValue(player, ['Pass Yards', 'Pass Yds']), key: 'Pass Yards' },
+        { label: 'Pass TD', val: getFlexibleValue(player, ['Pass Td', 'Pass TD']), key: 'Pass Td' },
+        { label: 'INTs', val: getFlexibleValue(player, ['Interceptions', 'INT']), key: 'Interceptions' },
+        { label: 'Rush Att', val: getFlexibleValue(player, ['Rush Attempts', 'Rush Att']), key: 'Rush Attempts' },
+        { label: 'Rush Yds', val: getFlexibleValue(player, ['Rush Yards', 'Rush Yds']), key: 'Rush Yards' },
+        { label: 'Rush TD', val: getFlexibleValue(player, ['Rush Td', 'Rush TD']), key: 'Rush Td' },
       ];
     } else if (pos === 'RB') {
       stats = [
-        { label: 'Rush Att', val: formatNumber(getStat(player, 'Rush Attempts')), key: 'Rush Attempts' },
-        { label: 'Rush Yds', val: formatNumber(getStat(player, 'Rush Yards')), key: 'Rush Yards' },
-        { label: 'Rush TD', val: formatNumber(getFlexibleValue(player, ['Rush Td', 'Rush TD'])), key: 'Rush Td' },
-        { label: 'Targets', val: formatNumber(getStat(player, 'Targets')), key: 'Targets' },
-        { label: 'Recs', val: formatNumber(getStat(player, 'Receptions')), key: 'Receptions' },
-        { label: 'Rec Yds', val: formatNumber(getStat(player, 'Receiving Yards')), key: 'Receiving Yards' },
-        { label: 'Rec TD', val: formatNumber(getFlexibleValue(player, ['Receiving Td', 'Receiving TD', 'Rec Td'])), key: 'Receiving Td' },
+        { label: 'Rush Att', val: getFlexibleValue(player, ['Rush Attempts', 'Rush Att']), key: 'Rush Attempts' },
+        { label: 'Rush Yds', val: getFlexibleValue(player, ['Rush Yards', 'Rush Yds']), key: 'Rush Yards' },
+        { label: 'Rush TD', val: getFlexibleValue(player, ['Rush Td', 'Rush TD']), key: 'Rush Td' },
+        { label: 'Targets', val: getFlexibleValue(player, ['Targets']), key: 'Targets' },
+        { label: 'Recs', val: getFlexibleValue(player, ['Receptions']), key: 'Receptions' },
+        { label: 'Rec Yds', val: getFlexibleValue(player, ['Receiving Yards']), key: 'Receiving Yards' },
+        { label: 'Rec TD', val: getFlexibleValue(player, ['Receiving Td', 'Receiving TD', 'Rec Td']), key: 'Receiving Td' },
       ];
     } else if (pos === 'WR' || pos === 'TE') {
       stats = [
-        { label: 'Targets', val: formatNumber(getStat(player, 'Targets')), key: 'Targets' },
-        { label: 'Recs', val: formatNumber(getStat(player, 'Receptions')), key: 'Receptions' },
-        { label: 'Rec Yds', val: formatNumber(getStat(player, 'Receiving Yards')), key: 'Receiving Yards' },
-        { label: 'Rec TD', val: formatNumber(getFlexibleValue(player, ['Receiving Td', 'Receiving TD', 'Rec Td'])), key: 'Receiving Td' },
-        { label: 'Air Yds', val: formatNumber(getStat(player, 'Air Yards')), key: 'Air Yards' },
-        { label: '1st Reads', val: formatNumber(getStat(player, 'First Read Targets')), key: 'First-Read Targets' },
-        { label: 'EZ Tgts', val: formatNumber(getStat(player, 'End Zone Targets')), key: 'End-Zone Targets' },
+        { label: 'Targets', val: getFlexibleValue(player, ['Targets']), key: 'Targets' },
+        { label: 'Recs', val: getFlexibleValue(player, ['Receptions']), key: 'Receptions' },
+        { label: 'Rec Yds', val: getFlexibleValue(player, ['Receiving Yards']), key: 'Receiving Yards' },
+        { label: 'Rec TD', val: getFlexibleValue(player, ['Receiving Td', 'Receiving TD', 'Rec Td']), key: 'Receiving Td' },
+        { label: 'Air Yds', val: getFlexibleValue(player, ['Air Yards']), key: 'Air Yards' },
+        { label: '1st Reads', val: getFlexibleValue(player, ['First Read Targets', 'First-Read Targets']), key: 'First Read Targets' },
+        { label: 'EZ Tgts', val: getFlexibleValue(player, ['End Zone Targets', 'End-Zone Targets']), key: 'End Zone Targets' },
+      ];
+    } else if (pos === 'K') {
+      stats = [
+        { label: 'FG Att', val: getFlexibleValue(player, ['Fga', 'FGA', 'Field Goals Attempted', 'FG Att']), key: 'Fga' },
+        { label: 'FG Made', val: getFlexibleValue(player, ['Fgm', 'FGM', 'Field Goals Made', 'FG Made']), key: 'Fgm' },
+        { label: 'FGA 40-49', val: getFlexibleValue(player, ['Fga 40 49', 'FGA 40-49', 'Fga4049']), key: 'Fga 40 49' },
+        { label: 'FGM 40-49', val: getFlexibleValue(player, ['Fgm 40 49', 'FGM 40-49', 'Fgm4049']), key: 'Fgm 40 49' },
+        { label: 'FGA 50+', val: getFlexibleValue(player, ['Fga 50 Plus', 'FGA 50+', 'Fga50Plus', 'Fga 50']), key: 'Fga 50 Plus' },
+        { label: 'FGM 50+', val: getFlexibleValue(player, ['Fgm 50 Plus', 'FGM 50+', 'Fgm50Plus', 'Fgm 50']), key: 'Fgm 50 Plus' },
+        { label: 'XP Att', val: getFlexibleValue(player, ['Xpa', 'XPA', 'Extra Points Attempted', 'XP Att']), key: 'Xpa' },
+        { label: 'XP Made', val: getFlexibleValue(player, ['Xpm', 'XPM', 'Extra Points Made', 'XP Made']), key: 'Xpm' },
+      ];
+    } else if (pos === 'DST') {
+      stats = [
+        { label: 'Sacks', val: getFlexibleValue(player, ['Sacks', 'SACK']), key: 'Sacks' },
+        { label: 'INTs', val: getFlexibleValue(player, ['Interceptions', 'INT']), key: 'Interceptions' },
+        { label: 'Fum Rec', val: getFlexibleValue(player, ['Fumble Recoveries', 'Fum Rec', 'FUM REC']), key: 'Fumble Recoveries' },
+        { label: 'Def TDs', val: getFlexibleValue(player, ['Defensive Touchdowns', 'Def TD', 'DEF TD']), key: 'Defensive Touchdowns' },
+        { label: 'Pts Allw', val: getFlexibleValue(player, ['Points Allowed', 'Pts Agn', 'PTS AGN']), key: 'Points Allowed' },
+        { label: 'Yds Allw', val: getFlexibleValue(player, ['Yards Allowed', 'Yds Agn', 'YDS AGN']), key: 'Yards Allowed' },
       ];
     }
 
@@ -174,7 +215,7 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
           return (
             <div key={i} className={`rounded-lg p-2 flex flex-col items-center justify-center text-center transition-colors border flex-1 min-w-[70px] ${heatClass}`}>
               <span className="text-[8px] font-black uppercase text-gray-400 mb-0.5 tracking-widest leading-none">{stat.label}</span>
-              <span className="text-[13px] font-black leading-none mt-1">{stat.val}</span>
+              <span className="text-[13px] font-black leading-none mt-1">{formatNumber(stat.val)}</span>
             </div>
           );
         })}
@@ -182,10 +223,9 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
     );
   };
 
-  // Determine Position context for headers
   const currentPos = visibleData && visibleData.length > 0 ? visibleData[0]?.Position : 'ALL';
-  const prob1Header = (currentPos === 'QB' || currentPos === 'TE') ? 'TOP 6' : 'TOP 12';
-  const prob2Header = (currentPos === 'QB' || currentPos === 'TE') ? 'TOP 12' : 'TOP 24';
+  const prob1Header = (currentPos === 'QB' || currentPos === 'TE' || currentPos === 'K' || currentPos === 'DST') ? 'TOP 6' : 'TOP 12';
+  const prob2Header = (currentPos === 'QB' || currentPos === 'TE' || currentPos === 'K' || currentPos === 'DST') ? 'TOP 12' : 'TOP 24';
 
   return (
     <div className="bg-[#111] rounded-2xl shadow-2xl border border-gray-800 animate-in fade-in slide-in-from-bottom-4 duration-700 relative min-h-[400px] overflow-visible">
@@ -207,10 +247,6 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
                   OMFG
                   <Info size={10} className="text-red-400/50 group-hover:text-red-400 transition-colors" />
                 </div>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                  Overall Metric Fantasy Grade. Analyzes recent volume and high-value opportunities to predict what could happen next.
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
-                </div>
               </th>
 
               <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">{isHistorical ? 'Actual Pts' : 'Proj Pts'}</th>
@@ -218,47 +254,19 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
               {!isHistorical && (
                 <>
                   <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center relative group cursor-help hover:bg-gray-800/40 transition-colors">
-                    <div className="flex items-center justify-center gap-1">
-                      Matchup
-                      <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
-                    </div>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                      Opponent Difficulty rating on a 0-100 scale. Higher scores mean an easier positional matchup.
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
-                    </div>
+                    Matchup
                   </th>
 
                   <th className="px-2 py-2 text-[9px] font-black text-[#1b75bb] uppercase tracking-widest text-center bg-[#0f446e]/20 border-x border-gray-800 relative group cursor-help hover:bg-[#0f446e]/40 transition-colors">
-                    <div className="flex items-center justify-center gap-1">
-                      {prob1Header}
-                      <Info size={10} className="text-[#1b75bb]/60 group-hover:text-[#1b75bb] transition-colors" />
-                    </div>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                      The model's probability that this player finishes inside the {prob1Header} at their position this week.
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
-                    </div>
+                    {prob1Header}
                   </th>
 
                   <th className="px-2 py-2 text-[9px] font-black text-[#1b75bb] uppercase tracking-widest text-center bg-[#0f446e]/20 border-r border-gray-800 relative group cursor-help hover:bg-[#0f446e]/40 transition-colors">
-                    <div className="flex items-center justify-center gap-1">
-                      {prob2Header}
-                      <Info size={10} className="text-[#1b75bb]/60 group-hover:text-[#1b75bb] transition-colors" />
-                    </div>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                      The model's probability that this player finishes inside the {prob2Header} at their position this week.
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
-                    </div>
+                    {prob2Header}
                   </th>
 
                   <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center relative group cursor-help hover:bg-gray-800/40 transition-colors">
-                    <div className="flex items-center justify-center gap-1">
-                      Edge
-                      <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
-                    </div>
-                    <div className="absolute top-full right-0 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                      Difference between OMFG rank and industry consensus. A positive (+) number means the model ranks them higher than the market.
-                      <div className="absolute bottom-full right-4 border-4 border-transparent border-b-gray-600"></div>
-                    </div>
+                    Edge
                   </th>
                 </>
               )}
@@ -295,12 +303,11 @@ export default function WeeklyTable({ visibleData, isHistorical, isSyncing }) {
                 const omfgVal = player['Preseason OMFG'] ?? player['In-Season OMFG Score'] ?? player['OMFG Score'];
                 const ptsVal = isHistorical ? player['Actual Fantasy Points'] : player['Projected Fantasy Points'];
                 
-                // Smart Fuzzy Extracts (Arrays trigger "Contains BOTH substrings" logic)
-                const prob1 = (currentPos === 'QB' || currentPos === 'TE') 
+                const prob1 = (currentPos === 'QB' || currentPos === 'TE' || currentPos === 'K' || currentPos === 'DST') 
                    ? getFlexibleValue(player, ['Top 6 Probability', ['prob', 'top6'], 'Top 6', ['prob', 'top5'], 'Top 5'])
                    : getFlexibleValue(player, ['Top 12 Probability', ['prob', 'top12'], 'Top 12']);
                 
-                const prob2 = (currentPos === 'QB' || currentPos === 'TE') 
+                const prob2 = (currentPos === 'QB' || currentPos === 'TE' || currentPos === 'K' || currentPos === 'DST') 
                    ? getFlexibleValue(player, ['Top 12 Probability', ['prob', 'top12'], 'Top 12'])
                    : getFlexibleValue(player, ['Top 24 Probability', ['prob', 'top24'], 'Top 24', ['prob', 'top20'], 'Top 20']);
   

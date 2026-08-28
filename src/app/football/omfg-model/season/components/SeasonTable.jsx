@@ -7,7 +7,6 @@ import { RefreshCw, ChevronDown, ChevronUp, Info } from 'lucide-react';
 export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
   const [expandedRows, setExpandedRows] = useState(new Set());
   
-  // Adjusted col span: Edge column is removed, so non-historical uses 10
   const colSpanCount = isHistorical ? 8 : 10;
 
   const toggleRow = (playerId) => {
@@ -20,12 +19,18 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
   };
 
   const formatNumber = (val, decimals = 1) => {
-    if (val === null || val === undefined || val === '') return '-';
+    if (val === null || val === undefined || val === '' || val === '-') return '-';
     const num = Number(val);
     return isNaN(num) ? '-' : num.toFixed(decimals);
   };
 
-  const inverseStats = new Set(['Projected Interceptions', 'Interceptions', 'Actual Interceptions', 'Projected Fumbles', 'Fumbles', 'Actual Fumbles']);
+  // 🌟 NEW: Added Pts Allow and Yds Allow fallbacks to Inverse Stats
+  const inverseStats = new Set([
+    'Projected Interceptions', 'Interceptions', 'Actual Interceptions', 'INT', 'Int', 'Ints',
+    'Projected Fumbles', 'Fumbles', 'Actual Fumbles', 'FUM',
+    'Projected Points Allowed', 'Points Allowed', 'Actual Points Allowed', 'Pts Agn', 'PTS AGN', 'Pts Allow',
+    'Projected Yards Allowed', 'Yards Allowed', 'Actual Yards Allowed', 'Yds Agn', 'YDS AGN', 'Yds Allow'
+  ]);
 
   const statThresholds = useMemo(() => {
     if (!visibleData || visibleData.length === 0) return {};
@@ -33,8 +38,12 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
     const allKeys = Object.keys(visibleData[0]);
 
     allKeys.forEach(stat => {
-      const values = visibleData.map(p => p[stat]).filter(v => v !== null && v !== undefined && v !== '')
-        .map(v => Number(v)).filter(v => !isNaN(v)).sort((a, b) => a - b);
+      const values = visibleData.map(p => p[stat])
+        .filter(v => v !== null && v !== undefined && v !== '' && v !== '-')
+        .map(v => Number(v))
+        .filter(v => !isNaN(v))
+        .sort((a, b) => a - b);
+        
       if (values.length > 0) {
         thresholds[stat] = {
           p90: values[Math.floor(values.length * 0.90)] || values[values.length - 1],
@@ -81,20 +90,50 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
     }
   };
 
-  const getStat = (player, statName) => player[`Projected ${statName}`] ?? player[`Actual ${statName}`] ?? player[statName];
-
   const getFlexibleValue = (player, matchRules) => {
     if (!player) return null;
     const normalize = (str) => String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
-    for (const [key, value] of Object.entries(player)) {
-      if (value === undefined || value === null || value === '') continue;
-      const normKey = normalize(key);
-      for (const rule of matchRules) {
+    
+    // 🌟 FIX: Explicitly ignore "-" dashes so the loop keeps searching for the real column
+    const isValid = (val) => val !== undefined && val !== null && val !== '' && val !== '-';
+
+    // Phase 1: EXACT MATCHES
+    for (const rule of matchRules) {
+      if (Array.isArray(rule)) continue;
+      const normRule = normalize(rule);
+      for (const [key, value] of Object.entries(player)) {
+        if (!isValid(value)) continue;
+        if (normalize(key) === normRule) return value;
+      }
+    }
+
+    // Phase 1.5: EXACT MATCHES ignoring "Projected" or "Actual" prefixes
+    for (const rule of matchRules) {
+      if (Array.isArray(rule)) continue;
+      const normRule = normalize(rule);
+      for (const [key, value] of Object.entries(player)) {
+        if (!isValid(value)) continue;
+        const strippedKey = normalize(key).replace(/^projected/, '').replace(/^actual/, '');
+        if (strippedKey === normRule) return value;
+      }
+    }
+    
+    // Phase 2: PARTIAL MATCHES (Safeguarded)
+    for (const rule of matchRules) {
+      for (const [key, value] of Object.entries(player)) {
+        if (!isValid(value)) continue;
+        const normKey = normalize(key);
         if (Array.isArray(rule)) {
           if (rule.every(sub => normKey.includes(normalize(sub)))) return value;
         } else {
           const normRule = normalize(rule);
-          if (normKey === normRule || normKey.includes(normRule)) return value;
+          
+          // Anti-Collision Safeguard for Kicker Stats
+          if (!normRule.includes('40') && normKey.includes('40')) continue;
+          if (!normRule.includes('50') && normKey.includes('50')) continue;
+          if (!normRule.includes('plus') && normKey.includes('plus')) continue;
+
+          if (normKey.includes(normRule)) return value;
         }
       }
     }
@@ -107,32 +146,53 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
 
     if (pos === 'QB') {
       stats = [
-        { label: 'Pass Att', val: getStat(player, 'Pass Attempts'), key: isHistorical ? 'Actual Pass Attempts' : 'Projected Pass Attempts' },
-        { label: 'Pass Yds', val: getStat(player, 'Pass Yards'), key: isHistorical ? 'Actual Pass Yards' : 'Projected Pass Yards' },
-        { label: 'Pass TD', val: getFlexibleValue(player, ['Pass Td', 'Pass TD', 'Projected Pass TDs', 'Actual Pass TDs']), key: isHistorical ? 'Actual Pass TDs' : 'Projected Pass TDs' },
-        { label: 'Rush Att', val: getStat(player, 'Rush Attempts'), key: isHistorical ? 'Actual Rush Attempts' : 'Projected Rush Attempts' },
-        { label: 'Rush Yds', val: getStat(player, 'Rush Yards'), key: isHistorical ? 'Actual Rush Yards' : 'Projected Rush Yards' },
-        { label: 'Rush TD', val: getFlexibleValue(player, ['Rush Td', 'Rush TD', 'Projected Rush TDs', 'Actual Rush TDs']), key: isHistorical ? 'Actual Rush TDs' : 'Projected Rush TDs' },
+        { label: 'Pass Att', val: getFlexibleValue(player, ['Pass Attempts', 'Pass Att']), key: 'Pass Attempts' },
+        { label: 'Pass Yds', val: getFlexibleValue(player, ['Pass Yards', 'Pass Yds']), key: 'Pass Yards' },
+        { label: 'Pass TD', val: getFlexibleValue(player, ['Pass Td', 'Pass TD']), key: 'Pass Td' },
+        { label: 'INTs', val: getFlexibleValue(player, ['Interceptions', 'INT', 'Ints']), key: 'Interceptions' },
+        { label: 'Rush Att', val: getFlexibleValue(player, ['Rush Attempts', 'Rush Att']), key: 'Rush Attempts' },
+        { label: 'Rush Yds', val: getFlexibleValue(player, ['Rush Yards', 'Rush Yds']), key: 'Rush Yards' },
+        { label: 'Rush TD', val: getFlexibleValue(player, ['Rush Td', 'Rush TD']), key: 'Rush Td' },
       ];
     } else if (pos === 'RB') {
       stats = [
-        { label: 'Rush Att', val: getStat(player, 'Rush Attempts'), key: isHistorical ? 'Actual Rush Attempts' : 'Projected Rush Attempts' },
-        { label: 'Rush Yds', val: getStat(player, 'Rush Yards'), key: isHistorical ? 'Actual Rush Yards' : 'Projected Rush Yards' },
-        { label: 'Rush TD', val: getFlexibleValue(player, ['Rush Td', 'Rush TD', 'Projected Rush TDs', 'Actual Rush TDs']), key: isHistorical ? 'Actual Rush TDs' : 'Projected Rush TDs' },
-        { label: 'Targets', val: getStat(player, 'Targets'), key: isHistorical ? 'Actual Targets' : 'Projected Targets' },
-        { label: 'Recs', val: getStat(player, 'Receptions'), key: isHistorical ? 'Actual Receptions' : 'Projected Receptions' },
-        { label: 'Rec Yds', val: getStat(player, 'Receiving Yards'), key: isHistorical ? 'Actual Receiving Yards' : 'Projected Receiving Yards' },
-        { label: 'Rec TD', val: getFlexibleValue(player, ['Receiving Td', 'Receiving TD', 'Rec Td', 'Projected Receiving Td', 'Actual Receiving Td']), key: isHistorical ? 'Actual Receiving Td' : 'Projected Receiving Td' },
+        { label: 'Rush Att', val: getFlexibleValue(player, ['Rush Attempts', 'Rush Att']), key: 'Rush Attempts' },
+        { label: 'Rush Yds', val: getFlexibleValue(player, ['Rush Yards', 'Rush Yds']), key: 'Rush Yards' },
+        { label: 'Rush TD', val: getFlexibleValue(player, ['Rush Td', 'Rush TD']), key: 'Rush Td' },
+        { label: 'Targets', val: getFlexibleValue(player, ['Targets']), key: 'Targets' },
+        { label: 'Recs', val: getFlexibleValue(player, ['Receptions']), key: 'Receptions' },
+        { label: 'Rec Yds', val: getFlexibleValue(player, ['Receiving Yards']), key: 'Receiving Yards' },
+        { label: 'Rec TD', val: getFlexibleValue(player, ['Receiving Td', 'Receiving TD', 'Rec Td']), key: 'Receiving Td' },
       ];
     } else if (pos === 'WR' || pos === 'TE') {
       stats = [
-        { label: 'Targets', val: getStat(player, 'Targets'), key: isHistorical ? 'Actual Targets' : 'Projected Targets' },
-        { label: 'Recs', val: getStat(player, 'Receptions'), key: isHistorical ? 'Actual Receptions' : 'Projected Receptions' },
-        { label: 'Rec Yds', val: getStat(player, 'Receiving Yards'), key: isHistorical ? 'Actual Receiving Yards' : 'Projected Receiving Yards' },
-        { label: 'Rec TD', val: getFlexibleValue(player, ['Receiving Td', 'Receiving TD', 'Rec Td', 'Projected Receiving Td', 'Actual Receiving Td']), key: isHistorical ? 'Actual Receiving Td' : 'Projected Receiving Td' },
-        { label: 'Air Yds', val: getStat(player, 'Air Yards'), key: isHistorical ? 'Actual Air Yards' : 'Projected Air Yards' },
-        { label: '1st Reads', val: getStat(player, 'First-Read Targets') ?? getStat(player, 'First Read Targets'), key: isHistorical ? 'Actual First Read Targets' : 'Projected First Read Targets' },
-        { label: 'EZ Tgts', val: getStat(player, 'End-Zone Targets') ?? getStat(player, 'End Zone Targets'), key: isHistorical ? 'Actual End Zone Targets' : 'Projected End Zone Targets' },
+        { label: 'Targets', val: getFlexibleValue(player, ['Targets']), key: 'Targets' },
+        { label: 'Recs', val: getFlexibleValue(player, ['Receptions']), key: 'Receptions' },
+        { label: 'Rec Yds', val: getFlexibleValue(player, ['Receiving Yards']), key: 'Receiving Yards' },
+        { label: 'Rec TD', val: getFlexibleValue(player, ['Receiving Td', 'Receiving TD', 'Rec Td']), key: 'Receiving Td' },
+        { label: 'Air Yds', val: getFlexibleValue(player, ['Air Yards']), key: 'Air Yards' },
+        { label: '1st Reads', val: getFlexibleValue(player, ['First Read Targets', 'First-Read Targets']), key: 'First Read Targets' },
+        { label: 'EZ Tgts', val: getFlexibleValue(player, ['End Zone Targets', 'End-Zone Targets']), key: 'End Zone Targets' },
+      ];
+    } else if (pos === 'K') {
+      stats = [
+        { label: 'FG Att', val: getFlexibleValue(player, ['Fga', 'FGA', 'Field Goals Attempted', 'FG Att']), key: 'Fga' },
+        { label: 'FG Made', val: getFlexibleValue(player, ['Fgm', 'FGM', 'Field Goals Made', 'FG Made']), key: 'Fgm' },
+        { label: 'FGA 40-49', val: getFlexibleValue(player, ['Fga 40 49', 'FGA 40-49', 'Fga4049']), key: 'Fga 40 49' },
+        { label: 'FGM 40-49', val: getFlexibleValue(player, ['Fgm 40 49', 'FGM 40-49', 'Fgm4049']), key: 'Fgm 40 49' },
+        { label: 'FGA 50+', val: getFlexibleValue(player, ['Fga 50 Plus', 'FGA 50+', 'Fga50Plus', 'Fga 50']), key: 'Fga 50 Plus' },
+        { label: 'FGM 50+', val: getFlexibleValue(player, ['Fgm 50 Plus', 'FGM 50+', 'Fgm50Plus', 'Fgm 50']), key: 'Fgm 50 Plus' },
+        { label: 'XP Att', val: getFlexibleValue(player, ['Xpa', 'XPA', 'Extra Points Attempted', 'XP Att']), key: 'Xpa' },
+        { label: 'XP Made', val: getFlexibleValue(player, ['Xpm', 'XPM', 'Extra Points Made', 'XP Made']), key: 'Xpm' },
+      ];
+    } else if (pos === 'DST') {
+      stats = [
+        { label: 'Sacks', val: getFlexibleValue(player, ['Sacks', 'SACK']), key: 'Sacks' },
+        { label: 'INTs', val: getFlexibleValue(player, ['Interceptions', 'INT', 'Ints', 'Int']), key: 'Interceptions' },
+        { label: 'Fum Rec', val: getFlexibleValue(player, ['Fumble Recoveries', 'Fumbles Recovered', 'Fum Rec', 'FUM REC']), key: 'Fumble Recoveries' },
+        { label: 'Def TDs', val: getFlexibleValue(player, ['Defensive Touchdowns', 'Def Tds', 'Def TD', 'DEF TD']), key: 'Defensive Touchdowns' },
+        { label: 'Pts Allw', val: getFlexibleValue(player, ['Points Allowed', 'Pts Allow', 'Pts Agn', 'PTS AGN']), key: 'Points Allowed' },
+        { label: 'Yds Allw', val: getFlexibleValue(player, ['Yards Allowed', 'Yds Allow', 'Yds Agn', 'YDS AGN']), key: 'Yards Allowed' },
       ];
     }
 
@@ -184,29 +244,17 @@ export default function SeasonTable({ visibleData, isHistorical, isSyncing }) {
                       Floor (P25)
                       <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
                     </div>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                      A reasonable downside outcome (25th percentile expectation). Helps identify players with a safe baseline.
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
-                    </div>
                   </th>
                   <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center bg-gray-800/20 relative group cursor-help hover:bg-gray-800/40 transition-colors">
                     <div className="flex items-center justify-center gap-1">
                       Base (P50)
                       <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
                     </div>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                      The median expectation. This represents the player's most likely outcome for the season.
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
-                    </div>
                   </th>
                   <th className="px-2 py-2 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center relative group cursor-help hover:bg-gray-800/40 transition-colors">
                     <div className="flex items-center justify-center gap-1">
                       Ceiling (P75)
                       <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
-                    </div>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                      An optimistic but realistic outcome that the player reaches or exceeds approximately 25% of the time.
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
                     </div>
                   </th>
                 </>

@@ -198,7 +198,7 @@ const DonutTooltip = ({ active, payload, playerDB }) => {
   return null;
 };
 
-export default function OmfgTeamHub({ visibleData, isHistorical, isSyncing }) {
+export default function SeasonTeamHub({ visibleData, isHistorical, isSyncing }) {
   const [playerDB, setPlayerDB] = useState({});
   const [dbLoading, setDbLoading] = useState(true);
 
@@ -240,6 +240,7 @@ export default function OmfgTeamHub({ visibleData, isHistorical, isSyncing }) {
 
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [donutMetric, setDonutMetric] = useState('First Read Targets');
+  const [teamPosition, setTeamPosition] = useState('All');
 
   useEffect(() => {
     if (availableTeams.length > 0 && (!selectedTeam || !availableTeams.includes(selectedTeam))) {
@@ -265,7 +266,7 @@ export default function OmfgTeamHub({ visibleData, isHistorical, isSyncing }) {
   const alphaData = useMemo(() => {
     if (!selectedTeam) return [];
     
-    const teamPlayers = visibleData.filter(p => p.Team === selectedTeam);
+    const teamPlayers = visibleData.filter(p => p.Team === selectedTeam && (teamPosition === 'All' || p.Position === teamPosition));
     
     return teamPlayers
       .map(p => ({
@@ -278,13 +279,13 @@ export default function OmfgTeamHub({ visibleData, isHistorical, isSyncing }) {
       .filter(p => p.omfg > 0)
       .sort((a, b) => b.omfg - a.omfg)
       .slice(0, 5); 
-  }, [visibleData, selectedTeam]);
+  }, [visibleData, selectedTeam, teamPosition]);
 
   // --- PREP DATA FOR DONUT CHART (Monochromatic Opacities) ---
   const donutData = useMemo(() => {
     if (!selectedTeam) return [];
 
-    const teamPlayers = visibleData.filter(p => p.Team === selectedTeam);
+    const teamPlayers = visibleData.filter(p => p.Team === selectedTeam && (teamPosition === 'All' || p.Position === teamPosition));
 
     let mapped = teamPlayers.map(p => ({
       name: p.Player.split(' ').pop(),
@@ -306,13 +307,15 @@ export default function OmfgTeamHub({ visibleData, isHistorical, isSyncing }) {
       ...item,
       fill: hexToRgba(activeColor, opacities[index] || 0.2)
     }));
-  }, [visibleData, selectedTeam, donutMetric, activeColor]);
+  }, [visibleData, selectedTeam, donutMetric, activeColor, teamPosition]);
 
   const metricLabels = {
     'First Read Targets': 'First Read',
     'End Zone Targets': 'End Zone',
     'Rush Attempts': 'Rush'
   };
+
+  const positions = ['All', 'QB', 'RB', 'WR', 'TE'];
 
   if (isSyncing || dbLoading) {
     return (
@@ -343,6 +346,21 @@ export default function OmfgTeamHub({ visibleData, isHistorical, isSyncing }) {
             value={selectedTeam} 
             onChange={setSelectedTeam} 
           />
+          <div className="flex flex-wrap bg-[#1a1a1a] p-1.5 rounded-2xl shadow-inner border border-gray-800 w-fit shrink-0">
+            {positions.map(pos => (
+              <button 
+                key={pos} 
+                onClick={() => setTeamPosition(pos)} 
+                className={`px-3 py-1.5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${
+                  teamPosition === pos 
+                    ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' 
+                    : 'text-gray-500 hover:text-white hover:bg-[#252525]'
+                }`}
+              >
+                {pos}
+              </button>
+            ))}
+          </div>
         </div>
         
         <div className="text-right hidden xl:flex items-center gap-3">

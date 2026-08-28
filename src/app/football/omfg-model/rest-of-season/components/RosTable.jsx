@@ -4,7 +4,6 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { RefreshCw, ChevronDown, ChevronUp, Info } from 'lucide-react';
 
-// 🌟 DYNAMIC RELATIVE RANGE BAR 🌟
 function RangeBar({ floor, base, ceiling, maxVal }) {
   const fNum = Number(floor);
   const bNum = Number(base);
@@ -14,40 +13,22 @@ function RangeBar({ floor, base, ceiling, maxVal }) {
     return <span className="text-gray-500 font-bold text-[11px]">-</span>;
   }
 
-  // Define the 100% width benchmark (adding a tiny 2% buffer so the highest dot doesn't touch the absolute edge)
   const safeMax = Math.max(maxVal, cNum) * 1.02;
-
-  // Calculate the left starting point and the total width of the colored track
   const leftPct = Math.max((fNum / safeMax) * 100, 0);
   const rightPct = Math.min((cNum / safeMax) * 100, 100);
   const widthPct = rightPct - leftPct;
-
-  // Calculate the absolute position of the median dot along the track
   const dotPct = (bNum / safeMax) * 100;
 
   return (
     <div className="flex flex-col items-center justify-center w-full max-w-[210px] mx-auto py-1">
-      {/* Numbers Row */}
       <div className="flex justify-between items-center w-full text-[10px] font-black mb-1 px-0.5">
         <span className="text-gray-400 font-semibold">{fNum.toFixed(1)}</span>
         <span className="text-white text-[11px] font-black drop-shadow">{bNum.toFixed(1)}</span>
         <span className="text-gray-400 font-semibold">{cNum.toFixed(1)}</span>
       </div>
-      
-      {/* Slider Bar Container (Dark Track) */}
       <div className="relative w-full h-2 rounded-full bg-[#1e2330] overflow-visible flex items-center border border-gray-800/80">
-        
-        {/* Color Gradient Track (Spans only from Floor to Ceiling) */}
-        <div 
-          className="absolute inset-y-0 rounded-full bg-gradient-to-r from-red-500 via-amber-400 to-emerald-400 opacity-90"
-          style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
-        />
-        
-        {/* White Center Dot (Positioned exactly at Base P50) */}
-        <div 
-          className="absolute w-3.5 h-3.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.9)] border-2 border-gray-900 z-10 transform -translate-x-1/2"
-          style={{ left: `${dotPct}%` }}
-        />
+        <div className="absolute inset-y-0 rounded-full bg-gradient-to-r from-red-500 via-amber-400 to-emerald-400 opacity-90" style={{ left: `${leftPct}%`, width: `${widthPct}%` }} />
+        <div className="absolute w-3.5 h-3.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.9)] border-2 border-gray-900 z-10 transform -translate-x-1/2" style={{ left: `${dotPct}%` }} />
       </div>
     </div>
   );
@@ -92,20 +73,108 @@ export default function RosTable({ visibleData, isSyncing }) {
     return 'text-gray-500';
   };
 
+  const inverseStats = new Set([
+    'Projected Interceptions', 'Interceptions', 'Actual Interceptions', 'INT',
+    'Projected Fumbles', 'Fumbles', 'Actual Fumbles', 'FUM',
+    'Projected Points Allowed', 'Points Allowed', 'Actual Points Allowed', 'Pts Agn', 'PTS AGN',
+    'Projected Yards Allowed', 'Yards Allowed', 'Actual Yards Allowed', 'Yds Agn', 'YDS AGN'
+  ]);
+
+  const statThresholds = useMemo(() => {
+    if (!visibleData || visibleData.length === 0) return {};
+    const thresholds = {};
+    const allKeys = Object.keys(visibleData[0]);
+
+    allKeys.forEach(stat => {
+      const values = visibleData.map(p => p[stat]).filter(v => v !== null && v !== undefined && v !== '')
+        .map(v => Number(v)).filter(v => !isNaN(v)).sort((a, b) => a - b);
+      if (values.length > 0) {
+        thresholds[stat] = {
+          p90: values[Math.floor(values.length * 0.90)] || values[values.length - 1],
+          p75: values[Math.floor(values.length * 0.75)] || values[values.length - 1],
+          p25: values[Math.floor(values.length * 0.25)] || values[0],
+          p10: values[Math.floor(values.length * 0.10)] || values[0],
+        };
+      }
+    });
+    return thresholds;
+  }, [visibleData]);
+
+  const getHeatmapClasses = (val, statKey, isBox = false) => {
+    if (val === null || val === undefined || val === '-') {
+      return isBox ? 'bg-[#111] border-gray-900 text-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]' : 'text-white';
+    }
+    const num = Number(val);
+    const thresh = statThresholds[statKey];
+    if (!thresh || isNaN(num)) return isBox ? 'bg-[#111] border-gray-900 text-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]' : 'text-white font-bold';
+
+    const isInverse = inverseStats.has(statKey);
+    let isTop10 = num >= thresh.p90; let isTop25 = num >= thresh.p75 && num < thresh.p90;
+    let isBot25 = num <= thresh.p25 && num > thresh.p10; let isBot10 = num <= thresh.p10;
+
+    if (isInverse) {
+      isTop10 = num <= thresh.p10; isTop25 = num <= thresh.p25 && num > thresh.p10;
+      isBot25 = num >= thresh.p75 && num < thresh.p90; isBot10 = num >= thresh.p90;
+    }
+
+    if (thresh.p90 === thresh.p10) return isBox ? 'bg-[#111] border-gray-900 text-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]' : 'text-white font-bold';
+
+    if (isBox) {
+      if (isTop10) return 'bg-emerald-900/30 border-emerald-800/50 text-emerald-400 shadow-[inset_0_0_8px_rgba(16,185,129,0.2)]';
+      if (isTop25) return 'bg-emerald-900/10 border-emerald-800/30 text-emerald-300';
+      if (isBot10) return 'bg-red-900/30 border-red-800/50 text-red-400 shadow-[inset_0_0_8px_rgba(239,68,68,0.2)]';
+      if (isBot25) return 'bg-red-900/10 border-red-800/30 text-red-300';
+      return 'bg-[#111] border-gray-900 text-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]';
+    } else {
+      if (isTop10) return 'text-emerald-400 font-black drop-shadow-sm';
+      if (isTop25) return 'text-emerald-300 font-bold';
+      if (isBot10) return 'text-red-400 font-black drop-shadow-sm';
+      if (isBot25) return 'text-red-300 font-bold';
+      return 'text-white font-bold';
+    }
+  };
+
   const getFlexibleValue = (player, matchRules) => {
     if (!player) return null;
     const normalize = (str) => String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
     
-    for (const [key, value] of Object.entries(player)) {
-      if (value === undefined || value === null || value === '') continue;
-      const normKey = normalize(key);
-      
-      for (const rule of matchRules) {
+    // Phase 1: EXACT MATCHES
+    for (const rule of matchRules) {
+      if (Array.isArray(rule)) continue;
+      const normRule = normalize(rule);
+      for (const [key, value] of Object.entries(player)) {
+        if (value === undefined || value === null || value === '') continue;
+        if (normalize(key) === normRule) return value;
+      }
+    }
+
+    // Phase 1.5: EXACT MATCHES ignoring "Projected" or "Actual" prefixes
+    for (const rule of matchRules) {
+      if (Array.isArray(rule)) continue;
+      const normRule = normalize(rule);
+      for (const [key, value] of Object.entries(player)) {
+        if (value === undefined || value === null || value === '') continue;
+        const strippedKey = normalize(key).replace(/^projected/, '').replace(/^actual/, '');
+        if (strippedKey === normRule) return value;
+      }
+    }
+    
+    // Phase 2: PARTIAL MATCHES (Safeguarded)
+    for (const rule of matchRules) {
+      for (const [key, value] of Object.entries(player)) {
+        if (value === undefined || value === null || value === '') continue;
+        const normKey = normalize(key);
         if (Array.isArray(rule)) {
           if (rule.every(sub => normKey.includes(normalize(sub)))) return value;
         } else {
           const normRule = normalize(rule);
-          if (normKey === normRule || normKey.includes(normRule)) return value;
+          
+          // Anti-Collision Safeguard for Kicker Stats
+          if (!normRule.includes('40') && normKey.includes('40')) continue;
+          if (!normRule.includes('50') && normKey.includes('50')) continue;
+          if (!normRule.includes('plus') && normKey.includes('plus')) continue;
+
+          if (normKey.includes(normRule)) return value;
         }
       }
     }
@@ -118,51 +187,71 @@ export default function RosTable({ visibleData, isSyncing }) {
 
     if (pos === 'QB') {
       stats = [
-        { label: 'Pass Att', val: formatNumber(getFlexibleValue(player, ['Pass Attempts', 'Pass Att'])) },
-        { label: 'Pass Yds', val: formatNumber(getFlexibleValue(player, ['Pass Yards', 'Pass Yds'])) },
-        { label: 'Pass TD', val: formatNumber(getFlexibleValue(player, ['Pass Td', 'Pass TD'])) },
-        { label: 'INTs', val: formatNumber(getFlexibleValue(player, ['Interceptions', 'INT'])) },
-        { label: 'Rush Att', val: formatNumber(getFlexibleValue(player, ['Rush Attempts', 'Rush Att'])) },
-        { label: 'Rush Yds', val: formatNumber(getFlexibleValue(player, ['Rush Yards', 'Rush Yds'])) },
-        { label: 'Rush TD', val: formatNumber(getFlexibleValue(player, ['Rush Td', 'Rush TD'])) },
+        { label: 'Pass Att', val: getFlexibleValue(player, ['Projected Pass Attempts', 'Actual Pass Attempts', 'Pass Attempts', 'Pass Att']), key: 'Pass Attempts' },
+        { label: 'Pass Yds', val: getFlexibleValue(player, ['Projected Pass Yards', 'Actual Pass Yards', 'Pass Yards', 'Pass Yds']), key: 'Pass Yards' },
+        { label: 'Pass TD', val: getFlexibleValue(player, ['Projected Pass Td', 'Actual Pass Td', 'Projected Pass TDs', 'Actual Pass TDs', 'Pass Td', 'Pass TD']), key: 'Pass Td' },
+        { label: 'INTs', val: getFlexibleValue(player, ['Projected Interceptions', 'Actual Interceptions', 'Interceptions', 'INT']), key: 'Interceptions' },
+        { label: 'Rush Att', val: getFlexibleValue(player, ['Projected Rush Attempts', 'Actual Rush Attempts', 'Rush Attempts', 'Rush Att']), key: 'Rush Attempts' },
+        { label: 'Rush Yds', val: getFlexibleValue(player, ['Projected Rush Yards', 'Actual Rush Yards', 'Rush Yards', 'Rush Yds']), key: 'Rush Yards' },
+        { label: 'Rush TD', val: getFlexibleValue(player, ['Projected Rush Td', 'Actual Rush Td', 'Projected Rush TDs', 'Actual Rush TDs', 'Rush Td', 'Rush TD']), key: 'Rush Td' },
       ];
     } else if (pos === 'RB') {
       stats = [
-        { label: 'Rush Att', val: formatNumber(getFlexibleValue(player, ['Rush Attempts', 'Rush Att'])) },
-        { label: 'Rush Yds', val: formatNumber(getFlexibleValue(player, ['Rush Yards', 'Rush Yds'])) },
-        { label: 'Rush TD', val: formatNumber(getFlexibleValue(player, ['Rush Td', 'Rush TD'])) },
-        { label: 'Targets', val: formatNumber(getFlexibleValue(player, ['Targets'])) },
-        { label: 'Recs', val: formatNumber(getFlexibleValue(player, ['Receptions'])) },
-        { label: 'Rec Yds', val: formatNumber(getFlexibleValue(player, ['Receiving Yards'])) },
-        { label: 'Rec TD', val: formatNumber(getFlexibleValue(player, ['Receiving Td', 'Rec TD'])) },
-        { label: 'Total TD', val: formatNumber(getFlexibleValue(player, ['Total Td', 'Total TD'])) },
+        { label: 'Rush Att', val: getFlexibleValue(player, ['Projected Rush Attempts', 'Actual Rush Attempts', 'Rush Attempts', 'Rush Att']), key: 'Rush Attempts' },
+        { label: 'Rush Yds', val: getFlexibleValue(player, ['Projected Rush Yards', 'Actual Rush Yards', 'Rush Yards', 'Rush Yds']), key: 'Rush Yards' },
+        { label: 'Rush TD', val: getFlexibleValue(player, ['Projected Rush Td', 'Actual Rush Td', 'Projected Rush TDs', 'Actual Rush TDs', 'Rush Td', 'Rush TD']), key: 'Rush Td' },
+        { label: 'Targets', val: getFlexibleValue(player, ['Projected Targets', 'Actual Targets', 'Targets']), key: 'Targets' },
+        { label: 'Recs', val: getFlexibleValue(player, ['Projected Receptions', 'Actual Receptions', 'Receptions']), key: 'Receptions' },
+        { label: 'Rec Yds', val: getFlexibleValue(player, ['Projected Receiving Yards', 'Actual Receiving Yards', 'Receiving Yards']), key: 'Receiving Yards' },
+        { label: 'Rec TD', val: getFlexibleValue(player, ['Projected Receiving Td', 'Actual Receiving Td', 'Receiving Td', 'Receiving TD', 'Rec Td']), key: 'Receiving Td' },
       ];
     } else if (pos === 'WR' || pos === 'TE') {
       stats = [
-        { label: 'Targets', val: formatNumber(getFlexibleValue(player, ['Targets'])) },
-        { label: 'Recs', val: formatNumber(getFlexibleValue(player, ['Receptions'])) },
-        { label: 'Rec Yds', val: formatNumber(getFlexibleValue(player, ['Receiving Yards'])) },
-        { label: 'Rec TD', val: formatNumber(getFlexibleValue(player, ['Receiving Td', 'Rec TD'])) },
-        { label: 'Air Yds', val: formatNumber(getFlexibleValue(player, ['Air Yards'])) },
-        { label: '1st Reads', val: formatNumber(getFlexibleValue(player, ['First Read Targets', 'First-Read Targets'])) },
-        { label: 'EZ Tgts', val: formatNumber(getFlexibleValue(player, ['End Zone Targets', 'End-Zone Targets'])) },
-        { label: 'Total TD', val: formatNumber(getFlexibleValue(player, ['Total Td', 'Total TD'])) },
+        { label: 'Targets', val: getFlexibleValue(player, ['Projected Targets', 'Actual Targets', 'Targets']), key: 'Targets' },
+        { label: 'Recs', val: getFlexibleValue(player, ['Projected Receptions', 'Actual Receptions', 'Receptions']), key: 'Receptions' },
+        { label: 'Rec Yds', val: getFlexibleValue(player, ['Projected Receiving Yards', 'Actual Receiving Yards', 'Receiving Yards']), key: 'Receiving Yards' },
+        { label: 'Rec TD', val: getFlexibleValue(player, ['Projected Receiving Td', 'Actual Receiving Td', 'Receiving Td', 'Receiving TD', 'Rec Td']), key: 'Receiving Td' },
+        { label: 'Air Yds', val: getFlexibleValue(player, ['Projected Air Yards', 'Actual Air Yards', 'Air Yards']), key: 'Air Yards' },
+        { label: '1st Reads', val: getFlexibleValue(player, ['Projected First Read Targets', 'Actual First Read Targets', 'First Read Targets', 'First-Read Targets']), key: 'First Read Targets' },
+        { label: 'EZ Tgts', val: getFlexibleValue(player, ['Projected End Zone Targets', 'Actual End Zone Targets', 'End Zone Targets', 'End-Zone Targets']), key: 'End Zone Targets' },
+      ];
+    } else if (pos === 'K') {
+      stats = [
+        { label: 'FG Att', val: getFlexibleValue(player, ['Projected Fga', 'Actual Fga', 'Fga', 'FGA', 'Field Goals Attempted', 'FG Att']), key: 'Fga' },
+        { label: 'FG Made', val: getFlexibleValue(player, ['Projected Fgm', 'Actual Fgm', 'Fgm', 'FGM', 'Field Goals Made', 'FG Made']), key: 'Fgm' },
+        { label: 'FGA 40-49', val: getFlexibleValue(player, ['Projected Fga 40 49', 'Actual Fga 40 49', 'Fga 40 49', 'FGA 40-49']), key: 'Fga 40 49' },
+        { label: 'FGM 40-49', val: getFlexibleValue(player, ['Projected Fgm 40 49', 'Actual Fgm 40 49', 'Fgm 40 49', 'FGM 40-49']), key: 'Fgm 40 49' },
+        { label: 'FGA 50+', val: getFlexibleValue(player, ['Projected Fga 50 Plus', 'Actual Fga 50 Plus', 'Fga 50 Plus', 'FGA 50+', 'Fga 50']), key: 'Fga 50 Plus' },
+        { label: 'FGM 50+', val: getFlexibleValue(player, ['Projected Fgm 50 Plus', 'Actual Fgm 50 Plus', 'Fgm 50 Plus', 'FGM 50+', 'Fgm 50']), key: 'Fgm 50 Plus' },
+        { label: 'XP Att', val: getFlexibleValue(player, ['Projected Xpa', 'Actual Xpa', 'Xpa', 'XPA', 'Extra Points Attempted', 'XP Att']), key: 'Xpa' },
+        { label: 'XP Made', val: getFlexibleValue(player, ['Projected Xpm', 'Actual Xpm', 'Xpm', 'XPM', 'Extra Points Made', 'XP Made']), key: 'Xpm' },
+      ];
+    } else if (pos === 'DST') {
+      stats = [
+        { label: 'Sacks', val: getFlexibleValue(player, ['Projected Sacks', 'Actual Sacks', 'Sacks', 'SACK']), key: 'Sacks' },
+        { label: 'INTs', val: getFlexibleValue(player, ['Projected Interceptions', 'Actual Interceptions', 'Interceptions', 'INT']), key: 'Interceptions' },
+        { label: 'Fum Rec', val: getFlexibleValue(player, ['Projected Fumble Recoveries', 'Actual Fumble Recoveries', 'Fumble Recoveries', 'Fum Rec', 'FUM REC']), key: 'Fumble Recoveries' },
+        { label: 'Def TDs', val: getFlexibleValue(player, ['Projected Defensive Touchdowns', 'Actual Defensive Touchdowns', 'Defensive Touchdowns', 'Def TD', 'DEF TD']), key: 'Defensive Touchdowns' },
+        { label: 'Pts Allw', val: getFlexibleValue(player, ['Projected Points Allowed', 'Actual Points Allowed', 'Points Allowed', 'Pts Agn', 'PTS AGN']), key: 'Points Allowed' },
+        { label: 'Yds Allw', val: getFlexibleValue(player, ['Projected Yards Allowed', 'Actual Yards Allowed', 'Yards Allowed', 'Yds Agn', 'YDS AGN']), key: 'Yards Allowed' },
       ];
     }
 
     return (
       <div className="flex flex-wrap gap-2 p-3">
-        {stats.map((stat, i) => (
-          <div key={i} className="rounded-lg p-2 flex flex-col items-center justify-center text-center transition-colors border bg-[#111] border-gray-900 text-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] flex-1 min-w-[75px]">
-            <span className="text-[8px] font-black uppercase text-gray-400 mb-0.5 tracking-widest leading-none">{stat.label}</span>
-            <span className="text-[13px] font-black leading-none mt-1">{stat.val}</span>
-          </div>
-        ))}
+        {stats.map((stat, i) => {
+          const heatClass = getHeatmapClasses(stat.val, stat.key, true);
+          return (
+            <div key={i} className={`rounded-lg p-2 flex flex-col items-center justify-center text-center transition-colors border flex-1 min-w-[70px] ${heatClass}`}>
+              <span className="text-[8px] font-black uppercase text-gray-400 mb-0.5 tracking-widest leading-none">{stat.label}</span>
+              <span className="text-[13px] font-black leading-none mt-1">{formatNumber(stat.val)}</span>
+            </div>
+          );
+        })}
       </div>
     );
   };
 
-  // Find the absolute highest ceiling in the currently visible data to scale the range bars relative to each other
   const maxCeiling = useMemo(() => {
     if (!visibleData || visibleData.length === 0) return 100;
     const ceilings = visibleData.map(p => Number(p['ROS Ceiling Points'] || p['Ceiling (P75)'] || 0)).filter(n => !isNaN(n));
@@ -188,10 +277,6 @@ export default function RosTable({ visibleData, isSyncing }) {
                   OMFG
                   <Info size={10} className="text-red-400/50 group-hover:text-red-400 transition-colors" />
                 </div>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                  Preseason or updated in-season opportunity score (0-100 rating).
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
-                </div>
               </th>
 
               <th className="px-2 py-2.5 text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">Rem G</th>
@@ -201,10 +286,6 @@ export default function RosTable({ visibleData, isSyncing }) {
                 <div className="flex items-center justify-center gap-1">
                   RoS Range (P25 - P75)
                   <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
-                </div>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-52 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                  Displays Floor (25th percentile downside), Base Median (50th percentile expectation), and Ceiling (75th percentile upside) fantasy points across remaining games.
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
                 </div>
               </th>
 
@@ -310,7 +391,6 @@ export default function RosTable({ visibleData, isSyncing }) {
                         {formatNumber(rosPpg, 1)}
                       </td>
                       
-                      {/* Range Bar Column - Dynamically Scaled via maxVal */}
                       <td className="px-4 py-2 text-center bg-gray-900/30 border-x border-gray-800/80">
                         <RangeBar floor={floorPts} base={basePts} ceiling={ceilPts} maxVal={maxCeiling} />
                       </td>
