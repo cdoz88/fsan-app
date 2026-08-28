@@ -137,43 +137,38 @@ export default function RosTable({ visibleData, isSyncing }) {
   const getFlexibleValue = (player, matchRules) => {
     if (!player) return null;
     const normalize = (str) => String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
-    
-    // Phase 1: EXACT MATCHES
+    const isValid = (val) => val !== undefined && val !== null && val !== '' && val !== '-';
+
     for (const rule of matchRules) {
       if (Array.isArray(rule)) continue;
       const normRule = normalize(rule);
       for (const [key, value] of Object.entries(player)) {
-        if (value === undefined || value === null || value === '') continue;
+        if (!isValid(value)) continue;
         if (normalize(key) === normRule) return value;
       }
     }
 
-    // Phase 1.5: EXACT MATCHES ignoring "Projected" or "Actual" prefixes
     for (const rule of matchRules) {
       if (Array.isArray(rule)) continue;
       const normRule = normalize(rule);
       for (const [key, value] of Object.entries(player)) {
-        if (value === undefined || value === null || value === '') continue;
+        if (!isValid(value)) continue;
         const strippedKey = normalize(key).replace(/^projected/, '').replace(/^actual/, '');
         if (strippedKey === normRule) return value;
       }
     }
     
-    // Phase 2: PARTIAL MATCHES (Safeguarded)
     for (const rule of matchRules) {
       for (const [key, value] of Object.entries(player)) {
-        if (value === undefined || value === null || value === '') continue;
+        if (!isValid(value)) continue;
         const normKey = normalize(key);
         if (Array.isArray(rule)) {
           if (rule.every(sub => normKey.includes(normalize(sub)))) return value;
         } else {
           const normRule = normalize(rule);
-          
-          // Anti-Collision Safeguard for Kicker Stats
           if (!normRule.includes('40') && normKey.includes('40')) continue;
           if (!normRule.includes('50') && normKey.includes('50')) continue;
           if (!normRule.includes('plus') && normKey.includes('plus')) continue;
-
           if (normKey.includes(normRule)) return value;
         }
       }
@@ -190,7 +185,7 @@ export default function RosTable({ visibleData, isSyncing }) {
         { label: 'Pass Att', val: getFlexibleValue(player, ['Projected Pass Attempts', 'Actual Pass Attempts', 'Pass Attempts', 'Pass Att']), key: 'Pass Attempts' },
         { label: 'Pass Yds', val: getFlexibleValue(player, ['Projected Pass Yards', 'Actual Pass Yards', 'Pass Yards', 'Pass Yds']), key: 'Pass Yards' },
         { label: 'Pass TD', val: getFlexibleValue(player, ['Projected Pass Td', 'Actual Pass Td', 'Projected Pass TDs', 'Actual Pass TDs', 'Pass Td', 'Pass TD']), key: 'Pass Td' },
-        { label: 'INTs', val: getFlexibleValue(player, ['Projected Interceptions', 'Actual Interceptions', 'Interceptions', 'INT']), key: 'Interceptions' },
+        { label: 'INTs', val: getFlexibleValue(player, ['Projected Interceptions', 'Actual Interceptions', 'Interceptions', 'INT', 'Ints']), key: 'Interceptions' },
         { label: 'Rush Att', val: getFlexibleValue(player, ['Projected Rush Attempts', 'Actual Rush Attempts', 'Rush Attempts', 'Rush Att']), key: 'Rush Attempts' },
         { label: 'Rush Yds', val: getFlexibleValue(player, ['Projected Rush Yards', 'Actual Rush Yards', 'Rush Yards', 'Rush Yds']), key: 'Rush Yards' },
         { label: 'Rush TD', val: getFlexibleValue(player, ['Projected Rush Td', 'Actual Rush Td', 'Projected Rush TDs', 'Actual Rush TDs', 'Rush Td', 'Rush TD']), key: 'Rush Td' },
@@ -217,23 +212,23 @@ export default function RosTable({ visibleData, isSyncing }) {
       ];
     } else if (pos === 'K') {
       stats = [
-        { label: 'FG Att', val: getFlexibleValue(player, ['Projected Fga', 'Actual Fga', 'Fga', 'FGA', 'Field Goals Attempted', 'FG Att']), key: 'Fga' },
-        { label: 'FG Made', val: getFlexibleValue(player, ['Projected Fgm', 'Actual Fgm', 'Fgm', 'FGM', 'Field Goals Made', 'FG Made']), key: 'Fgm' },
-        { label: 'FGA 40-49', val: getFlexibleValue(player, ['Projected Fga 40 49', 'Actual Fga 40 49', 'Fga 40 49', 'FGA 40-49']), key: 'Fga 40 49' },
-        { label: 'FGM 40-49', val: getFlexibleValue(player, ['Projected Fgm 40 49', 'Actual Fgm 40 49', 'Fgm 40 49', 'FGM 40-49']), key: 'Fgm 40 49' },
-        { label: 'FGA 50+', val: getFlexibleValue(player, ['Projected Fga 50 Plus', 'Actual Fga 50 Plus', 'Fga 50 Plus', 'FGA 50+', 'Fga 50']), key: 'Fga 50 Plus' },
-        { label: 'FGM 50+', val: getFlexibleValue(player, ['Projected Fgm 50 Plus', 'Actual Fgm 50 Plus', 'Fgm 50 Plus', 'FGM 50+', 'Fgm 50']), key: 'Fgm 50 Plus' },
-        { label: 'XP Att', val: getFlexibleValue(player, ['Projected Xpa', 'Actual Xpa', 'Xpa', 'XPA', 'Extra Points Attempted', 'XP Att']), key: 'Xpa' },
-        { label: 'XP Made', val: getFlexibleValue(player, ['Projected Xpm', 'Actual Xpm', 'Xpm', 'XPM', 'Extra Points Made', 'XP Made']), key: 'Xpm' },
+        { label: 'FG Att', val: getFlexibleValue(player, ['Projected FG Attempts', 'Actual FG Attempts', 'FG Attempts', 'FG Att', 'Projected Fga', 'Actual Fga', 'Fga']), key: 'Fga' },
+        { label: 'FG Made', val: getFlexibleValue(player, ['Projected FGs Made', 'Actual FGs Made', 'FGs Made', 'FG Made', 'Projected Fgm', 'Actual Fgm', 'Fgm']), key: 'Fgm' },
+        { label: 'FGA 40-49', val: getFlexibleValue(player, ['Projected 40-49 FG Attempts', 'Actual 40-49 FG Attempts', '40-49 FG Attempts', 'FGA 40-49', 'Projected Fga 40 49', 'Actual Fga 40 49', 'Fga 40 49']), key: 'Fga 40 49' },
+        { label: 'FGM 40-49', val: getFlexibleValue(player, ['Projected 40-49 FGs Made', 'Actual 40-49 FGs Made', '40-49 FGs Made', 'FGM 40-49', 'Projected Fgm 40 49', 'Actual Fgm 40 49', 'Fgm 40 49']), key: 'Fgm 40 49' },
+        { label: 'FGA 50+', val: getFlexibleValue(player, ['Projected 50+ FG Attempts', 'Actual 50+ FG Attempts', '50+ FG Attempts', 'FGA 50+', 'Projected Fga 50 Plus', 'Actual Fga 50 Plus', 'Fga 50 Plus']), key: 'Fga 50 Plus' },
+        { label: 'FGM 50+', val: getFlexibleValue(player, ['Projected 50+ FGs Made', 'Actual 50+ FGs Made', '50+ FGs Made', 'FGM 50+', 'Projected Fgm 50 Plus', 'Actual Fgm 50 Plus', 'Fgm 50 Plus']), key: 'Fgm 50 Plus' },
+        { label: 'XP Att', val: getFlexibleValue(player, ['Projected XP Attempts', 'Actual XP Attempts', 'XP Attempts', 'XP Att', 'Projected Xpa', 'Actual Xpa', 'Xpa']), key: 'Xpa' },
+        { label: 'XP Made', val: getFlexibleValue(player, ['Projected XPs Made', 'Actual XPs Made', 'XPs Made', 'XP Made', 'Projected Xpm', 'Actual Xpm', 'Xpm']), key: 'Xpm' },
       ];
     } else if (pos === 'DST') {
       stats = [
         { label: 'Sacks', val: getFlexibleValue(player, ['Projected Sacks', 'Actual Sacks', 'Sacks', 'SACK']), key: 'Sacks' },
-        { label: 'INTs', val: getFlexibleValue(player, ['Projected Interceptions', 'Actual Interceptions', 'Interceptions', 'INT']), key: 'Interceptions' },
-        { label: 'Fum Rec', val: getFlexibleValue(player, ['Projected Fumble Recoveries', 'Actual Fumble Recoveries', 'Fumble Recoveries', 'Fum Rec', 'FUM REC']), key: 'Fumble Recoveries' },
-        { label: 'Def TDs', val: getFlexibleValue(player, ['Projected Defensive Touchdowns', 'Actual Defensive Touchdowns', 'Defensive Touchdowns', 'Def TD', 'DEF TD']), key: 'Defensive Touchdowns' },
-        { label: 'Pts Allw', val: getFlexibleValue(player, ['Projected Points Allowed', 'Actual Points Allowed', 'Points Allowed', 'Pts Agn', 'PTS AGN']), key: 'Points Allowed' },
-        { label: 'Yds Allw', val: getFlexibleValue(player, ['Projected Yards Allowed', 'Actual Yards Allowed', 'Yards Allowed', 'Yds Agn', 'YDS AGN']), key: 'Yards Allowed' },
+        { label: 'INTs', val: getFlexibleValue(player, ['Projected Interceptions', 'Actual Interceptions', 'Interceptions', 'INT', 'Ints', 'Int']), key: 'Interceptions' },
+        { label: 'Fum Rec', val: getFlexibleValue(player, ['Projected Fumbles', 'Actual Fumbles', 'Fumbles', 'Fumble Recoveries', 'Fumbles Recovered', 'Fum Rec', 'FUM REC']), key: 'Fumbles' },
+        { label: 'Def TDs', val: getFlexibleValue(player, ['Projected Defensive Tds', 'Actual Defensive Tds', 'Defensive Tds', 'Defensive Touchdowns', 'Def Tds', 'Def TD', 'DEF TD']), key: 'Defensive Tds' },
+        { label: 'Pts Allw', val: getFlexibleValue(player, ['Projected Points Allowed', 'Actual Points Allowed', 'Points Allowed', 'Pts Allow', 'Pts Agn', 'PTS AGN']), key: 'Points Allowed' },
+        { label: 'Yds Allw', val: getFlexibleValue(player, ['Projected Yards Allowed', 'Actual Yards Allowed', 'Yards Allowed', 'Yds Allow', 'Yds Agn', 'YDS AGN']), key: 'Yards Allowed' },
       ];
     }
 
