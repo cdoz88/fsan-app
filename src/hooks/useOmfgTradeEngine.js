@@ -1,5 +1,14 @@
 import { useMemo } from 'react';
 
+// Unified Name Normalizer that strips out suffixes cleanly
+const normalizeName = (name) => {
+  if (!name) return '';
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+    .replace(/(jr|sr|ii|iii|iv|v)$/, '');
+};
+
 // EXACT Age Multiplier Matrix from the Trade Value Chart
 const getBaseAgeMultiplier = (position, age, strategy) => {
   if (!age) return 1.0;
@@ -203,7 +212,7 @@ export function useOmfgTradeEngine({
                     const ros_w = isPastDeadline ? 0.45 : 0.35;
                     const sos_w = isPastDeadline ? 0.30 : 0.40;
                     const pts_win_now = (ros_w * pts_ros) + (0.25 * (pts_wow * 17)) + (sos_w * pts_sos);
-                    dynRawValue = pts_win_now * finalEdgeMult * 2.5; // Win Now has no age gate in chart
+                    dynRawValue = pts_win_now * finalEdgeMult * 2.5; 
                 } else if (strat === 'balanced') {
                     const ros_w = isPastDeadline ? 0.25 : 0.15;
                     const sos_w = isPastDeadline ? 0.60 : 0.70;
@@ -219,7 +228,6 @@ export function useOmfgTradeEngine({
         maxVals.neutral = maxVals.balanced;
     }
 
-    const normalizeName = (name) => name ? name.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
     const map = {};
     recalculated.forEach(p => { map[normalizeName(p.name)] = p; });
 
@@ -238,7 +246,6 @@ export function useOmfgTradeEngine({
           return Math.round(((asset.rawBase * stratMod) / maxVal) * 1000) || 0; 
       }
 
-      const normalizeName = (name) => name ? name.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
       const player = playerValMap[normalizeName(asset.name)];
       if (!player) return 0;
 
@@ -304,8 +311,6 @@ export function useOmfgTradeEngine({
       
       const r = leagueRosters.find(roster => roster.owner_id === mId);
       if (!r) return;
-
-      const normalizeName = (name) => name ? name.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
 
       const teamPlayers = (r.players || []).map(pid => {
         const sData = sleeperPlayersMap[pid];
