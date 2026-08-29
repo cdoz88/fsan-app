@@ -158,141 +158,7 @@ export default function DynastyRankingsClient() {
     return 'text-red-600 font-bold';
   };
 
-  // Bulletproof Stat Extractor
-  const extractStat = (player, matchRules) => {
-    if (!player) return 0;
-    const normalize = (str) => String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
-    const isValid = (val) => val !== undefined && val !== null && val !== '' && val !== '-';
-
-    for (const rule of matchRules) {
-      const normRule = normalize(rule);
-      for (const [key, value] of Object.entries(player)) {
-        if (!isValid(value)) continue;
-        if (normalize(key) === normRule) return Number(value) || 0;
-      }
-    }
-
-    for (const rule of matchRules) {
-      const normRule = normalize(rule);
-      for (const [key, value] of Object.entries(player)) {
-        if (!isValid(value)) continue;
-        const strippedKey = normalize(key).replace(/^projected/, '').replace(/^actual/, '');
-        if (strippedKey === normRule) return Number(value) || 0;
-      }
-    }
-    return 0;
-  };
-
-  // --- AGE MULTIPLIER MATRIX ---
-  const getBaseAgeMultiplier = (position, age, strategy) => {
-    if (!age) return 1.0;
-    const pos = position === 'WR/TE' ? 'TE' : position;
-
-    if (strategy === 'build') {
-      if (pos === 'RB') return age <= 23 ? 1.35 : age <= 25 ? 1.00 : age <= 27 ? 0.60 : age <= 29 ? 0.30 : 0.10;
-      if (pos === 'WR') return age <= 24 ? 1.30 : age <= 27 ? 1.05 : age <= 29 ? 0.75 : age <= 31 ? 0.45 : 0.20;
-      if (pos === 'QB') return age <= 26 ? 1.30 : age <= 33 ? 1.00 : age <= 36 ? 0.65 : 0.25;
-      if (pos === 'TE') return age <= 25 ? 1.30 : age <= 28 ? 0.95 : age <= 30 ? 0.70 : age <= 32 ? 0.45 : 0.20;
-    } else { 
-      // Balanced and Win_Now Base
-      if (pos === 'RB') return age <= 23 ? 1.20 : age <= 25 ? 1.05 : age <= 27 ? 0.85 : age <= 29 ? 0.55 : 0.25;
-      if (pos === 'WR') return age <= 24 ? 1.15 : age <= 27 ? 1.05 : age <= 29 ? 0.90 : age <= 31 ? 0.70 : 0.45;
-      if (pos === 'QB') return age <= 26 ? 1.15 : age <= 33 ? 1.05 : age <= 36 ? 0.85 : 0.50;
-      if (pos === 'TE') return age <= 25 ? 1.15 : age <= 28 ? 1.00 : age <= 30 ? 0.85 : age <= 32 ? 0.65 : 0.40;
-    }
-    return 1.0;
-  };
-
-  const processedRankings = useMemo(() => {
-    let basePlayers = playersData || [];
-    
-    if (currentPosition === 'FLEX') {
-        basePlayers = basePlayers.filter(p => ['RB', 'WR', 'TE'].includes(p.position));
-    } else {
-        basePlayers = basePlayers.filter(p => p.position === currentPosition);
-    }
-
-    const recalculated = basePlayers.map(player => {
-        const { SOS_OMFG, WOW_OMFG, ROS_OMFG, P50, weekly_proj_pts, OMFG_Edge, age, position } = player;
-        const isTE = (position === 'TE' || position === 'WR/TE');
-
-        // Extract raw season stats for scoring engine using extractStat
-        const passTds = extractStat(player, ['Pass Td', 'Pass TD', 'PASS TDS']);
-        const receptions = extractStat(player, ['Receptions', 'Rec', 'REC']);
-
-        // Dynamic Scoring Calculations
-        const deltaPassTd = passTds * (currentPassTdValue - 4);
-        const deltaPpr = receptions * (currentPprValue - 0.5);
-        const deltaTep = isTE ? (receptions * currentTePremium) : 0;
-        const deltaTotal = deltaPassTd + deltaPpr + deltaTep;
-
-        const adjP50 = P50 + deltaTotal;
-
-        const pts_wow = (weekly_proj_pts + (player.pass_tds_week * (currentPassTdValue - 4))) * (1 + ((WOW_OMFG - 50) / 100));
-        const pts_sos = adjP50 + (adjP50 * (SOS_OMFG / 100));
-        const pts_ros = adjP50 + (adjP50 * (ROS_OMFG / 100)); 
-
-        let rawValue = 0;
-        let finalEdgeMult = 1.0 + (OMFG_Edge / 100);
-
-        const baseAgeMult = getBaseAgeMultiplier(position, age, dynastyStrategy);
-        
-        let gatedAgeMult = 1.0;
-        if (baseAgeMult > 1.0) {
-            const premiumFactor = baseAgeMult - 1.0;
-            gatedAgeMult = 1.0 + (premiumFactor * (SOS_OMFG / 100));
-        } else if (baseAgeMult < 1.0) {
-            const penaltyFactor = 1.0 - baseAgeMult;
-            gatedAgeMult = 1.0 - (penaltyFactor * (1.0 - (SOS_OMFG / 100)));
-        }
-
-        if (dynastyStrategy === 'win_now') {
-            const pts_win_now = (0.35 * pts_ros) + (0.25 * (pts_wow * 17)) + (0.40 * pts_sos);
-            rawValue = pts_win_now * finalEdgeMult * 2.5;
-        } else if (dynastyStrategy === 'balanced') {
-            const pts_balanced = (0.15 * pts_ros) + (0.15 * (pts_wow * 17)) + (0.70 * pts_sos);
-            rawValue = pts_balanced * gatedAgeMult * finalEdgeMult * 2.5;
-        } else if (dynastyStrategy === 'build') {
-            rawValue = pts_sos * gatedAgeMult * finalEdgeMult * 2.5;
-        }
-
-        // Apply Position Scarcity
-        let sf_mult = 1.0;
-        if (position === 'QB') {
-            if (currentIsSuperflex) sf_mult = 1.0 + (SOS_OMFG / 300.0); 
-            else sf_mult = 0.75; 
-        }
-        rawValue = rawValue * sf_mult;
-
-        let tep_mult = 1.0;
-        if (isTE) {
-            if (currentTePremium === 0.5) tep_mult = 1.15;
-            else if (currentTePremium >= 1.0) tep_mult = 1.30;
-            if (SOS_OMFG > 80.0) tep_mult = tep_mult * (1.0 + ((SOS_OMFG - 80) / 100));
-        }
-        rawValue = rawValue * tep_mult;
-        if (rawValue < 0) rawValue = 0;
-
-        return { ...player, rawValue, adjProjPts: adjP50 };
-    });
-
-    // Sort by rawValue for Dynasty Rankings (hidden behind the scenes)
-    recalculated.sort((a, b) => b.rawValue - a.rawValue);
-
-    const posCounters = {};
-    return recalculated.map((player, index) => {
-      const pos = player.position || 'UNK';
-      if (!posCounters[pos]) posCounters[pos] = 0;
-      posCounters[pos] += 1;
-      
-      return { 
-          ...player, 
-          overallRank: index + 1, 
-          posRank: `${pos}${posCounters[pos]}` 
-      };
-    });
-  }, [playersData, currentPosition, dynastyStrategy, currentIsSuperflex, currentPprValue, currentPassTdValue, currentTePremium]); 
-
+  // Bulletproof Stat Extractor (Hoisted for reliable scoring calculations)
   const getFlexibleValue = (player, matchRules) => {
     if (!player) return null;
     const normalize = (str) => String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -334,6 +200,131 @@ export default function DynastyRankingsClient() {
     }
     return null;
   };
+
+  // --- AGE MULTIPLIER MATRIX ---
+  const getBaseAgeMultiplier = (position, age, strategy) => {
+    if (!age) return 1.0;
+    const pos = position === 'WR/TE' ? 'TE' : position;
+
+    if (strategy === 'build') {
+      if (pos === 'RB') return age <= 23 ? 1.35 : age <= 25 ? 1.00 : age <= 27 ? 0.60 : age <= 29 ? 0.30 : 0.10;
+      if (pos === 'WR') return age <= 24 ? 1.30 : age <= 27 ? 1.05 : age <= 29 ? 0.75 : age <= 31 ? 0.45 : 0.20;
+      if (pos === 'QB') return age <= 26 ? 1.30 : age <= 33 ? 1.00 : age <= 36 ? 0.65 : 0.25;
+      if (pos === 'TE') return age <= 25 ? 1.30 : age <= 28 ? 0.95 : age <= 30 ? 0.70 : age <= 32 ? 0.45 : 0.20;
+    } else { 
+      // Balanced and Win_Now Base
+      if (pos === 'RB') return age <= 23 ? 1.20 : age <= 25 ? 1.05 : age <= 27 ? 0.85 : age <= 29 ? 0.55 : 0.25;
+      if (pos === 'WR') return age <= 24 ? 1.15 : age <= 27 ? 1.05 : age <= 29 ? 0.90 : age <= 31 ? 0.70 : 0.45;
+      if (pos === 'QB') return age <= 26 ? 1.15 : age <= 33 ? 1.05 : age <= 36 ? 0.85 : 0.50;
+      if (pos === 'TE') return age <= 25 ? 1.15 : age <= 28 ? 1.00 : age <= 30 ? 0.85 : age <= 32 ? 0.65 : 0.40;
+    }
+    return 1.0;
+  };
+
+  const processedRankings = useMemo(() => {
+    let basePlayers = playersData || [];
+    
+    // Position Filtering
+    if (currentPosition === 'FLEX') {
+        basePlayers = basePlayers.filter(p => ['RB', 'WR', 'TE'].includes(p.Position) || ['RB', 'WR', 'TE'].includes(p.position));
+    } else {
+        basePlayers = basePlayers.filter(p => (p.Position || p.position) === currentPosition);
+    }
+
+    const recalculated = basePlayers.map(player => {
+        const { SOS_OMFG, WOW_OMFG, ROS_OMFG, P50, weekly_proj_pts, OMFG_Edge, age } = player;
+        const pos = player.Position || player.position;
+        const isTE = (pos === 'TE' || pos === 'WR/TE');
+
+        // Extract raw season stats safely
+        const passTdsSeason = Number(getFlexibleValue(player, ['Pass Td', 'Pass TD', 'PASS TDS', 'Projected Pass Td', 'Projected Pass TDs'])) || 0;
+        const receptionsSeason = Number(getFlexibleValue(player, ['Receptions', 'Rec', 'REC', 'Projected Receptions'])) || 0;
+
+        // Determine weekly estimates for the WOW component
+        const passTdsWeek = passTdsSeason / 17;
+        const receptionsWeek = receptionsSeason / 17;
+
+        // Dynamic Scoring Adjustments (Season)
+        const deltaPassTd = passTdsSeason * (currentPassTdValue - 4);
+        const deltaPpr = receptionsSeason * (currentPprValue - 0.5);
+        const deltaTep = isTE ? (receptionsSeason * currentTePremium) : 0;
+        const deltaTotal = deltaPassTd + deltaPpr + deltaTep;
+
+        // Dynamic Scoring Adjustments (Weekly)
+        const deltaPassTdWeek = passTdsWeek * (currentPassTdValue - 4);
+        const deltaPprWeek = receptionsWeek * (currentPprValue - 0.5);
+        const deltaTepWeek = isTE ? (receptionsWeek * currentTePremium) : 0;
+        const deltaTotalWeek = deltaPassTdWeek + deltaPprWeek + deltaTepWeek;
+
+        const adjP50 = P50 + deltaTotal;
+        const adjWeeklyProj = weekly_proj_pts + deltaTotalWeek;
+
+        const pts_wow = adjWeeklyProj * (1 + ((WOW_OMFG - 50) / 100));
+        const pts_sos = adjP50 + (adjP50 * (SOS_OMFG / 100));
+        const pts_ros = adjP50 + (adjP50 * (ROS_OMFG / 100)); 
+
+        let rawValue = 0;
+        let finalEdgeMult = 1.0 + (OMFG_Edge / 100);
+
+        const baseAgeMult = getBaseAgeMultiplier(pos, age, dynastyStrategy);
+        
+        let gatedAgeMult = 1.0;
+        if (baseAgeMult > 1.0) {
+            const premiumFactor = baseAgeMult - 1.0;
+            gatedAgeMult = 1.0 + (premiumFactor * (SOS_OMFG / 100));
+        } else if (baseAgeMult < 1.0) {
+            const penaltyFactor = 1.0 - baseAgeMult;
+            gatedAgeMult = 1.0 - (penaltyFactor * (1.0 - (SOS_OMFG / 100)));
+        }
+
+        if (dynastyStrategy === 'win_now') {
+            const pts_win_now = (0.35 * pts_ros) + (0.25 * (pts_wow * 17)) + (0.40 * pts_sos);
+            rawValue = pts_win_now * finalEdgeMult * 2.5;
+        } else if (dynastyStrategy === 'balanced') {
+            const pts_balanced = (0.15 * pts_ros) + (0.15 * (pts_wow * 17)) + (0.70 * pts_sos);
+            rawValue = pts_balanced * gatedAgeMult * finalEdgeMult * 2.5;
+        } else if (dynastyStrategy === 'build') {
+            rawValue = pts_sos * gatedAgeMult * finalEdgeMult * 2.5;
+        }
+
+        // Apply Position Scarcity
+        let sf_mult = 1.0;
+        if (pos === 'QB') {
+            if (currentIsSuperflex) sf_mult = 1.0 + (SOS_OMFG / 300.0); 
+            else sf_mult = 0.75; 
+        }
+        rawValue = rawValue * sf_mult;
+
+        let tep_mult = 1.0;
+        if (isTE) {
+            if (currentTePremium === 0.5) tep_mult = 1.15;
+            else if (currentTePremium >= 1.0) tep_mult = 1.30;
+            if (SOS_OMFG > 80.0) tep_mult = tep_mult * (1.0 + ((SOS_OMFG - 80) / 100));
+        }
+        rawValue = rawValue * tep_mult;
+        
+        // Safeguard to prevent sorting array failures
+        if (isNaN(rawValue) || rawValue < 0) rawValue = 0;
+
+        return { ...player, rawValue, adjProjPts: adjP50 };
+    });
+
+    // Sort by rawValue for Dynasty Rankings (mixes positions in FLEX correctly)
+    recalculated.sort((a, b) => b.rawValue - a.rawValue);
+
+    const posCounters = {};
+    return recalculated.map((player, index) => {
+      const pos = player.Position || player.position || 'UNK';
+      if (!posCounters[pos]) posCounters[pos] = 0;
+      posCounters[pos] += 1;
+      
+      return { 
+          ...player, 
+          overallRank: index + 1, 
+          posRank: `${pos}${posCounters[pos]}` 
+      };
+    });
+  }, [playersData, currentPosition, dynastyStrategy, currentIsSuperflex, currentPprValue, currentPassTdValue, currentTePremium]); 
 
   const renderExpandedStats = (player) => {
     const pos = player.Position || player.position;
@@ -404,7 +395,8 @@ export default function DynastyRankingsClient() {
   };
 
   const renderCareerArc = (player) => {
-    const hash = player.name.charCodeAt(0) + player.name.charCodeAt(player.name.length - 1);
+    const playerName = player.Player || player.name || '';
+    const hash = playerName.charCodeAt(0) + playerName.charCodeAt(playerName.length - 1);
     const diff1 = (hash % 15) - 5; 
     const diff2 = ((hash * 2) % 10) - 3; 
     
@@ -604,7 +596,7 @@ export default function DynastyRankingsClient() {
                   >
                     <div className="flex items-center justify-center gap-1">
                       SOS OMFG
-                      <Info size={10} className="text-gray-500" />
+                      <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
                     </div>
                     <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-52 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
                       Season-Over-Season Overall Metric Fantasy Grade. Rates the strength of the player's underlying long-term profile compared to historical data.

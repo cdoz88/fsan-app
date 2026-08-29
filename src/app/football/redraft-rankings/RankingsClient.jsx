@@ -478,48 +478,63 @@ export default function RankingsClient() {
                     Proj Pts
                   </th>
                   <th 
-                    className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center cursor-help hover:bg-gray-800/40 transition-colors"
-                    title="Overall Metric Fantasy Grade. Rates the strength of the player's underlying volume and role opportunity for this week."
+                    className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center cursor-help hover:bg-gray-800/40 transition-colors relative group"
                   >
                     <div className="flex items-center justify-center gap-1">
                       OMFG
-                      <Info size={10} className="text-gray-500" />
+                      <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-52 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
+                      Overall Metric Fantasy Grade. Rates the strength of the player's underlying volume and role opportunity for this week.
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
                     </div>
                   </th>
                   <th 
-                    className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center cursor-help hover:bg-gray-800/40 transition-colors"
-                    title="A 0-100 rating of opponent matchup difficulty. Higher scores represent more favorable matchups against opposing defenses."
+                    className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center cursor-help hover:bg-gray-800/40 transition-colors relative group"
                   >
                     <div className="flex items-center justify-center gap-1">
                       Matchup
-                      <Info size={10} className="text-gray-500" />
+                      <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-52 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
+                      A 0-100 rating of opponent matchup difficulty. Higher scores represent more favorable matchups against opposing defenses.
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
                     </div>
                   </th>
                   <th 
-                    className="px-4 py-3 text-[10px] font-black text-[#1b75bb] uppercase tracking-widest text-center bg-[#0f446e]/20 border-l border-gray-800 cursor-help hover:bg-[#0f446e]/40 transition-colors"
-                    title="Estimated percentage chance of finishing inside this position-specific rank tier for the week."
+                    className="px-4 py-3 text-[10px] font-black text-[#1b75bb] uppercase tracking-widest text-center bg-[#0f446e]/20 border-l border-gray-800 cursor-help hover:bg-[#0f446e]/40 transition-colors relative group"
                   >
                     <div className="flex items-center justify-center gap-1">
                       {prob1Header}
-                      <Info size={10} className="text-[#1b75bb]/70" />
+                      <Info size={10} className="text-[#1b75bb]/70 group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-52 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
+                      Estimated percentage chance of finishing inside this position-specific rank tier for the week.
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
                     </div>
                   </th>
                   <th 
-                    className="px-4 py-3 text-[10px] font-black text-[#1b75bb] uppercase tracking-widest text-center bg-[#0f446e]/20 border-x border-gray-800 cursor-help hover:bg-[#0f446e]/40 transition-colors"
-                    title="Estimated percentage chance of finishing inside this position-specific rank tier for the week."
+                    className="px-4 py-3 text-[10px] font-black text-[#1b75bb] uppercase tracking-widest text-center bg-[#0f446e]/20 border-x border-gray-800 cursor-help hover:bg-[#0f446e]/40 transition-colors relative group"
                   >
                     <div className="flex items-center justify-center gap-1">
                       {prob2Header}
-                      <Info size={10} className="text-[#1b75bb]/70" />
+                      <Info size={10} className="text-[#1b75bb]/70 group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-52 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
+                      Estimated percentage chance of finishing inside this position-specific rank tier for the week.
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
                     </div>
                   </th>
                   <th 
-                    className="px-4 py-3 text-[10px] font-black text-[#1b75bb] uppercase tracking-widest text-center bg-[#0f446e]/20 border-r border-gray-800 cursor-help hover:bg-[#0f446e]/40 transition-colors"
-                    title="Estimated percentage chance of finishing inside this position-specific rank tier for the week."
+                    className="px-4 py-3 text-[10px] font-black text-[#1b75bb] uppercase tracking-widest text-center bg-[#0f446e]/20 border-r border-gray-800 cursor-help hover:bg-[#0f446e]/40 transition-colors relative group"
                   >
                     <div className="flex items-center justify-center gap-1">
                       {prob3Header}
-                      <Info size={10} className="text-[#1b75bb]/70" />
+                      <Info size={10} className="text-[#1b75bb]/70 group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-52 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
+                      Estimated percentage chance of finishing inside this position-specific rank tier for the week.
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
                     </div>
                   </th>
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Stats</th>

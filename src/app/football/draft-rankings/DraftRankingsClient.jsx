@@ -2,13 +2,14 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Settings, RefreshCw, Trophy, ListOrdered, ChevronDown, ChevronUp, Info } from 'lucide-react'; 
+import { Settings, RefreshCw, Trophy, ListOrdered, ChevronDown, ChevronUp, Info, X } from 'lucide-react'; 
 import { useLeague } from '../../../context/LeagueContext'; 
 
 export default function DraftRankingsClient() {
   const [playersData, setPlayersData] = useState([]);
   const [isSyncing, setIsSyncing] = useState(true);
   const [expandedRows, setExpandedRows] = useState(new Set());
+  const [activeModal, setActiveModal] = useState(null);
 
   // Hook into League Context
   const { getActiveLeagueData } = useLeague();
@@ -52,6 +53,31 @@ export default function DraftRankingsClient() {
     loadData();
   }, []);
 
+  // Bulletproof Stat Extractor specifically for the scoring engine
+  const extractStat = (player, matchRules) => {
+    if (!player) return 0;
+    const normalize = (str) => String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
+    const isValid = (val) => val !== undefined && val !== null && val !== '' && val !== '-';
+
+    for (const rule of matchRules) {
+      const normRule = normalize(rule);
+      for (const [key, value] of Object.entries(player)) {
+        if (!isValid(value)) continue;
+        if (normalize(key) === normRule) return Number(value) || 0;
+      }
+    }
+
+    for (const rule of matchRules) {
+      const normRule = normalize(rule);
+      for (const [key, value] of Object.entries(player)) {
+        if (!isValid(value)) continue;
+        const strippedKey = normalize(key).replace(/^projected/, '').replace(/^actual/, '');
+        if (strippedKey === normRule) return Number(value) || 0;
+      }
+    }
+    return 0;
+  };
+
   const processedRankings = useMemo(() => {
     let basePlayers = playersData || [];
     
@@ -70,9 +96,9 @@ export default function DraftRankingsClient() {
         
         const pos = player.Position || player.position;
         
-        // Extract raw season stats for scoring engine
-        const passTds = Number(player['Pass Td'] ?? player['PASS TDS'] ?? player['Projected Pass Td']) || 0;
-        const receptions = Number(player['Receptions'] ?? player['Rec'] ?? player['REC'] ?? player['Projected Receptions']) || 0;
+        // Extract raw season stats for scoring engine dynamically
+        const passTds = extractStat(player, ['Pass Td', 'Pass TD', 'PASS TDS', 'Projected Pass Td', 'Projected Pass TDs']);
+        const receptions = extractStat(player, ['Receptions', 'Rec', 'REC', 'Projected Receptions']);
 
         // Dynamic Scoring Adjustments (Assumes base OMFG data is 0.5 PPR and 4pt Pass TD)
         const deltaPassTd = passTds * (currentPassTdValue - 4);
@@ -286,6 +312,38 @@ export default function DraftRankingsClient() {
 
   return (
     <div className="w-full animate-in fade-in duration-500 pb-24 relative">
+
+      {/* Modal for Outcome Range Tooltips */}
+      {activeModal === 'outcomeRange' && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#161616] border border-gray-800 w-full max-w-xl rounded-3xl p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <button onClick={() => setActiveModal(null)} className="absolute right-4 top-4 text-gray-500 hover:text-white transition-colors">
+              <X size={20} />
+            </button>
+            <h3 className="text-base font-black text-white uppercase tracking-wider mb-2 flex items-center gap-2">
+              <Info size={18} className="text-zinc-400" /> Outcome Range (P25 - P75) Methodology
+            </h3>
+            
+            <div className="space-y-4 text-xs font-medium text-gray-400 leading-relaxed mt-4">
+              <p>
+                Instead of relying on a single static point projection, the <strong>Outcome Range</strong> displays a player's statistical range of outcomes derived from our projection models.
+              </p>
+              
+              <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60 mt-4">
+                <p>• <span className="text-red-400 font-bold">Left Edge (P25 - Floor):</span> The 25th percentile downside outcome. A realistic floor expectation if touchdown luck or game scripts swing negative.</p>
+                <p>• <span className="text-white font-bold">White Indicator (P50 - Median):</span> The 50th percentile baseline expectation. This represents the player's most likely output under standard conditions.</p>
+                <p>• <span className="text-emerald-400 font-bold">Right Edge (P75 - Ceiling):</span> The 75th percentile upside outcome. Represents high-end ceiling potential during a breakout season or favorable environment.</p>
+              </div>
+
+              <div className="space-y-2 bg-[#111] p-4 rounded-2xl border border-gray-800/60">
+                <p><strong>Reading Asset Volatility:</strong></p>
+                <p>• <span className="text-gray-300 font-bold">Wide Bar:</span> High-volatility / boom-or-bust profile with massive ceiling upside paired with downside risk.</p>
+                <p>• <span className="text-gray-300 font-bold">Narrow Bar:</span> Highly stable, predictable role with a tight range of outcomes and secure weekly utility.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Hero Section */}
       <div className="relative w-full h-[220px] md:h-[260px] flex items-center overflow-hidden rounded-2xl mb-8 shadow-2xl">
@@ -419,21 +477,29 @@ export default function DraftRankingsClient() {
                   </th>
 
                   <th 
-                    className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center cursor-help hover:bg-gray-800/40 transition-colors"
-                    title="Season-Over-Season Overall Metric Fantasy Grade. Rates the strength of the player's underlying long-term profile compared to historical data."
+                    className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center cursor-help hover:bg-gray-800/40 transition-colors relative group"
                   >
                     <div className="flex items-center justify-center gap-1">
                       SOS OMFG
-                      <Info size={10} className="text-gray-500" />
+                      <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-52 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
+                      Season-Over-Season Overall Metric Fantasy Grade. Rates the strength of the player's underlying long-term profile compared to historical data.
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
                     </div>
                   </th>
                   <th 
-                    className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center border-l border-gray-800 cursor-help hover:bg-gray-800/40 transition-colors"
-                    title="The expected range of season-long fantasy points based on the 25th percentile (floor), 50th percentile (median), and 75th percentile (ceiling)."
+                    className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center border-l border-gray-800 cursor-help hover:bg-gray-800/40 transition-colors relative group"
                   >
                     <div className="flex items-center justify-center gap-1">
                       Outcome Range (P25 - P75)
-                      <Info size={10} className="text-gray-500" />
+                      <button onClick={() => setActiveModal('outcomeRange')} className="text-gray-500 hover:text-white transition-colors">
+                        <Info size={11} />
+                      </button>
+                    </div>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
+                      The expected range of season-long fantasy points based on the 25th percentile (floor), 50th percentile (median), and 75th percentile (ceiling).
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
                     </div>
                   </th>
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Stats</th>
