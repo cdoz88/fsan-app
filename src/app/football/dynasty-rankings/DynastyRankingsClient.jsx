@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Settings, RefreshCw, Trophy, ListOrdered, ChevronRight, TrendingUp, TrendingDown, Minus, Info, X, ChevronDown, ChevronUp } from 'lucide-react'; 
+import { Settings, RefreshCw, Trophy, ListOrdered, ChevronRight, TrendingUp, TrendingDown, Minus, Info, X, ChevronDown, ChevronUp, Search } from 'lucide-react'; 
 import { useLeague } from '../../../context/LeagueContext'; 
 
 export default function DynastyRankingsClient() {
@@ -19,6 +19,8 @@ export default function DynastyRankingsClient() {
   const [currentPosition, setCurrentPosition] = useState('QB');
   const [showSettings, setShowSettings] = useState(false);
   const [dynastyStrategy, setDynastyStrategy] = useState('balanced');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
   
   // Manual Scoring Format Settings (Defaults to Full PPR)
   const [manualIsSuperflex, setManualIsSuperflex] = useState(false); 
@@ -326,6 +328,15 @@ export default function DynastyRankingsClient() {
     });
   }, [playersData, currentPosition, dynastyStrategy, currentIsSuperflex, currentPprValue, currentPassTdValue, currentTePremium]); 
 
+  // Apply Search Filter AFTER ranks are assigned to preserve true ranking numbers
+  const visibleRankings = useMemo(() => {
+    return processedRankings.filter(player => {
+      if (!searchQuery.trim()) return true;
+      const playerName = player.Player || player.name || '';
+      return playerName.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+  }, [processedRankings, searchQuery]);
+
   const renderExpandedStats = (player) => {
     const pos = player.Position || player.position;
     let stats = [];
@@ -496,6 +507,37 @@ export default function DynastyRankingsClient() {
                ))}
             </div>
 
+            {/* SEARCH TOGGLE */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button 
+                onClick={() => {
+                  setShowSearch(!showSearch);
+                  if (showSearch) setSearchQuery('');
+                }} 
+                className={`p-2 rounded-xl border transition-all ${showSearch || searchQuery ? 'bg-red-600/10 border-red-500/50 text-red-500' : 'bg-[#1a1a1a] border-gray-800 text-gray-500 hover:text-white'}`}
+              >
+                <Search size={16} />
+              </button>
+              
+              {showSearch && (
+                <div className="relative animate-in fade-in slide-in-from-left-2 duration-200">
+                  <input 
+                    type="text" 
+                    placeholder="Search player..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-[#111] border border-gray-800 text-white text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-xl pl-3 pr-8 py-2 h-[34px] w-40 sm:w-48 focus:outline-none focus:border-red-500 transition-colors shadow-inner"
+                    autoFocus
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="flex items-center bg-[#111] p-1 rounded-2xl border border-gray-800 w-fit animate-in fade-in zoom-in-95 duration-200 shrink-0">
               <button onClick={() => setDynastyStrategy('win_now')} className={`px-3 sm:px-4 py-2 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all ${dynastyStrategy === 'win_now' ? 'bg-zinc-200 text-black shadow-sm' : 'text-gray-500 hover:text-white'}`}>🏆 Win Now</button>
               <button onClick={() => setDynastyStrategy('balanced')} className={`px-3 sm:px-4 py-2 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all ${dynastyStrategy === 'balanced' ? 'bg-zinc-200 text-black shadow-sm' : 'text-gray-500 hover:text-white'}`}>⚖️ Balanced</button>
@@ -568,7 +610,7 @@ export default function DynastyRankingsClient() {
                   {[{ label: 'NONE', val: 0 }, { label: '+0.5', val: 0.5 }, { label: '+1.0', val: 1 }].map(opt => (
                     <button 
                       key={opt.label} onClick={() => setManualTePremium(opt.val)}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${manualTePremium === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${manualTePremium === val.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}
                     >
                       {opt.label}
                     </button>
@@ -626,14 +668,14 @@ export default function DynastyRankingsClient() {
                       </div>
                     </td>
                   </tr>
-                ) : processedRankings.length === 0 ? (
+                ) : visibleRankings.length === 0 ? (
                    <tr>
                     <td colSpan={colSpanCount} className="py-20 text-center">
                       <h3 className="text-xl font-black text-white uppercase tracking-wider mb-2">No Data Available</h3>
                       <p className="text-gray-500 font-bold">No players match the current filter selection.</p>
                     </td>
                   </tr>
-                ) : processedRankings.map((player, idx) => {
+                ) : visibleRankings.map((player, idx) => {
                     const playerName = player.Player || player.name || 'Unknown';
                     const playerId = `${playerName}-${idx}`;
                     const isExpanded = expandedRows.has(playerId);

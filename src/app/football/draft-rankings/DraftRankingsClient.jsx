@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Settings, RefreshCw, Trophy, ListOrdered, ChevronDown, ChevronUp, Info, X } from 'lucide-react'; 
+import { Settings, RefreshCw, Trophy, ListOrdered, ChevronDown, ChevronUp, Info, X, Search } from 'lucide-react'; 
 import { useLeague } from '../../../context/LeagueContext'; 
 
 export default function DraftRankingsClient() {
@@ -18,6 +18,8 @@ export default function DraftRankingsClient() {
   // UI State Variables
   const [currentPosition, setCurrentPosition] = useState('QB');
   const [showSettings, setShowSettings] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
   
   // Manual Scoring Format Settings (Defaults to Full PPR)
   const [manualIsSuperflex, setManualIsSuperflex] = useState(false); 
@@ -134,6 +136,15 @@ export default function DraftRankingsClient() {
       };
     });
   }, [playersData, currentPosition, currentPprValue, currentPassTdValue, currentTePremium]); 
+
+  // Apply Search Filter AFTER ranks are assigned to preserve true ranking numbers
+  const visibleRankings = useMemo(() => {
+    return processedRankings.filter(player => {
+      if (!searchQuery.trim()) return true;
+      const playerName = player.Player || player.name || '';
+      return playerName.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+  }, [processedRankings, searchQuery]);
 
   const toggleRow = (playerId) => {
     setExpandedRows(prev => {
@@ -382,6 +393,37 @@ export default function DraftRankingsClient() {
                   <button key={pos} onClick={() => setCurrentPosition(pos)} className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${currentPosition === pos ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'text-gray-500 hover:text-white hover:bg-[#252525]'}`}>{pos}</button>
                ))}
             </div>
+
+            {/* SEARCH TOGGLE */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button 
+                onClick={() => {
+                  setShowSearch(!showSearch);
+                  if (showSearch) setSearchQuery('');
+                }} 
+                className={`p-2 rounded-xl border transition-all ${showSearch || searchQuery ? 'bg-red-600/10 border-red-500/50 text-red-500' : 'bg-[#1a1a1a] border-gray-800 text-gray-500 hover:text-white'}`}
+              >
+                <Search size={16} />
+              </button>
+              
+              {showSearch && (
+                <div className="relative animate-in fade-in slide-in-from-left-2 duration-200">
+                  <input 
+                    type="text" 
+                    placeholder="Search player..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-[#111] border border-gray-800 text-white text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-xl pl-3 pr-8 py-2 h-[34px] w-40 sm:w-48 focus:outline-none focus:border-red-500 transition-colors shadow-inner"
+                    autoFocus
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-4 w-full xl:w-auto xl:justify-end shrink-0">
@@ -516,14 +558,14 @@ export default function DraftRankingsClient() {
                       </div>
                     </td>
                   </tr>
-                ) : processedRankings.length === 0 ? (
+                ) : visibleRankings.length === 0 ? (
                    <tr>
                     <td colSpan={colSpanCount} className="py-20 text-center">
                       <h3 className="text-xl font-black text-white uppercase tracking-wider mb-2">No Data Available</h3>
                       <p className="text-gray-500 font-bold">No players match the current filter selection.</p>
                     </td>
                   </tr>
-                ) : processedRankings.map((player, idx) => {
+                ) : visibleRankings.map((player, idx) => {
                     const playerId = `${player.Player || player.name}-${idx}`;
                     const isExpanded = expandedRows.has(playerId);
                     const playerName = player.Player || player.name || 'Unknown';
