@@ -92,8 +92,6 @@ export default function HalftimeTab() {
             mediaType === 'video' ? (
               <video 
                 src={mediaUrl} 
-                autoPlay 
-                loop 
                 controls 
                 className="w-full h-full object-contain p-2"
               />
