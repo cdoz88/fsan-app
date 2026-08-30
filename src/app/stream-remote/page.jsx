@@ -90,9 +90,12 @@ export default function MobileRemotePage() {
     const newScore = Math.max(0, currentScore + change);
     const updates = { [`${person}Score`]: newScore };
 
-    // Play the point gain sound if we are increasing the score
+    // Trigger specific sound based on positive/negative change
     if (change > 0) {
       updates.lastSound = 'Point Gain';
+      updates.soundTriggeredAt = Date.now();
+    } else if (change < 0 && currentScore > 0) {
+      updates.lastSound = 'quack';
       updates.soundTriggeredAt = Date.now();
     }
 
@@ -169,16 +172,15 @@ export default function MobileRemotePage() {
   // --- SOUNDBOARD CONFIGURATION ---
   // The 'id' must exactly match the file name (without .mp3)
   const SOUNDS = [
-    { id: 'airhorn', label: 'DJ Horn', emoji: '📢', color: 'from-amber-600 to-red-600 border-amber-500' },
-    { id: 'shots-fired', label: 'Shots Fired', emoji: '🔫🔥', color: 'from-emerald-600 to-teal-700 border-emerald-500' },
-    { id: 'got-eem', label: 'Got Eem', emoji: '📞🤣', color: 'from-blue-600 to-indigo-800 border-blue-500' },
-    { id: 'windows', label: 'Windows Shutdown', emoji: '💻', color: 'from-rose-700 to-pink-900 border-rose-500' },
+    { id: 'airhorn', label: 'Airhorn', emoji: '📢', color: 'from-amber-600 to-red-600 border-amber-500' },
+    { id: 'applause', label: 'Applause', emoji: '👏', color: 'from-emerald-600 to-teal-700 border-emerald-500' },
+    { id: 'correct', label: 'Correct', emoji: '✅', color: 'from-blue-600 to-indigo-800 border-blue-500' },
+    { id: 'wrong', label: 'Wrong', emoji: '❌', color: 'from-rose-700 to-pink-900 border-rose-500' },
     { id: 'cha-ching', label: 'Cha-Ching', emoji: '💰', color: 'from-green-600 to-emerald-800 border-green-400' },
     { id: 'crickets', label: 'Crickets', emoji: '🦗', color: 'from-zinc-700 to-zinc-900 border-zinc-600' },
-    { id: 'emotional', label: 'Emotional Damage', emoji: '😭', color: 'from-purple-700 to-fuchsia-900 border-purple-500' },
-    { id: 'jeopardy', label: 'Jeopardy', emoji: '⏳', color: 'from-cyan-700 to-blue-900 border-cyan-500' },
-    { id: 'got-time', label: 'Got Time', emoji: '❌🕔', color: 'from-amber-600 to-red-600 border-amber-500' },
-    { id: 'goat', label: 'Goat Scream', emoji: '🐐', color: 'from-emerald-600 to-teal-700 border-emerald-500' },
+    { id: 'ba-dum-tss', label: 'Ba-Dum-Tss', emoji: '🥁', color: 'from-purple-700 to-fuchsia-900 border-purple-500' },
+    { id: 'dundundun', label: 'Dun Dun Dun', emoji: '😱', color: 'from-cyan-700 to-blue-900 border-cyan-500' },
+    { id: 'quack', label: 'Quack', emoji: '🦆', color: 'from-yellow-500 to-amber-700 border-yellow-400' },
   ];
 
   return (

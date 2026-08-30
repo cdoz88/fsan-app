@@ -460,9 +460,11 @@ export default function StreamDashboardPage() {
     const newScore = Math.max(0, currentScore + change);
     const updates = { [`${person}Score`]: newScore };
 
-    // Play the point gain sound if we are increasing the score
     if (change > 0) {
       updates.lastSound = 'Point Gain';
+      updates.soundTriggeredAt = Date.now();
+    } else if (change < 0 && currentScore > 0) {
+      updates.lastSound = 'quack';
       updates.soundTriggeredAt = Date.now();
     }
 
