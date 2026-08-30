@@ -3,14 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { Image as ImageIcon, Video, Play, Trophy, Eye, EyeOff } from 'lucide-react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-
-// Adjust this import path to match where you saved your NapkinLeaderboard component!
 import NapkinLeaderboard from '@/components/dno/DNOLeaderboard';
 
 export default function HalftimeTab() {
   const [activeSubTab, setActiveSubTab] = useState('COREY');
 
   // --- STATE LISTENING TO FIREBASE ---
+  const [host1Name, setHost1Name] = useState('COREY');
+  const [host2Name, setHost2Name] = useState('KYLE');
+
   const [coreyMediaUrl, setCoreyMediaUrl] = useState(null);
   const [coreyMediaType, setCoreyMediaType] = useState('image');
   const [coreyRevealed, setCoreyRevealed] = useState(false);
@@ -25,6 +26,10 @@ export default function HalftimeTab() {
       if (docSnap.exists()) {
         const data = docSnap.data();
         
+        // Sync Display Names
+        if (data.host1Name !== undefined) setHost1Name(data.host1Name);
+        if (data.host2Name !== undefined) setHost2Name(data.host2Name);
+
         // Sync Corey's Media
         if (data.coreyMediaUrl !== undefined) setCoreyMediaUrl(data.coreyMediaUrl);
         if (data.coreyMediaType !== undefined) setCoreyMediaType(data.coreyMediaType);
@@ -60,8 +65,8 @@ export default function HalftimeTab() {
             className={`w-full py-16 rounded-3xl flex flex-col items-center justify-center gap-4 transition-all border-2 active:scale-95 ${
               !mediaUrl 
                 ? 'bg-transparent text-zinc-800 border-zinc-900 cursor-not-allowed' 
-                : isRevealed
-                  ? 'bg-transparent text-zinc-400 border-zinc-600 hover:text-white hover:border-zinc-400 shadow-lg'
+                : isRevealed 
+                  ? 'bg-transparent text-zinc-400 border-zinc-600 hover:text-white hover:border-zinc-400 shadow-lg' 
                   : 'bg-black/60 backdrop-blur-xl text-emerald-500 border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.15)] hover:bg-emerald-500/10 hover:shadow-[0_0_40px_rgba(16,185,129,0.25)]'
             }`}
           >
@@ -132,6 +137,7 @@ export default function HalftimeTab() {
           ></div>
 
         </div>
+
       </div>
     );
   };
@@ -147,7 +153,7 @@ export default function HalftimeTab() {
             activeSubTab === 'COREY' ? 'bg-[#1b75bb] text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
           }`}
         >
-          <ImageIcon size={16} /> Corey's Play
+          <ImageIcon size={16} /> {host1Name}&apos;s Play
         </button>
         
         <button
@@ -156,7 +162,7 @@ export default function HalftimeTab() {
             activeSubTab === 'KYLE' ? 'bg-[#1b75bb] text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
           }`}
         >
-          <Video size={16} /> Kyle's Play
+          <Video size={16} /> {host2Name}&apos;s Play
         </button>
         
         <button
@@ -184,7 +190,6 @@ export default function HalftimeTab() {
         )}
 
       </div>
-
     </div>
   );
 }

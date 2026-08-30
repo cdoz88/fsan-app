@@ -60,6 +60,8 @@ export default function StreamDashboardPage() {
   const [activeTab, setActiveTab] = useState('1ST Q');
   const [coreyScore, setCoreyScore] = useState(0);
   const [kyleScore, setKyleScore] = useState(0);
+  const [host1Name, setHost1Name] = useState('COREY');
+  const [host2Name, setHost2Name] = useState('KYLE');
   
   const [timerSeconds, setTimerSeconds] = useState(3600);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -90,6 +92,11 @@ export default function StreamDashboardPage() {
   const parsedCacheRef = useRef({});
   const isFirstFetchRef = useRef(true);
   const allChatsRef = useRef([]);
+
+  // Set Browser Tab Title
+  useEffect(() => {
+    document.title = "Stream Dashboard";
+  }, []);
 
   useEffect(() => {
     playerDBRef.current = playerDB;
@@ -374,6 +381,10 @@ export default function StreamDashboardPage() {
         
         if (data.coreyScore !== undefined) setCoreyScore(data.coreyScore);
         if (data.kyleScore !== undefined) setKyleScore(data.kyleScore);
+        
+        if (data.host1Name !== undefined) setHost1Name(data.host1Name);
+        if (data.host2Name !== undefined) setHost2Name(data.host2Name);
+
         if (data.dashboardTab !== undefined) setActiveTab(data.dashboardTab);
         if (data.isTimerRunning !== undefined) setIsTimerRunning(data.isTimerRunning);
         if (data.timerTargetEndTime !== undefined) setTimerTargetEndTime(data.timerTargetEndTime);
@@ -447,12 +458,20 @@ export default function StreamDashboardPage() {
 
   const handleScoreChange = (person, currentScore, change) => {
     const newScore = Math.max(0, currentScore + change);
+    const updates = { [`${person}Score`]: newScore };
+
+    // Play the point gain sound if we are increasing the score
+    if (change > 0) {
+      updates.lastSound = 'Point Gain';
+      updates.soundTriggeredAt = Date.now();
+    }
+
     if (person === 'corey') {
       setCoreyScore(newScore);
-      updateFirebaseState({ coreyScore: newScore });
+      updateFirebaseState(updates);
     } else {
       setKyleScore(newScore);
-      updateFirebaseState({ kyleScore: newScore });
+      updateFirebaseState(updates);
     }
   };
 
@@ -537,12 +556,14 @@ export default function StreamDashboardPage() {
           
           <div className="absolute inset-0 pointer-events-none border border-zinc-800/30 m-1.5 rounded-xl"></div>
 
-          {/* Corey Score */}
+          {/* Host 1 Score */}
           <div className="flex items-end justify-between z-10 w-[150px]">
             <div className="w-6"></div>
             
             <div className="flex flex-col items-center">
-              <span className="text-[15px] font-black text-white uppercase tracking-[0.2em] mb-1.5 drop-shadow-md">COREY</span>
+              <span className="text-[15px] font-black text-white uppercase tracking-[0.2em] mb-1.5 drop-shadow-md truncate w-full text-center px-1">
+                {host1Name}
+              </span>
               <span className="text-6xl text-amber-500 led-font leading-none drop-shadow-[0_0_12px_rgba(245,158,11,0.8)] tracking-wider">
                 {coreyScore.toString().padStart(2, '0')}
               </span>
@@ -620,7 +641,7 @@ export default function StreamDashboardPage() {
 
           <div className="w-px h-16 bg-[#18202b] mx-2 rounded-full"></div>
 
-          {/* Kyle Score */}
+          {/* Host 2 Score */}
           <div className="flex items-end justify-between z-10 w-[150px]">
             <div className="flex flex-col gap-1.5 pb-0.5">
               <button 
@@ -638,7 +659,9 @@ export default function StreamDashboardPage() {
             </div>
             
             <div className="flex flex-col items-center">
-              <span className="text-[15px] font-black text-white uppercase tracking-[0.2em] mb-1.5 drop-shadow-md">KYLE</span>
+              <span className="text-[15px] font-black text-white uppercase tracking-[0.2em] mb-1.5 drop-shadow-md truncate w-full text-center px-1">
+                {host2Name}
+              </span>
               <span className="text-6xl text-amber-500 led-font leading-none drop-shadow-[0_0_12px_rgba(245,158,11,0.8)] tracking-wider">
                 {kyleScore.toString().padStart(2, '0')}
               </span>

@@ -2,14 +2,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Minus, Volume2, Flame, Award, Image as ImageIcon, Upload, Loader2, Eye, EyeOff, PlaySquare, Search, RotateCcw } from 'lucide-react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
-import { db, storage } from '@/lib/firebase'; 
+import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 export default function MobileRemotePage() {
   const [coreyScore, setCoreyScore] = useState(0);
   const [kyleScore, setKyleScore] = useState(0);
+  const [host1Name, setHost1Name] = useState('COREY');
+  const [host2Name, setHost2Name] = useState('KYLE');
   const [activeSound, setActiveSound] = useState(null);
-  
+
   // Tab State
   const [activeTab, setActiveTab] = useState('sounds'); // 'sounds', 'gifs', 'halftime'
 
@@ -17,7 +19,7 @@ export default function MobileRemotePage() {
   const [coreyMediaUrl, setCoreyMediaUrl] = useState(null);
   const [coreyRevealed, setCoreyRevealed] = useState(false);
   const [coreyUploading, setCoreyUploading] = useState(false);
-  
+
   const [kyleMediaUrl, setKyleMediaUrl] = useState(null);
   const [kyleRevealed, setKyleRevealed] = useState(false);
   const [kyleUploading, setKyleUploading] = useState(false);
@@ -29,6 +31,11 @@ export default function MobileRemotePage() {
   const [gifSearchTerm, setGifSearchTerm] = useState('');
   const [gifs, setGifs] = useState([]);
   const [isSearchingGifs, setIsSearchingGifs] = useState(false);
+
+  // Set Browser Tab Title
+  useEffect(() => {
+    document.title = "Stream Remote";
+  }, []);
 
   // Initial load of trending GIFs
   useEffect(() => {
@@ -54,8 +61,12 @@ export default function MobileRemotePage() {
     const unsub = onSnapshot(doc(db, 'stream_state', 'live'), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
+        
         if (data.coreyScore !== undefined) setCoreyScore(data.coreyScore);
         if (data.kyleScore !== undefined) setKyleScore(data.kyleScore);
+        
+        if (data.host1Name !== undefined) setHost1Name(data.host1Name);
+        if (data.host2Name !== undefined) setHost2Name(data.host2Name);
         
         // Sync Halftime Media
         if (data.coreyMediaUrl !== undefined) setCoreyMediaUrl(data.coreyMediaUrl);
@@ -77,7 +88,15 @@ export default function MobileRemotePage() {
 
   const handleScoreChange = (person, currentScore, change) => {
     const newScore = Math.max(0, currentScore + change);
-    updateFirebase({ [`${person}Score`]: newScore });
+    const updates = { [`${person}Score`]: newScore };
+
+    // Play the point gain sound if we are increasing the score
+    if (change > 0) {
+      updates.lastSound = 'Point Gain';
+      updates.soundTriggeredAt = Date.now();
+    }
+
+    updateFirebase(updates);
   };
 
   const handleResetScores = () => {
@@ -150,14 +169,16 @@ export default function MobileRemotePage() {
   // --- SOUNDBOARD CONFIGURATION ---
   // The 'id' must exactly match the file name (without .mp3)
   const SOUNDS = [
-    { id: 'airhorn', label: 'Airhorn', emoji: '🚨', color: 'from-amber-600 to-red-600 border-amber-500' },
-    { id: 'applause', label: 'Applause', emoji: '👏', color: 'from-emerald-600 to-teal-700 border-emerald-500' },
-    { id: 'correct', label: 'Correct', emoji: '✅', color: 'from-blue-600 to-indigo-800 border-blue-500' },
-    { id: 'wrong', label: 'Wrong', emoji: '❌', color: 'from-rose-700 to-pink-900 border-rose-500' },
+    { id: 'airhorn', label: 'DJ Horn', emoji: '📢', color: 'from-amber-600 to-red-600 border-amber-500' },
+    { id: 'shots-fired', label: 'Shots Fired', emoji: '🔫🔥', color: 'from-emerald-600 to-teal-700 border-emerald-500' },
+    { id: 'got-eem', label: 'Got Eem', emoji: '📞🤣', color: 'from-blue-600 to-indigo-800 border-blue-500' },
+    { id: 'windows', label: 'Windows Shutdown', emoji: '💻', color: 'from-rose-700 to-pink-900 border-rose-500' },
     { id: 'cha-ching', label: 'Cha-Ching', emoji: '💰', color: 'from-green-600 to-emerald-800 border-green-400' },
     { id: 'crickets', label: 'Crickets', emoji: '🦗', color: 'from-zinc-700 to-zinc-900 border-zinc-600' },
-    { id: 'ba-dum-tss', label: 'Ba-Dum-Tss', emoji: '🥁', color: 'from-purple-700 to-fuchsia-900 border-purple-500' },
-    { id: 'dundundun', label: 'Dun Dun Dun', emoji: '😱', color: 'from-cyan-700 to-blue-900 border-cyan-500' },
+    { id: 'emotional', label: 'Emotional Damage', emoji: '😭', color: 'from-purple-700 to-fuchsia-900 border-purple-500' },
+    { id: 'jeopardy', label: 'Jeopardy', emoji: '⏳', color: 'from-cyan-700 to-blue-900 border-cyan-500' },
+    { id: 'got-time', label: 'Got Time', emoji: '❌🕔', color: 'from-amber-600 to-red-600 border-amber-500' },
+    { id: 'goat', label: 'Goat Scream', emoji: '🐐', color: 'from-emerald-600 to-teal-700 border-emerald-500' },
   ];
 
   return (
@@ -176,8 +197,15 @@ export default function MobileRemotePage() {
         </button>
 
         <div className="bg-[#141418] border-2 border-amber-500/40 rounded-2xl p-4 flex flex-col items-center justify-between shadow-xl relative overflow-hidden">
-          <div className="text-xs font-black text-amber-400 uppercase tracking-widest flex items-center gap-1.5 mb-2">
-            <Flame size={14} /> COREY
+          <div className="flex items-center gap-1.5 mb-2 w-full justify-center px-1">
+            <Flame size={14} className="text-amber-400 shrink-0" />
+            <input 
+              type="text" 
+              value={host1Name}
+              onChange={(e) => setHost1Name(e.target.value)}
+              onBlur={() => updateFirebase({ host1Name })}
+              className="bg-transparent text-xs font-black text-amber-400 uppercase tracking-widest text-center w-full focus:outline-none focus:bg-zinc-800 rounded px-1 transition-colors"
+            />
           </div>
           <div className="text-6xl font-black my-2 font-mono tracking-tight text-white drop-shadow-md">
             {coreyScore.toString().padStart(2, '0')}
@@ -189,8 +217,15 @@ export default function MobileRemotePage() {
         </div>
 
         <div className="bg-[#141418] border-2 border-cyan-500/40 rounded-2xl p-4 flex flex-col items-center justify-between shadow-xl relative overflow-hidden">
-          <div className="text-xs font-black text-cyan-400 uppercase tracking-widest flex items-center gap-1.5 mb-2">
-            <Award size={14} /> KYLE
+          <div className="flex items-center gap-1.5 mb-2 w-full justify-center px-1">
+            <Award size={14} className="text-cyan-400 shrink-0" />
+            <input 
+              type="text" 
+              value={host2Name}
+              onChange={(e) => setHost2Name(e.target.value)}
+              onBlur={() => updateFirebase({ host2Name })}
+              className="bg-transparent text-xs font-black text-cyan-400 uppercase tracking-widest text-center w-full focus:outline-none focus:bg-zinc-800 rounded px-1 transition-colors"
+            />
           </div>
           <div className="text-6xl font-black my-2 font-mono tracking-tight text-white drop-shadow-md">
             {kyleScore.toString().padStart(2, '0')}
@@ -290,10 +325,10 @@ export default function MobileRemotePage() {
         {activeTab === 'halftime' && (
           <div className="flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-1 h-full">
             
-            {/* Corey Upload Section */}
+            {/* Host 1 Upload Section */}
             <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-4 flex flex-col gap-3">
               <div className="text-xs font-black uppercase tracking-widest text-amber-500 flex items-center justify-between">
-                <span>Corey's Halftime Media</span>
+                <span>{host1Name}&apos;s Halftime Media</span>
                 {coreyMediaUrl && <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded">Media Ready</span>}
               </div>
               
@@ -317,10 +352,10 @@ export default function MobileRemotePage() {
               </button>
             </div>
 
-            {/* Kyle Upload Section */}
+            {/* Host 2 Upload Section */}
             <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-4 flex flex-col gap-3">
               <div className="text-xs font-black uppercase tracking-widest text-cyan-500 flex items-center justify-between">
-                <span>Kyle's Halftime Media</span>
+                <span>{host2Name}&apos;s Halftime Media</span>
                 {kyleMediaUrl && <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded">Media Ready</span>}
               </div>
               

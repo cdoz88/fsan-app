@@ -37,31 +37,44 @@ const NFL_COLORS = {
   TB:  { primary: '#D50A0A', secondary: '#FF7900' },
   TEN: { primary: '#0C2340', secondary: '#4B92DB' },
   WAS: { primary: '#5A1414', secondary: '#FFB612' },
-  FA:  { primary: '#3f3f46', secondary: '#18181b' } 
+  FA:  { primary: '#3f3f46', secondary: '#18181b' }
 };
 
-const POSITIONS = ['QB', 'RB', 'WR', 'TE'];
+const NFL_TEAMS = Object.keys(NFL_COLORS).filter(t => t !== 'FA');
+const TEAM_DSTS = NFL_TEAMS.reduce((acc, team) => {
+  acc[`dst_${team}`] = {
+    player_id: `dst_${team}`,
+    full_name: `${team} Defense`,
+    first_name: team,
+    last_name: 'D/ST',
+    position: 'DST',
+    team: team
+  };
+  return acc;
+}, {});
 
+const POSITIONS = ['QB', 'RB', 'WR', 'TE', 'DST'];
 const DEFAULT_WAIVER_DATA = {
   QB: { wireId: null, cutId: null, faab: '' },
   RB: { wireId: null, cutId: null, faab: '' },
   WR: { wireId: null, cutId: null, faab: '' },
-  TE: { wireId: null, cutId: null, faab: '' }
+  TE: { wireId: null, cutId: null, faab: '' },
+  DST: { wireId: null, cutId: null, faab: '' }
 };
 
 export default function WaiverTab() {
   const [activeWirePos, setActiveWirePos] = useState(null);
   const [activeCutPos, setActiveCutPos] = useState(null);
-  const [faabRevealed, setFaabRevealed] = useState({ QB: false, RB: false, WR: false, TE: false });
+  const [faabRevealed, setFaabRevealed] = useState({ QB: false, RB: false, WR: false, TE: false, DST: false });
   const [waiverData, setWaiverData] = useState(DEFAULT_WAIVER_DATA);
-
   const [showSettings, setShowSettings] = useState(false);
+  
   const [playerDB, setPlayerDB] = useState({});
   const [topPlayers, setTopPlayers] = useState([]);
   const [dbLoading, setDbLoading] = useState(true);
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [posFilter, setPosFilter] = useState('ALL');
-
   const [editingPos, setEditingPos] = useState('QB');
   const [editingType, setEditingType] = useState('wire'); // 'wire' or 'cut'
 
@@ -106,9 +119,13 @@ export default function WaiverTab() {
         if (slpRes.ok) {
           const slpData = await slpRes.json();
           const mergedDB = { ...slpData };
-          Object.keys(customMap).forEach(key => {
-             if (mergedDB[key]) mergedDB[key] = { ...mergedDB[key], ...customMap[key] };
+          
+          Object.keys(customMap).forEach(key => { 
+             if (mergedDB[key]) {
+               mergedDB[key] = { ...mergedDB[key], ...customMap[key] };
+             }
           });
+          
           setPlayerDB(mergedDB);
           
           const top = Object.values(mergedDB)
@@ -116,12 +133,13 @@ export default function WaiverTab() {
             .sort((a, b) => a.search_rank - b.search_rank)
             .slice(0, 400);
             
-          setTopPlayers(top);
+          setTopPlayers([...Object.values(TEAM_DSTS), ...top]);
         }
       } catch (err) {} finally {
         setDbLoading(false);
       }
     };
+    
     loadPlayerDatabases();
   }, []);
 
@@ -172,7 +190,8 @@ export default function WaiverTab() {
   const getESPNHeadshot = (espnId) => `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${espnId}.png&w=400&h=300`;
 
   const renderCard = (playerId, isWire = true) => {
-    const player = playerDB[playerId];
+    const player = playerDB[playerId] || TEAM_DSTS[playerId];
+    
     const cardBorderColor = isWire ? 'border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.25)]' : 'border-red-600 shadow-[0_0_30px_rgba(220,38,38,0.25)]';
     const accentTextColor = isWire ? 'text-cyan-400' : 'text-amber-500';
 
@@ -193,10 +212,14 @@ export default function WaiverTab() {
     const team = player.team ? player.team.toUpperCase() : 'FA';
     const tColors = NFL_COLORS[team] || NFL_COLORS['FA'];
     const teamLogo = team !== 'FA' ? `https://sleepercdn.com/images/team_logos/nfl/${team.toLowerCase()}.png` : null;
-
+    
     let playerImage = player.espn_id 
       ? getESPNHeadshot(player.espn_id) 
       : `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
+      
+    if (position === 'DST') {
+      playerImage = teamLogo;
+    }
 
     return (
       <div className={`w-full max-w-md h-[280px] rounded-[24px] border-[3px] ${cardBorderColor} bg-zinc-950 relative flex flex-col shadow-2xl transition-all duration-300 animate-in fade-in zoom-in-95`}>
@@ -207,7 +230,7 @@ export default function WaiverTab() {
             className="absolute inset-0 opacity-90"
             style={{ background: `linear-gradient(135deg, ${tColors.primary}70 0%, ${tColors.secondary}40 50%, #0a0a0c 100%)` }}
           />
-          {teamLogo && (
+          {teamLogo && position !== 'DST' && (
             <div className="absolute inset-0 flex items-center justify-center opacity-[0.15]">
               <img src={teamLogo} className="w-[140%] max-w-none h-auto object-contain mix-blend-screen" alt="" onError={(e) => e.target.style.display = 'none'} />
             </div>
@@ -222,19 +245,28 @@ export default function WaiverTab() {
         </div>
         <div className="absolute top-4 right-4 z-30 pointer-events-none">
           <span className="px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider bg-black/90 text-zinc-300 border border-zinc-700/50 shadow-md">
-            {team} • #{player.number || '00'}
+            {team} {player.number ? `• #${player.number}` : ''}
           </span>
         </div>
 
-        {/* Player Image Wrapper - Extends way above card to allow head overflow, clips bottom corners */}
-        <div className="absolute inset-x-0 bottom-0 h-[140%] rounded-b-[20px] overflow-hidden z-10 flex items-end justify-center pointer-events-none">
-          <img 
-            src={playerImage} 
-            alt={lastName}
-            className="w-auto h-[95%] object-contain object-bottom drop-shadow-[0_20px_30px_rgba(0,0,0,0.8)] filter contrast-110 brightness-105 origin-bottom"
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
-        </div>
+        {position === 'DST' ? (
+          <div className="absolute inset-x-0 bottom-0 h-[100%] rounded-b-[20px] overflow-hidden z-10 flex items-center justify-center pointer-events-none p-12 opacity-80">
+            <img 
+              src={playerImage} 
+              alt={lastName}
+              className="w-full h-full object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.8)]"
+            />
+          </div>
+        ) : (
+          <div className="absolute inset-x-0 bottom-0 h-[140%] rounded-b-[20px] overflow-hidden z-10 flex items-end justify-center pointer-events-none">
+            <img 
+              src={playerImage} 
+              alt={lastName}
+              className="w-auto h-[95%] object-contain object-bottom drop-shadow-[0_20px_30px_rgba(0,0,0,0.8)] filter contrast-110 brightness-105 origin-bottom"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          </div>
+        )}
 
         {/* Bottom Black Fade */}
         <div className="absolute inset-x-0 bottom-0 h-[50%] bg-gradient-to-t from-black via-black/80 to-transparent z-20 pointer-events-none rounded-b-[20px]" />
@@ -248,6 +280,7 @@ export default function WaiverTab() {
             {lastName}
           </span>
         </div>
+
       </div>
     );
   };
@@ -321,6 +354,7 @@ export default function WaiverTab() {
         {/* RIGHT SIDE: THE CUT LINE (DROP) */}
         <div className="flex-1 flex flex-col items-center justify-center gap-6 h-full">
           {activeCutPos ? renderCard(cutPlayer, false) : <div className="w-full max-w-md h-[280px]" />}
+          
           {/* Spacer to align vertically with FAAB box */}
           <div className="h-[52px]" />
         </div>
@@ -366,20 +400,21 @@ export default function WaiverTab() {
               {/* Left Column: Position Grid & FAAB Inputs */}
               <div className="space-y-4 overflow-y-auto custom-scrollbar pr-2">
                 {POSITIONS.map(pos => {
-                  const data = waiverData[pos];
-                  const wireP = playerDB[data.wireId];
-                  const cutP = playerDB[data.cutId];
+                  const data = waiverData[pos] || { wireId: null, cutId: null, faab: '' };
+                  const wireP = playerDB[data.wireId] || TEAM_DSTS[data.wireId];
+                  const cutP = playerDB[data.cutId] || TEAM_DSTS[data.cutId];
 
                   return (
                     <div key={`cfg-${pos}`} className="bg-black/60 border border-zinc-800 rounded-2xl p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-black text-amber-500 uppercase tracking-widest">{pos}</span>
+                        
                         <div className="flex items-center gap-1.5 bg-zinc-900 px-3 py-1 rounded-xl border border-zinc-800">
                           <DollarSign size={12} className="text-emerald-500" />
                           <input 
                             type="text" 
-                            value={data.faab} 
-                            onChange={(e) => handleUpdateFaab(pos, e.target.value)} 
+                            value={data.faab}
+                            onChange={(e) => handleUpdateFaab(pos, e.target.value)}
                             placeholder="FAAB ($ or %)"
                             className="w-24 bg-transparent text-xs font-bold text-white focus:outline-none"
                           />
@@ -426,8 +461,9 @@ export default function WaiverTab() {
                   <span className="text-xs font-black uppercase tracking-widest text-zinc-400">
                     Assigning <strong className={editingType === 'wire' ? 'text-emerald-400' : 'text-red-400'}>{editingPos} {editingType === 'wire' ? 'Wire Add' : 'Cut Drop'}</strong>
                   </span>
+                  
                   <div className="flex bg-zinc-900 border border-zinc-800 rounded-xl p-1">
-                    {['ALL', 'QB', 'RB', 'WR', 'TE'].map(pos => (
+                    {['ALL', 'QB', 'RB', 'WR', 'TE', 'DST'].map(pos => (
                       <button 
                         key={`flt-${pos}`} 
                         onClick={() => setPosFilter(pos)} 
@@ -470,9 +506,9 @@ export default function WaiverTab() {
                             }`}
                           >
                             <img 
-                              src={player.espn_id ? getESPNHeadshot(player.espn_id) : `https://sleepercdn.com/content/nfl/players/thumb/${player.player_id}.jpg`} 
+                              src={player.position === 'DST' ? `https://sleepercdn.com/images/team_logos/nfl/${player.team.toLowerCase()}.png` : (player.espn_id ? getESPNHeadshot(player.espn_id) : `https://sleepercdn.com/content/nfl/players/thumb/${player.player_id}.jpg`)} 
                               alt="" 
-                              className="w-8 h-8 rounded-lg object-cover bg-black shrink-0" 
+                              className={`w-8 h-8 rounded-lg ${player.position === 'DST' ? 'object-contain p-0.5' : 'object-cover'} bg-black shrink-0`} 
                               onError={(e) => { e.target.src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
                             />
                             <div className="flex-1 min-w-0">
@@ -485,12 +521,11 @@ export default function WaiverTab() {
                   )}
                 </div>
               </div>
-
             </div>
+
           </div>
         </div>
       )}
-
     </div>
   );
 }
