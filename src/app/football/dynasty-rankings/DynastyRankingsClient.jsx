@@ -22,10 +22,10 @@ export default function DynastyRankingsClient() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   
-  // Manual Scoring Format Settings (Defaults to Full PPR)
+  // Manual Scoring Format Settings (Defaults: 1QB, Full PPR, 6pt Pass TD, No TE Prem)
   const [manualIsSuperflex, setManualIsSuperflex] = useState(false); 
   const [manualPprValue, setManualPprValue] = useState(1); 
-  const [manualPassTdValue, setManualPassTdValue] = useState(4); 
+  const [manualPassTdValue, setManualPassTdValue] = useState(6); 
   const [manualTePremium, setManualTePremium] = useState(0);     
 
   // Active Scoring Formats (Overrides manual settings if a league is synced)
@@ -448,6 +448,7 @@ export default function DynastyRankingsClient() {
   return (
     <div className="w-full animate-in fade-in duration-500 pb-24 relative">
 
+      {/* Modal for Career Arc Tooltips */}
       {activeModal === 'careerArc' && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-[#161616] border border-gray-800 w-full max-w-xl rounded-3xl p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
@@ -484,14 +485,14 @@ export default function DynastyRankingsClient() {
               Dynasty Rankings
             </h1>
             <p className="text-gray-300 font-medium md:text-lg">
-              Dynamic dynasty rankings customized to your scoring format and roster strategy.
+              Dynasty rankings built to project long-term value, adjusted dynamically for age curves, your specific roster strategy, and exact league scoring rules.
             </p>
           </div>
 
-          <div className="flex bg-black/40 backdrop-blur-md p-1 rounded-full border border-white/10 shadow-2xl shrink-0 mt-4 md:mt-0 self-start md:self-end md:mb-8">
-            <Link href="/football/draft-rankings" className="px-5 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all text-gray-400 hover:text-white">Draft</Link>
-            <Link href="/football/redraft-rankings" className="px-5 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all text-gray-400 hover:text-white">Redraft</Link>
-            <button className="px-5 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all bg-white text-black shadow-md">Dynasty</button>
+          <div className="flex bg-black/40 backdrop-blur-md p-1.5 rounded-full border border-white/10 shadow-2xl shrink-0 mt-4 md:mt-0 self-start md:self-end md:mb-8">
+            <Link href="/football/draft-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">Draft</Link>
+            <Link href="/football/redraft-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">Redraft</Link>
+            <button className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all bg-white text-black shadow-md">Dynasty</button>
           </div>
         </div>
       </div>
@@ -610,7 +611,7 @@ export default function DynastyRankingsClient() {
                   {[{ label: 'NONE', val: 0 }, { label: '+0.5', val: 0.5 }, { label: '+1.0', val: 1 }].map(opt => (
                     <button 
                       key={opt.label} onClick={() => setManualTePremium(opt.val)}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${manualTePremium === val.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${manualTePremium === opt.val ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white'}`}
                     >
                       {opt.label}
                     </button>
