@@ -10,6 +10,7 @@ export default function DraftRankingsClient() {
   const [isSyncing, setIsSyncing] = useState(true);
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [activeModal, setActiveModal] = useState(null);
+  const [latestYearDisplay, setLatestYearDisplay] = useState('2026');
 
   // Hook into League Context
   const { getActiveLeagueData } = useLeague();
@@ -21,10 +22,10 @@ export default function DraftRankingsClient() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   
-  // Manual Scoring Format Settings (Defaults to Full PPR)
+  // Manual Scoring Format Settings (Defaults: 1QB, Full PPR, 6pt Pass TD, No TE Prem)
   const [manualIsSuperflex, setManualIsSuperflex] = useState(false); 
   const [manualPprValue, setManualPprValue] = useState(1); 
-  const [manualPassTdValue, setManualPassTdValue] = useState(4); 
+  const [manualPassTdValue, setManualPassTdValue] = useState(6); 
   const [manualTePremium, setManualTePremium] = useState(0);     
 
   // Active Scoring Formats (Overrides manual settings if a league is synced)
@@ -42,8 +43,25 @@ export default function DraftRankingsClient() {
     async function loadData() {
       setIsSyncing(true);
       try {
+        // Fetch metadata to find the most recent season available
+        const metaRes = await fetch(`/api/omfg-data?year=2026&week=Season`);
+        const metaData = await metaRes.json();
+        let latestYear = '2026';
+        
+        if (metaData.available_models) {
+            const activeSeason = metaData.available_models.filter(m => m.week === 'Season');
+            if (activeSeason.length > 0) {
+                // Sort descending by year
+                activeSeason.sort((a, b) => Number(b.year) - Number(a.year));
+                latestYear = String(activeSeason[0].year);
+            }
+        }
+        
+        // Update the dynamic header display
+        setLatestYearDisplay(latestYear);
+
         // Fetch Season-long data specifically
-        const res = await fetch(`/api/omfg-data?year=2026&week=Season`);
+        const res = await fetch(`/api/omfg-data?year=${latestYear}&week=Season`);
         const data = await res.json();
         setPlayersData(data.success && data.players ? data.players : []);
       } catch (err) {
@@ -368,10 +386,10 @@ export default function DraftRankingsClient() {
               <ListOrdered size={12} /> OMFG-Powered Projections
             </div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-2">
-              Draft Rankings
+              {latestYearDisplay} Draft Rankings
             </h1>
             <p className="text-gray-300 font-medium md:text-lg">
-              Dynamic season-long rankings customized to your specific league scoring format.
+              Season-long fantasy football draft rankings that project full-season value and outcome ranges—fully customized to match your exact league scoring so you know exactly who to draft.
             </p>
           </div>
 

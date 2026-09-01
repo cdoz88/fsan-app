@@ -6,7 +6,7 @@ import { getMenuBySlug } from '../../../utils/api';
 
 export const metadata = {
   title: 'OMFG Draft Rankings | FSAN',
-  description: 'Dynamic season-long draft rankings powered by OMFG models and customized to your league scoring format.',
+  description: 'Season-long fantasy football draft rankings that project full-season value and outcome ranges—fully customized to match your exact league scoring rules so you know exactly who to draft.',
 };
 
 export default async function DraftRankingsPage() {
