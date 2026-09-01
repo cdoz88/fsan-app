@@ -377,14 +377,14 @@ export default function RankingsClient() {
               {latestWeekDisplay} Rankings
             </h1>
             <p className="text-gray-300 font-medium md:text-lg">
-              Weekly player rankings that adapt to upcoming matchups and recent trends—fully customized to match your exact league scoring rules so you know exactly who to start.
+              Weekly fantasy football rankings that adapt to upcoming matchups and recent trends—fully customized to match your exact league scoring rules so you know exactly who to start.
             </p>
           </div>
 
-          <div className="flex bg-black/40 backdrop-blur-md p-1 rounded-full border border-white/10 shadow-2xl shrink-0 mt-4 md:mt-0 self-start md:self-end md:mb-8">
-            <Link href="/football/draft-rankings" className="px-5 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all text-gray-400 hover:text-white">Draft</Link>
-            <Link href="/football/redraft-rankings" className="px-5 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all bg-white text-black shadow-md">Redraft</Link>
-            <Link href="/football/dynasty-rankings" className="px-5 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all text-gray-400 hover:text-white">Dynasty</Link>
+          <div className="flex bg-black/40 backdrop-blur-md p-1.5 rounded-full border border-white/10 shadow-2xl shrink-0 mt-4 md:mt-0 self-start md:self-end md:mb-8">
+            <Link href="/football/draft-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">Draft</Link>
+            <Link href="/football/redraft-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all bg-white text-black shadow-md">Redraft</Link>
+            <Link href="/football/dynasty-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">Dynasty</Link>
           </div>
         </div>
       </div>
