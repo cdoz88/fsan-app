@@ -6,7 +6,7 @@ import { getMenuBySlug } from '../../../utils/api';
 
 export const metadata = {
   title: 'OMFG Redraft Rankings | FSAN',
-  description: 'Dynamic week-over-week fantasy football rankings powered by OMFG models and customized to your league scoring format.',
+  description: 'Weekly fantasy football rankings that adapt to upcoming matchups and recent trends—fully customized to match your exact league scoring rules so you know exactly who to start.',
 };
 
 export default async function RedraftRankingsPage() {

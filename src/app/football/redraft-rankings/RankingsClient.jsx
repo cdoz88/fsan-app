@@ -9,6 +9,7 @@ export default function RankingsClient() {
   const [playersData, setPlayersData] = useState([]);
   const [isSyncing, setIsSyncing] = useState(true);
   const [expandedRows, setExpandedRows] = useState(new Set());
+  const [latestWeekDisplay, setLatestWeekDisplay] = useState('Player');
 
   // Hook into League Context
   const { getActiveLeagueData } = useLeague();
@@ -20,10 +21,10 @@ export default function RankingsClient() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   
-  // Manual Scoring Format Settings
+  // Manual Scoring Format Settings (Defaults: 1QB, Full PPR, 6pt Pass TD, No TE Prem)
   const [manualIsSuperflex, setManualIsSuperflex] = useState(false); 
-  const [manualPprValue, setManualPprValue] = useState(0.5); 
-  const [manualPassTdValue, setManualPassTdValue] = useState(4); 
+  const [manualPprValue, setManualPprValue] = useState(1); 
+  const [manualPassTdValue, setManualPassTdValue] = useState(6); 
   const [manualTePremium, setManualTePremium] = useState(0);     
 
   // Active Scoring Formats (Overrides manual settings if a league is synced)
@@ -53,6 +54,9 @@ export default function RankingsClient() {
                 latestWeek = activeWeekly[0].week;
             }
         }
+        
+        // Update the dynamic header display
+        setLatestWeekDisplay(latestWeek);
 
         const res = await fetch(`/api/omfg-data?year=${latestYear}&week=${latestWeek}`);
         const data = await res.json();
@@ -370,10 +374,10 @@ export default function RankingsClient() {
               <ListOrdered size={12} /> OMFG-Powered Projections
             </div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-2">
-              Player Rankings
+              {latestWeekDisplay} Rankings
             </h1>
             <p className="text-gray-300 font-medium md:text-lg">
-              Dynamic week-over-week rankings customized to your specific league scoring format.
+              Weekly player rankings that adapt to upcoming matchups and recent trends—fully customized to match your exact league scoring rules so you know exactly who to start.
             </p>
           </div>
 
