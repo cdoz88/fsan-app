@@ -31,8 +31,8 @@ Return your response STRICTLY in JSON format matching this exact schema:
   "sideB": ["Josh Allen"]
 }`;
 
-    // 🚀 FIXED: Updated to the active 2026 model: gemini-3.5-flash
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${API_KEY}`;
+    // Updated to the correct active model: gemini-1.5-flash
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
     
     const response = await fetch(url, {
       method: 'POST',

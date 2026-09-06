@@ -56,6 +56,9 @@ const extractVideoId = (url) => {
   return (match && match[2].length === 11) ? match[2] : null;
 };
 
+// Utility function to space out API requests
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 export default function StreamDashboardPage() {
   const [activeTab, setActiveTab] = useState('1ST Q');
   const [coreyScore, setCoreyScore] = useState(0);
@@ -278,29 +281,41 @@ export default function StreamDashboardPage() {
             let sideA_Ids = [];
             let sideB_Ids = [];
 
+            // AI Pre-Filter: Only call Gemini if the message contains a question, a fantasy keyword, or is a Super Chat
             if (!isFirstFetchRef.current) {
-              try {
-                const aiRes = await fetch('/api/parse-chat', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ text: msg.text })
-                });
-                
-                if (aiRes.ok) {
-                  const aiData = await aiRes.json();
-                  if (aiData && !aiData.error) {
-                    parsedType = aiData.type || "chat";
-                    const rawSideA = aiData.sideA || aiData.sidea || aiData.SideA || [];
-                    const rawSideB = aiData.sideB || aiData.sideb || aiData.SideB || [];
+              const textLower = (msg.text || "").toLowerCase();
+              const isSuperChat = !!msg.amount;
+              const hasQuestion = textLower.includes('?');
+              const hasFantasyKeywords = ['trade', 'give', 'get', 'send', 'receive', ' vs ', 'start', 'bench', 'drop', 'add', 'pick up', 'pickup', 'worth', 'thoughts', 'dynasty', 'draft', 'keeper', 'keep', 'cut', 'roster', 'team'].some(kw => textLower.includes(kw));
 
-                    if (rawSideA.length > 0) sideA_Ids = rawSideA.map(resolveNameToId).filter(id => id !== null);
-                    if (rawSideB.length > 0) sideB_Ids = rawSideB.map(resolveNameToId).filter(id => id !== null);
+              if (isSuperChat || hasQuestion || hasFantasyKeywords) {
+                try {
+                  const aiRes = await fetch('/api/parse-chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: msg.text })
+                  });
+                  
+                  if (aiRes.ok) {
+                    const aiData = await aiRes.json();
+                    if (aiData && !aiData.error) {
+                      parsedType = aiData.type || "chat";
+                      const rawSideA = aiData.sideA || aiData.sidea || aiData.SideA || [];
+                      const rawSideB = aiData.sideB || aiData.sideb || aiData.SideB || [];
+
+                      if (rawSideA.length > 0) sideA_Ids = rawSideA.map(resolveNameToId).filter(id => id !== null);
+                      if (rawSideB.length > 0) sideB_Ids = rawSideB.map(resolveNameToId).filter(id => id !== null);
+                    }
+                  } else if (aiRes.status === 429) {
+                     console.warn("Gemini Quota Exceeded (429). Bypassing AI for this message.");
                   }
-                } else if (aiRes.status === 429) {
-                   console.warn("Gemini Quota Exceeded (429). Bypassing AI for this message.");
+                  
+                  // Small delay to prevent bursting the API
+                  await sleep(500);
+
+                } catch(e) {
+                  console.error("Gemini parse error:", e);
                 }
-              } catch(e) {
-                console.error("Gemini parse error:", e);
               }
             }
 
