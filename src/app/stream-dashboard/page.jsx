@@ -36,6 +36,55 @@ const DRAFT_PICKS = [
   { player_id: 'pick_2028_3', full_name: '2028 3rd Round Pick', position: 'PICK', team: 'DRAFT', year: '2028', round: '3rd' }
 ];
 
+const NFL_COLORS = {
+  ARI: { primary: '#97233F', secondary: '#000000' },
+  ATL: { primary: '#A71930', secondary: '#000000' },
+  BAL: { primary: '#241773', secondary: '#9E7C0C' },
+  BUF: { primary: '#00338D', secondary: '#C60C30' },
+  CAR: { primary: '#0085CA', secondary: '#101820' },
+  CHI: { primary: '#0B162A', secondary: '#C83803' },
+  CIN: { primary: '#FB4F14', secondary: '#000000' },
+  CLE: { primary: '#311D00', secondary: '#FF3C00' },
+  DAL: { primary: '#003594', secondary: '#041E42' },
+  DEN: { primary: '#FB4F14', secondary: '#002244' },
+  DET: { primary: '#0076B6', secondary: '#B0B7BC' },
+  GB:  { primary: '#203731', secondary: '#FFB612' },
+  HOU: { primary: '#03202F', secondary: '#A71930' },
+  IND: { primary: '#002C5F', secondary: '#A2AAAD' },
+  JAX: { primary: '#101820', secondary: '#D7A22A' },
+  KC:  { primary: '#E31837', secondary: '#FFB81C' },
+  LV:  { primary: '#000000', secondary: '#A5ACAF' },
+  LAC: { primary: '#0080C6', secondary: '#FFC20E' },
+  LAR: { primary: '#003594', secondary: '#FFA300' },
+  MIA: { primary: '#008E97', secondary: '#FC4C02' },
+  MIN: { primary: '#4F2683', secondary: '#FFC62F' },
+  NE:  { primary: '#002244', secondary: '#C60C30' },
+  NO:  { primary: '#D3BC8D', secondary: '#101820' },
+  NYG: { primary: '#0B2265', secondary: '#A71930' },
+  NYJ: { primary: '#125740', secondary: '#000000' },
+  PHI: { primary: '#004C54', secondary: '#A5ACAF' },
+  PIT: { primary: '#101820', secondary: '#FFB612' },
+  SF:  { primary: '#AA0000', secondary: '#B3995D' },
+  SEA: { primary: '#002244', secondary: '#69BE28' },
+  TB:  { primary: '#D50A0A', secondary: '#FF7900' },
+  TEN: { primary: '#0C2340', secondary: '#4B92DB' },
+  WAS: { primary: '#5A1414', secondary: '#FFB612' },
+  FA:  { primary: '#3f3f46', secondary: '#18181b' }
+};
+
+const NFL_TEAMS = Object.keys(NFL_COLORS).filter(t => t !== 'FA');
+const TEAM_DSTS = NFL_TEAMS.reduce((acc, team) => {
+  acc[`dst_${team}`] = {
+    player_id: `dst_${team}`,
+    full_name: `${team} Defense`,
+    first_name: team,
+    last_name: 'D/ST',
+    position: 'DST',
+    team: team
+  };
+  return acc;
+}, {});
+
 const getSuperChatStyle = (tier) => {
   switch(Number(tier)) {
     case 1: return "bg-blue-600 border-blue-400 text-white";
@@ -56,7 +105,6 @@ const extractVideoId = (url) => {
   return (match && match[2].length === 11) ? match[2] : null;
 };
 
-// Utility function to space out API requests
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export default function StreamDashboardPage() {
@@ -66,6 +114,9 @@ export default function StreamDashboardPage() {
   const [host1Name, setHost1Name] = useState('COREY');
   const [host2Name, setHost2Name] = useState('KYLE');
   
+  const [dashboardRole, setDashboardRole] = useState('HOST');
+  const dashboardRoleRef = useRef('HOST');
+  
   const [timerSeconds, setTimerSeconds] = useState(3600);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timerTargetEndTime, setTimerTargetEndTime] = useState(null);
@@ -73,7 +124,6 @@ export default function StreamDashboardPage() {
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const lastSoundTimeRef = useRef(Date.now());
 
-  // --- GIF ENGINE STATE ---
   const [activeGifUrl, setActiveGifUrl] = useState(null);
   const lastGifTimeRef = useRef(Date.now());
   const gifTimeoutRef = useRef(null);
@@ -96,10 +146,16 @@ export default function StreamDashboardPage() {
   const isFirstFetchRef = useRef(true);
   const allChatsRef = useRef([]);
 
-  // Set Browser Tab Title
+  const chatQueueRef = useRef([]);
+  const isProcessingQueueRef = useRef(false);
+
   useEffect(() => {
     document.title = "Stream Dashboard";
   }, []);
+
+  useEffect(() => {
+    dashboardRoleRef.current = dashboardRole;
+  }, [dashboardRole]);
 
   useEffect(() => {
     playerDBRef.current = playerDB;
@@ -156,10 +212,10 @@ export default function StreamDashboardPage() {
       if (pickMatch) return pickMatch.player_id;
     }
 
-    const db = playerDBRef.current;
+    const db = { ...playerDBRef.current, ...TEAM_DSTS };
     
     const players = Object.values(db).filter(p => 
-      ['QB', 'RB', 'WR', 'TE', 'K'].includes(p.position)
+      ['QB', 'RB', 'WR', 'TE', 'K', 'DST'].includes(p.position)
     ).sort((a, b) => {
       const aActive = a.status === 'Active' ? 1 : 0;
       const bActive = b.status === 'Active' ? 1 : 0;
@@ -206,9 +262,17 @@ export default function StreamDashboardPage() {
   };
 
   useEffect(() => {
+    let isMounted = true; 
+
+    if (dashboardRole === 'GUEST') {
+      if (isConnected) setConnectionStatus("🎧 Guest Mode: Syncing remotely...");
+      clearTimeout(pollingTimeoutRef.current);
+      return;
+    }
+
     const fetchChat = async () => {
       if (!isDbLoadedRef.current) {
-        setConnectionStatus("Loading player databases...");
+        if (isMounted) setConnectionStatus("Loading player databases...");
         pollingTimeoutRef.current = setTimeout(fetchChat, 2000);
         return;
       }
@@ -217,8 +281,10 @@ export default function StreamDashboardPage() {
 
       const videoId = extractVideoId(streamUrl);
       if (!videoId) {
-        setConnectionStatus("⚠️ Invalid YouTube URL");
-        setIsConnected(false);
+        if (isMounted) {
+            setConnectionStatus("⚠️ Invalid YouTube URL");
+            setIsConnected(false);
+        }
         return;
       }
 
@@ -230,14 +296,20 @@ export default function StreamDashboardPage() {
         if (liveChatIdRef.current) url += `&liveChatId=${liveChatIdRef.current}`;
         
         const res = await fetch(url);
+        
+        if (!isMounted) {
+            isFetchingRef.current = false;
+            return; 
+        }
+
         const data = await res.json();
         
         if (!res.ok || data.error) {
-          console.warn("YouTube API Warning/Error:", data.error);
-          setConnectionStatus(`⚠️ ${data.error || 'Stream issue detected.'}`);
+          console.warn("YouTube API Warning/Error:", data.error || data);
+          if (isMounted) setConnectionStatus(`⚠️ ${data.error?.message || data.error || 'Stream issue detected.'}`);
           
           if (res.status === 404 || res.status === 401) {
-            setIsConnected(false);
+            if (isMounted) setIsConnected(false);
             liveChatIdRef.current = null;
             pageTokenRef.current = "";
             isFirstFetchRef.current = true; 
@@ -249,130 +321,128 @@ export default function StreamDashboardPage() {
           return;
         }
 
-        setConnectionStatus(''); 
+        if (isMounted) setConnectionStatus(''); 
         
         if (data.liveChatId) {
           liveChatIdRef.current = data.liveChatId;
         }
-        
-        if (data.messages && data.messages.length > 0) {
-          const messagesToParse = data.messages.slice(-10);
-          const parsedMessages = [];
-          
-          const existingFirebaseMap = new Map((allChatsRef.current || []).map(item => [item.id, item]));
-          let firebaseNeedsUpdate = false;
-
-          for (const msg of messagesToParse) {
-            
-            // 1. Check if already parsed and stored in Firebase/local state
-            if (existingFirebaseMap.has(msg.id)) {
-              parsedMessages.push(existingFirebaseMap.get(msg.id));
-              continue;
-            }
-
-            // 2. Check local memory cache
-            if (parsedCacheRef.current[msg.id]) {
-              parsedMessages.push(parsedCacheRef.current[msg.id]);
-              continue; 
-            }
-
-            // 3. New Message: Parse with Gemini AI
-            let parsedType = "chat";
-            let sideA_Ids = [];
-            let sideB_Ids = [];
-
-            // AI Pre-Filter: Only call Gemini if the message contains a question, a fantasy keyword, or is a Super Chat
-            if (!isFirstFetchRef.current) {
-              const textLower = (msg.text || "").toLowerCase();
-              const isSuperChat = !!msg.amount;
-              const hasQuestion = textLower.includes('?');
-              const hasFantasyKeywords = ['trade', 'give', 'get', 'send', 'receive', ' vs ', 'start', 'bench', 'drop', 'add', 'pick up', 'pickup', 'worth', 'thoughts', 'dynasty', 'draft', 'keeper', 'keep', 'cut', 'roster', 'team'].some(kw => textLower.includes(kw));
-
-              if (isSuperChat || hasQuestion || hasFantasyKeywords) {
-                try {
-                  const aiRes = await fetch('/api/parse-chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: msg.text })
-                  });
-                  
-                  if (aiRes.ok) {
-                    const aiData = await aiRes.json();
-                    if (aiData && !aiData.error) {
-                      parsedType = aiData.type || "chat";
-                      const rawSideA = aiData.sideA || aiData.sidea || aiData.SideA || [];
-                      const rawSideB = aiData.sideB || aiData.sideb || aiData.SideB || [];
-
-                      if (rawSideA.length > 0) sideA_Ids = rawSideA.map(resolveNameToId).filter(id => id !== null);
-                      if (rawSideB.length > 0) sideB_Ids = rawSideB.map(resolveNameToId).filter(id => id !== null);
-                    }
-                  } else if (aiRes.status === 429) {
-                     console.warn("Gemini Quota Exceeded (429). Bypassing AI for this message.");
-                  }
-                  
-                  // Small delay to prevent bursting the API
-                  await sleep(500);
-
-                } catch(e) {
-                  console.error("Gemini parse error:", e);
-                }
-              }
-            }
-
-            const finalMsg = {
-              id: msg.id,
-              user: msg.user,
-              avatar: msg.avatar,
-              text: msg.text,
-              amount: msg.amount,
-              color: msg.isSuperChat ? getSuperChatStyle(msg.youtubeColorTier) : null,
-              type: parsedType,
-              sideA: sideA_Ids,
-              sideB: sideB_Ids
-            };
-
-            parsedCacheRef.current[msg.id] = finalMsg;
-            parsedMessages.push(finalMsg);
-            firebaseNeedsUpdate = true;
-          }
-
-          isFirstFetchRef.current = false;
-
-          const currentList = allChatsRef.current || [];
-          const merged = [...parsedMessages, ...currentList];
-          const unique = Array.from(new Map(merged.map(item => [item.id, item])).values()).slice(0, 100);
-
-          setAllChats(unique);
-          allChatsRef.current = unique;
-
-          // Centralize parsed chat into Firebase so other hosts get it instantly
-          if (firebaseNeedsUpdate) {
-            updateFirebaseState({ qa_allChats: unique });
-          }
-
-          const newSupers = parsedMessages.filter(m => m.amount);
-          if (newSupers.length > 0) {
-            setPriorityQueue(prev => {
-              const mergedSupers = [...prev, ...newSupers];
-              const uniqueSupers = Array.from(new Map(mergedSupers.map(item => [item.id, item])).values());
-              updateFirebaseState({ qa_priorityQueue: uniqueSupers });
-              return uniqueSupers;
-            });
-          }
-        }
 
         pageTokenRef.current = data.nextPageToken || pageTokenRef.current;
         const nextPollInterval = data.pollingIntervalMillis || 5000;
-        
-        isFetchingRef.current = false;
         pollingTimeoutRef.current = setTimeout(fetchChat, nextPollInterval);
+        isFetchingRef.current = false; 
+        
+        if (data.messages && data.messages.length > 0) {
+          chatQueueRef.current.push(...data.messages);
+          if (!isProcessingQueueRef.current) {
+            processChatQueue();
+          }
+        }
 
       } catch (err) {
         console.error("Polling error:", err);
-        setConnectionStatus("⚠️ Network error fetching chat.");
+        if (isMounted) setConnectionStatus("⚠️ Network error fetching chat.");
         isFetchingRef.current = false;
         pollingTimeoutRef.current = setTimeout(fetchChat, 10000); 
       }
+    };
+
+    const processChatQueue = async () => {
+      isProcessingQueueRef.current = true;
+
+      while (chatQueueRef.current.length > 0 && isMounted) {
+        const msg = chatQueueRef.current.shift();
+
+        const existingFirebaseMap = new Map((allChatsRef.current || []).map(item => [item.id, item]));
+        if (existingFirebaseMap.has(msg.id) || parsedCacheRef.current[msg.id]) {
+          continue;
+        }
+
+        let parsedType = "chat";
+        let sideA_Ids = [];
+        let sideB_Ids = [];
+
+        if (!isFirstFetchRef.current) {
+          const textLower = (msg.text || "").toLowerCase();
+          const isSuperChat = !!msg.amount;
+          const hasQuestion = textLower.includes('?');
+          
+          const hasFantasyKeywords = [
+            'trade', 'give', 'get', 'send', 'receive', ' vs ', ' vs', 'start', 
+            'bench', 'drop', 'add', 'pick up', 'pickup', 'worth', 'thoughts', 
+            'dynasty', 'draft', 'keeper', 'keep', 'cut', 'roster', 'team', 'def', 
+            ' or ', ' over '
+          ].some(kw => textLower.includes(kw));
+
+          if (isSuperChat || hasQuestion || hasFantasyKeywords) {
+            try {
+              const aiRes = await fetch('/api/parse-chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: msg.text })
+              });
+              
+              if (!isMounted) break;
+
+              if (aiRes.ok) {
+                const aiData = await aiRes.json();
+                if (aiData && !aiData.error) {
+                  parsedType = aiData.type || "chat";
+                  const rawSideA = aiData.sideA || aiData.sidea || aiData.SideA || [];
+                  const rawSideB = aiData.sideB || aiData.sideb || aiData.SideB || [];
+
+                  if (rawSideA.length > 0) sideA_Ids = rawSideA.map(resolveNameToId).filter(id => id !== null);
+                  if (rawSideB.length > 0) sideB_Ids = rawSideB.map(resolveNameToId).filter(id => id !== null);
+                }
+              } else {
+                 const errText = await aiRes.text();
+                 console.error(`Gemini API Error (${aiRes.status}):`, errText);
+              }
+              
+              await sleep(1500);
+
+            } catch(e) {
+              console.error("Gemini fetch failed:", e);
+            }
+          }
+        }
+
+        const finalMsg = {
+          id: msg.id,
+          user: msg.user,
+          avatar: msg.avatar,
+          text: msg.text,
+          amount: msg.amount,
+          color: msg.isSuperChat ? getSuperChatStyle(msg.youtubeColorTier) : null,
+          type: parsedType,
+          sideA: sideA_Ids,
+          sideB: sideB_Ids
+        };
+
+        parsedCacheRef.current[msg.id] = finalMsg;
+
+        if (isMounted) {
+            setAllChats(prev => {
+            const merged = [finalMsg, ...prev];
+            const unique = Array.from(new Map(merged.map(item => [item.id, item])).values()).slice(0, 500);
+            allChatsRef.current = unique;
+            updateFirebaseState({ qa_allChats: unique });
+            return unique;
+            });
+
+            if (finalMsg.amount) {
+            setPriorityQueue(prev => {
+                const mergedSupers = [...prev, finalMsg];
+                const uniqueSupers = Array.from(new Map(mergedSupers.map(item => [item.id, item])).values()).slice(0, 100);
+                updateFirebaseState({ qa_priorityQueue: uniqueSupers });
+                return uniqueSupers;
+            });
+            }
+        }
+      }
+
+      isFirstFetchRef.current = false;
+      isProcessingQueueRef.current = false;
     };
 
     if (isConnected && streamUrl) {
@@ -386,8 +456,11 @@ export default function StreamDashboardPage() {
       isFirstFetchRef.current = true; 
     }
 
-    return () => clearTimeout(pollingTimeoutRef.current);
-  }, [isConnected, streamUrl]); 
+    return () => {
+        isMounted = false;
+        clearTimeout(pollingTimeoutRef.current);
+    };
+  }, [isConnected, streamUrl, dashboardRole]); 
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'stream_state', 'live'), (docSnap) => {
@@ -420,14 +493,12 @@ export default function StreamDashboardPage() {
           }
         }
 
-        // --- GLOBAL GIF LISTENER ---
         if (data.gifTriggeredAt && data.gifTriggeredAt > lastGifTimeRef.current) {
           lastGifTimeRef.current = data.gifTriggeredAt;
           if (data.activeGif) {
             if (gifTimeoutRef.current) clearTimeout(gifTimeoutRef.current);
             setActiveGifUrl(data.activeGif);
             
-            // Auto-hide GIF after 2.5 seconds (2500ms)
             gifTimeoutRef.current = setTimeout(() => {
               setActiveGifUrl(null);
             }, 2500);
@@ -436,15 +507,21 @@ export default function StreamDashboardPage() {
 
         if (data.qa_streamUrl !== undefined) setStreamUrl(data.qa_streamUrl);
         if (data.qa_isConnected !== undefined) setIsConnected(data.qa_isConnected);
-        if (data.qa_priorityQueue !== undefined) setPriorityQueue(data.qa_priorityQueue);
+        
+        if (data.qa_priorityQueue !== undefined) {
+          if (dashboardRoleRef.current === 'GUEST' || allChatsRef.current.length === 0) {
+            setPriorityQueue(data.qa_priorityQueue);
+          }
+        }
 
-        // --- CENTRALIZED PARSED CHAT LISTENER ---
         if (data.qa_allChats !== undefined && Array.isArray(data.qa_allChats)) {
-          setAllChats(data.qa_allChats);
-          allChatsRef.current = data.qa_allChats;
-          data.qa_allChats.forEach(m => {
-            parsedCacheRef.current[m.id] = m;
-          });
+          if (dashboardRoleRef.current === 'GUEST' || allChatsRef.current.length === 0) {
+            setAllChats(data.qa_allChats);
+            allChatsRef.current = data.qa_allChats;
+            data.qa_allChats.forEach(m => {
+              parsedCacheRef.current[m.id] = m;
+            });
+          }
         }
       }
     });
@@ -453,7 +530,7 @@ export default function StreamDashboardPage() {
       unsub();
       if (gifTimeoutRef.current) clearTimeout(gifTimeoutRef.current);
     };
-  }, []);
+  }, []); 
 
   useEffect(() => {
     let interval;
@@ -560,12 +637,23 @@ export default function StreamDashboardPage() {
       {/* 1. TOP SCOREBOARD HEADER */}
       <div className="flex items-center justify-between px-8 pt-4 pb-4 w-full relative z-20 shadow-[0_10px_30px_rgba(0,0,0,0.8)] bg-[#0a0a0c] border-b border-zinc-900 shrink-0 gap-6">
         
-        <div className="flex-1 flex items-center justify-center">
-          <img 
-            src="https://admin.fsan.com/wp-content/uploads/2026/08/FFCK-Logo.webp" 
-            alt="FFCK" 
-            className="max-h-[65px] w-auto object-contain drop-shadow-lg"
-          />
+        <div className="flex-1 flex flex-col items-center justify-center gap-2">
+          {/* DISCREET ROLE TOGGLE BUTTON */}
+          <button 
+            onClick={() => setDashboardRole(r => r === 'HOST' ? 'GUEST' : 'HOST')}
+            className="relative group focus:outline-none"
+            title="Toggle Host/Guest Mode"
+          >
+            <img 
+              src="https://admin.fsan.com/wp-content/uploads/2026/08/FFCK-Logo.webp" 
+              alt="FFCK" 
+              className="max-h-[65px] w-auto object-contain drop-shadow-lg"
+            />
+            {/* The role is completely invisible until you hover directly over the logo */}
+            <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-widest text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+              [{dashboardRole}]
+            </span>
+          </button>
         </div>
 
         {/* Center Scoreboard */}

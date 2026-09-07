@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, X, MessageSquare, Rocket, PlaySquare, TrendingUp, Upload, Loader2, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Settings, X, MessageSquare, Rocket, PlaySquare, TrendingUp, Upload, Loader2, Trash2, Maximize2 } from 'lucide-react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
@@ -17,6 +17,7 @@ const RUN_OF_SHOW = [
 
 export default function PregameTab() {
   const [showSettings, setShowSettings] = useState(false);
+  const [expandedAd, setExpandedAd] = useState(null); // Tracks which ad is full-screen
   
   // Ad Spaces State
   const [ad1Url, setAd1Url] = useState(null);
@@ -34,10 +35,21 @@ export default function PregameTab() {
         const data = docSnap.data();
         if (data.pregameAd1 !== undefined) setAd1Url(data.pregameAd1);
         if (data.pregameAd2 !== undefined) setAd2Url(data.pregameAd2);
+        
+        // Sync expanded ad state across clients
+        if (data.pregameExpandedAd !== undefined) setExpandedAd(data.pregameExpandedAd);
       }
     });
     return () => unsub();
   }, []);
+
+  const updateFirebaseState = async (updates) => {
+    try {
+      await setDoc(doc(db, 'stream_state', 'live'), updates, { merge: true });
+    } catch (err) {
+      console.error("Failed to sync state to Firebase:", err);
+    }
+  };
 
   // Handle Image Uploads
   const handleFileUpload = async (e, slot) => {
@@ -57,9 +69,7 @@ export default function PregameTab() {
       // Append timestamp to break browser cache so the new image shows instantly
       const cacheBustedURL = `${downloadURL}&t=${Date.now()}`;
 
-      await setDoc(doc(db, 'stream_state', 'live'), {
-        [`pregameAd${slot}`]: cacheBustedURL
-      }, { merge: true });
+      await updateFirebaseState({ [`pregameAd${slot}`]: cacheBustedURL });
 
     } catch (error) {
       console.error("Upload failed:", error);
@@ -73,11 +83,13 @@ export default function PregameTab() {
   };
 
   const handleClearAd = async (slot) => {
-    try {
-      await setDoc(doc(db, 'stream_state', 'live'), { [`pregameAd${slot}`]: null }, { merge: true });
-    } catch (err) {
-      console.error("Failed to clear ad:", err);
-    }
+    await updateFirebaseState({ [`pregameAd${slot}`]: null });
+  };
+
+  const handleToggleExpand = (adUrl) => {
+    const newAdState = expandedAd === adUrl ? null : adUrl;
+    setExpandedAd(newAdState);
+    updateFirebaseState({ pregameExpandedAd: newAdState });
   };
 
   return (
@@ -136,21 +148,57 @@ export default function PregameTab() {
           
           {/* Ad Space 1 */}
           {ad1Url && (
-            <div className="flex-1 bg-black/40 border border-zinc-800/80 rounded-3xl p-2 shadow-2xl relative overflow-hidden flex items-center justify-center group">
+            <div 
+              onClick={() => handleToggleExpand(ad1Url)}
+              className="flex-1 bg-black/40 border border-zinc-800/80 rounded-3xl p-2 shadow-2xl relative overflow-hidden flex items-center justify-center group cursor-pointer transition-transform hover:scale-[1.02]"
+            >
               <img src={ad1Url} alt="Sponsor 1" className="w-full h-full object-contain drop-shadow-xl" />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-6">
+                <div className="bg-black/80 p-3 rounded-full text-white backdrop-blur-sm border border-zinc-700 shadow-xl">
+                  <Maximize2 size={24} />
+                </div>
+              </div>
             </div>
           )}
 
           {/* Ad Space 2 */}
           {ad2Url && (
-            <div className="flex-1 bg-black/40 border border-zinc-800/80 rounded-3xl p-2 shadow-2xl relative overflow-hidden flex items-center justify-center group">
+            <div 
+              onClick={() => handleToggleExpand(ad2Url)}
+              className="flex-1 bg-black/40 border border-zinc-800/80 rounded-3xl p-2 shadow-2xl relative overflow-hidden flex items-center justify-center group cursor-pointer transition-transform hover:scale-[1.02]"
+            >
               <img src={ad2Url} alt="Sponsor 2" className="w-full h-full object-contain drop-shadow-xl" />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-6">
+                <div className="bg-black/80 p-3 rounded-full text-white backdrop-blur-sm border border-zinc-700 shadow-xl">
+                  <Maximize2 size={24} />
+                </div>
+              </div>
             </div>
           )}
 
         </div>
 
       </div>
+
+      {/* FULL SCREEN AD MODAL */}
+      {expandedAd && (
+        <div 
+          onClick={() => handleToggleExpand(null)}
+          className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex items-center justify-center p-8 animate-in fade-in zoom-in-95 duration-300 cursor-pointer"
+        >
+          <button 
+            onClick={(e) => { e.stopPropagation(); handleToggleExpand(null); }}
+            className="absolute top-8 right-8 bg-zinc-900/80 p-3 rounded-full text-zinc-400 hover:text-white border border-zinc-700 transition-colors z-50 shadow-2xl"
+          >
+            <X size={32} />
+          </button>
+          <img 
+            src={expandedAd} 
+            alt="Expanded Sponsor" 
+            className="w-full h-full object-contain drop-shadow-[0_0_50px_rgba(0,0,0,0.8)] rounded-xl pointer-events-none" 
+          />
+        </div>
+      )}
 
       {/* SETUP MODAL */}
       {showSettings && (

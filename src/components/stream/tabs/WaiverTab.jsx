@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Search, X, Settings, DollarSign, Trash2 } from 'lucide-react';
+import { Search, X, Settings, DollarSign, RotateCcw } from 'lucide-react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -187,6 +187,12 @@ export default function WaiverTab() {
     updateFirebaseWaiver({ waiverData: newWaiverData });
   };
 
+  const handleClearBoard = () => {
+    setActiveWirePos(null);
+    setActiveCutPos(null);
+    updateFirebaseWaiver({ waiverActiveWirePos: null, waiverActiveCutPos: null });
+  };
+
   const getESPNHeadshot = (espnId) => `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${espnId}.png&w=400&h=300`;
 
   const renderCard = (playerId, isWire = true) => {
@@ -348,8 +354,20 @@ export default function WaiverTab() {
           )}
         </div>
 
-        {/* CENTER DIVIDER */}
-        <div className="w-px h-[280px] bg-gradient-to-b from-transparent via-zinc-800 to-transparent shrink-0" />
+        {/* CENTER DIVIDER WITH CLEAR BUTTON */}
+        <div className="flex flex-col items-center justify-center relative w-12 shrink-0">
+          <div className="w-px h-[100px] bg-gradient-to-b from-transparent to-zinc-800 shrink-0" />
+          
+          <button 
+            onClick={handleClearBoard}
+            className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-800 flex items-center justify-center my-4 group transition-colors hover:bg-zinc-900 hover:border-red-900/50"
+            title="Clear Board"
+          >
+            <RotateCcw size={16} className="text-zinc-800 group-hover:text-red-500/70 transition-colors" />
+          </button>
+          
+          <div className="w-px h-[100px] bg-gradient-to-t from-transparent to-zinc-800 shrink-0" />
+        </div>
 
         {/* RIGHT SIDE: THE CUT LINE (DROP) */}
         <div className="flex-1 flex flex-col items-center justify-center gap-6 h-full">

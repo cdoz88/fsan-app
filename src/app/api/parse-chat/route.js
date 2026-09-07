@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 export async function POST(request) {
   try {
     const { text } = await request.json();
@@ -21,39 +23,62 @@ Determine the type of question:
 
 CRITICAL RULE 1: If the user mentions ANY NFL player names, you MUST extract them into the "sideA" or "sideB" arrays. Do this even if you classify the type as "chat".
 CRITICAL RULE 2: You MUST output the player's FULL real-world NFL name (First and Last). If the user types a nickname or last name like "Mahomes", "CMC", "Sun God", or "Allen", you MUST convert it to "Patrick Mahomes", "Christian McCaffrey", "Amon-Ra St. Brown", or "Josh Allen".
+CRITICAL RULE 3: For defenses, you MUST output the team abbreviation followed by the word "Defense" (e.g., "DAL Defense", "BUF Defense", "SF Defense").
 
 For draft picks, format them strictly as "YYYY [1st/2nd/3rd] Round Pick" (e.g., "2027 1st Round Pick").
 
 Return your response STRICTLY in JSON format matching this exact schema:
 {
   "type": "trade",
-  "sideA": ["Patrick Mahomes"],
-  "sideB": ["Josh Allen"]
+  "sideA": ["Patrick Mahomes", "DAL Defense"],
+  "sideB": ["Josh Allen", "2026 1st Round Pick"]
 }`;
 
-    // Updated to the correct active model: gemini-1.5-flash
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    // Endpoint locked to gemini-3.6-flash
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${API_KEY}`;
     
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: prompt },
-              { text: `Message to parse: "${text}"` } 
-            ]
-          }
-        ]
-      })
-    });
+    let data;
+    let success = false;
+    let retries = 3;
+    let delay = 2000; 
 
-    const data = await response.json();
-    
-    if (!response.ok || data.error) {
+    for (let i = 0; i < retries; i++) {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                { text: prompt },
+                { text: `Message to parse: "${text}"` } 
+              ]
+            }
+          ]
+        })
+      });
+
+      data = await response.json();
+
+      if (response.ok && !data.error) {
+        success = true;
+        break; 
+      }
+
+      const errorMessage = data.error?.message || "";
+      
+      if (response.status === 429 || response.status === 503 || errorMessage.toLowerCase().includes("high demand") || errorMessage.toLowerCase().includes("overloaded")) {
+        console.warn(`Gemini API high demand. Retrying in ${delay/1000}s... (Attempt ${i + 1} of ${retries})`);
+        await sleep(delay);
+        delay *= 2; 
+      } else {
+        break; 
+      }
+    }
+
+    if (!success) {
        console.error("Gemini API Error Detail:", data.error || data);
-       return NextResponse.json({ error: data.error?.message || "Gemini API error" }, { status: 400 });
+       return NextResponse.json({ error: data.error?.message || "Gemini API error after retries" }, { status: 400 });
     }
 
     const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;

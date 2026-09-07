@@ -752,14 +752,19 @@ export default function QandATab({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <button onClick={() => handleSelectPriorityDisplay(priorityQueue[0], false)} className="bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] font-black uppercase tracking-widest py-2 px-3 rounded-lg transition-colors flex items-center gap-1.5 border border-zinc-700">
-                    <MessageCircle size={12} /> Show Chat
+                  <button 
+                    onClick={() => (activeChat?.id === priorityQueue[0].id && !showGraphic) ? handleClearScreen() : handleSelectPriorityDisplay(priorityQueue[0], false)} 
+                    className="bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] font-black uppercase tracking-widest py-2 px-3 rounded-lg transition-colors flex items-center gap-1.5 border border-zinc-700"
+                  >
+                    <MessageCircle size={12} /> {(activeChat?.id === priorityQueue[0].id && !showGraphic) ? 'Hide Chat' : 'Show Chat'}
                   </button>
                   
-                  {/* Conditional Graphic Button */}
                   {(priorityQueue[0].sideA?.length > 0 || priorityQueue[0].sideB?.length > 0) && (
-                    <button onClick={() => handleSelectPriorityDisplay(priorityQueue[0], true)} className="bg-zinc-700 hover:bg-zinc-600 text-white text-[10px] font-black uppercase tracking-widest py-2 px-3 rounded-lg transition-colors flex items-center gap-1.5 border border-zinc-500 shadow-md">
-                      <ImageIcon size={12} /> Visual
+                    <button 
+                      onClick={() => (activeChat?.id === priorityQueue[0].id && showGraphic) ? handleClearScreen() : handleSelectPriorityDisplay(priorityQueue[0], true)} 
+                      className="bg-zinc-700 hover:bg-zinc-600 text-white text-[10px] font-black uppercase tracking-widest py-2 px-3 rounded-lg transition-colors flex items-center gap-1.5 border border-zinc-500 shadow-md"
+                    >
+                      <ImageIcon size={12} /> {(activeChat?.id === priorityQueue[0].id && showGraphic) ? 'Close' : 'Visual'}
                     </button>
                   )}
                 </div>
@@ -891,8 +896,11 @@ export default function QandATab({
 
         {/* Tab Content List */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-2.5 space-y-2.5 min-h-0">
-          {currentChatList.map((chat) => (
-            chat.amount ? (
+          {[...currentChatList].reverse().map((chat) => {
+            const isChatActive = activeChat?.id === chat.id && !showGraphic;
+            const isVisualActive = activeChat?.id === chat.id && showGraphic;
+
+            return chat.amount ? (
               // SUPER CHAT STYLING
               <div key={chat.id} className={`p-0.5 rounded-xl transition-all flex flex-col gap-2 ${activeChat?.id === chat.id ? 'bg-zinc-400 scale-[1.02]' : 'bg-zinc-800/40 hover:bg-zinc-700/60'}`}>
                 <div className="bg-[#111114] rounded-[10px] p-2 flex flex-col gap-2">
@@ -907,14 +915,20 @@ export default function QandATab({
                     </div>
                   </div>
                   <div className="flex gap-2 mt-0.5">
-                    <button onClick={() => handleSelectDisplay(chat, false)} className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-700">
-                      <MessageCircle size={11} /> Show Chat
+                    <button 
+                      onClick={() => isChatActive ? handleClearScreen() : handleSelectDisplay(chat, false)} 
+                      className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-700"
+                    >
+                      <MessageCircle size={11} /> {isChatActive ? 'Hide Chat' : 'Show Chat'}
                     </button>
                     
                     {/* Conditional Graphic Button */}
                     {(chat.sideA?.length > 0 || chat.sideB?.length > 0) && (
-                      <button onClick={() => handleSelectDisplay(chat, true)} className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-500">
-                        <ImageIcon size={11} /> Visual
+                      <button 
+                        onClick={() => isVisualActive ? handleClearScreen() : handleSelectDisplay(chat, true)} 
+                        className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-500"
+                      >
+                        <ImageIcon size={11} /> {isVisualActive ? 'Close' : 'Visual'}
                       </button>
                     )}
                   </div>
@@ -931,20 +945,26 @@ export default function QandATab({
                   </div>
                 </div>
                 <div className="flex gap-2 mt-0.5">
-                  <button onClick={() => handleSelectDisplay(chat, false)} className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-700">
-                    <MessageCircle size={11} /> Show Chat
+                  <button 
+                    onClick={() => isChatActive ? handleClearScreen() : handleSelectDisplay(chat, false)} 
+                    className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-700"
+                  >
+                    <MessageCircle size={11} /> {isChatActive ? 'Hide Chat' : 'Show Chat'}
                   </button>
                   
                   {/* Conditional Graphic Button */}
                   {(chat.sideA?.length > 0 || chat.sideB?.length > 0) && (
-                    <button onClick={() => handleSelectDisplay(chat, true)} className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-500">
-                      <ImageIcon size={11} /> Visual
+                    <button 
+                      onClick={() => isVisualActive ? handleClearScreen() : handleSelectDisplay(chat, true)} 
+                      className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-500"
+                    >
+                      <ImageIcon size={11} /> {isVisualActive ? 'Close' : 'Visual'}
                     </button>
                   )}
                 </div>
               </div>
-            )
-          ))}
+            );
+          })}
           
           {currentChatList.length === 0 && (
             <div className="h-full flex flex-col items-center justify-center text-zinc-500 font-black uppercase tracking-widest text-xs py-10 px-6 text-center gap-2">

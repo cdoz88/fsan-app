@@ -786,43 +786,48 @@ export default function OvertimeTab({
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-2.5 space-y-2.5 min-h-0">
-          {superChats.map((chat) => (
-            <div 
-              key={chat.id} 
-              className={`p-0.5 rounded-xl transition-all flex flex-col gap-2 
-                ${activeChat?.id === chat.id ? 'bg-zinc-400 scale-[1.02]' : 'bg-zinc-800/40 hover:bg-zinc-700/60'}
-              `}
-            >
-              <div className="bg-[#111114] rounded-[10px] p-2 flex flex-col gap-2">
-                <div className="flex gap-2.5 items-start">
-                  <img src={chat.avatar} alt={chat.user} className="w-8 h-8 rounded-full shrink-0 border border-zinc-700" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <div className="text-[10px] font-black tracking-widest uppercase text-zinc-400 truncate">{chat.user}</div>
-                      <div className={`text-[9px] font-black px-1.5 rounded-sm border drop-shadow-md uppercase tracking-wider ${chat.color}`}>{chat.amount}</div>
+          {[...superChats].reverse().map((chat) => {
+            const isChatActive = activeChat?.id === chat.id && !showGraphic;
+            const isVisualActive = activeChat?.id === chat.id && showGraphic;
+
+            return (
+              <div 
+                key={chat.id} 
+                className={`p-0.5 rounded-xl transition-all flex flex-col gap-2 
+                  ${activeChat?.id === chat.id ? 'bg-zinc-400 scale-[1.02]' : 'bg-zinc-800/40 hover:bg-zinc-700/60'}
+                `}
+              >
+                <div className="bg-[#111114] rounded-[10px] p-2 flex flex-col gap-2">
+                  <div className="flex gap-2.5 items-start">
+                    <img src={chat.avatar} alt={chat.user} className="w-8 h-8 rounded-full shrink-0 border border-zinc-700" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <div className="text-[10px] font-black tracking-widest uppercase text-zinc-400 truncate">{chat.user}</div>
+                        <div className={`text-[9px] font-black px-1.5 rounded-sm border drop-shadow-md uppercase tracking-wider ${chat.color}`}>{chat.amount}</div>
+                      </div>
+                      <div className="text-xs text-zinc-200 leading-snug font-medium">{chat.text}</div>
                     </div>
-                    <div className="text-xs text-zinc-200 leading-snug font-medium">{chat.text}</div>
+                  </div>
+                  <div className="flex gap-2 mt-0.5">
+                    <button 
+                      onClick={() => isChatActive ? handleClearScreen() : handleSelectDisplay(chat, false)} 
+                      className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-700"
+                    >
+                      <MessageCircle size={11} /> {isChatActive ? 'Hide Chat' : 'Show Chat'}
+                    </button>
+                    {(chat.sideA?.length > 0 || chat.sideB?.length > 0) && (
+                      <button 
+                        onClick={() => isVisualActive ? handleClearScreen() : handleSelectDisplay(chat, true)} 
+                        className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-500"
+                      >
+                        <ImageIcon size={11} /> {isVisualActive ? 'Close' : 'Visual'}
+                      </button>
+                    )}
                   </div>
                 </div>
-                <div className="flex gap-2 mt-0.5">
-                  <button 
-                    onClick={() => handleSelectDisplay(chat, false)} 
-                    className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-700"
-                  >
-                    <MessageCircle size={11} /> Show Chat
-                  </button>
-                  {(chat.sideA?.length > 0 || chat.sideB?.length > 0) && (
-                    <button 
-                      onClick={() => handleSelectDisplay(chat, true)} 
-                      className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-500"
-                    >
-                      <ImageIcon size={11} /> Show Graphic
-                    </button>
-                  )}
-                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {superChats.length === 0 && (
             <div className="h-full flex flex-col items-center justify-center text-zinc-500 font-black uppercase tracking-widest text-xs py-10 px-6 text-center gap-2">
