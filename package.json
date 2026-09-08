@@ -30,7 +30,8 @@
     "react-dom": "19.2.4",
     "recharts": "^3.10.1",
     "stripe": "^21.0.1",
-    "tailwind-merge": "^3.5.0"
+    "tailwind-merge": "^3.5.0",
+    "tmi.js": "^1.8.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

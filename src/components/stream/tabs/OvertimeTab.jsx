@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Settings, X, Image as ImageIcon, MessageCircle, RefreshCw, Info, Search, User, RotateCcw, Calendar, History, Loader2, Plus, Play, Pause, Zap, Beaker } from 'lucide-react';
+import { MessageSquare, Settings, X, Image as ImageIcon, MessageCircle, RefreshCw, Info, Search, User, RotateCcw, Calendar, History, Loader2, Plus, Play, Pause, Zap, Beaker, Check } from 'lucide-react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -249,6 +249,8 @@ const formatChatForFirebase = (chat) => {
 export default function OvertimeTab({
   streamUrl,
   setStreamUrl,
+  twitchChannel,
+  setTwitchChannel,
   isConnected,
   setIsConnected,
   connectionStatus,
@@ -262,10 +264,12 @@ export default function OvertimeTab({
   const [targetEndTime, setTargetEndTime] = useState(null);
 
   // --- Q&A STATE ---
+  const [activeSidebarTab, setActiveSidebarTab] = useState('super');
   const [activeChat, setActiveChat] = useState(null);
   const [showGraphic, setShowGraphic] = useState(false);
   const [customPlayerLists, setCustomPlayerLists] = useState(null);
   const [disabledPlayers, setDisabledPlayers] = useState({});
+  const [dismissedChats, setDismissedChats] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
   const [playerSearch, setPlayerSearch] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -276,7 +280,7 @@ export default function OvertimeTab({
   const [omfgLoading, setOmfgLoading] = useState(false);
   const [availableYears, setAvailableYears] = useState([]);
 
-  // Filter out the live chat to only grab Super Chats!
+  const regularChats = allChats.filter(chat => !chat.amount);
   const superChats = allChats.filter(chat => chat.amount);
 
   // --- FIREBASE COLLABORATION LISTENER ---
@@ -290,6 +294,7 @@ export default function OvertimeTab({
         if (data.ot_showGraphic !== undefined) setShowGraphic(data.ot_showGraphic);
         if (data.ot_customPlayerLists !== undefined) setCustomPlayerLists(data.ot_customPlayerLists);
         if (data.ot_disabledPlayers !== undefined) setDisabledPlayers(data.ot_disabledPlayers);
+        if (data.ot_dismissedChats !== undefined) setDismissedChats(data.ot_dismissedChats);
 
         // Countdown Sync
         if (data.ot_isClockRunning !== undefined) setIsClockRunning(data.ot_isClockRunning);
@@ -315,7 +320,7 @@ export default function OvertimeTab({
           setAvailableYears(['2026', '2025', '2024']);
         }
       } catch(e) {
-        setAvailableYears(['2026', '2025', '2024']);
+          setAvailableYears(['2026', '2025', '2024']);
       }
     };
     fetchYears();
@@ -441,7 +446,6 @@ export default function OvertimeTab({
     setCustomPlayerLists(null);
     setDisabledPlayers({});
     
-    // AUTOMATION: Pause the clock and reset it to 2:00 because we are actively answering
     updateFirebaseState({
       ot_activeChat: chatItem,
       ot_showGraphic: isGraphic,
@@ -459,7 +463,6 @@ export default function OvertimeTab({
     setCustomPlayerLists(null);
     setDisabledPlayers({});
     
-    // AUTOMATION: The screen is empty, so immediately start the 2:00 Sudden Death countdown!
     updateFirebaseState({
       ot_activeChat: null,
       ot_showGraphic: false,
@@ -482,6 +485,16 @@ export default function OvertimeTab({
     const newState = { ...disabledPlayers, [playerId]: !disabledPlayers[playerId] };
     setDisabledPlayers(newState);
     updateFirebaseState({ ot_disabledPlayers: newState });
+  };
+
+  const handleToggleDismiss = (chatId, e) => {
+    if (e) e.stopPropagation();
+    const newDismissed = dismissedChats.includes(chatId)
+      ? dismissedChats.filter(id => id !== chatId)
+      : [...dismissedChats, chatId];
+      
+    setDismissedChats(newDismissed);
+    updateFirebaseState({ ot_dismissedChats: newDismissed });
   };
 
   const handlePlayerSelect = (newPlayerId) => {
@@ -526,7 +539,8 @@ export default function OvertimeTab({
     updateFirebaseState({
       qa_allChats: [],
       qa_priorityQueue: [],
-      ot_activeChat: null
+      ot_activeChat: null,
+      ot_dismissedChats: []
     });
   };
 
@@ -771,35 +785,129 @@ export default function OvertimeTab({
         )}
       </div>
 
-      {/* 2. RIGHT SIDEBAR: Super Chat Feed */}
+      {/* 2. RIGHT SIDEBAR: Tabbed Live Chat Feed */}
       <div className="w-80 lg:w-88 bg-[#0e0e11] border border-zinc-800 rounded-2xl flex flex-col shadow-2xl flex-shrink-0 min-h-0">
         
-        <div className="p-3 border-b border-zinc-800 bg-black/50 rounded-t-2xl flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-black text-amber-500 uppercase tracking-widest">Super Chats</span>
-            <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-600'}`}></span>
-          </div>
+        {/* Split Tabs Header */}
+        <div className="flex bg-[#141418] border-b border-zinc-800 rounded-t-2xl overflow-hidden p-1.5 gap-1.5 shrink-0">
+          <button
+            onClick={() => setActiveSidebarTab('live')}
+            className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${activeSidebarTab === 'live' ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'}`}
+          >
+            Live Chat
+            <span className={`px-1.5 py-0.5 rounded-md text-[9px] ${activeSidebarTab === 'live' ? 'bg-zinc-600 text-white' : 'bg-[#0e0e11] text-zinc-600'}`}>{regularChats.length}</span>
+          </button>
           
-          <button onClick={() => setShowSettings(true)} className="p-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white rounded-lg transition-colors">
-            <Settings size={16} />
+          <button
+            onClick={() => setActiveSidebarTab('super')}
+            className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${activeSidebarTab === 'super' ? 'bg-emerald-600 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'}`}
+          >
+            Super Chats
+            <span className={`px-1.5 py-0.5 rounded-md text-[9px] ${activeSidebarTab === 'super' ? 'bg-emerald-800 text-white' : 'bg-[#0e0e11] text-zinc-600'}`}>{superChats.length}</span>
+          </button>
+          
+          <button 
+            onClick={() => setShowSettings(true)}
+            className="px-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white rounded-xl transition-colors shrink-0"
+          >
+            <Settings size={14} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-2.5 space-y-2.5 min-h-0">
-          {[...superChats].reverse().map((chat) => {
+        {/* LIVE CHATS CONTAINER */}
+        <div className={`flex-1 overflow-y-auto custom-scrollbar p-2.5 space-y-2.5 min-h-0 ${activeSidebarTab === 'live' ? 'block' : 'hidden'}`}>
+          {[...regularChats].reverse().map((chat) => {
             const isChatActive = activeChat?.id === chat.id && !showGraphic;
             const isVisualActive = activeChat?.id === chat.id && showGraphic;
+            const isDismissed = dismissedChats.includes(chat.id);
 
             return (
               <div 
                 key={chat.id} 
-                className={`p-0.5 rounded-xl transition-all flex flex-col gap-2 
+                className={`relative p-2.5 rounded-xl border transition-all flex flex-col gap-2 
+                  ${isDismissed ? 'opacity-30 grayscale hover:opacity-80' : ''}
+                  ${activeChat?.id === chat.id ? 'bg-zinc-800/90 border-zinc-500 shadow-md' : 'bg-black/50 border-zinc-900 hover:border-zinc-800'}
+                `}
+              >
+                {/* Dismiss Checkmark Button */}
+                <button 
+                  onClick={(e) => handleToggleDismiss(chat.id, e)} 
+                  className={`absolute top-2 right-2 p-1.5 rounded-full transition-colors z-10
+                    ${isDismissed ? 'text-emerald-500 bg-emerald-500/20' : 'text-zinc-600 hover:text-white hover:bg-zinc-700'}
+                  `}
+                  title={isDismissed ? "Restore Chat" : "Mark as Done"}
+                >
+                  <Check size={14} strokeWidth={isDismissed ? 3 : 2} />
+                </button>
+
+                <div className="flex gap-2.5 items-start pr-6">
+                  <img src={chat.avatar || "https://placehold.co/100x100/3f3f46/white?text=U"} alt={chat.user} className="w-7 h-7 rounded-full shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[10px] font-black tracking-widest uppercase text-zinc-500 mb-0.5 truncate">{chat.user}</div>
+                    <div className="text-xs text-zinc-300 leading-snug">{chat.text}</div>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-0.5">
+                  <button 
+                    onClick={() => isChatActive ? handleClearScreen() : handleSelectDisplay(chat, false)} 
+                    className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-700"
+                  >
+                    <MessageCircle size={11} /> {isChatActive ? 'Hide Chat' : 'Show Chat'}
+                  </button>
+                  
+                  {(chat.sideA?.length > 0 || chat.sideB?.length > 0) && (
+                    <button 
+                      onClick={() => isVisualActive ? handleClearScreen() : handleSelectDisplay(chat, true)} 
+                      className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-500"
+                    >
+                      <ImageIcon size={11} /> {isVisualActive ? 'Close' : 'Visual'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          {regularChats.length === 0 && (
+            <div className="h-full flex flex-col items-center justify-center text-zinc-500 font-black uppercase tracking-widest text-xs py-10 px-6 text-center gap-2">
+              {connectionStatus ? (
+                <span className={connectionStatus.includes(' ') ? 'text-red-500' : ''}>{connectionStatus}</span>
+              ) : (
+                "No chats yet."
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* SUPER CHATS CONTAINER */}
+        <div className={`flex-1 overflow-y-auto custom-scrollbar p-2.5 space-y-2.5 min-h-0 ${activeSidebarTab === 'super' ? 'block' : 'hidden'}`}>
+          {[...superChats].reverse().map((chat) => {
+            const isChatActive = activeChat?.id === chat.id && !showGraphic;
+            const isVisualActive = activeChat?.id === chat.id && showGraphic;
+            const isDismissed = dismissedChats.includes(chat.id);
+
+            return (
+              <div 
+                key={chat.id} 
+                className={`relative p-0.5 rounded-xl transition-all flex flex-col gap-2 
+                  ${isDismissed ? 'opacity-30 grayscale hover:opacity-80' : ''}
                   ${activeChat?.id === chat.id ? 'bg-zinc-400 scale-[1.02]' : 'bg-zinc-800/40 hover:bg-zinc-700/60'}
                 `}
               >
-                <div className="bg-[#111114] rounded-[10px] p-2 flex flex-col gap-2">
-                  <div className="flex gap-2.5 items-start">
-                    <img src={chat.avatar} alt={chat.user} className="w-8 h-8 rounded-full shrink-0 border border-zinc-700" />
+                <div className="bg-[#111114] rounded-[10px] p-2 flex flex-col gap-2 relative">
+                  
+                  {/* Dismiss Checkmark Button */}
+                  <button 
+                    onClick={(e) => handleToggleDismiss(chat.id, e)} 
+                    className={`absolute top-2 right-2 p-1.5 rounded-full transition-colors z-10
+                      ${isDismissed ? 'text-emerald-500 bg-emerald-500/20' : 'text-zinc-600 hover:text-white hover:bg-zinc-700'}
+                    `}
+                    title={isDismissed ? "Restore Chat" : "Mark as Done"}
+                  >
+                    <Check size={14} strokeWidth={isDismissed ? 3 : 2} />
+                  </button>
+
+                  <div className="flex gap-2.5 items-start pr-6">
+                    <img src={chat.avatar || "https://placehold.co/100x100/dc2626/white?text=VIP"} alt={chat.user} className="w-8 h-8 rounded-full shrink-0 border border-zinc-700" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <div className="text-[10px] font-black tracking-widest uppercase text-zinc-400 truncate">{chat.user}</div>
@@ -815,6 +923,7 @@ export default function OvertimeTab({
                     >
                       <MessageCircle size={11} /> {isChatActive ? 'Hide Chat' : 'Show Chat'}
                     </button>
+                    
                     {(chat.sideA?.length > 0 || chat.sideB?.length > 0) && (
                       <button 
                         onClick={() => isVisualActive ? handleClearScreen() : handleSelectDisplay(chat, true)} 
@@ -828,38 +937,61 @@ export default function OvertimeTab({
               </div>
             );
           })}
-
           {superChats.length === 0 && (
             <div className="h-full flex flex-col items-center justify-center text-zinc-500 font-black uppercase tracking-widest text-xs py-10 px-6 text-center gap-2">
-              {connectionStatus && connectionStatus.includes(' ') ? (
-                <span className="text-red-500">{connectionStatus}</span>
+              {connectionStatus ? (
+                <span className={connectionStatus.includes(' ') ? 'text-red-500' : ''}>{connectionStatus}</span>
               ) : (
-                "Waiting for Super Chats..."
+                "No chats yet."
               )}
             </div>
           )}
         </div>
+
       </div>
 
       {/* 3. UNIFIED SEARCH MODAL (ADD & SWAP) */}
       {playerSearch && (
-        <div onClick={() => setPlayerSearch(null)} className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-200">
-          <div onClick={(e) => e.stopPropagation()} className="bg-[#18181b] border border-zinc-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <div 
+          onClick={() => setPlayerSearch(null)}
+          className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-200"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#18181b] border border-zinc-700 rounded-2xl p-6 w-full max-w-md shadow-2xl"
+          >
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800">
               <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-                {playerSearch.type === 'swap' ? <><RefreshCw size={16} className="text-[#1b75bb]" /> Swap Player</> : <><Plus size={16} className="text-emerald-500" /> Add Player</>}
+                {playerSearch.type === 'swap' ? (
+                  <><RefreshCw size={16} className="text-[#1b75bb]" /> Swap Player</>
+                ) : (
+                  <><Plus size={16} className="text-emerald-500" /> Add Player</>
+                )}
               </h3>
-              <button onClick={() => setPlayerSearch(null)} className="text-zinc-500 hover:text-white"><X size={18} /></button>
+              <button onClick={() => setPlayerSearch(null)} className="text-zinc-500 hover:text-white">
+                <X size={18} />
+              </button>
             </div>
 
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
-              <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search player or pick (e.g. '2026')..." className="w-full bg-black border border-zinc-700 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-zinc-400 text-xs" autoFocus />
+              <input 
+                type="text" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search player, pick (e.g. '2026'), or DEF..." 
+                className="w-full bg-black border border-zinc-700 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-zinc-400 text-xs"
+                autoFocus
+              />
             </div>
 
             <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
               {searchResults.map(p => (
-                <div key={p.player_id} onClick={() => handlePlayerSelect(String(p.player_id))} className="p-2.5 bg-black/60 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 rounded-xl flex items-center justify-between cursor-pointer transition-colors group">
+                <div 
+                  key={p.player_id}
+                  onClick={() => handlePlayerSelect(String(p.player_id))}
+                  className="p-2.5 bg-black/60 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 rounded-xl flex items-center justify-between cursor-pointer transition-colors group"
+                >
                   <div className="flex items-center gap-3">
                     <User size={16} className="text-zinc-500" />
                     <div>
@@ -867,7 +999,9 @@ export default function OvertimeTab({
                       <div className="text-[10px] text-zinc-500 uppercase font-black">{p.position || 'NFL'} • {p.team || 'FA'}</div>
                     </div>
                   </div>
-                  <span className={`text-[10px] text-white px-2 py-1 rounded-md font-black uppercase transition-colors ${playerSearch.type === 'swap' ? 'bg-[#1b75bb] group-hover:bg-[#155e96]' : 'bg-emerald-600 group-hover:bg-emerald-500'}`}>Select</span>
+                  <span className={`text-[10px] text-white px-2 py-1 rounded-md font-black uppercase transition-colors ${playerSearch.type === 'swap' ? 'bg-[#1b75bb] group-hover:bg-[#155e96]' : 'bg-emerald-600 group-hover:bg-emerald-500'}`}>
+                    Select
+                  </span>
                 </div>
               ))}
               {searchQuery.length > 1 && searchResults.length === 0 && (
@@ -880,12 +1014,25 @@ export default function OvertimeTab({
 
       {/* 4. SLEEPER + ESPN INFO & STATS MODAL */}
       {selectedInfoPlayer && (
-        <div onClick={() => setInfoPlayerId(null)} className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-200">
-          <div onClick={(e) => e.stopPropagation()} className="bg-[#18181b] border border-zinc-700 rounded-2xl p-6 w-full max-w-4xl shadow-2xl space-y-4 max-h-[85vh] flex flex-col overflow-hidden relative">
-            <button onClick={() => setInfoPlayerId(null)} className="absolute top-4 right-4 text-zinc-500 hover:text-white z-10 bg-black/50 p-1.5 rounded-lg border border-zinc-800"><X size={18} /></button>
+        <div 
+          onClick={() => setInfoPlayerId(null)}
+          className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-200"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#18181b] border border-zinc-700 rounded-2xl p-6 w-full max-w-4xl shadow-2xl space-y-4 max-h-[85vh] flex flex-col overflow-hidden relative"
+          >
+            <button 
+              onClick={() => setInfoPlayerId(null)} 
+              className="absolute top-4 right-4 text-zinc-500 hover:text-white z-10 bg-black/50 p-1.5 rounded-lg border border-zinc-800"
+              title="Close"
+            >
+              <X size={18} />
+            </button>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-1 pt-2">
               
+              {/* Player Condensed Bio Banner */}
               <div className="flex flex-col sm:flex-row items-center justify-between bg-black/60 p-4 rounded-xl border border-zinc-800 shrink-0 gap-4">
                 <div className="flex items-center gap-4 w-full sm:w-auto">
                   {selectedInfoPlayer.position === 'DST' ? (
@@ -906,7 +1053,9 @@ export default function OvertimeTab({
                   )}
                   <div className="min-w-0">
                     <div className="text-2xl font-black text-white uppercase leading-none truncate pr-8 sm:pr-0">{selectedInfoPlayer.full_name}</div>
-                    <div className="text-xs font-bold text-[#1b75bb] uppercase tracking-wider mt-1">{selectedInfoPlayer.position} • {selectedInfoPlayer.team || 'Free Agent'} {selectedInfoPlayer.number ? `• #${selectedInfoPlayer.number}` : ''}</div>
+                    <div className="text-xs font-bold text-[#1b75bb] uppercase tracking-wider mt-1">
+                      {selectedInfoPlayer.position} • {selectedInfoPlayer.team || 'Free Agent'} {selectedInfoPlayer.number ? `• #${selectedInfoPlayer.number}` : ''}
+                    </div>
                   </div>
                   
                   {omfgScore && (
@@ -937,10 +1086,10 @@ export default function OvertimeTab({
                 </div>
               </div>
 
-              {/* 2026 GAME LOG & SCHEDULE TABLE */}
+              {/* 2026 SCHEDULE TABLE */}
               <div className="bg-black/40 p-3.5 rounded-xl border border-zinc-800">
                 <div className="text-[10px] text-zinc-400 font-black uppercase tracking-widest mb-3 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5"><Calendar size={13} className="text-[#1b75bb]" /> 2026 Game Log & Schedule</span>
+                  <span className="flex items-center gap-1.5"><Calendar size={13} className="text-[#1b75bb]" /> 2026 Team Schedule</span>
                   {infoLoading && <Loader2 size={12} className="animate-spin text-zinc-500" />}
                 </div>
                 {infoLoading ? (
@@ -959,20 +1108,18 @@ export default function OvertimeTab({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-zinc-800/60 font-bold text-white">
-                        {playerSchedule.map((game, idx) => {
-                          return (
-                            <tr key={idx} className="hover:bg-zinc-800/50 transition-colors">
-                              <td className="p-2.5 text-zinc-400">{game.week}</td>
-                              <td className="p-2.5 flex items-center gap-2">
-                                <span className="text-zinc-500 text-[10px]">{game.isHome ? 'VS' : '@'}</span>
-                                <img src={game.oppLogo} alt="" className="w-5 h-5 object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
-                                {game.opp}
-                              </td>
-                              <td className="p-2.5 text-right text-zinc-300">{game.date}</td>
-                              <td className="p-2.5 text-right text-zinc-500">{game.time}</td>
-                            </tr>
-                          );
-                        })}
+                        {playerSchedule.map((game, idx) => (
+                          <tr key={idx} className="hover:bg-zinc-800/50 transition-colors">
+                            <td className="p-2.5 text-zinc-400">{game.week}</td>
+                            <td className="p-2.5 flex items-center gap-2">
+                              <span className="text-zinc-500 text-[10px]">{game.isHome ? 'VS' : '@'}</span>
+                              <img src={game.oppLogo} alt="" className="w-5 h-5 object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
+                              {game.opp}
+                            </td>
+                            <td className="p-2.5 text-right text-zinc-300">{game.date}</td>
+                            <td className="p-2.5 text-right text-zinc-500">{game.time}</td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
@@ -1011,7 +1158,7 @@ export default function OvertimeTab({
                           return (
                             <tr key={i} className="hover:bg-zinc-800/50 transition-colors">
                               <td className="p-2.5 text-zinc-400">
-                                {statYear.year} {statYear.year === projYear ? <span className="text-emerald-500 text-[9px] ml-1">(PROJ)</span> : ''}
+                                {statYear.year} {statYear.year === '2026' ? <span className="text-emerald-500 text-[9px] ml-1">(PROJ)</span> : ''}
                               </td>
                               <td className="p-2.5">{statYear.Team || selectedInfoPlayer.team || '-'}</td>
                               {cols.map((col, j) => {
@@ -1043,11 +1190,19 @@ export default function OvertimeTab({
 
       {/* 5. SETTINGS MODAL */}
       {showSettings && (
-        <div onClick={() => setShowSettings(false)} className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-6">
-          <div onClick={(e) => e.stopPropagation()} className="bg-[#18181b] border border-zinc-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <div 
+          onClick={() => setShowSettings(false)}
+          className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-6"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#18181b] border border-zinc-700 rounded-2xl p-6 w-full max-w-md shadow-2xl"
+          >
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800">
               <h3 className="text-base font-black text-white uppercase tracking-wider">Live Chat Stream Setup</h3>
-              <button onClick={() => setShowSettings(false)} className="text-zinc-500 hover:text-white"><X size={18} /></button>
+              <button onClick={() => setShowSettings(false)} className="text-zinc-500 hover:text-white">
+                <X size={18} />
+              </button>
             </div>
 
             <div className="space-y-4">
@@ -1055,26 +1210,40 @@ export default function OvertimeTab({
                 <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">YouTube URL</label>
                 <input 
                   type="text" 
-                  value={streamUrl} 
+                  value={streamUrl}
                   onChange={(e) => {
                     setStreamUrl(e.target.value);
                     updateFirebaseState({ qa_streamUrl: e.target.value });
-                  }} 
+                  }}
                   placeholder="https://www.youtube.com/watch?v=..." 
-                  className="w-full bg-black border border-zinc-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-zinc-400 text-xs" 
+                  className="w-full bg-black border border-zinc-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-zinc-400 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Twitch Channel Name (Optional)</label>
+                <input 
+                  type="text" 
+                  value={twitchChannel}
+                  onChange={(e) => {
+                    setTwitchChannel(e.target.value);
+                    updateFirebaseState({ qa_twitchChannel: e.target.value });
+                  }}
+                  placeholder="e.g. selloutcrowds" 
+                  className="w-full bg-black border border-zinc-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-zinc-400 text-xs"
                 />
               </div>
 
               <button 
                 onClick={() => {
-                   const newStatus = !isConnected;
-                  setIsConnected(newStatus); 
+                  const newStatus = !isConnected;
+                  setIsConnected(newStatus);
                   updateFirebaseState({ qa_isConnected: newStatus });
-                  setShowSettings(false); 
-                }} 
-                className={`w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${isConnected ? 'bg-red-600 text-white' : 'bg-emerald-600 text-white'}`}
+                  setShowSettings(false);
+                }}
+                className={`w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${isConnected ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}
               >
-                {isConnected ? 'Disconnect Stream' : 'Connect Stream'}
+                {isConnected ? 'Disconnect Streams' : 'Connect Streams'}
               </button>
 
               <div className="pt-4 border-t border-zinc-800 space-y-2 mt-4">

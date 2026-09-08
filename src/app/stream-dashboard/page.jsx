@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Minus, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase'; 
+import tmi from 'tmi.js';
 
 import QandATab from '@/components/stream/tabs/QandATab';
 import BoomBustTab from '@/components/stream/tabs/BoomBustTab';
@@ -116,6 +117,7 @@ export default function StreamDashboardPage() {
   
   const [dashboardRole, setDashboardRole] = useState('HOST');
   const dashboardRoleRef = useRef('HOST');
+  const isMountedRef = useRef(true);
   
   const [timerSeconds, setTimerSeconds] = useState(3600);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -129,6 +131,7 @@ export default function StreamDashboardPage() {
   const gifTimeoutRef = useRef(null);
 
   const [streamUrl, setStreamUrl] = useState('');
+  const [twitchChannel, setTwitchChannel] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('Waiting for stream connection...');
   const [allChats, setAllChats] = useState([]);
@@ -151,6 +154,10 @@ export default function StreamDashboardPage() {
 
   useEffect(() => {
     document.title = "Stream Dashboard";
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -261,9 +268,160 @@ export default function StreamDashboardPage() {
     }
   };
 
-  useEffect(() => {
-    let isMounted = true; 
+  // --- SHARED QUEUE PROCESSOR ---
+  // Hoisted so both YouTube and Twitch can trigger this simultaneously
+  const processChatQueue = async () => {
+    isProcessingQueueRef.current = true;
 
+    while (chatQueueRef.current.length > 0 && isMountedRef.current) {
+      const msg = chatQueueRef.current.shift();
+
+      const existingFirebaseMap = new Map((allChatsRef.current || []).map(item => [item.id, item]));
+      if (existingFirebaseMap.has(msg.id) || parsedCacheRef.current[msg.id]) {
+        continue;
+      }
+
+      let parsedType = "chat";
+      let sideA_Ids = [];
+      let sideB_Ids = [];
+
+      if (!isFirstFetchRef.current) {
+        const textLower = (msg.text || "").toLowerCase();
+        const isSuperChat = !!msg.amount;
+        const hasQuestion = textLower.includes('?');
+        
+        const hasFantasyKeywords = [
+          'trade', 'give', 'get', 'send', 'receive', ' vs ', ' vs', 'start', 
+          'bench', 'drop', 'add', 'pick up', 'pickup', 'worth', 'thoughts', 
+          'dynasty', 'draft', 'keeper', 'keep', 'cut', 'roster', 'team', 'def', 
+          ' or ', ' over '
+        ].some(kw => textLower.includes(kw));
+
+        if (isSuperChat || hasQuestion || hasFantasyKeywords) {
+          try {
+            const aiRes = await fetch('/api/parse-chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: msg.text })
+            });
+            
+            if (!isMountedRef.current) break;
+
+            if (aiRes.ok) {
+              const aiData = await aiRes.json();
+              if (aiData && !aiData.error) {
+                parsedType = aiData.type || "chat";
+                const rawSideA = aiData.sideA || aiData.sidea || aiData.SideA || [];
+                const rawSideB = aiData.sideB || aiData.sideb || aiData.SideB || [];
+
+                if (rawSideA.length > 0) sideA_Ids = rawSideA.map(resolveNameToId).filter(id => id !== null);
+                if (rawSideB.length > 0) sideB_Ids = rawSideB.map(resolveNameToId).filter(id => id !== null);
+              }
+            } else {
+               const errText = await aiRes.text();
+               console.error(`Gemini API Error (${aiRes.status}):`, errText);
+            }
+            
+            await sleep(1500);
+
+          } catch(e) {
+            console.error("Gemini fetch failed:", e);
+          }
+        }
+      }
+
+      const finalMsg = {
+        id: msg.id,
+        user: msg.user,
+        avatar: msg.avatar,
+        text: msg.text,
+        amount: msg.amount,
+        color: msg.isSuperChat ? getSuperChatStyle(msg.youtubeColorTier) : null,
+        type: parsedType,
+        sideA: sideA_Ids,
+        sideB: sideB_Ids
+      };
+
+      parsedCacheRef.current[msg.id] = finalMsg;
+
+      if (isMountedRef.current) {
+          setAllChats(prev => {
+          const merged = [finalMsg, ...prev];
+          const unique = Array.from(new Map(merged.map(item => [item.id, item])).values()).slice(0, 500);
+          allChatsRef.current = unique;
+          updateFirebaseState({ qa_allChats: unique });
+          return unique;
+          });
+
+          if (finalMsg.amount) {
+          setPriorityQueue(prev => {
+              const mergedSupers = [...prev, finalMsg];
+              const uniqueSupers = Array.from(new Map(mergedSupers.map(item => [item.id, item])).values()).slice(0, 100);
+              updateFirebaseState({ qa_priorityQueue: uniqueSupers });
+              return uniqueSupers;
+          });
+          }
+      }
+    }
+
+    isFirstFetchRef.current = false;
+    isProcessingQueueRef.current = false;
+  };
+
+
+  // --- TWITCH CHAT REAL-TIME WEBSOCKET LISTENER ---
+  useEffect(() => {
+    let client = null;
+
+    if (dashboardRole === 'GUEST' || !isConnected || !twitchChannel.trim()) {
+      return;
+    }
+
+    const cleanChannel = twitchChannel.trim().toLowerCase().replace(/^#/, '');
+
+    try {
+      client = new tmi.Client({
+        options: { debug: false },
+        channels: [cleanChannel]
+      });
+
+      client.connect().catch(err => {
+        console.warn("Twitch Chat Connection Warning:", err);
+      });
+
+      client.on('message', (channel, tags, message, self) => {
+        if (self || !isMountedRef.current) return;
+
+        const msgId = tags.id || `twitch_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        const username = tags['display-name'] || tags.username || 'TwitchViewer';
+
+        const formattedMsg = {
+          id: msgId,
+          user: `${username} (Twitch)`,
+          avatar: 'https://placehold.co/100x100/9146FF/white?text=TW',
+          text: message,
+          amount: null,
+          color: null
+        };
+
+        chatQueueRef.current.push(formattedMsg);
+        if (!isProcessingQueueRef.current) {
+          processChatQueue();
+        }
+      });
+    } catch (err) {
+      console.error("Failed to initialize Twitch Chat Client:", err);
+    }
+
+    return () => {
+      if (client) {
+        client.disconnect().catch(() => {});
+      }
+    };
+  }, [isConnected, twitchChannel, dashboardRole]);
+
+  // --- YOUTUBE CHAT POLLING LISTENER ---
+  useEffect(() => {
     if (dashboardRole === 'GUEST') {
       if (isConnected) setConnectionStatus("🎧 Guest Mode: Syncing remotely...");
       clearTimeout(pollingTimeoutRef.current);
@@ -272,7 +430,7 @@ export default function StreamDashboardPage() {
 
     const fetchChat = async () => {
       if (!isDbLoadedRef.current) {
-        if (isMounted) setConnectionStatus("Loading player databases...");
+        if (isMountedRef.current) setConnectionStatus("Loading player databases...");
         pollingTimeoutRef.current = setTimeout(fetchChat, 2000);
         return;
       }
@@ -280,11 +438,16 @@ export default function StreamDashboardPage() {
       if (isFetchingRef.current) return;
 
       const videoId = extractVideoId(streamUrl);
-      if (!videoId) {
-        if (isMounted) {
-            setConnectionStatus("⚠️ Invalid YouTube URL");
+      if (!videoId && !twitchChannel.trim()) {
+        if (isMountedRef.current) {
+            setConnectionStatus("⚠️ Please enter a YouTube URL or Twitch Channel");
             setIsConnected(false);
         }
+        return;
+      }
+
+      if (!videoId) {
+        if (isMountedRef.current) setConnectionStatus("👾 Connected to Twitch Chat Only");
         return;
       }
 
@@ -297,7 +460,7 @@ export default function StreamDashboardPage() {
         
         const res = await fetch(url);
         
-        if (!isMounted) {
+        if (!isMountedRef.current) {
             isFetchingRef.current = false;
             return; 
         }
@@ -306,10 +469,10 @@ export default function StreamDashboardPage() {
         
         if (!res.ok || data.error) {
           console.warn("YouTube API Warning/Error:", data.error || data);
-          if (isMounted) setConnectionStatus(`⚠️ ${data.error?.message || data.error || 'Stream issue detected.'}`);
+          if (isMountedRef.current) setConnectionStatus(`⚠️ ${data.error?.message || data.error || 'Stream issue detected.'}`);
           
           if (res.status === 404 || res.status === 401) {
-            if (isMounted) setIsConnected(false);
+            if (isMountedRef.current) setIsConnected(false);
             liveChatIdRef.current = null;
             pageTokenRef.current = "";
             isFirstFetchRef.current = true; 
@@ -321,7 +484,7 @@ export default function StreamDashboardPage() {
           return;
         }
 
-        if (isMounted) setConnectionStatus(''); 
+        if (isMountedRef.current) setConnectionStatus(''); 
         
         if (data.liveChatId) {
           liveChatIdRef.current = data.liveChatId;
@@ -341,112 +504,14 @@ export default function StreamDashboardPage() {
 
       } catch (err) {
         console.error("Polling error:", err);
-        if (isMounted) setConnectionStatus("⚠️ Network error fetching chat.");
+        if (isMountedRef.current) setConnectionStatus("⚠️ Network error fetching chat.");
         isFetchingRef.current = false;
         pollingTimeoutRef.current = setTimeout(fetchChat, 10000); 
       }
     };
 
-    const processChatQueue = async () => {
-      isProcessingQueueRef.current = true;
-
-      while (chatQueueRef.current.length > 0 && isMounted) {
-        const msg = chatQueueRef.current.shift();
-
-        const existingFirebaseMap = new Map((allChatsRef.current || []).map(item => [item.id, item]));
-        if (existingFirebaseMap.has(msg.id) || parsedCacheRef.current[msg.id]) {
-          continue;
-        }
-
-        let parsedType = "chat";
-        let sideA_Ids = [];
-        let sideB_Ids = [];
-
-        if (!isFirstFetchRef.current) {
-          const textLower = (msg.text || "").toLowerCase();
-          const isSuperChat = !!msg.amount;
-          const hasQuestion = textLower.includes('?');
-          
-          const hasFantasyKeywords = [
-            'trade', 'give', 'get', 'send', 'receive', ' vs ', ' vs', 'start', 
-            'bench', 'drop', 'add', 'pick up', 'pickup', 'worth', 'thoughts', 
-            'dynasty', 'draft', 'keeper', 'keep', 'cut', 'roster', 'team', 'def', 
-            ' or ', ' over '
-          ].some(kw => textLower.includes(kw));
-
-          if (isSuperChat || hasQuestion || hasFantasyKeywords) {
-            try {
-              const aiRes = await fetch('/api/parse-chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: msg.text })
-              });
-              
-              if (!isMounted) break;
-
-              if (aiRes.ok) {
-                const aiData = await aiRes.json();
-                if (aiData && !aiData.error) {
-                  parsedType = aiData.type || "chat";
-                  const rawSideA = aiData.sideA || aiData.sidea || aiData.SideA || [];
-                  const rawSideB = aiData.sideB || aiData.sideb || aiData.SideB || [];
-
-                  if (rawSideA.length > 0) sideA_Ids = rawSideA.map(resolveNameToId).filter(id => id !== null);
-                  if (rawSideB.length > 0) sideB_Ids = rawSideB.map(resolveNameToId).filter(id => id !== null);
-                }
-              } else {
-                 const errText = await aiRes.text();
-                 console.error(`Gemini API Error (${aiRes.status}):`, errText);
-              }
-              
-              await sleep(1500);
-
-            } catch(e) {
-              console.error("Gemini fetch failed:", e);
-            }
-          }
-        }
-
-        const finalMsg = {
-          id: msg.id,
-          user: msg.user,
-          avatar: msg.avatar,
-          text: msg.text,
-          amount: msg.amount,
-          color: msg.isSuperChat ? getSuperChatStyle(msg.youtubeColorTier) : null,
-          type: parsedType,
-          sideA: sideA_Ids,
-          sideB: sideB_Ids
-        };
-
-        parsedCacheRef.current[msg.id] = finalMsg;
-
-        if (isMounted) {
-            setAllChats(prev => {
-            const merged = [finalMsg, ...prev];
-            const unique = Array.from(new Map(merged.map(item => [item.id, item])).values()).slice(0, 500);
-            allChatsRef.current = unique;
-            updateFirebaseState({ qa_allChats: unique });
-            return unique;
-            });
-
-            if (finalMsg.amount) {
-            setPriorityQueue(prev => {
-                const mergedSupers = [...prev, finalMsg];
-                const uniqueSupers = Array.from(new Map(mergedSupers.map(item => [item.id, item])).values()).slice(0, 100);
-                updateFirebaseState({ qa_priorityQueue: uniqueSupers });
-                return uniqueSupers;
-            });
-            }
-        }
-      }
-
-      isFirstFetchRef.current = false;
-      isProcessingQueueRef.current = false;
-    };
-
-    if (isConnected && streamUrl) {
-      setConnectionStatus("Connecting to YouTube API...");
+    if (isConnected && (streamUrl || twitchChannel)) {
+      setConnectionStatus("Connecting to Chat APIs...");
       fetchChat();
     } else {
       setConnectionStatus("Waiting for stream connection...");
@@ -457,11 +522,11 @@ export default function StreamDashboardPage() {
     }
 
     return () => {
-        isMounted = false;
         clearTimeout(pollingTimeoutRef.current);
     };
-  }, [isConnected, streamUrl, dashboardRole]); 
+  }, [isConnected, streamUrl, twitchChannel, dashboardRole]); 
 
+  // --- FIREBASE SNAPSHOT LISTENER ---
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'stream_state', 'live'), (docSnap) => {
       if (docSnap.exists()) {
@@ -506,6 +571,7 @@ export default function StreamDashboardPage() {
         }
 
         if (data.qa_streamUrl !== undefined) setStreamUrl(data.qa_streamUrl);
+        if (data.qa_twitchChannel !== undefined) setTwitchChannel(data.qa_twitchChannel);
         if (data.qa_isConnected !== undefined) setIsConnected(data.qa_isConnected);
         
         if (data.qa_priorityQueue !== undefined) {
@@ -796,6 +862,8 @@ export default function StreamDashboardPage() {
           <QandATab 
             streamUrl={streamUrl}
             setStreamUrl={setStreamUrl}
+            twitchChannel={twitchChannel}
+            setTwitchChannel={setTwitchChannel}
             isConnected={isConnected}
             setIsConnected={setIsConnected}
             connectionStatus={connectionStatus}
@@ -815,6 +883,8 @@ export default function StreamDashboardPage() {
           <OvertimeTab 
             streamUrl={streamUrl}
             setStreamUrl={setStreamUrl}
+            twitchChannel={twitchChannel}
+            setTwitchChannel={setTwitchChannel}
             isConnected={isConnected}
             setIsConnected={setIsConnected}
             connectionStatus={connectionStatus}

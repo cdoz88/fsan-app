@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Settings, X, Image as ImageIcon, MessageCircle, RefreshCw, Info, Search, User, RotateCcw, Calendar, History, Loader2, Plus, Zap, Beaker } from 'lucide-react';
+import { MessageSquare, Settings, X, Image as ImageIcon, MessageCircle, RefreshCw, Info, Search, User, RotateCcw, Calendar, History, Loader2, Plus, Zap, Beaker, Check } from 'lucide-react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -249,6 +249,8 @@ const getColumnsForPosition = (pos) => {
 export default function QandATab({
   streamUrl,
   setStreamUrl,
+  twitchChannel,
+  setTwitchChannel,
   isConnected,
   setIsConnected,
   connectionStatus,
@@ -264,6 +266,7 @@ export default function QandATab({
   const [showGraphic, setShowGraphic] = useState(false);
   const [customPlayerLists, setCustomPlayerLists] = useState(null);
   const [disabledPlayers, setDisabledPlayers] = useState({});
+  const [dismissedChats, setDismissedChats] = useState([]);
   const [playerSearch, setPlayerSearch] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -276,7 +279,6 @@ export default function QandATab({
 
   const regularChats = allChats.filter(chat => !chat.amount);
   const superChats = allChats.filter(chat => chat.amount);
-  const currentChatList = activeSidebarTab === 'live' ? regularChats : superChats;
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'stream_state', 'live'), (docSnap) => {
@@ -286,12 +288,12 @@ export default function QandATab({
         if (data.qa_showGraphic !== undefined) setShowGraphic(data.qa_showGraphic);
         if (data.qa_customPlayerLists !== undefined) setCustomPlayerLists(data.qa_customPlayerLists);
         if (data.qa_disabledPlayers !== undefined) setDisabledPlayers(data.qa_disabledPlayers);
+        if (data.qa_dismissedChats !== undefined) setDismissedChats(data.qa_dismissedChats);
       }
     });
     return () => unsub();
   }, []);
 
-  // Fetch Available OMFG Years on Mount
   useEffect(() => {
     const fetchYears = async () => {
       try {
@@ -453,6 +455,16 @@ export default function QandATab({
     updateFirebaseState({ qa_disabledPlayers: newState });
   };
 
+  const handleToggleDismiss = (chatId, e) => {
+    if (e) e.stopPropagation();
+    const newDismissed = dismissedChats.includes(chatId)
+      ? dismissedChats.filter(id => id !== chatId)
+      : [...dismissedChats, chatId];
+      
+    setDismissedChats(newDismissed);
+    updateFirebaseState({ qa_dismissedChats: newDismissed });
+  };
+
   const handlePlayerSelect = (newPlayerId) => {
     if (!playerSearch || !activeChat) return;
 
@@ -508,7 +520,8 @@ export default function QandATab({
     updateFirebaseState({
       qa_allChats: [],
       qa_priorityQueue: [],
-      qa_activeChat: null
+      qa_activeChat: null,
+      qa_dismissedChats: []
     });
   };
 
@@ -894,17 +907,101 @@ export default function QandATab({
           </button>
         </div>
 
-        {/* Tab Content List */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-2.5 space-y-2.5 min-h-0">
-          {[...currentChatList].reverse().map((chat) => {
+        {/* Tab Content List (CSS Hidden toggles to preserve scroll positions) */}
+        
+        {/* LIVE CHATS CONTAINER */}
+        <div className={`flex-1 overflow-y-auto custom-scrollbar p-2.5 space-y-2.5 min-h-0 ${activeSidebarTab === 'live' ? 'block' : 'hidden'}`}>
+          {[...regularChats].reverse().map((chat) => {
             const isChatActive = activeChat?.id === chat.id && !showGraphic;
             const isVisualActive = activeChat?.id === chat.id && showGraphic;
+            const isDismissed = dismissedChats.includes(chat.id);
 
-            return chat.amount ? (
-              // SUPER CHAT STYLING
-              <div key={chat.id} className={`p-0.5 rounded-xl transition-all flex flex-col gap-2 ${activeChat?.id === chat.id ? 'bg-zinc-400 scale-[1.02]' : 'bg-zinc-800/40 hover:bg-zinc-700/60'}`}>
-                <div className="bg-[#111114] rounded-[10px] p-2 flex flex-col gap-2">
-                  <div className="flex gap-2.5 items-start">
+            return (
+              <div 
+                key={chat.id} 
+                className={`relative p-2.5 rounded-xl border transition-all flex flex-col gap-2 
+                  ${isDismissed ? 'opacity-30 grayscale hover:opacity-80' : ''}
+                  ${activeChat?.id === chat.id ? 'bg-zinc-800/90 border-zinc-500 shadow-md' : 'bg-black/50 border-zinc-900 hover:border-zinc-800'}
+                `}
+              >
+                {/* Dismiss Checkmark Button */}
+                <button 
+                  onClick={(e) => handleToggleDismiss(chat.id, e)} 
+                  className={`absolute top-2 right-2 p-1.5 rounded-full transition-colors z-10
+                    ${isDismissed ? 'text-emerald-500 bg-emerald-500/20' : 'text-zinc-600 hover:text-white hover:bg-zinc-700'}
+                  `}
+                  title={isDismissed ? "Restore Chat" : "Mark as Done"}
+                >
+                  <Check size={14} strokeWidth={isDismissed ? 3 : 2} />
+                </button>
+
+                <div className="flex gap-2.5 items-start pr-6">
+                  <img src={chat.avatar || "https://placehold.co/100x100/3f3f46/white?text=U"} alt={chat.user} className="w-7 h-7 rounded-full shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[10px] font-black tracking-widest uppercase text-zinc-500 mb-0.5 truncate">{chat.user}</div>
+                    <div className="text-xs text-zinc-300 leading-snug">{chat.text}</div>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-0.5">
+                  <button 
+                    onClick={() => isChatActive ? handleClearScreen() : handleSelectDisplay(chat, false)} 
+                    className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-700"
+                  >
+                    <MessageCircle size={11} /> {isChatActive ? 'Hide Chat' : 'Show Chat'}
+                  </button>
+                  
+                  {(chat.sideA?.length > 0 || chat.sideB?.length > 0) && (
+                    <button 
+                      onClick={() => isVisualActive ? handleClearScreen() : handleSelectDisplay(chat, true)} 
+                      className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-500"
+                    >
+                      <ImageIcon size={11} /> {isVisualActive ? 'Close' : 'Visual'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          {regularChats.length === 0 && (
+            <div className="h-full flex flex-col items-center justify-center text-zinc-500 font-black uppercase tracking-widest text-xs py-10 px-6 text-center gap-2">
+              {connectionStatus ? (
+                <span className={connectionStatus.includes(' ') ? 'text-red-500' : ''}>{connectionStatus}</span>
+              ) : (
+                "No chats yet."
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* SUPER CHATS CONTAINER */}
+        <div className={`flex-1 overflow-y-auto custom-scrollbar p-2.5 space-y-2.5 min-h-0 ${activeSidebarTab === 'super' ? 'block' : 'hidden'}`}>
+          {[...superChats].reverse().map((chat) => {
+            const isChatActive = activeChat?.id === chat.id && !showGraphic;
+            const isVisualActive = activeChat?.id === chat.id && showGraphic;
+            const isDismissed = dismissedChats.includes(chat.id);
+
+            return (
+              <div 
+                key={chat.id} 
+                className={`relative p-0.5 rounded-xl transition-all flex flex-col gap-2 
+                  ${isDismissed ? 'opacity-30 grayscale hover:opacity-80' : ''}
+                  ${activeChat?.id === chat.id ? 'bg-zinc-400 scale-[1.02]' : 'bg-zinc-800/40 hover:bg-zinc-700/60'}
+                `}
+              >
+                <div className="bg-[#111114] rounded-[10px] p-2 flex flex-col gap-2 relative">
+                  
+                  {/* Dismiss Checkmark Button */}
+                  <button 
+                    onClick={(e) => handleToggleDismiss(chat.id, e)} 
+                    className={`absolute top-2 right-2 p-1.5 rounded-full transition-colors z-10
+                      ${isDismissed ? 'text-emerald-500 bg-emerald-500/20' : 'text-zinc-600 hover:text-white hover:bg-zinc-700'}
+                    `}
+                    title={isDismissed ? "Restore Chat" : "Mark as Done"}
+                  >
+                    <Check size={14} strokeWidth={isDismissed ? 3 : 2} />
+                  </button>
+
+                  <div className="flex gap-2.5 items-start pr-6">
                     <img src={chat.avatar || "https://placehold.co/100x100/dc2626/white?text=VIP"} alt={chat.user} className="w-8 h-8 rounded-full shrink-0 border border-zinc-700" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
@@ -922,7 +1019,6 @@ export default function QandATab({
                       <MessageCircle size={11} /> {isChatActive ? 'Hide Chat' : 'Show Chat'}
                     </button>
                     
-                    {/* Conditional Graphic Button */}
                     {(chat.sideA?.length > 0 || chat.sideB?.length > 0) && (
                       <button 
                         onClick={() => isVisualActive ? handleClearScreen() : handleSelectDisplay(chat, true)} 
@@ -934,39 +1030,9 @@ export default function QandATab({
                   </div>
                 </div>
               </div>
-            ) : (
-              // REGULAR CHAT STYLING
-              <div key={chat.id} className={`p-2.5 rounded-xl border transition-all flex flex-col gap-2 ${activeChat?.id === chat.id ? 'bg-zinc-800/90 border-zinc-500 shadow-md' : 'bg-black/50 border-zinc-900 hover:border-zinc-800'}`}>
-                <div className="flex gap-2.5 items-start">
-                  <img src={chat.avatar || "https://placehold.co/100x100/3f3f46/white?text=U"} alt={chat.user} className="w-7 h-7 rounded-full shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[10px] font-black tracking-widest uppercase text-zinc-500 mb-0.5 truncate">{chat.user}</div>
-                    <div className="text-xs text-zinc-300 leading-snug">{chat.text}</div>
-                  </div>
-                </div>
-                <div className="flex gap-2 mt-0.5">
-                  <button 
-                    onClick={() => isChatActive ? handleClearScreen() : handleSelectDisplay(chat, false)} 
-                    className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-700"
-                  >
-                    <MessageCircle size={11} /> {isChatActive ? 'Hide Chat' : 'Show Chat'}
-                  </button>
-                  
-                  {/* Conditional Graphic Button */}
-                  {(chat.sideA?.length > 0 || chat.sideB?.length > 0) && (
-                    <button 
-                      onClick={() => isVisualActive ? handleClearScreen() : handleSelectDisplay(chat, true)} 
-                      className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 border border-zinc-500"
-                    >
-                      <ImageIcon size={11} /> {isVisualActive ? 'Close' : 'Visual'}
-                    </button>
-                  )}
-                </div>
-              </div>
             );
           })}
-          
-          {currentChatList.length === 0 && (
+          {superChats.length === 0 && (
             <div className="h-full flex flex-col items-center justify-center text-zinc-500 font-black uppercase tracking-widest text-xs py-10 px-6 text-center gap-2">
               {connectionStatus ? (
                 <span className={connectionStatus.includes(' ') ? 'text-red-500' : ''}>{connectionStatus}</span>
@@ -976,6 +1042,7 @@ export default function QandATab({
             </div>
           )}
         </div>
+
       </div>
 
       {/* 3. UNIFIED SEARCH MODAL (ADD & SWAP) */}
@@ -1248,6 +1315,20 @@ export default function QandATab({
                 />
               </div>
 
+              <div>
+                <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Twitch Channel Name (Optional)</label>
+                <input 
+                  type="text" 
+                  value={twitchChannel}
+                  onChange={(e) => {
+                    setTwitchChannel(e.target.value);
+                    updateFirebaseState({ qa_twitchChannel: e.target.value });
+                  }}
+                  placeholder="e.g. selloutcrowds" 
+                  className="w-full bg-black border border-zinc-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-zinc-400 text-xs"
+                />
+              </div>
+
               <button 
                 onClick={() => {
                   const newStatus = !isConnected;
@@ -1257,7 +1338,7 @@ export default function QandATab({
                 }}
                 className={`w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${isConnected ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}
               >
-                {isConnected ? 'Disconnect Stream' : 'Connect Stream'}
+                {isConnected ? 'Disconnect Streams' : 'Connect Streams'}
               </button>
 
               <div className="pt-4 border-t border-zinc-800 space-y-2 mt-4">
