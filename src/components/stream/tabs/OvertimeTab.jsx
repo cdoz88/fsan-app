@@ -256,7 +256,9 @@ export default function OvertimeTab({
   connectionStatus,
   allChats,
   playerDB,
-  updateFirebaseState
+  updateFirebaseState,
+  handleClearAllChats,
+  handleInjectMockData
 }) {
   // --- OVERTIME COUNTDOWN STATE ---
   const [timeLeft, setTimeLeft] = useState(120); // 2 minutes
@@ -280,6 +282,7 @@ export default function OvertimeTab({
   const [omfgLoading, setOmfgLoading] = useState(false);
   const [availableYears, setAvailableYears] = useState([]);
 
+  // Filter out the live chat to only grab Super Chats!
   const regularChats = allChats.filter(chat => !chat.amount);
   const superChats = allChats.filter(chat => chat.amount);
 
@@ -446,6 +449,7 @@ export default function OvertimeTab({
     setCustomPlayerLists(null);
     setDisabledPlayers({});
     
+    // AUTOMATION: Pause the clock and reset it to 2:00 because we are actively answering
     updateFirebaseState({
       ot_activeChat: chatItem,
       ot_showGraphic: isGraphic,
@@ -463,6 +467,7 @@ export default function OvertimeTab({
     setCustomPlayerLists(null);
     setDisabledPlayers({});
     
+    // AUTOMATION: The screen is empty, so immediately start the 2:00 Sudden Death countdown!
     updateFirebaseState({
       ot_activeChat: null,
       ot_showGraphic: false,
@@ -524,24 +529,6 @@ export default function OvertimeTab({
     setPlayerSearch(null);
     setSearchQuery('');
     updateFirebaseState({ ot_customPlayerLists: newLists });
-  };
-
-  const handleInjectMockData = () => {
-    const mockSupers = MOCK_TEST_CHATS.filter(c => c.amount);
-    updateFirebaseState({
-      qa_allChats: MOCK_TEST_CHATS,
-      qa_priorityQueue: mockSupers
-    });
-    setShowSettings(false);
-  };
-
-  const handleClearMockData = () => {
-    updateFirebaseState({
-      qa_allChats: [],
-      qa_priorityQueue: [],
-      ot_activeChat: null,
-      ot_dismissedChats: []
-    });
   };
 
   const getESPNHeadshot = (espnId) => `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${espnId}.png&w=350&h=254`;
@@ -655,6 +642,15 @@ export default function OvertimeTab({
           <div className={`text-[10px] font-bold tracking-widest uppercase leading-none ${cardStyle.text} drop-shadow-md mb-0.5`}>{firstName}</div>
           <div className="text-xl font-black text-white tracking-tight truncate w-full drop-shadow-lg leading-none uppercase">{lastName}</div>
         </div>
+
+        {/* Info Icon Button (Bottom Right) */}
+        <button 
+          onClick={(e) => { e.stopPropagation(); setInfoPlayerId(playerId); }}
+          className="absolute bottom-2 right-2 z-40 p-1.5 bg-zinc-900/80 hover:bg-[#1b75bb] text-zinc-400 hover:text-white rounded-full border border-zinc-700/50 backdrop-blur-md transition-colors shadow-lg cursor-pointer"
+          title="Player Info & Stats"
+        >
+          <Info size={14} />
+        </button>
       </div>
     );
   };
@@ -738,13 +734,13 @@ export default function OvertimeTab({
         ) : (
           <div className="flex-1 flex flex-col p-6 overflow-hidden min-h-0">
             
-            <div className={`bg-gradient-to-r ${activeChat.color.replace('text-white', '').replace('text-black', '')} p-0.5 rounded-2xl shadow-xl mb-4 shrink-0 animate-in slide-in-from-top-3 duration-300`}>
+            <div className={`bg-gradient-to-r ${(activeChat.color || 'bg-amber-500 border-amber-300 text-black').replace('text-white', '').replace('text-black', '')} p-0.5 rounded-2xl shadow-xl mb-4 shrink-0 animate-in slide-in-from-top-3 duration-300`}>
               <div className={`bg-[#111114] rounded-[14px] flex items-center relative overflow-hidden transition-all duration-300 ${showGraphic ? 'p-4 gap-4' : 'p-6 md:p-8 gap-6'}`}>
                 <img src={activeChat.avatar} alt={activeChat.user} className={`${showGraphic ? 'w-10 h-10 border' : 'w-16 h-16 md:w-20 md:h-20 border-2'} rounded-full border-zinc-600 shadow-md shrink-0 z-10 transition-all duration-300`} />
                 <div className="flex-1 min-w-0 z-10">
                   <div className="flex items-center gap-3 mb-1">
                     <span className={`${showGraphic ? 'text-[11px]' : 'text-sm md:text-base'} font-black tracking-widest uppercase text-zinc-400 transition-all duration-300`}>{activeChat.user}</span>
-                    <span className={`${showGraphic ? 'text-[10px] px-2 py-0.5' : 'text-xs md:text-sm px-3 py-1'} font-black rounded uppercase tracking-wider ${activeChat.color} transition-all duration-300`}>{activeChat.amount}</span>
+                    <span className={`${showGraphic ? 'text-[10px] px-2 py-0.5' : 'text-xs md:text-sm px-3 py-1'} font-black rounded uppercase tracking-wider ${activeChat.color || 'text-amber-500'} transition-all duration-300`}>{activeChat.amount}</span>
                   </div>
                   <div className={`text-white font-bold leading-snug break-words transition-all duration-300 ${showGraphic ? 'text-xl md:text-2xl' : 'text-4xl md:text-5xl'}`}>"{activeChat.text}"</div>
                 </div>
@@ -814,6 +810,8 @@ export default function OvertimeTab({
           </button>
         </div>
 
+        {/* Tab Content List (CSS Hidden toggles to preserve scroll positions) */}
+        
         {/* LIVE CHATS CONTAINER */}
         <div className={`flex-1 overflow-y-auto custom-scrollbar p-2.5 space-y-2.5 min-h-0 ${activeSidebarTab === 'live' ? 'block' : 'hidden'}`}>
           {[...regularChats].reverse().map((chat) => {
@@ -911,7 +909,7 @@ export default function OvertimeTab({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <div className="text-[10px] font-black tracking-widest uppercase text-zinc-400 truncate">{chat.user}</div>
-                        <div className={`text-[9px] font-black px-1.5 rounded-sm border drop-shadow-md uppercase tracking-wider ${chat.color}`}>{chat.amount}</div>
+                        <div className={`text-[9px] font-black px-1.5 rounded-sm border drop-shadow-md uppercase tracking-wider ${chat.color || 'text-amber-500'}`}>{chat.amount}</div>
                       </div>
                       <div className="text-xs text-zinc-200 leading-snug font-medium">{chat.text}</div>
                     </div>
@@ -952,46 +950,23 @@ export default function OvertimeTab({
 
       {/* 3. UNIFIED SEARCH MODAL (ADD & SWAP) */}
       {playerSearch && (
-        <div 
-          onClick={() => setPlayerSearch(null)}
-          className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-200"
-        >
-          <div 
-            onClick={(e) => e.stopPropagation()}
-            className="bg-[#18181b] border border-zinc-700 rounded-2xl p-6 w-full max-w-md shadow-2xl"
-          >
+        <div onClick={() => setPlayerSearch(null)} className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-200">
+          <div onClick={(e) => e.stopPropagation()} className="bg-[#18181b] border border-zinc-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800">
               <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-                {playerSearch.type === 'swap' ? (
-                  <><RefreshCw size={16} className="text-[#1b75bb]" /> Swap Player</>
-                ) : (
-                  <><Plus size={16} className="text-emerald-500" /> Add Player</>
-                )}
+                {playerSearch.type === 'swap' ? <><RefreshCw size={16} className="text-[#1b75bb]" /> Swap Player</> : <><Plus size={16} className="text-emerald-500" /> Add Player</>}
               </h3>
-              <button onClick={() => setPlayerSearch(null)} className="text-zinc-500 hover:text-white">
-                <X size={18} />
-              </button>
+              <button onClick={() => setPlayerSearch(null)} className="text-zinc-500 hover:text-white"><X size={18} /></button>
             </div>
 
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
-              <input 
-                type="text" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search player, pick (e.g. '2026'), or DEF..." 
-                className="w-full bg-black border border-zinc-700 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-zinc-400 text-xs"
-                autoFocus
-              />
+              <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search player or pick (e.g. '2026')..." className="w-full bg-black border border-zinc-700 rounded-xl pl-9 pr-3 py-2.5 text-white focus:outline-none focus:border-zinc-400 text-xs" autoFocus />
             </div>
 
             <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
               {searchResults.map(p => (
-                <div 
-                  key={p.player_id}
-                  onClick={() => handlePlayerSelect(String(p.player_id))}
-                  className="p-2.5 bg-black/60 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 rounded-xl flex items-center justify-between cursor-pointer transition-colors group"
-                >
+                <div key={p.player_id} onClick={() => handlePlayerSelect(String(p.player_id))} className="p-2.5 bg-black/60 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 rounded-xl flex items-center justify-between cursor-pointer transition-colors group">
                   <div className="flex items-center gap-3">
                     <User size={16} className="text-zinc-500" />
                     <div>
@@ -999,9 +974,7 @@ export default function OvertimeTab({
                       <div className="text-[10px] text-zinc-500 uppercase font-black">{p.position || 'NFL'} • {p.team || 'FA'}</div>
                     </div>
                   </div>
-                  <span className={`text-[10px] text-white px-2 py-1 rounded-md font-black uppercase transition-colors ${playerSearch.type === 'swap' ? 'bg-[#1b75bb] group-hover:bg-[#155e96]' : 'bg-emerald-600 group-hover:bg-emerald-500'}`}>
-                    Select
-                  </span>
+                  <span className={`text-[10px] text-white px-2 py-1 rounded-md font-black uppercase transition-colors ${playerSearch.type === 'swap' ? 'bg-[#1b75bb] group-hover:bg-[#155e96]' : 'bg-emerald-600 group-hover:bg-emerald-500'}`}>Select</span>
                 </div>
               ))}
               {searchQuery.length > 1 && searchResults.length === 0 && (
@@ -1014,25 +987,12 @@ export default function OvertimeTab({
 
       {/* 4. SLEEPER + ESPN INFO & STATS MODAL */}
       {selectedInfoPlayer && (
-        <div 
-          onClick={() => setInfoPlayerId(null)}
-          className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-200"
-        >
-          <div 
-            onClick={(e) => e.stopPropagation()}
-            className="bg-[#18181b] border border-zinc-700 rounded-2xl p-6 w-full max-w-4xl shadow-2xl space-y-4 max-h-[85vh] flex flex-col overflow-hidden relative"
-          >
-            <button 
-              onClick={() => setInfoPlayerId(null)} 
-              className="absolute top-4 right-4 text-zinc-500 hover:text-white z-10 bg-black/50 p-1.5 rounded-lg border border-zinc-800"
-              title="Close"
-            >
-              <X size={18} />
-            </button>
+        <div onClick={() => setInfoPlayerId(null)} className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-in fade-in duration-200">
+          <div onClick={(e) => e.stopPropagation()} className="bg-[#18181b] border border-zinc-700 rounded-2xl p-6 w-full max-w-4xl shadow-2xl space-y-4 max-h-[85vh] flex flex-col overflow-hidden relative">
+            <button onClick={() => setInfoPlayerId(null)} className="absolute top-4 right-4 text-zinc-500 hover:text-white z-10 bg-black/50 p-1.5 rounded-lg border border-zinc-800"><X size={18} /></button>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-1 pt-2">
               
-              {/* Player Condensed Bio Banner */}
               <div className="flex flex-col sm:flex-row items-center justify-between bg-black/60 p-4 rounded-xl border border-zinc-800 shrink-0 gap-4">
                 <div className="flex items-center gap-4 w-full sm:w-auto">
                   {selectedInfoPlayer.position === 'DST' ? (
@@ -1053,9 +1013,7 @@ export default function OvertimeTab({
                   )}
                   <div className="min-w-0">
                     <div className="text-2xl font-black text-white uppercase leading-none truncate pr-8 sm:pr-0">{selectedInfoPlayer.full_name}</div>
-                    <div className="text-xs font-bold text-[#1b75bb] uppercase tracking-wider mt-1">
-                      {selectedInfoPlayer.position} • {selectedInfoPlayer.team || 'Free Agent'} {selectedInfoPlayer.number ? `• #${selectedInfoPlayer.number}` : ''}
-                    </div>
+                    <div className="text-xs font-bold text-[#1b75bb] uppercase tracking-wider mt-1">{selectedInfoPlayer.position} • {selectedInfoPlayer.team || 'Free Agent'} {selectedInfoPlayer.number ? `• #${selectedInfoPlayer.number}` : ''}</div>
                   </div>
                   
                   {omfgScore && (
@@ -1086,10 +1044,10 @@ export default function OvertimeTab({
                 </div>
               </div>
 
-              {/* 2026 SCHEDULE TABLE */}
+              {/* 2026 GAME LOG & SCHEDULE TABLE */}
               <div className="bg-black/40 p-3.5 rounded-xl border border-zinc-800">
                 <div className="text-[10px] text-zinc-400 font-black uppercase tracking-widest mb-3 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5"><Calendar size={13} className="text-[#1b75bb]" /> 2026 Team Schedule</span>
+                  <span className="flex items-center gap-1.5"><Calendar size={13} className="text-[#1b75bb]" /> 2026 Game Log & Schedule</span>
                   {infoLoading && <Loader2 size={12} className="animate-spin text-zinc-500" />}
                 </div>
                 {infoLoading ? (
@@ -1108,18 +1066,20 @@ export default function OvertimeTab({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-zinc-800/60 font-bold text-white">
-                        {playerSchedule.map((game, idx) => (
-                          <tr key={idx} className="hover:bg-zinc-800/50 transition-colors">
-                            <td className="p-2.5 text-zinc-400">{game.week}</td>
-                            <td className="p-2.5 flex items-center gap-2">
-                              <span className="text-zinc-500 text-[10px]">{game.isHome ? 'VS' : '@'}</span>
-                              <img src={game.oppLogo} alt="" className="w-5 h-5 object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
-                              {game.opp}
-                            </td>
-                            <td className="p-2.5 text-right text-zinc-300">{game.date}</td>
-                            <td className="p-2.5 text-right text-zinc-500">{game.time}</td>
-                          </tr>
-                        ))}
+                        {playerSchedule.map((game, idx) => {
+                          return (
+                            <tr key={idx} className="hover:bg-zinc-800/50 transition-colors">
+                              <td className="p-2.5 text-zinc-400">{game.week}</td>
+                              <td className="p-2.5 flex items-center gap-2">
+                                <span className="text-zinc-500 text-[10px]">{game.isHome ? 'VS' : '@'}</span>
+                                <img src={game.oppLogo} alt="" className="w-5 h-5 object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
+                                {game.opp}
+                              </td>
+                              <td className="p-2.5 text-right text-zinc-300">{game.date}</td>
+                              <td className="p-2.5 text-right text-zinc-500">{game.time}</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -1158,7 +1118,7 @@ export default function OvertimeTab({
                           return (
                             <tr key={i} className="hover:bg-zinc-800/50 transition-colors">
                               <td className="p-2.5 text-zinc-400">
-                                {statYear.year} {statYear.year === '2026' ? <span className="text-emerald-500 text-[9px] ml-1">(PROJ)</span> : ''}
+                                {statYear.year} {statYear.year === projYear ? <span className="text-emerald-500 text-[9px] ml-1">(PROJ)</span> : ''}
                               </td>
                               <td className="p-2.5">{statYear.Team || selectedInfoPlayer.team || '-'}</td>
                               {cols.map((col, j) => {
@@ -1190,19 +1150,11 @@ export default function OvertimeTab({
 
       {/* 5. SETTINGS MODAL */}
       {showSettings && (
-        <div 
-          onClick={() => setShowSettings(false)}
-          className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-6"
-        >
-          <div 
-            onClick={(e) => e.stopPropagation()}
-            className="bg-[#18181b] border border-zinc-700 rounded-2xl p-6 w-full max-w-md shadow-2xl"
-          >
+        <div onClick={() => setShowSettings(false)} className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-6">
+          <div onClick={(e) => e.stopPropagation()} className="bg-[#18181b] border border-zinc-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800">
               <h3 className="text-base font-black text-white uppercase tracking-wider">Live Chat Stream Setup</h3>
-              <button onClick={() => setShowSettings(false)} className="text-zinc-500 hover:text-white">
-                <X size={18} />
-              </button>
+              <button onClick={() => setShowSettings(false)} className="text-zinc-500 hover:text-white"><X size={18} /></button>
             </div>
 
             <div className="space-y-4">
@@ -1210,13 +1162,13 @@ export default function OvertimeTab({
                 <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">YouTube URL</label>
                 <input 
                   type="text" 
-                  value={streamUrl}
+                  value={streamUrl} 
                   onChange={(e) => {
                     setStreamUrl(e.target.value);
                     updateFirebaseState({ qa_streamUrl: e.target.value });
-                  }}
+                  }} 
                   placeholder="https://www.youtube.com/watch?v=..." 
-                  className="w-full bg-black border border-zinc-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-zinc-400 text-xs"
+                  className="w-full bg-black border border-zinc-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-zinc-400 text-xs" 
                 />
               </div>
 
@@ -1236,12 +1188,12 @@ export default function OvertimeTab({
 
               <button 
                 onClick={() => {
-                  const newStatus = !isConnected;
-                  setIsConnected(newStatus);
+                   const newStatus = !isConnected;
+                  setIsConnected(newStatus); 
                   updateFirebaseState({ qa_isConnected: newStatus });
-                  setShowSettings(false);
-                }}
-                className={`w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${isConnected ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}
+                  setShowSettings(false); 
+                }} 
+                className={`w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${isConnected ? 'bg-red-600 text-white' : 'bg-emerald-600 text-white'}`}
               >
                 {isConnected ? 'Disconnect Streams' : 'Connect Streams'}
               </button>
@@ -1252,13 +1204,13 @@ export default function OvertimeTab({
                   <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Visual Testing</span>
                 </div>
                 <button 
-                  onClick={handleInjectMockData}
+                  onClick={() => { handleInjectMockData(); setShowSettings(false); }}
                   className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors bg-amber-600 hover:bg-amber-500 text-white shadow-md"
                 >
                   Inject Fake Chats
                 </button>
                 <button 
-                  onClick={handleClearMockData}
+                  onClick={() => { handleClearAllChats(); setShowSettings(false); }}
                   className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700"
                 >
                   Clear All Chats

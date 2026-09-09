@@ -432,7 +432,7 @@ export default function StreamDashboardPage() {
         avatar: msg.avatar,
         text: msg.text,
         amount: msg.amount,
-        color: msg.isSuperChat ? getSuperChatStyle(msg.youtubeColorTier) : null,
+        color: msg.amount ? (msg.color || getSuperChatStyle(msg.youtubeColorTier || 0)) : null,
         type: parsedType,
         sideA: sideA_Ids,
         sideB: sideB_Ids
@@ -573,6 +573,8 @@ export default function StreamDashboardPage() {
             pageTokenRef.current = "";
             isFirstFetchRef.current = true; 
             updateFirebaseState({ qa_isConnected: false });
+          } else if (res.status === 403) {
+            pollingTimeoutRef.current = setTimeout(fetchChat, 60000);
           } else {
             pollingTimeoutRef.current = setTimeout(fetchChat, 10000);
           }
@@ -670,6 +672,7 @@ export default function StreamDashboardPage() {
         if (data.qa_twitchChannel !== undefined) setTwitchChannel(data.qa_twitchChannel);
         if (data.qa_isConnected !== undefined) setIsConnected(data.qa_isConnected);
         
+        // Use the Ref to check role cleanly without causing hooks to re-trigger
         if (data.qa_priorityQueue !== undefined) {
           if (dashboardRoleRef.current === 'GUEST' || allChatsRef.current.length === 0) {
             setPriorityQueue(data.qa_priorityQueue);
@@ -795,7 +798,7 @@ export default function StreamDashboardPage() {
           font-family: 'Bitcount', monospace; 
         }
       `}} />
-
+      
       {/* 1. TOP SCOREBOARD HEADER */}
       <div className="flex items-center justify-between px-8 pt-4 pb-4 w-full relative z-20 shadow-[0_10px_30px_rgba(0,0,0,0.8)] bg-[#0a0a0c] border-b border-zinc-900 shrink-0 gap-6">
         

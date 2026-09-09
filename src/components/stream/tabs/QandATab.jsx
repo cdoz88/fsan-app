@@ -126,21 +126,6 @@ const MOCK_TEST_CHATS = [
   }
 ];
 
-const formatChatForFirebase = (chat) => {
-  if (!chat) return null;
-  return {
-    id: chat.id || null,
-    user: chat.user || "",
-    avatar: chat.avatar || "",
-    text: chat.text || "",
-    type: chat.type || "chat",
-    amount: chat.amount || null,  
-    color: chat.color || null,    
-    sideA: chat.sideA || [],
-    sideB: chat.sideB || []
-  };
-};
-
 // --- DATA HELPERS ---
 const formatNumber = (val, decimals = 1) => {
   if (val === null || val === undefined || val === '' || val === '-') return '-';
@@ -258,7 +243,9 @@ export default function QandATab({
   priorityQueue,
   setPriorityQueue,
   playerDB,
-  updateFirebaseState
+  updateFirebaseState,
+  handleClearAllChats,
+  handleInjectMockData
 }) {
   const [showSettings, setShowSettings] = useState(false);
   const [activeSidebarTab, setActiveSidebarTab] = useState('live');
@@ -266,7 +253,7 @@ export default function QandATab({
   const [showGraphic, setShowGraphic] = useState(false);
   const [customPlayerLists, setCustomPlayerLists] = useState(null);
   const [disabledPlayers, setDisabledPlayers] = useState({});
-  const [dismissedChats, setDismissedChats] = useState([]);
+  const [dismissedChats, setDismissedChats] = useState([]); // Track completed chats
   const [playerSearch, setPlayerSearch] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -294,6 +281,7 @@ export default function QandATab({
     return () => unsub();
   }, []);
 
+  // Fetch Available OMFG Years on Mount
   useEffect(() => {
     const fetchYears = async () => {
       try {
@@ -389,7 +377,17 @@ export default function QandATab({
   }, [infoPlayerId, playerDB, availableYears]);
 
   const handleSelectDisplay = (chatItem, isGraphic) => {
-    const formattedChat = formatChatForFirebase(chatItem);
+    const formattedChat = {
+      id: chatItem.id || null,
+      user: chatItem.user || "",
+      avatar: chatItem.avatar || "",
+      text: chatItem.text || "",
+      type: chatItem.type || "chat",
+      amount: chatItem.amount || null,  
+      color: chatItem.color || null,    
+      sideA: chatItem.sideA || [],
+      sideB: chatItem.sideB || []
+    };
     setActiveChat(formattedChat);
     setShowGraphic(isGraphic);
     setCustomPlayerLists(null);
@@ -405,7 +403,17 @@ export default function QandATab({
 
   const handleSelectPriorityDisplay = (chatItem, isGraphic) => {
     const newQueue = priorityQueue.filter(item => item.id !== chatItem.id);
-    const formattedChat = formatChatForFirebase(chatItem);
+    const formattedChat = {
+      id: chatItem.id || null,
+      user: chatItem.user || "",
+      avatar: chatItem.avatar || "",
+      text: chatItem.text || "",
+      type: chatItem.type || "chat",
+      amount: chatItem.amount || null,  
+      color: chatItem.color || null,    
+      sideA: chatItem.sideA || [],
+      sideB: chatItem.sideB || []
+    };
     
     setPriorityQueue(newQueue);
     setActiveChat(formattedChat);
@@ -505,24 +513,6 @@ export default function QandATab({
     setSearchQuery('');
     
     updateFirebaseState({ qa_customPlayerLists: newLists });
-  };
-
-  const handleInjectMockData = () => {
-    const mockSupers = MOCK_TEST_CHATS.filter(c => c.amount);
-    updateFirebaseState({
-      qa_allChats: MOCK_TEST_CHATS,
-      qa_priorityQueue: mockSupers
-    });
-    setShowSettings(false);
-  };
-
-  const handleClearMockData = () => {
-    updateFirebaseState({
-      qa_allChats: [],
-      qa_priorityQueue: [],
-      qa_activeChat: null,
-      qa_dismissedChats: []
-    });
   };
 
   const getESPNHeadshot = (espnId) => `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${espnId}.png&w=350&h=254`;
@@ -702,6 +692,15 @@ export default function QandATab({
             {lastName}
           </div>
         </div>
+
+        {/* Info Icon Button (Bottom Right) */}
+        <button 
+          onClick={(e) => { e.stopPropagation(); setInfoPlayerId(playerId); }}
+          className="absolute bottom-2 right-2 z-40 p-1.5 bg-zinc-900/80 hover:bg-[#1b75bb] text-zinc-400 hover:text-white rounded-full border border-zinc-700/50 backdrop-blur-md transition-colors shadow-lg cursor-pointer"
+          title="Player Info & Stats"
+        >
+          <Info size={14} />
+        </button>
       </div>
     );
   };
@@ -750,7 +749,7 @@ export default function QandATab({
             </div>
             
             {/* Show only the next person in line */}
-            <div className={`bg-gradient-to-r ${priorityQueue[0].color.replace('text-white', '').replace('text-black', '')} p-0.5 rounded-xl shadow-lg animate-in slide-in-from-top-2`}>
+            <div className={`bg-gradient-to-r ${(priorityQueue[0].color || 'bg-amber-500 border-amber-300 text-black').replace('text-white', '').replace('text-black', '')} p-0.5 rounded-xl shadow-lg animate-in slide-in-from-top-2`}>
               <div className="bg-[#111114] rounded-[10px] p-3 flex justify-between items-center gap-4">
                 
                 <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -758,7 +757,7 @@ export default function QandATab({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="text-[10px] font-black tracking-widest uppercase text-zinc-400">{priorityQueue[0].user}</span>
-                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border drop-shadow-md uppercase tracking-wider ${priorityQueue[0].color}`}>{priorityQueue[0].amount}</span>
+                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border drop-shadow-md uppercase tracking-wider ${priorityQueue[0].color || 'text-amber-500'}`}>{priorityQueue[0].amount}</span>
                     </div>
                     <div className="text-sm text-zinc-200 font-medium truncate">"{priorityQueue[0].text}"</div>
                   </div>
@@ -819,13 +818,13 @@ export default function QandATab({
             
             {/* Conditional Styling based on if it's a Super Chat */}
             {activeChat.amount ? (
-              <div className={`bg-gradient-to-r ${activeChat.color.replace('text-white', '').replace('text-black', '')} p-0.5 rounded-2xl shadow-xl mb-4 shrink-0 animate-in slide-in-from-top-3 duration-300`}>
+              <div className={`bg-gradient-to-r ${(activeChat.color || 'bg-amber-500 border-amber-300 text-black').replace('text-white', '').replace('text-black', '')} p-0.5 rounded-2xl shadow-xl mb-4 shrink-0 animate-in slide-in-from-top-3 duration-300`}>
                 <div className={`bg-[#111114] rounded-[14px] flex items-center relative overflow-hidden transition-all duration-300 ${showGraphic ? 'p-4 gap-4' : 'p-6 md:p-8 gap-6'}`}>
                   <img src={activeChat.avatar || "https://placehold.co/100x100/dc2626/white?text=VIP"} alt={activeChat.user} className={`${showGraphic ? 'w-10 h-10 border' : 'w-16 h-16 md:w-20 md:h-20 border-2'} rounded-full border-zinc-600 shadow-md shrink-0 z-10 transition-all duration-300`} />
                   <div className="flex-1 min-w-0 z-10">
                     <div className="flex items-center gap-3 mb-1">
                       <span className={`${showGraphic ? 'text-[11px]' : 'text-sm md:text-base'} font-black tracking-widest uppercase text-zinc-400 transition-all duration-300`}>{activeChat.user}</span>
-                      <span className={`${showGraphic ? 'text-[10px] px-2 py-0.5' : 'text-xs md:text-sm px-3 py-1'} font-black rounded uppercase tracking-wider ${activeChat.color} transition-all duration-300`}>{activeChat.amount}</span>
+                      <span className={`${showGraphic ? 'text-[10px] px-2 py-0.5' : 'text-xs md:text-sm px-3 py-1'} font-black rounded uppercase tracking-wider ${activeChat.color || 'text-amber-500'} transition-all duration-300`}>{activeChat.amount}</span>
                     </div>
                     <div className={`text-white font-bold leading-snug break-words transition-all duration-300 ${showGraphic ? 'text-xl md:text-2xl' : 'text-4xl md:text-5xl'}`}>"{activeChat.text}"</div>
                   </div>
@@ -1006,7 +1005,7 @@ export default function QandATab({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <div className="text-[10px] font-black tracking-widest uppercase text-zinc-400 truncate">{chat.user}</div>
-                        <div className={`text-[9px] font-black px-1.5 rounded-sm border drop-shadow-md uppercase tracking-wider ${chat.color}`}>{chat.amount}</div>
+                        <div className={`text-[9px] font-black px-1.5 rounded-sm border drop-shadow-md uppercase tracking-wider ${chat.color || 'text-amber-500'}`}>{chat.amount}</div>
                       </div>
                       <div className="text-xs text-zinc-200 leading-snug font-medium">{chat.text}</div>
                     </div>
@@ -1347,13 +1346,13 @@ export default function QandATab({
                   <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Visual Testing</span>
                 </div>
                 <button 
-                  onClick={handleInjectMockData}
+                  onClick={() => { handleInjectMockData(); setShowSettings(false); }}
                   className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors bg-amber-600 hover:bg-amber-500 text-white shadow-md"
                 >
                   Inject Fake Chats
                 </button>
                 <button 
-                  onClick={handleClearMockData}
+                  onClick={() => { handleClearAllChats(); setShowSettings(false); }}
                   className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700"
                 >
                   Clear All Chats
