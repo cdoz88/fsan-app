@@ -86,6 +86,64 @@ const TEAM_DSTS = NFL_TEAMS.reduce((acc, team) => {
   return acc;
 }, {});
 
+const MOCK_TEST_CHATS = [
+  {
+    id: 'mock_1',
+    user: 'FantasyGuru99',
+    avatar: 'https://placehold.co/100x100/1b75bb/white?text=FG',
+    text: 'Are we starting Josh Allen this week even in the snow?',
+    type: 'chat',
+    amount: null,
+    color: null,
+    sideA: [],
+    sideB: []
+  },
+  {
+    id: 'mock_2',
+    user: 'DynastyDan',
+    avatar: 'https://placehold.co/100x100/10b981/white?text=DD',
+    text: 'Need trade help ASAP! Giving away my first rounder for a haul.',
+    type: 'trade',
+    amount: '$10.00',
+    color: 'bg-yellow-500 border-yellow-300 text-black',
+    sideA: ['pick_2025_1'],
+    sideB: ['pick_2026_1', 'pick_2026_2']
+  },
+  {
+    id: 'mock_3',
+    user: 'KyleFanBoy',
+    avatar: 'https://placehold.co/100x100/f59e0b/white?text=KF',
+    text: 'Kyle is always right. Corey, your takes are wild today.',
+    type: 'chat',
+    amount: '$2.00',
+    color: 'bg-cyan-500 border-cyan-300 text-black',
+    sideA: [],
+    sideB: []
+  },
+  {
+    id: 'mock_4',
+    user: 'SleeperSavant',
+    avatar: 'https://placehold.co/100x100/ef4444/white?text=SS',
+    text: 'Who wins this trade? I am contending this year.',
+    type: 'trade',
+    amount: '$50.00',
+    color: 'bg-red-600 border-red-400 text-white',
+    sideA: ['pick_2025_1'],
+    sideB: ['pick_2025_2', 'pick_2026_3']
+  },
+  {
+    id: 'mock_5',
+    user: 'GridironGeek',
+    avatar: 'https://placehold.co/100x100/8b5cf6/white?text=GG',
+    text: 'This dashboard looks amazing guys! What happens if I send a really long chat message that spans multiple lines to test how the text wrapping works on the screen?',
+    type: 'chat',
+    amount: null,
+    color: null,
+    sideA: [],
+    sideB: []
+  }
+];
+
 const getSuperChatStyle = (tier) => {
   switch(Number(tier)) {
     case 1: return "bg-blue-600 border-blue-400 text-white";
@@ -266,6 +324,44 @@ export default function StreamDashboardPage() {
     } catch (err) {
       console.error("Failed to sync to Firebase:", err);
     }
+  };
+
+  // --- GLOBALLY HOISTED CONTROLS ---
+  const handleClearAllChats = () => {
+    // Clear strictly local memory for Host
+    setAllChats([]);
+    setPriorityQueue([]);
+    allChatsRef.current = [];
+    parsedCacheRef.current = {};
+    chatQueueRef.current = [];
+
+    // Clear Firebase state globally
+    updateFirebaseState({
+      qa_allChats: [],
+      qa_priorityQueue: [],
+      qa_activeChat: null,
+      qa_dismissedChats: [],
+      ot_activeChat: null,
+      ot_dismissedChats: []
+    });
+  };
+
+  const handleInjectMockData = () => {
+    const mockSupers = MOCK_TEST_CHATS.filter(c => c.amount);
+    
+    // Inject directly into local memory for Host
+    setAllChats(MOCK_TEST_CHATS);
+    allChatsRef.current = MOCK_TEST_CHATS;
+    setPriorityQueue(mockSupers);
+    MOCK_TEST_CHATS.forEach(m => {
+      parsedCacheRef.current[m.id] = m;
+    });
+
+    // Sync to Firebase for Guests
+    updateFirebaseState({
+      qa_allChats: MOCK_TEST_CHATS,
+      qa_priorityQueue: mockSupers
+    });
   };
 
   // --- SHARED QUEUE PROCESSOR ---
@@ -699,7 +795,7 @@ export default function StreamDashboardPage() {
           font-family: 'Bitcount', monospace; 
         }
       `}} />
-      
+
       {/* 1. TOP SCOREBOARD HEADER */}
       <div className="flex items-center justify-between px-8 pt-4 pb-4 w-full relative z-20 shadow-[0_10px_30px_rgba(0,0,0,0.8)] bg-[#0a0a0c] border-b border-zinc-900 shrink-0 gap-6">
         
@@ -872,6 +968,8 @@ export default function StreamDashboardPage() {
             setPriorityQueue={setPriorityQueue}
             playerDB={playerDB}
             updateFirebaseState={updateFirebaseState}
+            handleClearAllChats={handleClearAllChats}
+            handleInjectMockData={handleInjectMockData}
           />
         )}
         
@@ -893,6 +991,8 @@ export default function StreamDashboardPage() {
             setPriorityQueue={setPriorityQueue}
             playerDB={playerDB}
             updateFirebaseState={updateFirebaseState}
+            handleClearAllChats={handleClearAllChats}
+            handleInjectMockData={handleInjectMockData}
           />
         )}
         
