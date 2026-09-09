@@ -10,6 +10,7 @@ export default function DynastyRankingsClient() {
   const [isSyncing, setIsSyncing] = useState(true);
   const [activeModal, setActiveModal] = useState(null);
   const [expandedRows, setExpandedRows] = useState(new Set());
+  const [isRegularSeason, setIsRegularSeason] = useState(false);
 
   // Hook into League Context
   const { getActiveLeagueData } = useLeague();
@@ -60,6 +61,10 @@ export default function DynastyRankingsClient() {
                 latestYear = String(activeWeekly[0].year);
                 latestWeek = activeWeekly[0].week;
             }
+            
+            // Check if regular season or RoS models are active
+            const hasRosOrWeekly = metaData.available_models.some(m => m.week !== 'Season' && m.week !== 'Preseason');
+            setIsRegularSeason(hasRosOrWeekly);
         }
 
         // Fetch Season, WoW, and ROS
@@ -490,7 +495,11 @@ export default function DynastyRankingsClient() {
           </div>
 
           <div className="flex bg-black/40 backdrop-blur-md p-1.5 rounded-full border border-white/10 shadow-2xl shrink-0 mt-4 md:mt-0 self-start md:self-end md:mb-8">
-            <Link href="/football/draft-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">Draft</Link>
+            {!isRegularSeason ? (
+              <Link href="/football/draft-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">Draft</Link>
+            ) : (
+              <Link href="/football/ros-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">RoS</Link>
+            )}
             <Link href="/football/redraft-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">Redraft</Link>
             <button className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all bg-white text-black shadow-md">Dynasty</button>
           </div>

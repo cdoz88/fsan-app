@@ -11,6 +11,7 @@ export default function DraftRankingsClient() {
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [activeModal, setActiveModal] = useState(null);
   const [latestYearDisplay, setLatestYearDisplay] = useState('2026');
+  const [isRegularSeason, setIsRegularSeason] = useState(false);
 
   // Hook into League Context
   const { getActiveLeagueData } = useLeague();
@@ -55,6 +56,10 @@ export default function DraftRankingsClient() {
                 activeSeason.sort((a, b) => Number(b.year) - Number(a.year));
                 latestYear = String(activeSeason[0].year);
             }
+            
+            // Check if regular season or RoS models are active
+            const hasRosOrWeekly = metaData.available_models.some(m => m.week !== 'Season' && m.week !== 'Preseason');
+            setIsRegularSeason(hasRosOrWeekly);
         }
         
         // Update the dynamic header display
@@ -394,7 +399,10 @@ export default function DraftRankingsClient() {
           </div>
 
           <div className="flex bg-black/40 backdrop-blur-md p-1.5 rounded-full border border-white/10 shadow-2xl shrink-0 mt-4 md:mt-0 self-start md:self-end md:mb-8">
-            <Link href="/football/draft-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all bg-white text-black shadow-md">Draft</Link>
+            <button className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all bg-white text-black shadow-md">Draft</button>
+            {isRegularSeason && (
+              <Link href="/football/ros-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">RoS</Link>
+            )}
             <Link href="/football/redraft-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">Redraft</Link>
             <Link href="/football/dynasty-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">Dynasty</Link>
           </div>
@@ -584,7 +592,7 @@ export default function DraftRankingsClient() {
                     </td>
                   </tr>
                 ) : visibleRankings.map((player, idx) => {
-                    const playerId = `${player.Player}-${idx}`;
+                    const playerId = `${player.Player || player.name}-${idx}`;
                     const isExpanded = expandedRows.has(playerId);
                     const playerName = player.Player || player.name || 'Unknown';
                     const playerUrl = `/player/${playerName.toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`;
@@ -609,10 +617,10 @@ export default function DraftRankingsClient() {
                         <td className="px-4 py-2.5">
                            <div className="flex items-center gap-3">
                              <Link href={playerUrl} onClick={(e) => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="text-sm font-black text-gray-100 tracking-tight hover:text-red-400 transition-colors">
-                               {player.Player}
+                               {playerName}
                              </Link>
-                             {player.Team && player.Team !== 'fa' && (
-                               <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${player.Team.toLowerCase()}.png`} alt={player.Team} className="w-6 h-6 object-contain drop-shadow-md" onError={(e) => e.target.style.display = 'none'} />
+                             {(player.Team || player.team) && (player.Team || player.team) !== 'fa' && (
+                               <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${(player.Team || player.team).toLowerCase()}.png`} alt={player.Team || player.team} className="w-6 h-6 object-contain drop-shadow-md" onError={(e) => e.target.style.display = 'none'} />
                              )}
                            </div>
                         </td>

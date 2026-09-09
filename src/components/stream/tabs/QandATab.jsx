@@ -126,6 +126,21 @@ const MOCK_TEST_CHATS = [
   }
 ];
 
+const formatChatForFirebase = (chat) => {
+  if (!chat) return null;
+  return {
+    id: chat.id || null,
+    user: chat.user || "",
+    avatar: chat.avatar || "",
+    text: chat.text || "",
+    type: chat.type || "chat",
+    amount: chat.amount || null,  
+    color: chat.color || null,    
+    sideA: chat.sideA || [],
+    sideB: chat.sideB || []
+  };
+};
+
 // --- DATA HELPERS ---
 const formatNumber = (val, decimals = 1) => {
   if (val === null || val === undefined || val === '' || val === '-') return '-';
@@ -377,17 +392,7 @@ export default function QandATab({
   }, [infoPlayerId, playerDB, availableYears]);
 
   const handleSelectDisplay = (chatItem, isGraphic) => {
-    const formattedChat = {
-      id: chatItem.id || null,
-      user: chatItem.user || "",
-      avatar: chatItem.avatar || "",
-      text: chatItem.text || "",
-      type: chatItem.type || "chat",
-      amount: chatItem.amount || null,  
-      color: chatItem.color || null,    
-      sideA: chatItem.sideA || [],
-      sideB: chatItem.sideB || []
-    };
+    const formattedChat = formatChatForFirebase(chatItem);
     setActiveChat(formattedChat);
     setShowGraphic(isGraphic);
     setCustomPlayerLists(null);
@@ -403,17 +408,7 @@ export default function QandATab({
 
   const handleSelectPriorityDisplay = (chatItem, isGraphic) => {
     const newQueue = priorityQueue.filter(item => item.id !== chatItem.id);
-    const formattedChat = {
-      id: chatItem.id || null,
-      user: chatItem.user || "",
-      avatar: chatItem.avatar || "",
-      text: chatItem.text || "",
-      type: chatItem.type || "chat",
-      amount: chatItem.amount || null,  
-      color: chatItem.color || null,    
-      sideA: chatItem.sideA || [],
-      sideB: chatItem.sideB || []
-    };
+    const formattedChat = formatChatForFirebase(chatItem);
     
     setPriorityQueue(newQueue);
     setActiveChat(formattedChat);
@@ -843,12 +838,12 @@ export default function QandATab({
             )}
 
             {showGraphic && (currentSideA.length > 0 || currentSideB.length > 0) && (
-              <div className="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar min-h-0">
+              <div className="flex-1 flex items-start sm:items-center justify-center p-2 overflow-auto custom-scrollbar min-h-0">
                 
                 {activeChat.type === 'trade' || currentSideB.length > 0 ? (
-                  <div className="flex items-center justify-center gap-6 max-w-full">
-                    <div className="flex flex-col items-center gap-3 w-full max-w-[460px]">
-                      <div className="flex flex-wrap items-center justify-center gap-3">
+                  <div className="flex items-center justify-center gap-4 lg:gap-6 min-w-max px-4">
+                    <div className="flex flex-col items-center gap-3 w-[440px] shrink-0">
+                      <div className="flex flex-wrap items-center justify-center gap-3 w-full">
                         {currentSideA.map(pId => renderDNOLandscapeCard(pId, 'sideA'))}
                       </div>
                       {renderAddPlayerButton('sideA')}
@@ -856,15 +851,15 @@ export default function QandATab({
                     
                     <div className="text-zinc-500 text-3xl font-black italic uppercase tracking-widest shrink-0 px-2">VS</div>
                     
-                    <div className="flex flex-col items-center gap-3 w-full max-w-[460px]">
-                      <div className="flex flex-wrap items-center justify-center gap-3">
+                    <div className="flex flex-col items-center gap-3 w-[440px] shrink-0">
+                      <div className="flex flex-wrap items-center justify-center gap-3 w-full">
                         {currentSideB.map(pId => renderDNOLandscapeCard(pId, 'sideB'))}
                       </div>
                       {renderAddPlayerButton('sideB')}
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-3 w-full max-w-[780px] py-2">
+                  <div className="flex flex-col items-center gap-3 w-full max-w-[800px] py-2 px-4">
                     <div className="flex flex-wrap items-center justify-center gap-4">
                       {currentSideA.map(pId => renderDNOLandscapeCard(pId, 'sideA'))}
                     </div>

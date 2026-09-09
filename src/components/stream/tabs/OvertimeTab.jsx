@@ -68,63 +68,20 @@ const TEAM_DSTS = NFL_TEAMS.reduce((acc, team) => {
   return acc;
 }, {});
 
-const MOCK_TEST_CHATS = [
-  {
-    id: 'mock_1',
-    user: 'FantasyGuru99',
-    avatar: 'https://placehold.co/100x100/1b75bb/white?text=FG',
-    text: 'Are we starting Josh Allen this week even in the snow?',
-    type: 'chat',
-    amount: null,
-    color: null,
-    sideA: [],
-    sideB: []
-  },
-  {
-    id: 'mock_2',
-    user: 'DynastyDan',
-    avatar: 'https://placehold.co/100x100/10b981/white?text=DD',
-    text: 'Need trade help ASAP! Giving away my first rounder for a haul.',
-    type: 'trade',
-    amount: '$10.00',
-    color: 'bg-yellow-500 border-yellow-300 text-black',
-    sideA: ['pick_2025_1'],
-    sideB: ['pick_2026_1', 'pick_2026_2']
-  },
-  {
-    id: 'mock_3',
-    user: 'KyleFanBoy',
-    avatar: 'https://placehold.co/100x100/f59e0b/white?text=KF',
-    text: 'Kyle is always right. Corey, your takes are wild today.',
-    type: 'chat',
-    amount: '$2.00',
-    color: 'bg-cyan-500 border-cyan-300 text-black',
-    sideA: [],
-    sideB: []
-  },
-  {
-    id: 'mock_4',
-    user: 'SleeperSavant',
-    avatar: 'https://placehold.co/100x100/ef4444/white?text=SS',
-    text: 'Who wins this trade? I am contending this year.',
-    type: 'trade',
-    amount: '$50.00',
-    color: 'bg-red-600 border-red-400 text-white',
-    sideA: ['pick_2025_1'],
-    sideB: ['pick_2025_2', 'pick_2026_3']
-  },
-  {
-    id: 'mock_5',
-    user: 'GridironGeek',
-    avatar: 'https://placehold.co/100x100/8b5cf6/white?text=GG',
-    text: 'This dashboard looks amazing guys! What happens if I send a really long chat message that spans multiple lines to test how the text wrapping works on the screen?',
-    type: 'chat',
-    amount: null,
-    color: null,
-    sideA: [],
-    sideB: []
-  }
-];
+const formatChatForFirebase = (chat) => {
+  if (!chat) return null;
+  return {
+    id: chat.id || null,
+    user: chat.user || "",
+    avatar: chat.avatar || "",
+    text: chat.text || "",
+    type: chat.type || "chat",
+    amount: chat.amount || null,  
+    color: chat.color || null,    
+    sideA: chat.sideA || [],
+    sideB: chat.sideB || []
+  };
+};
 
 // --- DATA HELPERS ---
 const formatNumber = (val, decimals = 1) => {
@@ -229,21 +186,6 @@ const getColumnsForPosition = (pos) => {
   }
 
   return [baseCols[0], ...specificCols, baseCols[1], baseCols[2]];
-};
-
-const formatChatForFirebase = (chat) => {
-  if (!chat) return null;
-  return {
-    id: chat.id || null,
-    user: chat.user || "",
-    avatar: chat.avatar || "",
-    text: chat.text || "",
-    type: chat.type || "chat",
-    amount: chat.amount || null,  
-    color: chat.color || null,    
-    sideA: chat.sideA || [],
-    sideB: chat.sideB || []
-  };
 };
 
 export default function OvertimeTab({
@@ -748,11 +690,11 @@ export default function OvertimeTab({
             </div>
 
             {showGraphic && (currentSideA.length > 0 || currentSideB.length > 0) && (
-              <div className="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar min-h-0">
+              <div className="flex-1 flex items-start sm:items-center justify-center p-2 overflow-auto custom-scrollbar min-h-0">
                 {activeChat.type === 'trade' || currentSideB.length > 0 ? (
-                  <div className="flex items-center justify-center gap-6 max-w-full">
-                    <div className="flex flex-col items-center gap-3 w-full max-w-[460px]">
-                      <div className="flex flex-wrap items-center justify-center gap-3">
+                  <div className="flex items-center justify-center gap-4 lg:gap-6 min-w-max px-4">
+                    <div className="flex flex-col items-center gap-3 w-[440px] shrink-0">
+                      <div className="flex flex-wrap items-center justify-center gap-3 w-full">
                         {currentSideA.map(pId => renderDNOLandscapeCard(pId, 'sideA'))}
                       </div>
                       {renderAddPlayerButton('sideA')}
@@ -760,15 +702,15 @@ export default function OvertimeTab({
                     
                     <div className="text-zinc-500 text-3xl font-black italic uppercase tracking-widest shrink-0 px-2">VS</div>
                     
-                    <div className="flex flex-col items-center gap-3 w-full max-w-[460px]">
-                      <div className="flex flex-wrap items-center justify-center gap-3">
+                    <div className="flex flex-col items-center gap-3 w-[440px] shrink-0">
+                      <div className="flex flex-wrap items-center justify-center gap-3 w-full">
                         {currentSideB.map(pId => renderDNOLandscapeCard(pId, 'sideB'))}
                       </div>
                       {renderAddPlayerButton('sideB')}
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-3 w-full max-w-[780px] py-2">
+                  <div className="flex flex-col items-center gap-3 w-full max-w-[800px] py-2 px-4">
                     <div className="flex flex-wrap items-center justify-center gap-4">
                       {currentSideA.map(pId => renderDNOLandscapeCard(pId, 'sideA'))}
                     </div>

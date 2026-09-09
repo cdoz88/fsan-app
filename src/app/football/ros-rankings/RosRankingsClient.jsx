@@ -2,15 +2,15 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Settings, RefreshCw, Trophy, ListOrdered, ChevronDown, ChevronUp, Info, Search, X } from 'lucide-react'; 
+import { Settings, RefreshCw, Trophy, ListOrdered, ChevronDown, ChevronUp, Info, X, Search } from 'lucide-react'; 
 import { useLeague } from '../../../context/LeagueContext'; 
 
-export default function RankingsClient() {
+export default function RosRankingsClient() {
   const [playersData, setPlayersData] = useState([]);
   const [isSyncing, setIsSyncing] = useState(true);
   const [expandedRows, setExpandedRows] = useState(new Set());
-  const [latestWeekDisplay, setLatestWeekDisplay] = useState('Player');
-  const [isRegularSeason, setIsRegularSeason] = useState(false);
+  const [activeModal, setActiveModal] = useState(null);
+  const [latestYearDisplay, setLatestYearDisplay] = useState('2026');
 
   // Hook into League Context
   const { getActiveLeagueData } = useLeague();
@@ -43,31 +43,29 @@ export default function RankingsClient() {
     async function loadData() {
       setIsSyncing(true);
       try {
-        const metaRes = await fetch(`/api/omfg-data?year=2026&week=Week 1`);
+        // Fetch metadata to find the most recent season available
+        const metaRes = await fetch(`/api/omfg-data?year=2026&week=Season`);
         const metaData = await metaRes.json();
         let latestYear = '2026';
-        let latestWeek = 'Week 1';
         
         if (metaData.available_models) {
-            const activeWeekly = metaData.available_models.filter(m => m.week !== 'Season');
-            if (activeWeekly.length > 0) {
-                latestYear = String(activeWeekly[0].year);
-                latestWeek = activeWeekly[0].week;
+            const activeSeason = metaData.available_models.filter(m => m.week === 'Season');
+            if (activeSeason.length > 0) {
+                // Sort descending by year
+                activeSeason.sort((a, b) => Number(b.year) - Number(a.year));
+                latestYear = String(activeSeason[0].year);
             }
-            
-            // Check if regular season or RoS models are active
-            const hasRosOrWeekly = metaData.available_models.some(m => m.week !== 'Season' && m.week !== 'Preseason');
-            setIsRegularSeason(hasRosOrWeekly);
         }
         
         // Update the dynamic header display
-        setLatestWeekDisplay(latestWeek);
+        setLatestYearDisplay(latestYear);
 
-        const res = await fetch(`/api/omfg-data?year=${latestYear}&week=${latestWeek}`);
+        // Fetch Rest of Season data specifically
+        const res = await fetch(`/api/omfg-data?year=${latestYear}&week=${encodeURIComponent('Rest of Season')}`);
         const data = await res.json();
         setPlayersData(data.success && data.players ? data.players : []);
       } catch (err) {
-        console.error("Error loading Rankings data", err);
+        console.error("Error loading Rest of Season Rankings data", err);
       } finally {
         setIsSyncing(false);
       }
@@ -75,48 +73,77 @@ export default function RankingsClient() {
     loadData();
   }, []);
 
+  // Bulletproof Stat Extractor specifically for the scoring engine
+  const extractStat = (player, matchRules) => {
+    if (!player) return 0;
+    const normalize = (str) => String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
+    const isValid = (val) => val !== undefined && val !== null && val !== '' && val !== '-';
+
+    for (const rule of matchRules) {
+      const normRule = normalize(rule);
+      for (const [key, value] of Object.entries(player)) {
+        if (!isValid(value)) continue;
+        if (normalize(key) === normRule) return Number(value) || 0;
+      }
+    }
+
+    for (const rule of matchRules) {
+      const normRule = normalize(rule);
+      for (const [key, value] of Object.entries(player)) {
+        if (!isValid(value)) continue;
+        const strippedKey = normalize(key).replace(/^projected/, '').replace(/^actual/, '');
+        if (strippedKey === normRule) return Number(value) || 0;
+      }
+    }
+    return 0;
+  };
+
   const processedRankings = useMemo(() => {
     let basePlayers = playersData || [];
     
     // Position Filtering
     if (currentPosition === 'FLEX') {
-        basePlayers = basePlayers.filter(p => ['RB', 'WR', 'TE'].includes(p.Position));
+        basePlayers = basePlayers.filter(p => ['RB', 'WR', 'TE'].includes(p.Position) || ['RB', 'WR', 'TE'].includes(p.position));
     } else {
-        basePlayers = basePlayers.filter(p => p.Position === currentPosition);
+        basePlayers = basePlayers.filter(p => (p.Position || p.position) === currentPosition);
     }
 
     const recalculated = basePlayers.map(player => {
-        const baseProj = Number(player['Projected Fantasy Points']) || 0;
-        const pos = player.Position;
+        // Handle variations in JSON keys for full season
+        const P50 = Number(player['Base (P50)'] ?? player['Projected Fantasy Points'] ?? player['ROS Base Points']) || 0;
+        const P25 = Number(player['Floor (P25)'] ?? player['ROS Floor Points']) || P50 * 0.85; 
+        const P75 = Number(player['Ceiling (P75)'] ?? player['ROS Ceiling Points']) || P50 * 1.15;
         
-        // Extract raw stats
-        const passTds = Number(player['Pass Td'] || player['PASS TDS']) || 0;
-        const receptions = Number(player['Receptions'] || player['REC']) || 0;
+        const pos = player.Position || player.position;
+        
+        // Extract raw season stats for scoring engine dynamically
+        const passTds = extractStat(player, ['Pass Td', 'Pass TD', 'PASS TDS', 'Projected Pass Td', 'Projected Pass TDs']);
+        const receptions = extractStat(player, ['Receptions', 'Rec', 'REC', 'Projected Receptions']);
 
         // Dynamic Scoring Adjustments (Assumes base OMFG data is 0.5 PPR and 4pt Pass TD)
         const deltaPassTd = passTds * (currentPassTdValue - 4);
         const deltaPpr = receptions * (currentPprValue - 0.5);
-        const deltaTep = (pos === 'TE') ? (receptions * currentTePremium) : 0;
+        const deltaTep = (pos === 'TE' || pos === 'WR/TE') ? (receptions * currentTePremium) : 0;
+        const deltaTotal = deltaPassTd + deltaPpr + deltaTep;
         
-        const adjProjPts = baseProj + deltaPassTd + deltaPpr + deltaTep;
-        
-        // Determine Edge against Market
-        const consensusGap = Number(player['Consensus Rank Gap'] || player['Rank Gap']) || 0;
+        const adjP50 = P50 + deltaTotal;
+        const adjP25 = P25 + deltaTotal;
+        const adjP75 = P75 + deltaTotal;
         
         return {
             ...player,
-            adjProjPts,
-            consensusGap
+            adjProjPts: adjP50,
+            adjP25,
+            adjP75
         };
     });
 
     // Re-sort dynamically by adjusted points
     recalculated.sort((a, b) => b.adjProjPts - a.adjProjPts);
 
-    // Assign dynamic overall and positional ranks
     const posCounters = {};
     return recalculated.map((player, index) => {
-      const pos = player.Position || 'UNK';
+      const pos = player.Position || player.position || 'UNK';
       if (!posCounters[pos]) posCounters[pos] = 0;
       posCounters[pos] += 1;
       
@@ -152,26 +179,6 @@ export default function RankingsClient() {
     return isNaN(num) ? '-' : num.toFixed(decimals);
   };
 
-  const formatPct = (val) => {
-    if (val === null || val === undefined || val === '') return '-';
-    const cleanVal = String(val).replace('%', '').trim();
-    let num = Number(cleanVal);
-    if (isNaN(num)) return '-';
-    if (num <= 1 && num > 0) num = num * 100;
-    return `${Math.round(num)}%`;
-  };
-
-  const getProbColor = (val) => {
-    if (val === null || val === undefined || val === '') return 'text-gray-600';
-    const cleanVal = String(val).replace('%', '').trim();
-    let num = Number(cleanVal);
-    if (isNaN(num)) return 'text-gray-600';
-    const pct = (num <= 1 && num > 0) ? num * 100 : num;
-    if (pct >= 60) return 'text-blue-400';
-    if (pct >= 30) return 'text-blue-600';
-    return 'text-gray-600';
-  };
-
   // Fixed Absolute Scale Heatmap
   const getAbsoluteHeatmapColor = (val) => {
     if (val === null || val === undefined || val === '') return 'text-gray-400';
@@ -186,63 +193,6 @@ export default function RankingsClient() {
     if (num >= 25.0) return 'text-orange-300 font-bold';
     if (num >= 12.5) return 'text-red-400 font-bold';
     return 'text-red-600 font-bold';
-  };
-
-  // Relative Scale Heatmap for Expanded Stats
-  const inverseStats = useMemo(() => new Set([
-    'Projected Interceptions', 'Interceptions', 'Actual Interceptions', 'INT',
-    'Projected Fumbles', 'Fumbles', 'Actual Fumbles', 'FUM',
-    'Projected Points Allowed', 'Points Allowed', 'Actual Points Allowed', 'Pts Agn', 'PTS AGN',
-    'Projected Yards Allowed', 'Yards Allowed', 'Actual Yards Allowed', 'Yds Agn', 'YDS AGN'
-  ]), []);
-
-  const statThresholds = useMemo(() => {
-    if (!processedRankings || processedRankings.length === 0) return {};
-    const thresholds = {};
-    const allKeys = Object.keys(processedRankings[0]);
-
-    allKeys.forEach(stat => {
-      const values = processedRankings.map(p => p[stat])
-        .filter(v => v !== null && v !== undefined && v !== '')
-        .map(v => Number(v)).filter(v => !isNaN(v)).sort((a, b) => a - b);
-        
-      if (values.length > 0) {
-        thresholds[stat] = {
-          p90: values[Math.floor(values.length * 0.90)] || values[values.length - 1],
-          p75: values[Math.floor(values.length * 0.75)] || values[values.length - 1],
-          p25: values[Math.floor(values.length * 0.25)] || values[0],
-          p10: values[Math.floor(values.length * 0.10)] || values[0],
-        };
-      }
-    });
-    return thresholds;
-  }, [processedRankings]);
-
-  const getHeatmapClasses = (val, statKey) => {
-    if (val === null || val === undefined || val === '-') {
-      return 'bg-[#111] border-gray-900 text-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]';
-    }
-    const num = Number(val);
-    const thresh = statThresholds[statKey];
-    
-    if (!thresh || isNaN(num)) return 'bg-[#111] border-gray-900 text-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]';
-
-    const isInverse = inverseStats.has(statKey);
-    let isTop10 = num >= thresh.p90; let isTop25 = num >= thresh.p75 && num < thresh.p90;
-    let isBot25 = num <= thresh.p25 && num > thresh.p10; let isBot10 = num <= thresh.p10;
-
-    if (isInverse) {
-      isTop10 = num <= thresh.p10; isTop25 = num <= thresh.p25 && num > thresh.p10;
-      isBot25 = num >= thresh.p75 && num < thresh.p90; isBot10 = num >= thresh.p90;
-    }
-
-    if (thresh.p90 === thresh.p10) return 'bg-[#111] border-gray-900 text-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]';
-
-    if (isTop10) return 'bg-emerald-900/30 border-emerald-800/50 text-emerald-400 shadow-[inset_0_0_8px_rgba(16,185,129,0.2)]';
-    if (isTop25) return 'bg-emerald-900/10 border-emerald-800/30 text-emerald-300';
-    if (isBot10) return 'bg-red-900/30 border-red-800/50 text-red-400 shadow-[inset_0_0_8px_rgba(239,68,68,0.2)]';
-    if (isBot25) return 'bg-red-900/10 border-red-800/30 text-red-300';
-    return 'bg-[#111] border-gray-900 text-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]';
   };
 
   const getFlexibleValue = (player, matchRules) => {
@@ -288,84 +238,141 @@ export default function RankingsClient() {
   };
 
   const renderExpandedStats = (player) => {
-    const pos = player.Position;
+    const pos = player.Position || player.position;
     let stats = [];
 
     if (pos === 'QB') {
       stats = [
-        { label: 'Pass Att', val: getFlexibleValue(player, ['Projected Pass Attempts', 'Actual Pass Attempts', 'Pass Attempts', 'Pass Att']), key: 'Pass Attempts' },
-        { label: 'Pass Yds', val: getFlexibleValue(player, ['Projected Pass Yards', 'Actual Pass Yards', 'Pass Yards', 'Pass Yds']), key: 'Pass Yards' },
-        { label: 'Pass TD', val: getFlexibleValue(player, ['Projected Pass Td', 'Actual Pass Td', 'Projected Pass TDs', 'Actual Pass TDs', 'Pass Td', 'Pass TD']), key: 'Pass Td' },
-        { label: 'INTs', val: getFlexibleValue(player, ['Projected Interceptions', 'Actual Interceptions', 'Interceptions', 'INT', 'Ints']), key: 'Interceptions' },
-        { label: 'Rush Att', val: getFlexibleValue(player, ['Projected Rush Attempts', 'Actual Rush Attempts', 'Rush Attempts', 'Rush Att']), key: 'Rush Attempts' },
-        { label: 'Rush Yds', val: getFlexibleValue(player, ['Projected Rush Yards', 'Actual Rush Yards', 'Rush Yards', 'Rush Yds']), key: 'Rush Yards' },
-        { label: 'Rush TD', val: getFlexibleValue(player, ['Projected Rush Td', 'Actual Rush Td', 'Projected Rush TDs', 'Actual Rush TDs', 'Rush Td', 'Rush TD']), key: 'Rush Td' },
+        { label: 'Pass Att', val: getFlexibleValue(player, ['Projected Pass Attempts', 'Actual Pass Attempts', 'Pass Attempts', 'Pass Att']) },
+        { label: 'Pass Yds', val: getFlexibleValue(player, ['Projected Pass Yards', 'Actual Pass Yards', 'Pass Yards', 'Pass Yds']) },
+        { label: 'Pass TD', val: getFlexibleValue(player, ['Projected Pass Td', 'Actual Pass Td', 'Projected Pass TDs', 'Actual Pass TDs', 'Pass Td', 'Pass TD']) },
+        { label: 'INTs', val: getFlexibleValue(player, ['Projected Interceptions', 'Actual Interceptions', 'Interceptions', 'INT', 'Ints']) },
+        { label: 'Rush Att', val: getFlexibleValue(player, ['Projected Rush Attempts', 'Actual Rush Attempts', 'Rush Attempts', 'Rush Att']) },
+        { label: 'Rush Yds', val: getFlexibleValue(player, ['Projected Rush Yards', 'Actual Rush Yards', 'Rush Yards', 'Rush Yds']) },
+        { label: 'Rush TD', val: getFlexibleValue(player, ['Projected Rush Td', 'Actual Rush Td', 'Projected Rush TDs', 'Actual Rush TDs', 'Rush Td', 'Rush TD']) },
       ];
     } else if (pos === 'RB') {
       stats = [
-        { label: 'Rush Att', val: getFlexibleValue(player, ['Projected Rush Attempts', 'Actual Rush Attempts', 'Rush Attempts', 'Rush Att']), key: 'Rush Attempts' },
-        { label: 'Rush Yds', val: getFlexibleValue(player, ['Projected Rush Yards', 'Actual Rush Yards', 'Rush Yards', 'Rush Yds']), key: 'Rush Yards' },
-        { label: 'Rush TD', val: getFlexibleValue(player, ['Projected Rush Td', 'Actual Rush Td', 'Projected Rush TDs', 'Actual Rush TDs', 'Rush Td', 'Rush TD']), key: 'Rush Td' },
-        { label: 'Targets', val: getFlexibleValue(player, ['Projected Targets', 'Actual Targets', 'Targets']), key: 'Targets' },
-        { label: 'Recs', val: getFlexibleValue(player, ['Projected Receptions', 'Actual Receptions', 'Receptions']), key: 'Receptions' },
-        { label: 'Rec Yds', val: getFlexibleValue(player, ['Projected Receiving Yards', 'Actual Receiving Yards', 'Receiving Yards']), key: 'Receiving Yards' },
-        { label: 'Rec TD', val: getFlexibleValue(player, ['Projected Receiving Td', 'Actual Receiving Td', 'Receiving Td', 'Receiving TD', 'Rec Td']), key: 'Receiving Td' },
+        { label: 'Rush Att', val: getFlexibleValue(player, ['Projected Rush Attempts', 'Actual Rush Attempts', 'Rush Attempts', 'Rush Att']) },
+        { label: 'Rush Yds', val: getFlexibleValue(player, ['Projected Rush Yards', 'Actual Rush Yards', 'Rush Yards', 'Rush Yds']) },
+        { label: 'Rush TD', val: getFlexibleValue(player, ['Projected Rush Td', 'Actual Rush Td', 'Projected Rush TDs', 'Actual Rush TDs', 'Rush Td', 'Rush TD']) },
+        { label: 'Targets', val: getFlexibleValue(player, ['Projected Targets', 'Actual Targets', 'Targets']) },
+        { label: 'Recs', val: getFlexibleValue(player, ['Projected Receptions', 'Actual Receptions', 'Receptions', 'Rec']) },
+        { label: 'Rec Yds', val: getFlexibleValue(player, ['Projected Receiving Yards', 'Actual Receiving Yards', 'Receiving Yards', 'Rec Yds']) },
+        { label: 'Rec TD', val: getFlexibleValue(player, ['Projected Receiving Td', 'Actual Receiving Td', 'Receiving Td', 'Receiving TD', 'Rec Td']) },
       ];
     } else if (pos === 'WR' || pos === 'TE') {
       stats = [
-        { label: 'Targets', val: getFlexibleValue(player, ['Projected Targets', 'Actual Targets', 'Targets']), key: 'Targets' },
-        { label: 'Recs', val: getFlexibleValue(player, ['Projected Receptions', 'Actual Receptions', 'Receptions']), key: 'Receptions' },
-        { label: 'Rec Yds', val: getFlexibleValue(player, ['Projected Receiving Yards', 'Actual Receiving Yards', 'Receiving Yards']), key: 'Receiving Yards' },
-        { label: 'Rec TD', val: getFlexibleValue(player, ['Projected Receiving Td', 'Actual Receiving Td', 'Receiving Td', 'Receiving TD', 'Rec Td']), key: 'Receiving Td' },
-        { label: 'Air Yds', val: getFlexibleValue(player, ['Projected Air Yards', 'Actual Air Yards', 'Air Yards']), key: 'Air Yards' },
-        { label: '1st Reads', val: getFlexibleValue(player, ['Projected First Read Targets', 'Actual First Read Targets', 'First Read Targets', 'First-Read Targets']), key: 'First Read Targets' },
-        { label: 'EZ Tgts', val: getFlexibleValue(player, ['Projected End Zone Targets', 'Actual End Zone Targets', 'End Zone Targets', 'End-Zone Targets']), key: 'End Zone Targets' },
+        { label: 'Targets', val: getFlexibleValue(player, ['Projected Targets', 'Actual Targets', 'Targets']) },
+        { label: 'Recs', val: getFlexibleValue(player, ['Projected Receptions', 'Actual Receptions', 'Receptions', 'Rec']) },
+        { label: 'Rec Yds', val: getFlexibleValue(player, ['Projected Receiving Yards', 'Actual Receiving Yards', 'Receiving Yards', 'Rec Yds']) },
+        { label: 'Rec TD', val: getFlexibleValue(player, ['Projected Receiving Td', 'Actual Receiving Td', 'Receiving Td', 'Receiving TD', 'Rec Td']) },
+        { label: 'Air Yds', val: getFlexibleValue(player, ['Projected Air Yards', 'Actual Air Yards', 'Air Yards']) },
+        { label: '1st Reads', val: getFlexibleValue(player, ['Projected First Read Targets', 'Actual First Read Targets', 'First Read Targets', 'First-Read Targets']) },
+        { label: 'EZ Tgts', val: getFlexibleValue(player, ['Projected End Zone Targets', 'Actual End Zone Targets', 'End Zone Targets', 'End-Zone Targets']) },
       ];
     } else if (pos === 'K') {
       stats = [
-        { label: 'FG Att', val: getFlexibleValue(player, ['Projected FG Attempts', 'Actual FG Attempts', 'FG Attempts', 'FG Att', 'Projected Fga', 'Actual Fga', 'Fga']), key: 'Fga' },
-        { label: 'FG Made', val: getFlexibleValue(player, ['Projected FGs Made', 'Actual FGs Made', 'FGs Made', 'FG Made', 'Projected Fgm', 'Actual Fgm', 'Fgm']), key: 'Fgm' },
-        { label: 'FGA 40-49', val: getFlexibleValue(player, ['Projected 40-49 FG Attempts', 'Actual 40-49 FG Attempts', '40-49 FG Attempts', 'FGA 40-49', 'Projected Fga 40 49', 'Actual Fga 40 49', 'Fga 40 49']), key: 'Fga 40 49' },
-        { label: 'FGM 40-49', val: getFlexibleValue(player, ['Projected 40-49 FGs Made', 'Actual 40-49 FGs Made', '40-49 FGs Made', 'FGM 40-49', 'Projected Fgm 40 49', 'Actual Fgm 40 49', 'Fgm 40 49']), key: 'Fgm 40 49' },
-        { label: 'FGA 50+', val: getFlexibleValue(player, ['Projected 50+ FG Attempts', 'Actual 50+ FG Attempts', '50+ FG Attempts', 'FGA 50+', 'Projected Fga 50 Plus', 'Actual Fga 50 Plus', 'Fga 50 Plus']), key: 'Fga 50 Plus' },
-        { label: 'FGM 50+', val: getFlexibleValue(player, ['Projected 50+ FGs Made', 'Actual 50+ FGs Made', '50+ FGs Made', 'FGM 50+', 'Projected Fgm 50 Plus', 'Actual Fgm 50 Plus', 'Fgm 50 Plus']), key: 'Fgm 50 Plus' },
-        { label: 'XP Att', val: getFlexibleValue(player, ['Projected XP Attempts', 'Actual XP Attempts', 'XP Attempts', 'XP Att', 'Projected Xpa', 'Actual Xpa', 'Xpa']), key: 'Xpa' },
-        { label: 'XP Made', val: getFlexibleValue(player, ['Projected XPs Made', 'Actual XPs Made', 'XPs Made', 'XP Made', 'Projected Xpm', 'Actual Xpm', 'Xpm']), key: 'Xpm' },
+        { label: 'FG Att', val: getFlexibleValue(player, ['Projected FG Attempts', 'Actual FG Attempts', 'FG Attempts', 'FG Att', 'Projected Fga', 'Actual Fga', 'Fga']) },
+        { label: 'FG Made', val: getFlexibleValue(player, ['Projected FGs Made', 'Actual FGs Made', 'FGs Made', 'FG Made', 'Projected Fgm', 'Actual Fgm', 'Fgm']) },
+        { label: 'FGA 40-49', val: getFlexibleValue(player, ['Projected 40-49 FG Attempts', 'Actual 40-49 FG Attempts', '40-49 FG Attempts', 'FGA 40-49', 'Projected Fga 40 49', 'Actual Fga 40 49', 'Fga 40 49']) },
+        { label: 'FGM 40-49', val: getFlexibleValue(player, ['Projected 40-49 FGs Made', 'Actual 40-49 FGs Made', '40-49 FGs Made', 'FGM 40-49', 'Projected Fgm 40 49', 'Actual Fgm 40 49', 'Fgm 40 49']) },
+        { label: 'FGA 50+', val: getFlexibleValue(player, ['Projected 50+ FG Attempts', 'Actual 50+ FG Attempts', '50+ FG Attempts', 'FGA 50+', 'Projected Fga 50 Plus', 'Actual Fga 50 Plus', 'Fga 50 Plus']) },
+        { label: 'FGM 50+', val: getFlexibleValue(player, ['Projected 50+ FGs Made', 'Actual 50+ FGs Made', '50+ FGs Made', 'FGM 50+', 'Projected Fgm 50 Plus', 'Actual Fgm 50 Plus', 'Fgm 50 Plus']) },
+        { label: 'XP Att', val: getFlexibleValue(player, ['Projected XP Attempts', 'Actual XP Attempts', 'XP Attempts', 'XP Att', 'Projected Xpa', 'Actual Xpa', 'Xpa']) },
+        { label: 'XP Made', val: getFlexibleValue(player, ['Projected XPs Made', 'Actual XPs Made', 'XPs Made', 'XP Made', 'Projected Xpm', 'Actual Xpm', 'Xpm']) },
       ];
     } else if (pos === 'DST') {
       stats = [
-        { label: 'Sacks', val: getFlexibleValue(player, ['Projected Sacks', 'Actual Sacks', 'Sacks', 'SACK']), key: 'Sacks' },
-        { label: 'INTs', val: getFlexibleValue(player, ['Projected Interceptions', 'Actual Interceptions', 'Interceptions', 'INT', 'Ints', 'Int']), key: 'Interceptions' },
-        { label: 'Fum Rec', val: getFlexibleValue(player, ['Projected Fumbles', 'Actual Fumbles', 'Fumbles', 'Fumble Recoveries', 'Fumbles Recovered', 'Fum Rec', 'FUM REC']), key: 'Fumbles' },
-        { label: 'Def TDs', val: getFlexibleValue(player, ['Projected Defensive Tds', 'Actual Defensive Tds', 'Defensive Tds', 'Defensive Touchdowns', 'Def Tds', 'Def TD', 'DEF TD']), key: 'Defensive Tds' },
-        { label: 'Pts Allw', val: getFlexibleValue(player, ['Projected Points Allowed', 'Actual Points Allowed', 'Points Allowed', 'Pts Allow', 'Pts Agn', 'PTS AGN']), key: 'Points Allowed' },
-        { label: 'Yds Allw', val: getFlexibleValue(player, ['Projected Yards Allowed', 'Actual Yards Allowed', 'Yards Allowed', 'Yds Allow', 'Yds Agn', 'YDS AGN']), key: 'Yards Allowed' },
+        { label: 'Sacks', val: getFlexibleValue(player, ['Projected Sacks', 'Actual Sacks', 'Sacks', 'SACK']) },
+        { label: 'INTs', val: getFlexibleValue(player, ['Projected Interceptions', 'Actual Interceptions', 'Interceptions', 'INT', 'Ints', 'Int']) },
+        { label: 'Fum Rec', val: getFlexibleValue(player, ['Projected Fumbles', 'Actual Fumbles', 'Fumbles', 'Fumble Recoveries', 'Fumbles Recovered', 'Fum Rec', 'FUM REC']) },
+        { label: 'Def TDs', val: getFlexibleValue(player, ['Projected Defensive Tds', 'Actual Defensive Tds', 'Defensive Tds', 'Defensive Touchdowns', 'Def Tds', 'Def TD', 'DEF TD']) },
+        { label: 'Pts Allw', val: getFlexibleValue(player, ['Projected Points Allowed', 'Actual Points Allowed', 'Points Allowed', 'Pts Allow', 'Pts Agn', 'PTS AGN']) },
+        { label: 'Yds Allw', val: getFlexibleValue(player, ['Projected Yards Allowed', 'Actual Yards Allowed', 'Yards Allowed', 'Yds Allow', 'Yds Agn', 'YDS AGN']) },
       ];
     }
 
     return (
       <div className="flex flex-wrap gap-2 p-3">
-        {stats.map((stat, i) => {
-          const heatClass = getHeatmapClasses(stat.val, stat.key);
-          return (
-            <div key={i} className={`rounded-lg p-2 flex flex-col items-center justify-center text-center transition-colors border flex-1 min-w-[70px] ${heatClass}`}>
-              <span className="text-[8px] font-black uppercase text-gray-400 mb-0.5 tracking-widest leading-none">{stat.label}</span>
-              <span className="text-[13px] font-black leading-none mt-1">{formatNumber(stat.val)}</span>
-            </div>
-          );
-        })}
+        {stats.map((stat, i) => (
+          <div key={i} className="bg-[#111] border border-gray-900 rounded-lg p-2 flex flex-col items-center justify-center text-center text-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] flex-1 min-w-[70px]">
+            <span className="text-[8px] font-black uppercase text-gray-400 mb-0.5 tracking-widest leading-none">{stat.label}</span>
+            <span className="text-[13px] font-black leading-none mt-1">{formatNumber(stat.val)}</span>
+          </div>
+        ))}
       </div>
     );
   };
 
-  const prob1Header = currentPosition === 'TE' ? 'TOP 5' : (currentPosition === 'QB' || currentPosition === 'K' || currentPosition === 'DST') ? 'TOP 6' : 'TOP 12';
-  const prob2Header = (currentPosition === 'QB' || currentPosition === 'TE' || currentPosition === 'K' || currentPosition === 'DST') ? 'TOP 12' : 'TOP 24';
-  const prob3Header = (currentPosition === 'QB' || currentPosition === 'TE' || currentPosition === 'K' || currentPosition === 'DST') ? 'TOP 18' : 'TOP 36';
-  
-  const colSpanCount = currentPosition === 'FLEX' ? 11 : 10;
+  // --- Range Bar Visualizer ---
+  const minP25 = Math.min(...processedRankings.map(p => p.adjP25)) || 0;
+  const maxP75 = Math.max(...processedRankings.map(p => p.adjP75)) || 1;
+  const rangeSpan = (maxP75 - minP25) || 1;
+
+  const renderRangeVisualizer = (p25, p50, p75) => {
+    const leftPercent = Math.max(0, Math.min(100, ((p25 - minP25) / rangeSpan) * 100));
+    const widthPercent = Math.max(0, Math.min(100, ((p75 - p25) / rangeSpan) * 100));
+    const medianPercentOfBar = (p75 - p25) > 0 ? ((p50 - p25) / (p75 - p25)) * 100 : 50;
+
+    return (
+        <div className="flex flex-col items-center w-36 sm:w-48 mx-auto gap-1">
+          <div className="flex justify-between w-full text-[9px] font-bold text-gray-500">
+             <span>{p25.toFixed(1)}</span>
+             <span className="text-white">{p50.toFixed(1)}</span>
+             <span>{p75.toFixed(1)}</span>
+          </div>
+          <div className="w-full h-1.5 bg-gray-800 rounded-full relative shadow-inner">
+              <div 
+                  className="absolute h-full rounded-full bg-gradient-to-r from-red-500 via-orange-500 to-green-500 shadow-[0_0_8px_rgba(255,255,255,0.15)]" 
+                  style={{ left: `${leftPercent}%`, width: `${widthPercent}%` }}
+              >
+                  <div 
+                      className="absolute w-2.5 h-2.5 bg-white rounded-full top-1/2 -translate-y-1/2 -translate-x-1/2 shadow-md border border-gray-300"
+                      style={{ left: `${medianPercentOfBar}%` }}
+                  />
+              </div>
+          </div>
+        </div>
+    );
+  };
+
+  const colSpanCount = currentPosition === 'FLEX' ? 7 : 6;
 
   return (
     <div className="w-full animate-in fade-in duration-500 pb-24 relative">
+
+      {/* Modal for Outcome Range Tooltips */}
+      {activeModal === 'outcomeRange' && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#161616] border border-gray-800 w-full max-w-xl rounded-3xl p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <button onClick={() => setActiveModal(null)} className="absolute right-4 top-4 text-gray-500 hover:text-white transition-colors">
+              <X size={20} />
+            </button>
+            <h3 className="text-base font-black text-white uppercase tracking-wider mb-2 flex items-center gap-2">
+              <Info size={18} className="text-zinc-400" /> Outcome Range (P25 - P75) Methodology
+            </h3>
+            
+            <div className="space-y-4 text-xs font-medium text-gray-400 leading-relaxed mt-4">
+              <p>
+                Instead of relying on a single static point projection, the <strong>Outcome Range</strong> displays a player's statistical range of outcomes derived from our projection models.
+              </p>
+              
+              <div className="space-y-3 bg-[#111] p-4 rounded-2xl border border-gray-800/60 mt-4">
+                <p>• <span className="text-red-400 font-bold">Left Edge (P25 - Floor):</span> The 25th percentile downside outcome. A realistic floor expectation if touchdown luck or game scripts swing negative.</p>
+                <p>• <span className="text-white font-bold">White Indicator (P50 - Median):</span> The 50th percentile baseline expectation. This represents the player's most likely output under standard conditions.</p>
+                <p>• <span className="text-emerald-400 font-bold">Right Edge (P75 - Ceiling):</span> The 75th percentile upside outcome. Represents high-end ceiling potential during a breakout season or favorable environment.</p>
+              </div>
+
+              <div className="space-y-2 bg-[#111] p-4 rounded-2xl border border-gray-800/60">
+                <p><strong>Reading Asset Volatility:</strong></p>
+                <p>• <span className="text-gray-300 font-bold">Wide Bar:</span> High-volatility / boom-or-bust profile with massive ceiling upside paired with downside risk.</p>
+                <p>• <span className="text-gray-300 font-bold">Narrow Bar:</span> Highly stable, predictable role with a tight range of outcomes and secure weekly utility.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Hero Section */}
       <div className="relative w-full h-[220px] md:h-[260px] flex items-center overflow-hidden rounded-2xl mb-8 shadow-2xl">
@@ -379,20 +386,16 @@ export default function RankingsClient() {
               <ListOrdered size={12} /> OMFG-Powered Projections
             </div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter leading-none drop-shadow-2xl text-white uppercase mb-2">
-              {latestWeekDisplay} Rankings
+              {latestYearDisplay} Rest of Season
             </h1>
             <p className="text-gray-300 font-medium md:text-lg">
-              Weekly fantasy football rankings that adapt to upcoming matchups and recent trends—fully customized to match your exact league scoring rules so you know exactly who to start.
+              Rest of season fantasy football rankings that project remaining value and outcome ranges—fully customized to match your exact league scoring rules so you know exactly who to trade for or pick up.
             </p>
           </div>
 
           <div className="flex bg-black/40 backdrop-blur-md p-1.5 rounded-full border border-white/10 shadow-2xl shrink-0 mt-4 md:mt-0 self-start md:self-end md:mb-8">
-            {!isRegularSeason ? (
-              <Link href="/football/draft-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">Draft</Link>
-            ) : (
-              <Link href="/football/ros-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">RoS</Link>
-            )}
-            <button className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all bg-white text-black shadow-md">Redraft</button>
+            <button className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all bg-white text-black shadow-md">RoS</button>
+            <Link href="/football/redraft-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">Redraft</Link>
             <Link href="/football/dynasty-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">Dynasty</Link>
           </div>
         </div>
@@ -528,67 +531,34 @@ export default function RankingsClient() {
                   )}
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center w-16">Pos Rank</th>
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">Player</th>
-                  <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Opponent</th>
+                  
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center bg-gray-900/30 border-x border-gray-800">
                     Proj Pts
                   </th>
+
                   <th 
                     className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center cursor-help hover:bg-gray-800/40 transition-colors relative group"
                   >
                     <div className="flex items-center justify-center gap-1">
-                      OMFG
+                      SOS OMFG
                       <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
                     </div>
                     <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-52 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                      Overall Metric Fantasy Grade. Rates the strength of the player's underlying volume and role opportunity for this week.
+                      Season-Over-Season Overall Metric Fantasy Grade. Rates the strength of the player's underlying long-term profile compared to historical data.
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
                     </div>
                   </th>
                   <th 
-                    className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center cursor-help hover:bg-gray-800/40 transition-colors relative group"
+                    className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center border-l border-gray-800 cursor-help hover:bg-gray-800/40 transition-colors relative group"
                   >
                     <div className="flex items-center justify-center gap-1">
-                      Matchup
-                      <Info size={10} className="text-gray-500 group-hover:text-white transition-colors" />
+                      Outcome Range (P25 - P75)
+                      <button onClick={() => setActiveModal('outcomeRange')} className="text-gray-500 hover:text-white transition-colors">
+                        <Info size={11} />
+                      </button>
                     </div>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-52 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                      A 0-100 rating of opponent matchup difficulty. Higher scores represent more favorable matchups against opposing defenses.
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
-                    </div>
-                  </th>
-                  <th 
-                    className="px-4 py-3 text-[10px] font-black text-[#1b75bb] uppercase tracking-widest text-center bg-[#0f446e]/20 border-l border-gray-800 cursor-help hover:bg-[#0f446e]/40 transition-colors relative group"
-                  >
-                    <div className="flex items-center justify-center gap-1">
-                      {prob1Header}
-                      <Info size={10} className="text-[#1b75bb]/70 group-hover:text-white transition-colors" />
-                    </div>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-52 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                      Estimated percentage chance of finishing inside this position-specific rank tier for the week.
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
-                    </div>
-                  </th>
-                  <th 
-                    className="px-4 py-3 text-[10px] font-black text-[#1b75bb] uppercase tracking-widest text-center bg-[#0f446e]/20 border-x border-gray-800 cursor-help hover:bg-[#0f446e]/40 transition-colors relative group"
-                  >
-                    <div className="flex items-center justify-center gap-1">
-                      {prob2Header}
-                      <Info size={10} className="text-[#1b75bb]/70 group-hover:text-white transition-colors" />
-                    </div>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-52 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                      Estimated percentage chance of finishing inside this position-specific rank tier for the week.
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
-                    </div>
-                  </th>
-                  <th 
-                    className="px-4 py-3 text-[10px] font-black text-[#1b75bb] uppercase tracking-widest text-center bg-[#0f446e]/20 border-r border-gray-800 cursor-help hover:bg-[#0f446e]/40 transition-colors relative group"
-                  >
-                    <div className="flex items-center justify-center gap-1">
-                      {prob3Header}
-                      <Info size={10} className="text-[#1b75bb]/70 group-hover:text-white transition-colors" />
-                    </div>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-52 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
-                      Estimated percentage chance of finishing inside this position-specific rank tier for the week.
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#1a1a1a] border border-gray-600 text-gray-300 text-[10px] rounded-lg shadow-[0_0_15px_rgba(251,191,36,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[120] w-48 text-center pointer-events-none normal-case tracking-normal font-medium leading-relaxed whitespace-normal">
+                      The expected range of season-long fantasy points based on the 25th percentile (floor), 50th percentile (median), and 75th percentile (ceiling).
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-600"></div>
                     </div>
                   </th>
@@ -614,28 +584,12 @@ export default function RankingsClient() {
                     </td>
                   </tr>
                 ) : visibleRankings.map((player, idx) => {
-                    const playerId = `${player.Player}-${idx}`;
+                    const playerId = `${player.Player || player.name}-${idx}`;
                     const isExpanded = expandedRows.has(playerId);
-                    const playerUrl = `/player/${player.Player?.toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`;
-                    const omfgScore = Number(player['Preseason OMFG'] ?? player['In-Season OMFG Score'] ?? player['OMFG Score']) || 0;
-                    const matchupScore = Number(player['Matchup Score']) || 0;
-
-                    let prob1, prob2, prob3;
-
-                    if (currentPosition === 'TE') {
-                        prob1 = getFlexibleValue(player, ['Top 5 Probability', 'Top 5', ['prob', 'top5']]);
-                        prob2 = getFlexibleValue(player, ['Top 12 Probability', 'Top 12', ['prob', 'top12']]);
-                        prob3 = getFlexibleValue(player, ['Top 18 Probability', 'Top 18', ['prob', 'top18']]);
-                    } else if (currentPosition === 'QB' || currentPosition === 'K' || currentPosition === 'DST') {
-                        prob1 = getFlexibleValue(player, ['Top 6 Probability', 'Top 6', ['prob', 'top6']]);
-                        prob2 = getFlexibleValue(player, ['Top 12 Probability', 'Top 12', ['prob', 'top12']]);
-                        prob3 = getFlexibleValue(player, ['Top 18 Probability', 'Top 18', ['prob', 'top18']]);
-                    } else {
-                        // RBs, WRs, FLEX
-                        prob1 = getFlexibleValue(player, ['Top 12 Probability', 'Top 12', ['prob', 'top12']]);
-                        prob2 = getFlexibleValue(player, ['Top 24 Probability', 'Top 24', ['prob', 'top24']]);
-                        prob3 = getFlexibleValue(player, ['Top 36 Probability', 'Top 36', ['prob', 'top36']]);
-                    }
+                    const playerName = player.Player || player.name || 'Unknown';
+                    const playerUrl = `/player/${playerName.toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`;
+                    
+                    const omfgScore = Number(player['OMFG Score'] ?? player['SOS OMFG Score'] ?? player['Preseason OMFG']) || 0;
 
                     return (
                     <React.Fragment key={playerId}>
@@ -655,15 +609,12 @@ export default function RankingsClient() {
                         <td className="px-4 py-2.5">
                            <div className="flex items-center gap-3">
                              <Link href={playerUrl} onClick={(e) => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="text-sm font-black text-gray-100 tracking-tight hover:text-red-400 transition-colors">
-                               {player.Player}
+                               {playerName}
                              </Link>
-                             {player.Team && player.Team !== 'fa' && (
-                               <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${player.Team.toLowerCase()}.png`} alt={player.Team} className="w-6 h-6 object-contain drop-shadow-md" onError={(e) => e.target.style.display = 'none'} />
+                             {(player.Team || player.team) && (player.Team || player.team) !== 'fa' && (
+                               <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${(player.Team || player.team).toLowerCase()}.png`} alt={player.Team || player.team} className="w-6 h-6 object-contain drop-shadow-md" onError={(e) => e.target.style.display = 'none'} />
                              )}
                            </div>
-                        </td>
-                        <td className="px-4 py-2.5 text-center">
-                            <span className="text-xs font-bold text-gray-400">{player.Opponent}</span>
                         </td>
                         <td className="px-4 py-2.5 text-center bg-gray-900/30 border-x border-gray-800/50">
                             <div className="text-base font-black text-white">{player.adjProjPts.toFixed(1)}</div>
@@ -673,19 +624,8 @@ export default function RankingsClient() {
                               {formatNumber(omfgScore)}
                             </div>
                         </td>
-                        <td className="px-4 py-2.5 text-center">
-                            <div className={`text-xs ${getAbsoluteHeatmapColor(matchupScore)}`}>
-                              {formatNumber(matchupScore)}
-                            </div>
-                        </td>
-                        <td className="px-4 py-2.5 text-center bg-[#0f446e]/20 border-l border-gray-800/50">
-                            <span className={`text-[11px] font-bold ${getProbColor(prob1)}`}>{formatPct(prob1)}</span>
-                        </td>
-                        <td className="px-4 py-2.5 text-center bg-[#0f446e]/20 border-x border-gray-800/50">
-                            <span className={`text-[11px] font-bold ${getProbColor(prob2)}`}>{formatPct(prob2)}</span>
-                        </td>
-                        <td className="px-4 py-2.5 text-center bg-[#0f446e]/20 border-r border-gray-800/50">
-                            <span className={`text-[11px] font-bold ${getProbColor(prob3)}`}>{formatPct(prob3)}</span>
+                        <td className="px-4 py-2.5 text-center border-l border-gray-800/50 w-48">
+                            {renderRangeVisualizer(player.adjP25, player.adjProjPts, player.adjP75)}
                         </td>
                         <td className="px-4 py-2.5 text-center text-gray-500">
                           {isExpanded ? <ChevronUp size={16} className="mx-auto" /> : <ChevronDown size={16} className="mx-auto" />}
