@@ -375,12 +375,12 @@ export default function RosRankingsClient() {
       )}
       
       {/* Hero Section */}
-      <div className="relative w-full h-[220px] md:h-[260px] flex items-center overflow-hidden rounded-2xl mb-8 shadow-2xl">
+      <div className="relative w-full min-h-[240px] md:min-h-[260px] flex items-center overflow-hidden rounded-2xl mb-8 shadow-2xl py-8 md:py-0">
         <div className="absolute inset-0 opacity-80 z-0" style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }} />
         <img src={bgImage} alt="Football Background" className="absolute -right-[10%] md:-right-10 top-1/2 transform -translate-y-1/2 h-[200%] w-auto opacity-20 pointer-events-none z-0" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent z-0" />
         
-        <div className="relative z-10 w-full flex flex-col md:flex-row items-center justify-between h-full px-6 md:px-10 pb-4 sm:pb-0 gap-4">
+        <div className="relative z-10 w-full flex flex-col md:flex-row items-start md:items-center justify-between px-6 md:px-10 gap-6 md:gap-4">
           <div className="max-w-2xl w-full">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest mb-3 shadow-inner backdrop-blur-sm">
               <ListOrdered size={12} /> OMFG-Powered Projections
@@ -393,10 +393,10 @@ export default function RosRankingsClient() {
             </p>
           </div>
 
-          <div className="flex bg-black/40 backdrop-blur-md p-1.5 rounded-full border border-white/10 shadow-2xl shrink-0 mt-4 md:mt-0 self-start md:self-end md:mb-8">
-            <button className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all bg-white text-black shadow-md">RoS</button>
-            <Link href="/football/redraft-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">Redraft</Link>
-            <Link href="/football/dynasty-rankings" className="px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white">Dynasty</Link>
+          <div className="flex bg-black/40 backdrop-blur-md p-1.5 rounded-full border border-white/10 shadow-2xl shrink-0 max-w-full overflow-x-auto scrollbar-hide self-start md:self-end md:mb-8">
+            <button className="px-4 py-2.5 md:px-6 md:py-3 rounded-full font-black text-[10px] md:text-xs uppercase tracking-widest transition-all bg-white text-black shadow-md whitespace-nowrap">RoS</button>
+            <Link href="/football/redraft-rankings" className="px-4 py-2.5 md:px-6 md:py-3 rounded-full font-black text-[10px] md:text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white whitespace-nowrap">Redraft</Link>
+            <Link href="/football/dynasty-rankings" className="px-4 py-2.5 md:px-6 md:py-3 rounded-full font-black text-[10px] md:text-xs uppercase tracking-widest transition-all text-gray-400 hover:text-white whitespace-nowrap">Dynasty</Link>
           </div>
         </div>
       </div>
