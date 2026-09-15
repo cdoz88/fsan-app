@@ -107,12 +107,18 @@ export default function DNOLeaderboard({ initialLeaderboard = DEFAULT_LEADERBOAR
 
   const filteredTeams = activeTeams.filter(team => team.ownerUsername?.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  const getBadges = (team) => {
+  // FIX: Extract badges securely from the overall dataset for consistency inside the modal
+  const getBadges = (team, isModal = false) => {
     let badges = [];
-    const bSource = currentWeek === 'overall' ? team.badges : team.weekly_badges;
-    if (bSource?.litchAward) badges.push({ icon: <LitchSVG />, count: currentWeek === 'overall' ? team.badges.litchAward : null });
-    if (bSource?.weeklyTopScorer) badges.push({ icon: <WeeklyScorerSVG />, count: currentWeek === 'overall' ? team.badges.weeklyTopScorer : null });
-    if (bSource?.twoHundredClub) badges.push({ icon: <Club200SVG />, count: currentWeek === 'overall' ? team.badges.twoHundredClub : null });
+    let bSource = team.badges; // Default to overall badges
+    
+    if (!isModal && currentWeek !== 'overall') {
+        bSource = team.weekly_badges;
+    }
+
+    if (bSource?.litchAward) badges.push({ icon: <LitchSVG />, count: (!isModal && currentWeek !== 'overall') ? null : bSource.litchAward });
+    if (bSource?.weeklyTopScorer) badges.push({ icon: <WeeklyScorerSVG />, count: (!isModal && currentWeek !== 'overall') ? null : bSource.weeklyTopScorer });
+    if (bSource?.twoHundredClub) badges.push({ icon: <Club200SVG />, count: (!isModal && currentWeek !== 'overall') ? null : bSource.twoHundredClub });
     return badges;
   };
 
@@ -121,7 +127,6 @@ export default function DNOLeaderboard({ initialLeaderboard = DEFAULT_LEADERBOAR
       
       <div className="p-4 md:p-6 border-b border-gray-800 bg-[#151515] flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-           {/* Dynamic Season Label injected here */}
            <h2 className="text-xl font-black uppercase tracking-wider text-white mr-4 whitespace-nowrap">
              {overrideSeasonLabel || initialLeaderboard?.data?.season_label || "2026 Season"}
            </h2>
@@ -223,29 +228,55 @@ export default function DNOLeaderboard({ initialLeaderboard = DEFAULT_LEADERBOAR
              </div>
              <div className="p-6 overflow-y-auto flex-1 scrollbar-hide">
                 <div className="space-y-4">
-                  {[...availableWeeks].sort((a,b) => b-a).map(w => {
-                    const winnersForWeek = winnersRegistry[activeHistoryAward]?.[w] || [];
-                    if (winnersForWeek.length === 0) return null;
-                    return (
-                      <div key={w} className="bg-[#111] rounded-2xl p-4 border border-gray-800">
-                        <div className="text-[10px] font-black uppercase text-blue-500 mb-3 tracking-widest border-b border-gray-800 pb-2">
-                          Week {w} {activeHistoryAward === 'twoHundredClub' ? 'Members' : 'Winner'}
+                  {activeHistoryAward === 'litchAward' ? (
+                    (() => {
+                      const litchWinners = winnersRegistry['litchAward']?.['Overall'] || [];
+                      if (litchWinners.length === 0) return <div className="text-gray-500 text-sm">No leader established yet.</div>;
+                      return (
+                        <div className="bg-[#111] rounded-2xl p-4 border border-gray-800">
+                          <div className="text-[10px] font-black uppercase text-blue-500 mb-3 tracking-widest border-b border-gray-800 pb-2">
+                            Current Overall Leader
+                          </div>
+                          <div className="flex flex-wrap gap-4">
+                             {litchWinners.map(tid => {
+                               const team = overallTeams.find(t => t.teamId === tid);
+                               if (!team) return null;
+                               return (
+                                 <div key={tid} onClick={() => { setActiveHistoryAward(null); handleRowClick(tid); }} className="flex items-center gap-3 bg-[#1a1a1a] px-3 py-2 rounded-xl border border-gray-700 hover:border-blue-500 cursor-pointer transition-all group">
+                                   <img src={team.ownerAvatar} className="w-6 h-6 rounded-full" alt="" />
+                                   <span className="text-xs font-bold text-gray-200 group-hover:text-white">{team.ownerUsername}</span>
+                                 </div>
+                               );
+                             })}
+                          </div>
                         </div>
-                        <div className="flex flex-wrap gap-4">
-                           {winnersForWeek.map(tid => {
-                             const team = overallTeams.find(t => t.teamId === tid);
-                             if (!team) return null;
-                             return (
-                               <div key={tid} onClick={() => { setActiveHistoryAward(null); handleRowClick(tid); }} className="flex items-center gap-3 bg-[#1a1a1a] px-3 py-2 rounded-xl border border-gray-700 hover:border-blue-500 cursor-pointer transition-all group">
-                                 <img src={team.ownerAvatar} className="w-6 h-6 rounded-full" alt="" />
-                                 <span className="text-xs font-bold text-gray-200 group-hover:text-white">{team.ownerUsername}</span>
-                               </div>
-                             );
-                           })}
+                      );
+                    })()
+                  ) : (
+                    [...availableWeeks].sort((a,b) => b-a).map(w => {
+                      const winnersForWeek = winnersRegistry[activeHistoryAward]?.[w] || [];
+                      if (winnersForWeek.length === 0) return null;
+                      return (
+                        <div key={w} className="bg-[#111] rounded-2xl p-4 border border-gray-800">
+                          <div className="text-[10px] font-black uppercase text-blue-500 mb-3 tracking-widest border-b border-gray-800 pb-2">
+                            Week {w} {activeHistoryAward === 'twoHundredClub' ? 'Members' : 'Winner'}
+                          </div>
+                          <div className="flex flex-wrap gap-4">
+                             {winnersForWeek.map(tid => {
+                               const team = overallTeams.find(t => t.teamId === tid);
+                               if (!team) return null;
+                               return (
+                                 <div key={tid} onClick={() => { setActiveHistoryAward(null); handleRowClick(tid); }} className="flex items-center gap-3 bg-[#1a1a1a] px-3 py-2 rounded-xl border border-gray-700 hover:border-blue-500 cursor-pointer transition-all group">
+                                   <img src={team.ownerAvatar} className="w-6 h-6 rounded-full" alt="" />
+                                   <span className="text-xs font-bold text-gray-200 group-hover:text-white">{team.ownerUsername}</span>
+                                 </div>
+                               );
+                             })}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                 </div>
              </div>
           </div>
@@ -269,7 +300,8 @@ export default function DNOLeaderboard({ initialLeaderboard = DEFAULT_LEADERBOAR
                           <div className="bg-[#111] border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
                              <span className="text-[10px] font-black uppercase text-gray-500 mb-2">Awards</span>
                              <div className="flex gap-4 items-center justify-center">
-                               {getBadges(selectedTeam).length > 0 ? getBadges(selectedTeam).map((b, i) => (
+                               {/* FIX: Ensure we always pull overall badges for the modal view */}
+                               {getBadges(overallTeams.find(t => t.teamId === selectedTeam.teamId), true).length > 0 ? getBadges(overallTeams.find(t => t.teamId === selectedTeam.teamId), true).map((b, i) => (
                                  <div key={i} className="flex items-center gap-1.5">
                                    {b.icon}
                                    {b.count && <span className="text-white font-bold text-sm">{b.count}</span>}
@@ -284,17 +316,81 @@ export default function DNOLeaderboard({ initialLeaderboard = DEFAULT_LEADERBOAR
                        </div>
                        
                        <div className="w-full h-[300px] bg-[#111] border border-gray-800 rounded-2xl p-4 shadow-inner">
-                         <Line data={{ labels: Array.from({length: 17}, (_, i) => `Wk ${i + 1}`), datasets: [{ label: 'Points', data: Array.from({length: 17}, (_, i) => modalData.weekly_results[i+1]?.points || null), borderColor: '#48bb78', backgroundColor: 'rgba(72, 187, 120, 0.1)', yAxisID: 'yPoints', fill: true, tension: 0.4 }, { label: 'Rank', data: Array.from({length: 17}, (_, i) => modalData.weekly_results[i+1]?.rank || null), borderColor: '#27d7ff', backgroundColor: 'rgba(39, 215, 255, 0.1)', yAxisID: 'yRank', fill: true, tension: 0.4 }] }} options={{ responsive: true, maintainAspectRatio: false, scales: { yPoints: { type: 'linear', position: 'left', grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a0aec0' } }, yRank: { type: 'linear', position: 'right', reverse: true, min: 1, max: overallTeams.length, grid: { drawOnChartArea: false }, ticks: { color: '#a0aec0' } }, x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a0aec0' } } }, plugins: { legend: { labels: { color: '#e2e8f0', usePointStyle: true, boxWidth: 8 } } } }} />
+                         <Line 
+                            data={{ 
+                                labels: Array.from({length: 17}, (_, i) => `Wk ${i + 1}`), 
+                                datasets: [
+                                    { 
+                                        label: 'Points', 
+                                        // FIX: Check if week is available before plotting points
+                                        data: Array.from({length: 17}, (_, i) => availableWeeks.includes(i + 1) ? modalData.weekly_results[i+1]?.points : null), 
+                                        borderColor: '#48bb78', 
+                                        backgroundColor: 'rgba(72, 187, 120, 0.1)', 
+                                        yAxisID: 'yPoints', 
+                                        fill: true, 
+                                        tension: 0.4 
+                                    }, 
+                                    { 
+                                        label: 'Rank', 
+                                        // FIX: Check if week is available before plotting rank
+                                        data: Array.from({length: 17}, (_, i) => availableWeeks.includes(i + 1) ? modalData.weekly_results[i+1]?.rank : null), 
+                                        borderColor: '#27d7ff', 
+                                        backgroundColor: 'rgba(39, 215, 255, 0.1)', 
+                                        yAxisID: 'yRank', 
+                                        fill: true, 
+                                        tension: 0.4 
+                                    }
+                                ] 
+                            }} 
+                            options={{ 
+                                responsive: true, 
+                                maintainAspectRatio: false, 
+                                scales: { 
+                                    yPoints: { type: 'linear', position: 'left', grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a0aec0' } }, 
+                                    yRank: { type: 'linear', position: 'right', reverse: true, min: 1, max: overallTeams.length, grid: { drawOnChartArea: false }, ticks: { color: '#a0aec0' } }, 
+                                    x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#a0aec0' } } 
+                                }, 
+                                plugins: { legend: { labels: { color: '#e2e8f0', usePointStyle: true, boxWidth: 8 } } } 
+                            }} 
+                         />
                        </div>
 
                        <div className="w-full overflow-x-auto bg-[#111] border border-gray-800 rounded-2xl shadow-inner">
                          <table className="w-full text-center whitespace-nowrap">
                            <thead><tr className="border-b border-gray-800 bg-[#0a0a0a]"><th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase text-left">Week</th>{Array.from({length: 17}, (_, i) => <th key={i} className="px-3 py-3 text-[10px] font-black text-gray-500">{i + 1}</th>)}</tr></thead>
                            <tbody className="divide-y divide-gray-800/50 text-xs font-bold text-gray-300">
-                             <tr className="hover:bg-[#151515]"><td className="px-4 py-3 text-left text-gray-500">PTS</td>{Array.from({length: 17}, (_, i) => <td key={i} className="px-3 py-3">{modalData.weekly_results[i+1] ? Math.round(modalData.weekly_results[i+1].points) : '-'}</td>)}</tr>
-                             <tr className="hover:bg-[#151515]"><td className="px-4 py-3 text-left text-gray-500">H2H</td>{Array.from({length: 17}, (_, i) => { const res = modalData.weekly_results[i+1]?.h2h; return <td key={i} className={`px-3 py-3 ${res === 'W' ? 'text-green-500' : res === 'L' ? 'text-red-500' : ''}`}>{res || '-'}</td> })}</tr>
-                             <tr className="hover:bg-[#151515]"><td className="px-4 py-3 text-left text-gray-500">MED</td>{Array.from({length: 17}, (_, i) => { const res = modalData.weekly_results[i+1]?.median; return <td key={i} className={`px-3 py-3 ${res === 'W' ? 'text-green-500' : res === 'L' ? 'text-red-500' : ''}`}>{res || '-'}</td> })}</tr>
-                             <tr className="hover:bg-[#151515]"><td className="px-4 py-3 text-left text-gray-500 font-black">RNK</td>{Array.from({length: 17}, (_, i) => <td key={i} className="px-3 py-3 text-white">{modalData.weekly_results[i+1]?.rank || '-'}</td>)}</tr>
+                             <tr className="hover:bg-[#151515]">
+                                <td className="px-4 py-3 text-left text-gray-500">PTS</td>
+                                {Array.from({length: 17}, (_, i) => (
+                                    <td key={i} className="px-3 py-3">
+                                        {availableWeeks.includes(i + 1) && modalData.weekly_results[i+1] ? Math.round(modalData.weekly_results[i+1].points) : '-'}
+                                    </td>
+                                ))}
+                             </tr>
+                             <tr className="hover:bg-[#151515]">
+                                <td className="px-4 py-3 text-left text-gray-500">H2H</td>
+                                {Array.from({length: 17}, (_, i) => { 
+                                    if (!availableWeeks.includes(i + 1)) return <td key={i} className="px-3 py-3 text-gray-600">-</td>;
+                                    const res = modalData.weekly_results[i+1]?.h2h; 
+                                    return <td key={i} className={`px-3 py-3 ${res === 'W' ? 'text-green-500' : res === 'L' ? 'text-red-500' : ''}`}>{res || '-'}</td> 
+                                })}
+                             </tr>
+                             <tr className="hover:bg-[#151515]">
+                                <td className="px-4 py-3 text-left text-gray-500">MED</td>
+                                {Array.from({length: 17}, (_, i) => { 
+                                    if (!availableWeeks.includes(i + 1)) return <td key={i} className="px-3 py-3 text-gray-600">-</td>;
+                                    const res = modalData.weekly_results[i+1]?.median; 
+                                    return <td key={i} className={`px-3 py-3 ${res === 'W' ? 'text-green-500' : res === 'L' ? 'text-red-500' : ''}`}>{res || '-'}</td> 
+                                })}
+                             </tr>
+                             <tr className="hover:bg-[#151515]">
+                                <td className="px-4 py-3 text-left text-gray-500 font-black">RNK</td>
+                                {Array.from({length: 17}, (_, i) => (
+                                    <td key={i} className="px-3 py-3 text-white">
+                                        {availableWeeks.includes(i + 1) && modalData.weekly_results[i+1]?.rank ? modalData.weekly_results[i+1].rank : '-'}
+                                    </td>
+                                ))}
+                             </tr>
                            </tbody>
                          </table>
                        </div>
