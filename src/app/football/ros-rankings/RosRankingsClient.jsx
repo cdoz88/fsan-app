@@ -43,24 +43,33 @@ export default function RosRankingsClient() {
     async function loadData() {
       setIsSyncing(true);
       try {
-        // Fetch metadata to find the most recent season available
+        // Fetch Season metadata first to safely get the list of ALL available models
         const metaRes = await fetch(`/api/omfg-data?year=2026&week=Season`);
         const metaData = await metaRes.json();
+        
         let latestYear = '2026';
         
         if (metaData.available_models) {
-            const activeSeason = metaData.available_models.filter(m => m.week === 'Season');
-            if (activeSeason.length > 0) {
-                // Sort descending by year
-                activeSeason.sort((a, b) => Number(b.year) - Number(a.year));
-                latestYear = String(activeSeason[0].year);
+            // Filter out 'Season', 'Preseason', and 'Rest of Season' to get only weekly models
+            const activeWeekly = metaData.available_models.filter(m => m.week !== 'Season' && m.week !== 'Preseason' && m.week !== 'Rest of Season');
+
+            if (activeWeekly.length > 0) {
+                // Sort by year descending, then by week number descending
+                activeWeekly.sort((a, b) => {
+                    if (b.year !== a.year) return Number(b.year) - Number(a.year);
+                    const weekA = parseInt(a.week.replace(/[^0-9]/g, '')) || 0;
+                    const weekB = parseInt(b.week.replace(/[^0-9]/g, '')) || 0;
+                    return weekB - weekA;
+                });
+                
+                latestYear = String(activeWeekly[0].year);
             }
         }
         
         // Update the dynamic header display
         setLatestYearDisplay(latestYear);
 
-        // Fetch Rest of Season data specifically
+        // Fetch Rest of Season data specifically for the latest year
         const res = await fetch(`/api/omfg-data?year=${latestYear}&week=${encodeURIComponent('Rest of Season')}`);
         const data = await res.json();
         setPlayersData(data.success && data.players ? data.players : []);

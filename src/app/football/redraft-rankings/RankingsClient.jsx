@@ -43,26 +43,39 @@ export default function RankingsClient() {
     async function loadData() {
       setIsSyncing(true);
       try {
-        const metaRes = await fetch(`/api/omfg-data?year=2026&week=Week 1`);
+        // Fetch Season metadata first to safely get the list of ALL available models
+        const metaRes = await fetch(`/api/omfg-data?year=2026&week=Season`);
         const metaData = await metaRes.json();
+        
         let latestYear = '2026';
         let latestWeek = 'Week 1';
         
         if (metaData.available_models) {
-            const activeWeekly = metaData.available_models.filter(m => m.week !== 'Season');
+            // Filter out 'Season' and 'Preseason' to get only weekly models
+            const activeWeekly = metaData.available_models.filter(m => m.week !== 'Season' && m.week !== 'Preseason' && m.week !== 'Rest of Season');
+            
+            // Determine if regular season is active
+            const hasRosOrWeekly = metaData.available_models.some(m => m.week !== 'Season' && m.week !== 'Preseason');
+            setIsRegularSeason(hasRosOrWeekly);
+
             if (activeWeekly.length > 0) {
+                // Sort by year descending, then by week number descending
+                activeWeekly.sort((a, b) => {
+                    if (b.year !== a.year) return Number(b.year) - Number(a.year);
+                    const weekA = parseInt(a.week.replace(/[^0-9]/g, '')) || 0;
+                    const weekB = parseInt(b.week.replace(/[^0-9]/g, '')) || 0;
+                    return weekB - weekA;
+                });
+                
                 latestYear = String(activeWeekly[0].year);
                 latestWeek = activeWeekly[0].week;
             }
-            
-            // Check if regular season or RoS models are active
-            const hasRosOrWeekly = metaData.available_models.some(m => m.week !== 'Season' && m.week !== 'Preseason');
-            setIsRegularSeason(hasRosOrWeekly);
         }
         
         // Update the dynamic header display
         setLatestWeekDisplay(latestWeek);
 
+        // Fetch the data for the most recent week found
         const res = await fetch(`/api/omfg-data?year=${latestYear}&week=${latestWeek}`);
         const data = await res.json();
         setPlayersData(data.success && data.players ? data.players : []);

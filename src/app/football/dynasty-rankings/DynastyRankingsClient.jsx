@@ -49,22 +49,32 @@ export default function DynastyRankingsClient() {
         const dynData = await dynRes.json();
         const basePlayers = (dynData.success && dynData.players) ? dynData.players : [];
 
-        // Fetch OMFG Metadata for latest week
-        const metaRes = await fetch(`/api/omfg-data?year=2026&week=Week 1`);
+        // Fetch OMFG Metadata via Season Endpoint to safely get all available models
+        const metaRes = await fetch(`/api/omfg-data?year=2026&week=Season`);
         const metaData = await metaRes.json();
         let latestYear = '2026';
         let latestWeek = 'Week 1';
         
         if (metaData.available_models) {
-            const activeWeekly = metaData.available_models.filter(m => m.week !== 'Season');
+            // Filter out 'Season', 'Preseason', and 'Rest of Season' to get only weekly models
+            const activeWeekly = metaData.available_models.filter(m => m.week !== 'Season' && m.week !== 'Preseason' && m.week !== 'Rest of Season');
+            
+            // Determine if regular season is active
+            const hasRosOrWeekly = metaData.available_models.some(m => m.week !== 'Season' && m.week !== 'Preseason');
+            setIsRegularSeason(hasRosOrWeekly);
+
             if (activeWeekly.length > 0) {
+                // Sort by year descending, then by week number descending
+                activeWeekly.sort((a, b) => {
+                    if (b.year !== a.year) return Number(b.year) - Number(a.year);
+                    const weekA = parseInt(a.week.replace(/[^0-9]/g, '')) || 0;
+                    const weekB = parseInt(b.week.replace(/[^0-9]/g, '')) || 0;
+                    return weekB - weekA;
+                });
+                
                 latestYear = String(activeWeekly[0].year);
                 latestWeek = activeWeekly[0].week;
             }
-            
-            // Check if regular season or RoS models are active
-            const hasRosOrWeekly = metaData.available_models.some(m => m.week !== 'Season' && m.week !== 'Preseason');
-            setIsRegularSeason(hasRosOrWeekly);
         }
 
         // Fetch Season, WoW, and ROS
@@ -643,6 +653,10 @@ export default function DynastyRankingsClient() {
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center w-16">Pos Rank</th>
                   <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">Player</th>
                   
+                  <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center bg-gray-900/30 border-x border-gray-800">
+                    Proj Pts
+                  </th>
+
                   <th 
                     className="px-4 py-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center cursor-help hover:bg-gray-800/40 transition-colors relative group"
                   >
@@ -717,6 +731,9 @@ export default function DynastyRankingsClient() {
                                  <img src={`https://a.espncdn.com/i/teamlogos/nfl/500/${(player.Team || player.team).toLowerCase()}.png`} alt={player.Team || player.team} className="w-6 h-6 object-contain drop-shadow-md" onError={(e) => e.target.style.display = 'none'} />
                                )}
                              </div>
+                          </td>
+                          <td className="px-4 py-2.5 text-center bg-gray-900/30 border-x border-gray-800/50">
+                              <div className="text-base font-black text-white">{player.adjProjPts.toFixed(1)}</div>
                           </td>
                           <td className="px-4 py-2.5 text-center">
                               <div className={`text-xs ${getAbsoluteHeatmapColor(omfgScore)}`}>
