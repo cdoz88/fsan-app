@@ -228,55 +228,45 @@ export default function DNOLeaderboard({ initialLeaderboard = DEFAULT_LEADERBOAR
              </div>
              <div className="p-6 overflow-y-auto flex-1 scrollbar-hide">
                 <div className="space-y-4">
-                  {activeHistoryAward === 'litchAward' ? (
-                    (() => {
-                      const litchWinners = winnersRegistry['litchAward']?.['Overall'] || [];
-                      if (litchWinners.length === 0) return <div className="text-gray-500 text-sm">No leader established yet.</div>;
-                      return (
-                        <div className="bg-[#111] rounded-2xl p-4 border border-gray-800">
-                          <div className="text-[10px] font-black uppercase text-blue-500 mb-3 tracking-widest border-b border-gray-800 pb-2">
-                            Current Overall Leader
+                  {(() => {
+                      const titleMap = {
+                          litchAward: 'Overall Leader',
+                          weeklyTopScorer: 'Winner',
+                          twoHundredClub: 'Members'
+                      };
+                      
+                      // Filter weeks that actually have winners for the selected award
+                      const weeksWithWinners = [...availableWeeks]
+                        .sort((a,b) => b-a)
+                        .filter(w => (winnersRegistry[activeHistoryAward]?.[w] || []).length > 0);
+                      
+                      if (weeksWithWinners.length === 0) {
+                          return <div className="text-gray-500 text-sm">No history established yet.</div>;
+                      }
+
+                      return weeksWithWinners.map(w => {
+                        const winnersForWeek = winnersRegistry[activeHistoryAward]?.[w] || [];
+                        return (
+                          <div key={w} className="bg-[#111] rounded-2xl p-4 border border-gray-800">
+                            <div className="text-[10px] font-black uppercase text-blue-500 mb-3 tracking-widest border-b border-gray-800 pb-2">
+                              Week {w} {titleMap[activeHistoryAward]}
+                            </div>
+                            <div className="flex flex-wrap gap-4">
+                               {winnersForWeek.map(tid => {
+                                 const team = overallTeams.find(t => t.teamId === tid);
+                                 if (!team) return null;
+                                 return (
+                                   <div key={tid} onClick={() => { setActiveHistoryAward(null); handleRowClick(tid); }} className="flex items-center gap-3 bg-[#1a1a1a] px-3 py-2 rounded-xl border border-gray-700 hover:border-blue-500 cursor-pointer transition-all group">
+                                     <img src={team.ownerAvatar} className="w-6 h-6 rounded-full" alt="" />
+                                     <span className="text-xs font-bold text-gray-200 group-hover:text-white">{team.ownerUsername}</span>
+                                   </div>
+                                 );
+                               })}
+                            </div>
                           </div>
-                          <div className="flex flex-wrap gap-4">
-                             {litchWinners.map(tid => {
-                               const team = overallTeams.find(t => t.teamId === tid);
-                               if (!team) return null;
-                               return (
-                                 <div key={tid} onClick={() => { setActiveHistoryAward(null); handleRowClick(tid); }} className="flex items-center gap-3 bg-[#1a1a1a] px-3 py-2 rounded-xl border border-gray-700 hover:border-blue-500 cursor-pointer transition-all group">
-                                   <img src={team.ownerAvatar} className="w-6 h-6 rounded-full" alt="" />
-                                   <span className="text-xs font-bold text-gray-200 group-hover:text-white">{team.ownerUsername}</span>
-                                 </div>
-                               );
-                             })}
-                          </div>
-                        </div>
-                      );
-                    })()
-                  ) : (
-                    [...availableWeeks].sort((a,b) => b-a).map(w => {
-                      const winnersForWeek = winnersRegistry[activeHistoryAward]?.[w] || [];
-                      if (winnersForWeek.length === 0) return null;
-                      return (
-                        <div key={w} className="bg-[#111] rounded-2xl p-4 border border-gray-800">
-                          <div className="text-[10px] font-black uppercase text-blue-500 mb-3 tracking-widest border-b border-gray-800 pb-2">
-                            Week {w} {activeHistoryAward === 'twoHundredClub' ? 'Members' : 'Winner'}
-                          </div>
-                          <div className="flex flex-wrap gap-4">
-                             {winnersForWeek.map(tid => {
-                               const team = overallTeams.find(t => t.teamId === tid);
-                               if (!team) return null;
-                               return (
-                                 <div key={tid} onClick={() => { setActiveHistoryAward(null); handleRowClick(tid); }} className="flex items-center gap-3 bg-[#1a1a1a] px-3 py-2 rounded-xl border border-gray-700 hover:border-blue-500 cursor-pointer transition-all group">
-                                   <img src={team.ownerAvatar} className="w-6 h-6 rounded-full" alt="" />
-                                   <span className="text-xs font-bold text-gray-200 group-hover:text-white">{team.ownerUsername}</span>
-                                 </div>
-                               );
-                             })}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
+                        );
+                      });
+                  })()}
                 </div>
              </div>
           </div>
