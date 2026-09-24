@@ -91,7 +91,7 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   }
 
   return (
-    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={wrapperClasses} style={bgStyles}>
+    <a href={ad.buttonLink || '#'} target="_blank" rel="noopener noreferrer" className={wrapperClasses} style={bgStyles}>
        {ad.bgImage && <img loading="lazy" src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
        {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
        
@@ -321,11 +321,11 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
           }
         }
       `;
-      const queryParams = new URLSearchParams({ query: query.trim() });
       try {
-        const res = await fetch(`https://admin.fsan.com/graphql?${queryParams.toString()}`, {
-          method: 'GET',
+        const res = await fetch(`https://admin.fsan.com/graphql`, {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: query.trim() }),
           cache: 'no-store'
         });
         const json = await res.json();

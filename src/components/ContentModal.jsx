@@ -77,7 +77,7 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   }
 
   return (
-    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={wrapperClasses} style={bgStyles}>
+    <a href={ad.buttonLink || '#'} target="_blank" rel="noopener noreferrer" className={wrapperClasses} style={bgStyles}>
        {ad.bgImage && <img loading="lazy" src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
        {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
        
@@ -670,7 +670,7 @@ export default function ContentModal({ selectedItem, setSelectedItem, videos }) 
     if (platform === 'facebook') shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
     if (platform === 'x') shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
     if (platform === 'reddit') shareUrl = `https://reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`;
-    window.open(shareUrl, '_blank', 'width=600,height=400');
+    window.open(shareUrl, '_blank', 'width=600,height=400,noopener,noreferrer');
   };
 
   const handleCopy = () => {
