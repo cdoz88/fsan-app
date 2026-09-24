@@ -43,7 +43,12 @@ export default function MobileRemotePage() {
       setIsSearchingGifs(true);
       try {
         const apiKey = process.env.NEXT_PUBLIC_GIPHY_API_KEY || 'GlVGYHqc3SyXX10vJ1D4w4w474tT0fDI'; 
-        const res = await fetch(`https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=24&rating=pg-13`);
+        const res = await fetch(`https://api.giphy.com/v1/gifs/trending?limit=24&rating=pg-13`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`
+          }
+        });
         const json = await res.json();
         setGifs(json.data || []);
       } catch (error) {
@@ -124,7 +129,12 @@ export default function MobileRemotePage() {
     setIsSearchingGifs(true);
     try {
       const apiKey = process.env.NEXT_PUBLIC_GIPHY_API_KEY || 'GlVGYHqc3SyXX10vJ1D4w4w474tT0fDI'; 
-      const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=24&rating=pg-13`);
+      const res = await fetch(`https://api.giphy.com/v1/gifs/search?q=${encodeURIComponent(query)}&limit=24&rating=pg-13`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
+        }
+      });
       const json = await res.json();
       setGifs(json.data || []);
     } catch (error) {

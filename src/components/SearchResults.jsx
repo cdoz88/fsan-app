@@ -3,6 +3,7 @@ import React, { useRef } from 'react';
 import Link from 'next/link';
 import { PlayCircle, FileText, Video, Zap, Play, ChevronLeft, ChevronRight, Headphones } from 'lucide-react';
 import { themes } from '../utils/theme';
+import DOMPurify from 'isomorphic-dompurify';
 
 // SEO Helper: Generates the true path for Googlebot
 const getItemUrl = (item) => {
@@ -62,8 +63,8 @@ export default function SearchResults({ results, activeSport, setSelectedItem, s
       </div>
       <div className="p-5 flex flex-col flex-1">
         <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{item.date}</span>
-        <h3 className="font-black text-base text-gray-200 group-hover:text-white transition-colors leading-tight line-clamp-3 mb-2" dangerouslySetInnerHTML={{ __html: item.title }} />
-        <p className="text-xs text-gray-400 line-clamp-2 mt-auto" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
+        <h3 className="font-black text-base text-gray-200 group-hover:text-white transition-colors leading-tight line-clamp-3 mb-2" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
+        <p className="text-xs text-gray-400 line-clamp-2 mt-auto" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.excerpt) }} />
       </div>
     </Link>
   );
@@ -85,7 +86,7 @@ export default function SearchResults({ results, activeSport, setSelectedItem, s
             <span className={`w-1.5 h-1.5 rounded-full ${cardTheme.bg}`}></span>
             <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">{item.date}</span>
           </div>
-          <h3 className={`font-black text-lg lg:text-xl text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+          <h3 className={`font-black text-lg lg:text-xl text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
         </div>
       </Link>
     );
@@ -104,7 +105,7 @@ export default function SearchResults({ results, activeSport, setSelectedItem, s
         <div className="bg-black/50 backdrop-blur-sm rounded-full p-3 md:p-4 border border-white/10"><Play size={24} className="text-white ml-1" fill="currentColor"/></div>
       </div>
       <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 z-20">
-        <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+        <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
       </div>
     </Link>
   );
@@ -128,7 +129,7 @@ export default function SearchResults({ results, activeSport, setSelectedItem, s
              <span className={`w-1.5 h-1.5 rounded-full ${itemTheme.bg}`}></span>
              <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500">{item.date}</span>
           </div>
-          <h4 className={`font-bold text-sm leading-snug mb-2 text-gray-200 group-hover:${itemTheme.text} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: item.title }} />
+          <h4 className={`font-bold text-sm leading-snug mb-2 text-gray-200 group-hover:${itemTheme.text} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
           <div className="flex items-center gap-[3px] mt-auto h-4 opacity-70 group-hover:opacity-100 transition-opacity">
             {[4, 8, 12, 8, 16, 10, 14, 6, 10, 12, 8, 6, 14, 8, 4, 8, 12].map((h, i) => (
               <div key={i} className={`w-[2px] sm:w-[3px] shrink-0 rounded-full bg-gray-600 group-hover:${itemTheme.bg} transition-colors`} style={{ height: `${h}px` }} />

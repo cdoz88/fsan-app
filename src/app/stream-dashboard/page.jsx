@@ -786,6 +786,7 @@ export default function StreamDashboardPage() {
       className="h-screen overflow-hidden bg-[#0a0a0c] flex flex-col font-sans relative"
       onClick={handleGlobalClick}
     >
+      {/* Rafter False Positive: Static string block, no user input. */}
       <style dangerouslySetInnerHTML={{__html: `
         @font-face {
           font-family: 'Bitcount';

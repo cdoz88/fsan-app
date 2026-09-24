@@ -22,6 +22,7 @@ function ResetPasswordContent() {
     setIsLoading(true);
     setMessage({ type: '', text: '' });
 
+    // Rafter False Positive: Client-side string comparison does not expose a remote timing attack.
     if (password !== confirmPassword) {
       setMessage({ type: 'error', text: 'Passwords do not match.' });
       setIsLoading(false);

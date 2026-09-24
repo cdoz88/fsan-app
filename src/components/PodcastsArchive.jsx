@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Headphones, ChevronRight, PlayCircle, Loader2 } from 'lucide-react';
 import { themes } from '../utils/theme';
+import DOMPurify from 'isomorphic-dompurify';
 
 // SEO Helper: Generates the true path for Googlebot
 const getItemUrl = (item) => {
@@ -36,7 +37,7 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   );
 
   return (
-    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={`@container w-full h-full rounded-2xl flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${isHeader ? 'p-3 @md:p-4 min-h-[80px]' : 'p-4 @2xl:p-6 min-h-[120px]'} ${ad.fgImage && !isHeader ? 'flex-col items-center justify-center text-center gap-4 min-h-[200px]' : 'flex-row items-center justify-between gap-3 @2xl:gap-6'}`} style={bgStyles}>
+    <a href={ad.buttonLink || '#'} target="_blank" rel="noopener noreferrer" className={`@container w-full h-full rounded-2xl flex relative overflow-hidden shadow-2xl group transition-all border-2 no-underline block hover:scale-[1.01] ${isHeader ? 'p-3 @md:p-4 min-h-[80px]' : 'p-4 @2xl:p-6 min-h-[120px]'} ${ad.fgImage && !isHeader ? 'flex-col items-center justify-center text-center gap-4 min-h-[200px]' : 'flex-row items-center justify-between gap-3 @2xl:gap-6'}`} style={bgStyles}>
        {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
        {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
        
@@ -96,7 +97,7 @@ const LineupCard = ({ item, setSelectedItem }) => (
       </div>
     </div>
     <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 z-20">
-      <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+      <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
     </div>
   </Link>
 );
@@ -135,7 +136,7 @@ const EpisodeCard = ({ item, setSelectedItem, activeSport, masterPodcasts }) => 
            {activeSport === 'All' && <span className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${itemTheme.bg}`}></span>}
            <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-gray-500">{item.date}</span>
         </div>
-        <h4 className={`font-bold text-sm md:text-base leading-snug mb-2 md:mb-3 text-gray-200 group-hover:${itemTheme.text} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: item.title }} />
+        <h4 className={`font-bold text-sm md:text-base leading-snug mb-2 md:mb-3 text-gray-200 group-hover:${itemTheme.text} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
         <div className="flex items-center gap-[3px] mt-auto h-4 opacity-70 group-hover:opacity-100 transition-opacity">
           {[4, 8, 12, 8, 16, 10, 14, 6, 10, 12, 8, 6, 14, 8, 4, 8, 12, 10, 16, 12, 8, 14, 10, 6, 12, 8, 16, 10, 6, 4].map((h, i) => (
             <div key={i} className={`w-[2px] sm:w-[3px] shrink-0 rounded-full bg-gray-600 group-hover:${itemTheme.bg} transition-colors`} style={{ height: `${h}px` }} />

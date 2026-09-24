@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Loader2, ChevronRight, ChevronUp, PlayCircle, ChevronLeft, Zap, Play } from 'lucide-react';
 import { themes } from '../utils/theme';
 import { fetchPosts } from '../utils/api';
+import DOMPurify from 'isomorphic-dompurify';
 
 const hideScrollbar = "scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
 
@@ -87,7 +88,7 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   }
 
   return (
-    <a href={ad.buttonLink || '#'} target="_blank" rel="noreferrer" className={wrapperClasses} style={bgStyles}>
+    <a href={ad.buttonLink || '#'} target="_blank" rel="noopener noreferrer" className={wrapperClasses} style={bgStyles}>
        {ad.bgImage && <img src={ad.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" alt="" />}
        {ad.pattern !== 'none' && <div className="absolute inset-0" style={{ backgroundImage: patternOverlay, mixBlendMode: 'overlay', backgroundSize: ad.pattern === 'grid' ? '20px 20px' : 'auto' }}></div>}
        
@@ -152,7 +153,7 @@ const WideVideoCard = ({ item, setSelectedItem, activeSport }) => {
       <PlayCircle size={64} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-20 drop-shadow-lg" />
       <div className="absolute bottom-0 left-0 right-0 p-6 z-20 flex flex-col justify-end opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
         <PostMeta item={item} activeSport={activeSport} />
-        <h3 className={`font-black text-xl lg:text-3xl text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-xl`} dangerouslySetInnerHTML={{ __html: item.title }} />
+        <h3 className={`font-black text-xl lg:text-3xl text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-xl`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
       </div>
     </Link>
   );
@@ -168,7 +169,7 @@ const VideoListCard = ({ item, setSelectedItem, activeSport }) => {
       </div>
       <div className="flex-1 p-3 lg:p-4 relative z-20 flex flex-col justify-center">
         <PostMeta item={item} activeSport={activeSport} />
-        <h4 className={`font-black text-xs lg:text-sm text-gray-200 leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+        <h4 className={`font-black text-xs lg:text-sm text-gray-200 leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
       </div>
     </Link>
   );
@@ -183,7 +184,7 @@ const GridVideoCard = ({ item, setSelectedItem, activeSport }) => {
       <PlayCircle size={40} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-20 drop-shadow-lg" />
       <div className="absolute bottom-0 left-0 right-0 p-4 z-20 flex flex-col justify-end opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
         <PostMeta item={item} activeSport={activeSport} />
-        <h3 className={`font-bold text-sm lg:text-base text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+        <h3 className={`font-bold text-sm lg:text-base text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
       </div>
     </Link>
   );
@@ -197,7 +198,7 @@ const ShortCard = ({ item, setSelectedItem, activeSport }) => (
       <div className="bg-black/50 backdrop-blur-sm rounded-full p-3 md:p-4 border border-white/10"><Play size={24} className="text-white ml-1" fill="currentColor"/></div>
     </div>
     <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 z-20">
-      <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+      <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
     </div>
   </Link>
 );

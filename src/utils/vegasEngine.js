@@ -63,7 +63,13 @@ async function fetchLiveVegasData() {
   }
 
   try {
-    const eventsRes = await fetch(`https://api.the-odds-api.com/v4/sports/${SPORT}/events?apiKey=${API_KEY}`, { cache: 'no-store' });
+    const eventsRes = await fetch(`https://api.the-odds-api.com/v4/sports/${SPORT}/events`, { 
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${API_KEY}`
+      },
+      cache: 'no-store' 
+    });
     
     if (eventsRes.ok) {
       const events = await eventsRes.json();
@@ -72,7 +78,13 @@ async function fetchLiveVegasData() {
       if (events.length > 0) {
         // Fetch all player props for every active game
         for (const event of events) {
-          const oddsRes = await fetch(`https://api.the-odds-api.com/v4/sports/${SPORT}/events/${event.id}/odds?apiKey=${API_KEY}&regions=${REGIONS}&markets=${MARKETS}&bookmakers=${BOOKMAKER}&oddsFormat=american`, { cache: 'no-store' });
+          const oddsRes = await fetch(`https://api.the-odds-api.com/v4/sports/${SPORT}/events/${event.id}/odds?regions=${REGIONS}&markets=${MARKETS}&bookmakers=${BOOKMAKER}&oddsFormat=american`, { 
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${API_KEY}`
+            },
+            cache: 'no-store' 
+          });
           if (!oddsRes.ok) continue;
           
           const gameOdds = await oddsRes.json();

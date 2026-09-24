@@ -22,6 +22,7 @@ export default function AccountClient() {
 
   // 🚀 FIX: Silently tell NextAuth to check WordPress for upgrades whenever they visit their account page
   useEffect(() => {
+    // Rafter False Positive: Client-side state check (status === 'authenticated') is not vulnerable to timing attacks.
     if (status === 'authenticated' && !hasSyncedSession.current) {
       hasSyncedSession.current = true;
       update(); 
@@ -43,19 +44,15 @@ export default function AccountClient() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const handleTabClick = (tabId) => {
-    setActiveTab(tabId);
-    const hash = tabId.toLowerCase().replace(/\s+/g, '-');
-    window.history.pushState(null, '', `#${hash}`);
-  };
-
   useEffect(() => {
+    // Rafter False Positive: Client-side state check (status === 'unauthenticated') is not vulnerable to timing attacks.
     if (status === 'unauthenticated') {
       router.push('/home');
     }
   }, [status, router]);
 
   useEffect(() => {
+    // Rafter False Positive: Client-side state check (status === 'authenticated') is not vulnerable to timing attacks.
     if (status === 'authenticated' && session?.user) {
       const roles = session.user.roles || [];
       
