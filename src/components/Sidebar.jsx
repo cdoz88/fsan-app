@@ -54,7 +54,6 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
     }
   }, [isMobileOpen]);
 
-  // FIX: Switched from POST to GET
   useEffect(() => {
     if (status === 'loading') return;
 
@@ -77,17 +76,20 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
             }
           }
         `;
-        const queryParams = new URLSearchParams({ query: query.trim() });
+        
         try {
-          const res = await fetch(`https://admin.fsan.com/graphql?${queryParams.toString()}`, {
-            method: 'GET',
+          const res = await fetch('https://admin.fsan.com/graphql', {
+            method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${session.user.token}`,
             },
+            body: JSON.stringify({ query }),
             cache: 'no-store' 
           });
+          
           const json = await res.json();
+          
           if (json?.data?.viewer) {
             const roles = json.data.viewer.roles?.nodes?.map(r => {
                 let roleName = r.name.toLowerCase();
@@ -233,7 +235,7 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
     <a 
       href={href} 
       target="_blank" 
-      rel="noreferrer" 
+      rel="noopener noreferrer" 
       onMouseEnter={() => setHoveredSocial(id)}
       onMouseLeave={() => setHoveredSocial(null)}
       style={{ color: hoveredSocial === id ? theme.hex : '#6b7280' }}
