@@ -76,7 +76,7 @@ export default function OmfgTeamPane({
   };
 
   return (
-    <div className="flex-1 w-full bg-[#111] border sm:border-2 border-gray-800 rounded-xl sm:rounded-3xl p-1.5 sm:p-6 shadow-2xl relative flex flex-col min-h-[500px] sm:min-h-[600px] min-w-0">
+    <div className={`flex-1 w-full bg-[#111] border sm:border-2 border-gray-800 rounded-xl sm:rounded-3xl p-1.5 sm:p-6 shadow-2xl relative flex flex-col min-h-[500px] sm:min-h-[600px] min-w-0 ${query.length > 1 ? 'z-[100]' : 'z-10'}`}>
       
       {/* HEADER SECTION */}
       <div className="flex flex-col xl:flex-row xl:justify-between xl:items-start gap-1.5 sm:gap-4 mb-2 sm:mb-4 border-b border-gray-800 pb-2 sm:pb-4 shrink-0 min-h-[48px] sm:min-h-[64px]">

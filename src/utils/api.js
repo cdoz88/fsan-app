@@ -171,7 +171,14 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
   try {
     let rawPosts = [];
     let totalPages = 1;
-    const fetchOptions = { next: { revalidate: 60 } }; 
+    
+    // ADDED: Authorization headers using environment variables to pass security checks
+    const fetchOptions = { 
+        next: { revalidate: 60 },
+        headers: {
+            'Authorization': `Bearer ${process.env.WP_API_TOKEN || ''}`
+        }
+    }; 
     const timeBuster = Math.floor(Date.now() / (1000 * 60 * 5));
 
     const apiSport = activeSport;
@@ -185,10 +192,6 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
         `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=30&page=1&sport=All&type=shows&t=${timeBuster}`
       ];
     } else if (targetType === 'podcasts') {
-      // 🚀 THE CATCH-ALL FIX
-      // Because the WP backend drops Racing/Golf when 'type=podcasts' is explicitly requested,
-      // we cast a massive net by also fetching 'type=articles'. This bypasses the API block,
-      // allowing our formatPost function to dynamically identify and upgrade them into podcasts!
       endpoints = [
         `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=40&page=${currentPage}&sport=${apiSport}&type=podcasts&t=${timeBuster}`,
         `https://admin.fsan.com/wp-json/fsan/v1/feed?per_page=40&page=${currentPage}&sport=${apiSport}&type=articles&t=${timeBuster}`, 
@@ -209,6 +212,9 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
       if (res && res.ok) {
         const tp = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);
         if (tp > totalPages) totalPages = tp;
+      } else if (res && !res.ok) {
+          // Helpful debug log to catch security rejections (401/403)
+          console.warn(`Fetch rejected for ${res.url} with status: ${res.status}`);
       }
     });
 
@@ -224,8 +230,6 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
 
     let formattedPosts = rawPosts.map(formatPost);
 
-    // 🚀 STRICT FRONTEND FILTERING
-    // Ensures components ONLY receive exactly what they requested, regardless of WP anomalies.
     if (activeSport && activeSport !== 'All') {
         formattedPosts = formattedPosts.filter(p => p.sport.toLowerCase() === activeSport.toLowerCase());
     }
@@ -264,6 +268,8 @@ export async function fetchGraphQL(query, variables = {}) {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        // ADDED: Authorization header for GraphQL
+        'Authorization': `Bearer ${process.env.WP_API_TOKEN || ''}`
       },
       next: { revalidate: 60 }, 
     });

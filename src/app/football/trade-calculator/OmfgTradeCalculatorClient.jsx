@@ -397,8 +397,8 @@ export default function OmfgTradeCalculatorClient() {
       </div>
 
       <div className="w-full">
-        {/* Controls Row */}
-        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6 relative z-[100] w-full">
+        {/* Controls Row - z-index lowered so header dropdown paints over it */}
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6 relative z-30 w-full">
           
           <div className="flex flex-row flex-wrap items-center gap-2 xl:gap-4 w-full pb-2 -mb-2">
             

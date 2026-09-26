@@ -52,15 +52,25 @@ export default function OmfgTradeValueClient() {
         const dynData = await dynRes.json();
         const basePlayers = (dynData.success && dynData.players) ? dynData.players : [];
 
-        // 2. Fetch OMFG Metadata to find latest year/week
-        const metaRes = await fetch(`/api/omfg-data?year=2026&week=Week 1`);
+        // 2. Fetch OMFG Metadata to find latest year/week (Updated to match other components)
+        const metaRes = await fetch(`/api/omfg-data?year=2026&week=Season`);
         const metaData = await metaRes.json();
         let latestYear = '2026';
         let latestWeek = 'Week 1';
         
         if (metaData.available_models) {
-            const activeWeekly = metaData.available_models.filter(m => m.week !== 'Season');
+            // Filter out non-weekly models
+            const activeWeekly = metaData.available_models.filter(m => m.week !== 'Season' && m.week !== 'Preseason' && m.week !== 'Rest of Season');
+            
             if (activeWeekly.length > 0) {
+                // Sort by year descending, then by week number descending
+                activeWeekly.sort((a, b) => {
+                    if (b.year !== a.year) return Number(b.year) - Number(a.year);
+                    const weekA = parseInt(a.week.replace(/[^0-9]/g, '')) || 0;
+                    const weekB = parseInt(b.week.replace(/[^0-9]/g, '')) || 0;
+                    return weekB - weekA;
+                });
+                
                 latestYear = String(activeWeekly[0].year);
                 latestWeek = activeWeekly[0].week;
                 setActiveWeekNum(parseInt(latestWeek.replace(/\D/g, '')) || 1);

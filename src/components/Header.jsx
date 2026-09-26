@@ -34,7 +34,6 @@ export default function Header({ activeSport }) {
   
   const { data: session, status } = useSession();
 
-  // Determine user tier based on session roles or tier property
   let userTier = 'free';
   if (session?.user) {
       const roles = session.user.roles || [];
@@ -160,11 +159,12 @@ export default function Header({ activeSport }) {
           }
         }
       `;
-      const queryParams = new URLSearchParams({ query: query.trim() });
       try {
-        const res = await fetch(`https://admin.fsan.com/graphql?${queryParams.toString()}`, {
-          method: 'GET',
+        const res = await fetch(`https://admin.fsan.com/graphql`, {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: query.trim() }),
+          cache: 'no-store'
         });
         const json = await res.json();
         if (json?.data?.menu?.menuItems?.nodes) {
@@ -212,7 +212,7 @@ export default function Header({ activeSport }) {
 
   return (
     <>
-      <div className="bg-[#1a1a1a] border-b border-gray-800 px-4 py-3 flex justify-between items-center z-[100] sticky top-0 shadow-md">
+      <div className="bg-[#1a1a1a] border-b border-gray-800 px-4 py-3 flex justify-between items-center z-[110] sticky top-0 shadow-md">
         
         {/* Left Side: Logo & Network Selector */}
         <div className="relative flex items-center">
@@ -227,7 +227,7 @@ export default function Header({ activeSport }) {
           {isSportDropdownOpen && (
             <>
               <div className="fixed inset-0 z-[90]" onClick={() => setIsSportDropdownOpen(false)}></div>
-              <div className="absolute top-full left-0 mt-3 w-64 bg-[#1a1a1a] border border-gray-800 rounded-xl shadow-2xl z-[100] overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
+              <div className="absolute top-full left-0 mt-3 w-64 bg-[#1a1a1a] border border-gray-800 rounded-xl shadow-2xl z-[120] overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
                 <div className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 border-b border-gray-800/50">Select Network</div>
                 {sportsList.map((sport) => {
                   const targetPath = sport.name === 'All' ? `/${currentView}` : `/${sport.name.toLowerCase()}/${currentView}`;
@@ -304,7 +304,7 @@ export default function Header({ activeSport }) {
 
           {/* Context-Aware League Selector */}
           {showLeagueSelector && (
-            <div className="relative ml-2 sm:ml-4 pl-2 sm:pl-4 border-l border-gray-800 flex items-center z-[100]">
+            <div className="relative ml-2 sm:ml-4 pl-2 sm:pl-4 border-l border-gray-800 flex items-center z-[120]">
               <button
                 onClick={() => setIsLeagueDropdownOpen(!isLeagueDropdownOpen)}
                 className="flex items-center gap-1.5 sm:gap-2 bg-[#111] hover:bg-gray-800 border border-gray-800 hover:border-gray-600 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-4 sm:py-2 transition-all shadow-inner max-w-[140px] sm:max-w-[200px]"
@@ -329,7 +329,7 @@ export default function Header({ activeSport }) {
               {isLeagueDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-[90]" onClick={() => setIsLeagueDropdownOpen(false)}></div>
-                  <div className="absolute top-full right-0 mt-3 w-64 bg-[#1a1a1a] border border-gray-800 rounded-xl shadow-2xl z-[100] overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
+                  <div className="absolute top-full right-0 mt-3 w-64 bg-[#1a1a1a] border border-gray-800 rounded-xl shadow-2xl z-[150] overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
                     <div className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 border-b border-gray-800/50">
                       {activeSport} Context
                     </div>
@@ -434,7 +434,6 @@ export default function Header({ activeSport }) {
 
             if (isCenterBtn) {
               return (
-                // 🚀 FIXED: Removed mb-[-36px] from the container to stop pulling the text up
                 <Link key={item.id} href={item.url} target={item.url.startsWith('http') ? '_blank' : '_self'} className="flex flex-col items-center group no-underline relative -top-3">
                   <div className={`w-14 h-14 rounded-full flex items-center justify-center border-[4px] border-[#0a0a0a] shadow-xl ${currentGradient} text-white transition-transform group-hover:scale-105 group-active:scale-95 no-underline`}>
                     <Icon size={24} className={pathname.includes(item.url) ? 'animate-pulse' : ''} />
@@ -462,7 +461,6 @@ export default function Header({ activeSport }) {
               <span className="text-[9px] font-bold uppercase tracking-widest">Scores</span>
             </Link>
             
-            {/* 🚀 FIXED: Removed mb-[-36px] from the fallback layout as well */}
             <Link href={`${basePath}/home`} className="flex flex-col items-center group no-underline relative -top-3">
               <div className={`w-14 h-14 rounded-full flex items-center justify-center border-[4px] border-[#0a0a0a] shadow-xl ${currentGradient} text-white transition-transform group-hover:scale-105 group-active:scale-95 no-underline`}>
                 <Flame size={24} className={currentView === 'home' ? 'animate-pulse' : ''} />
@@ -524,7 +522,7 @@ export default function Header({ activeSport }) {
                   {isSearchSportDropdownOpen && (
                     <>
                       <div className="fixed inset-0 z-10" onClick={() => setIsSearchSportDropdownOpen(false)}></div>
-                      <div className="absolute top-full left-0 mt-3 w-48 bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl z-20 overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
+                      <div className="absolute top-full left-0 mt-3 w-48 bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl z-[150] overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
                         <div className="px-4 py-2 text-[9px] font-black uppercase tracking-widest text-gray-500 border-b border-gray-800/50 mb-1">Search Within</div>
                         {sportsList.map(s => (
                           <button key={s.name} onClick={() => { setSearchSport(s.name); setIsSearchSportDropdownOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${searchSport === s.name ? 'bg-[#252525] text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
