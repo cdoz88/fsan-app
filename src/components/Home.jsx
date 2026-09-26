@@ -309,7 +309,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
 
   const basePath = activeSport === 'All' || !activeSport ? '' : `/${activeSport.toLowerCase()}`;
 
-  // --- AD FETCHING RESTORED TO ORIGINAL SAFE GET ---
+  // --- AD FETCHING RESTORED TO ORIGINAL SAFE POST ---
   useEffect(() => {
     const fetchAds = async () => {
       const query = `
@@ -319,11 +319,11 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
           }
         }
       `;
-      const queryParams = new URLSearchParams({ query: query.trim() });
       try {
-        const res = await fetch(`https://admin.fsan.com/graphql?${queryParams.toString()}`, {
-          method: 'GET',
+        const res = await fetch(`https://admin.fsan.com/graphql`, {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: query.trim() }),
           cache: 'no-store'
         });
         const json = await res.json();
