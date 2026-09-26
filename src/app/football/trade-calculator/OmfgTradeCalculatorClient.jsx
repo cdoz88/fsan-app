@@ -79,14 +79,22 @@ export default function OmfgTradeCalculatorClient() {
         const dynData = await dynRes.json();
         const basePlayers = (dynData.success && dynData.players) ? dynData.players : [];
 
-        const metaRes = await fetch(`/api/omfg-data?year=2026&week=Week 1`);
+        // 🚀 THE FIX: Use robust filtering for metadata so it doesn't crash on bad "week" strings
+        const metaRes = await fetch(`/api/omfg-data?year=2026&week=Season`);
         const metaData = await metaRes.json();
         let latestYear = '2026';
         let latestWeek = 'Week 1';
         
         if (metaData.available_models) {
-            const activeWeekly = metaData.available_models.filter(m => m.week !== 'Season');
+            const activeWeekly = metaData.available_models.filter(m => m.week !== 'Season' && m.week !== 'Preseason' && m.week !== 'Rest of Season');
             if (activeWeekly.length > 0) {
+                activeWeekly.sort((a, b) => {
+                    if (b.year !== a.year) return Number(b.year) - Number(a.year);
+                    const weekA = parseInt(a.week.replace(/[^0-9]/g, '')) || 0;
+                    const weekB = parseInt(b.week.replace(/[^0-9]/g, '')) || 0;
+                    return weekB - weekA;
+                });
+                
                 latestYear = String(activeWeekly[0].year);
                 latestWeek = activeWeekly[0].week;
                 setActiveWeekNum(parseInt(latestWeek.replace(/\D/g, '')) || 1);
