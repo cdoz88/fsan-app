@@ -54,6 +54,7 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
     }
   }, [isMobileOpen]);
 
+  // RESTORED: Back to the original GET implementation to satisfy WAF and Caching rules
   useEffect(() => {
     if (status === 'loading') return;
 
@@ -76,20 +77,17 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
             }
           }
         `;
-        
+        const queryParams = new URLSearchParams({ query: query.trim() });
         try {
-          const res = await fetch('https://admin.fsan.com/graphql', {
-            method: 'POST',
+          const res = await fetch(`https://admin.fsan.com/graphql?${queryParams.toString()}`, {
+            method: 'GET',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${session.user.token}`,
             },
-            body: JSON.stringify({ query }),
             cache: 'no-store' 
           });
-          
           const json = await res.json();
-          
           if (json?.data?.viewer) {
             const roles = json.data.viewer.roles?.nodes?.map(r => {
                 let roleName = r.name.toLowerCase();

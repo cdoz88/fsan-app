@@ -5,8 +5,6 @@ import { PlayCircle, FileText, Video, Mic, Play, Zap, Flame, ChevronLeft, Chevro
 import { themes } from '../utils/theme';
 import sanitizeHtml from 'sanitize-html';
 
-// --- GLOBAL CONSTANTS & HELPERS ---
-
 const hideScrollbar = "scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
 
 const shieldMaskStyle = {
@@ -24,7 +22,6 @@ const getItemUrl = (item) => {
 
 const sanitize = (dirty) => sanitizeHtml(dirty, { allowedTags: [], allowedAttributes: {} });
 
-// 🚀 BULLETPROOF FALLBACK: Direct DOM Mutation Quality Ladder
 const SafeImage = ({ src, className, alt = "", loading }) => {
   return (
     <img 
@@ -48,8 +45,6 @@ const SafeImage = ({ src, className, alt = "", loading }) => {
     />
   );
 };
-
-// --- GLOBAL SUB-COMPONENTS ---
 
 const PostMeta = ({ item, activeSport }) => (
   <div className="flex items-center gap-2 mb-3 z-20 relative">
@@ -314,7 +309,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
 
   const basePath = activeSport === 'All' || !activeSport ? '' : `/${activeSport.toLowerCase()}`;
 
-  // --- AD FETCHING ---
+  // --- AD FETCHING RESTORED TO ORIGINAL SAFE GET ---
   useEffect(() => {
     const fetchAds = async () => {
       const query = `
@@ -324,11 +319,11 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
           }
         }
       `;
+      const queryParams = new URLSearchParams({ query: query.trim() });
       try {
-        const res = await fetch(`https://admin.fsan.com/graphql`, {
-          method: 'POST',
+        const res = await fetch(`https://admin.fsan.com/graphql?${queryParams.toString()}`, {
+          method: 'GET',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: query.trim() }),
           cache: 'no-store'
         });
         const json = await res.json();
