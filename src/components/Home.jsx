@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { PlayCircle, FileText, Video, Mic, Play, Zap, Flame, ChevronLeft, ChevronRight, ChevronUp, Headphones, ArrowRight } from 'lucide-react';
 import { themes } from '../utils/theme';
+import sanitizeHtml from 'sanitize-html';
 
 // --- GLOBAL CONSTANTS & HELPERS ---
 
@@ -20,6 +21,8 @@ const getItemUrl = (item) => {
   const sportPrefix = (!item.sport || item.sport === 'All') ? '' : `/${item.sport.toLowerCase()}`;
   return `${sportPrefix}/${itemView}/${item.slug}`;
 };
+
+const sanitize = (dirty) => sanitizeHtml(dirty, { allowedTags: [], allowedAttributes: {} });
 
 // 🚀 BULLETPROOF FALLBACK: Direct DOM Mutation Quality Ladder
 const SafeImage = ({ src, className, alt = "", loading }) => {
@@ -158,9 +161,9 @@ const VideoCard = ({ item, isHero, setSelectedItem, activeSport }) => {
       )}
       <div className={`absolute bottom-0 left-0 right-0 p-4 lg:p-6 z-20 flex flex-col justify-end ${isVideo ? 'opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0' : 'opacity-100 translate-y-0'} transition-all duration-300`}>
         <PostMeta item={item} activeSport={activeSport} />
-        <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'} text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-3 drop-shadow-md mb-2`} dangerouslySetInnerHTML={{ __html: item.title }} />
+        <h3 className={`font-black ${isHero ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'} text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-3 drop-shadow-md mb-2`} dangerouslySetInnerHTML={{ __html: sanitize(item.title) }} />
         {!isVideo && isHero && item.excerpt && (
-          <div className="text-sm text-gray-300 line-clamp-2 max-w-3xl drop-shadow-md mt-1" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
+          <div className="text-sm text-gray-300 line-clamp-2 max-w-3xl drop-shadow-md mt-1" dangerouslySetInnerHTML={{ __html: sanitize(item.excerpt) }} />
         )}
       </div>
     </Link>
@@ -175,7 +178,7 @@ const ShortCard = ({ item, setSelectedItem, activeSport }) => (
       <div className="bg-black/50 backdrop-blur-sm rounded-full p-3 md:p-4 border border-white/10"><Play size={24} className="text-white ml-1" fill="currentColor"/></div>
     </div>
     <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 z-20">
-      <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+      <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: sanitize(item.title) }} />
     </div>
   </Link>
 );
@@ -192,8 +195,8 @@ const VerticalCard = ({ item, setSelectedItem, activeSport }) => {
       </div>
       <div className="px-5 pb-5 flex flex-col flex-1 relative z-20 -mt-10 pt-2">
         <PostMeta item={item} activeSport={activeSport} />
-        <h3 className={`font-black text-lg leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors mb-2 line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
-        <div className="text-sm text-gray-400 line-clamp-2 mt-auto drop-shadow-md" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
+        <h3 className={`font-black text-lg leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors mb-2 line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: sanitize(item.title) }} />
+        <div className="text-sm text-gray-400 line-clamp-2 mt-auto drop-shadow-md" dangerouslySetInnerHTML={{ __html: sanitize(item.excerpt) }} />
       </div>
     </Link>
   );
@@ -208,8 +211,8 @@ const PressBoxCard = ({ item, setSelectedItem, activeSport }) => (
     </div>
     <div className="relative z-10 px-5 pb-5 md:p-6 md:pl-2 flex flex-col justify-center h-full flex-1 -mt-8 md:mt-0 bg-[#1e1e1e] md:bg-transparent">
       <PostMeta item={item} activeSport={activeSport} />
-      <h4 className={`text-lg md:text-xl lg:text-2xl font-bold leading-tight mb-2 text-gray-200 group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors drop-shadow-lg`} dangerouslySetInnerHTML={{ __html: item.title }} />
-      <div className="text-sm text-gray-400 line-clamp-2 leading-relaxed drop-shadow" dangerouslySetInnerHTML={{ __html: item.excerpt }} />
+      <h4 className={`text-lg md:text-xl lg:text-2xl font-bold leading-tight mb-2 text-gray-200 group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors drop-shadow-lg`} dangerouslySetInnerHTML={{ __html: sanitize(item.title) }} />
+      <div className="text-sm text-gray-400 line-clamp-2 leading-relaxed drop-shadow" dangerouslySetInnerHTML={{ __html: sanitize(item.excerpt) }} />
     </div>
   </Link>
 );
@@ -245,7 +248,7 @@ const BoothCard = ({ item, setSelectedItem, activeSport, masterPodcasts }) => {
            {activeSport === 'All' && <span className={`w-1.5 h-1.5 rounded-full ${itemTheme.bg}`}></span>}
            <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500">{item.date}</span>
         </div>
-        <h4 className={`font-bold text-sm leading-snug mb-2 text-gray-200 group-hover:${itemTheme.text} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: item.title }} />
+        <h4 className={`font-bold text-sm leading-snug mb-2 text-gray-200 group-hover:${itemTheme.text} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: sanitize(item.title) }} />
         <div className="flex items-center gap-[3px] mt-auto h-4 opacity-70 group-hover:opacity-100 transition-opacity">
           {[4, 8, 12, 8, 16, 10, 14, 6, 10, 12, 8, 6, 14, 8, 4, 8, 12, 10, 16, 12, 8, 14, 10, 6, 12, 8, 16, 10, 6, 4].map((h, i) => (
             <div key={i} className={`w-[2px] sm:w-[3px] shrink-0 rounded-full bg-gray-600 group-hover:${itemTheme.bg} transition-colors`} style={{ height: `${h}px` }} />
@@ -264,7 +267,7 @@ const LineupCard = ({ item, setSelectedItem, activeSport }) => (
       <div className="bg-black/50 backdrop-blur-sm rounded-full p-3 border border-white/10"><Headphones size={24} className="text-white" /></div>
     </div>
     <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 z-20">
-      <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: item.title }} />
+      <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: sanitize(item.title) }} />
     </div>
   </Link>
 );
@@ -401,7 +404,7 @@ export default function Home({ wpPosts, masterPodcasts, activeSport, setSelected
                     {item.type === 'short' && <Zap size={14} stroke="url(#grey-grad)" />}
                   </div>
                 </div>
-                <span className="text-[11px] font-medium text-gray-400 group-hover:text-white transition-colors text-center w-[90px] line-clamp-2 leading-tight" dangerouslySetInnerHTML={{ __html: item.title }} />
+                <span className="text-[11px] font-medium text-gray-400 group-hover:text-white transition-colors text-center w-[90px] line-clamp-2 leading-tight" dangerouslySetInnerHTML={{ __html: sanitize(item.title) }} />
               </Link>
             ))}
           </div>

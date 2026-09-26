@@ -1,7 +1,7 @@
 import ClientManager from '../../../components/ClientManager';
 import { fetchPosts, getMenuBySlug } from '../../../utils/api';
 import { redirect } from 'next/navigation';
-import DOMPurify from 'isomorphic-dompurify';
+import sanitizeHtml from 'sanitize-html';
 
 export async function generateMetadata({ params }) {
   const { sport, view } = await params;
@@ -67,7 +67,7 @@ export default async function DynamicPage({ params, searchParams }) {
                }
 
                if (athleteResult) {
-                  playerRedirectSlug = q.trim().toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-\vert{}-$)/g, '');
+                  playerRedirectSlug = q.trim().toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
                }
             }
          } catch(e) {
@@ -99,7 +99,8 @@ export default async function DynamicPage({ params, searchParams }) {
        }
      `;
 
-     const stripTags = (html) => html ? DOMPurify.sanitize(html, { ALLOWED_TAGS: [] }).trim() : '';
+     // Safely strip all HTML tags for excerpts
+     const stripTags = (html) => html ? sanitizeHtml(html, { allowedTags: [] }).trim() : '';
      const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
 
      try {

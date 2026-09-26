@@ -1,7 +1,7 @@
 import React from 'react';
 import { getMenuBySlug } from '../../../utils/api'; 
 import PlayerClient from './PlayerClient';
-import DOMPurify from 'isomorphic-dompurify';
+import sanitizeHtml from 'sanitize-html';
 
 // --- DATA FETCHING ---
 
@@ -187,7 +187,8 @@ async function getPlayerContent(searchName, sportName) {
     console.error("Feed fetch error:", e);
   }
 
-  const stripTags = (html) => html ? DOMPurify.sanitize(html, { ALLOWED_TAGS: [] }).trim() : '';
+  // Safely strip all HTML tags for excerpts
+  const stripTags = (html) => html ? sanitizeHtml(html, { allowedTags: [] }).trim() : '';
   const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
 
   const formattedPosts = posts.reduce((acc, post) => {
