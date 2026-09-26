@@ -3,7 +3,9 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Headphones, ChevronRight, PlayCircle, Loader2 } from 'lucide-react';
 import { themes } from '../utils/theme';
-import DOMPurify from 'isomorphic-dompurify';
+import sanitizeHtml from 'sanitize-html';
+
+const sanitize = (dirty) => sanitizeHtml(dirty, { allowedTags: [], allowedAttributes: {} });
 
 // SEO Helper: Generates the true path for Googlebot
 const getItemUrl = (item) => {
@@ -97,17 +99,15 @@ const LineupCard = ({ item, setSelectedItem }) => (
       </div>
     </div>
     <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 z-20">
-      <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
+      <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: sanitize(item.title) }} />
     </div>
   </Link>
 );
 
-// NEW: EpisodeCard component for rendering individual episodes in a list format
 const EpisodeCard = ({ item, setSelectedItem, activeSport, masterPodcasts }) => {
   const itemTheme = themes[item.sport] || themes.All;
   let displayImage = item.imageUrl;
   
-  // Inherit the Master Show's artwork if the episode lacks its own image
   if (!displayImage && masterPodcasts) {
      const genericSlugs = ['all', 'football', 'basketball', 'baseball', 'podcast', 'podcasts', 'pod-episode', 'football-pod-episode', 'basketball-pod-episode', 'baseball-pod-episode', 'football-podcast', 'podcast-basketball', 'podcast-baseball', 'uncategorized'];
      const parentShow = masterPodcasts.find(m => {
@@ -136,7 +136,7 @@ const EpisodeCard = ({ item, setSelectedItem, activeSport, masterPodcasts }) => 
            {activeSport === 'All' && <span className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${itemTheme.bg}`}></span>}
            <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-gray-500">{item.date}</span>
         </div>
-        <h4 className={`font-bold text-sm md:text-base leading-snug mb-2 md:mb-3 text-gray-200 group-hover:${itemTheme.text} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
+        <h4 className={`font-bold text-sm md:text-base leading-snug mb-2 md:mb-3 text-gray-200 group-hover:${itemTheme.text} transition-colors line-clamp-2`} dangerouslySetInnerHTML={{ __html: sanitize(item.title) }} />
         <div className="flex items-center gap-[3px] mt-auto h-4 opacity-70 group-hover:opacity-100 transition-opacity">
           {[4, 8, 12, 8, 16, 10, 14, 6, 10, 12, 8, 6, 14, 8, 4, 8, 12, 10, 16, 12, 8, 14, 10, 6, 12, 8, 16, 10, 6, 4].map((h, i) => (
             <div key={i} className={`w-[2px] sm:w-[3px] shrink-0 rounded-full bg-gray-600 group-hover:${itemTheme.bg} transition-colors`} style={{ height: `${h}px` }} />
@@ -147,13 +147,10 @@ const EpisodeCard = ({ item, setSelectedItem, activeSport, masterPodcasts }) => 
   );
 };
 
-// --- MAIN COMPONENT ---
-
 export default function PodcastsArchive({ podcasts, episodes = [], activeSport, setSelectedItem, loadMorePosts, isLoadingMore, hasMore }) {
   const theme = themes[activeSport] || themes.All;
   const [globalAds, setGlobalAds] = useState([]);
 
-  // Fetch Global Ads from WP
   useEffect(() => {
     const fetchAds = async () => {
       const query = `
@@ -199,14 +196,12 @@ export default function PodcastsArchive({ podcasts, episodes = [], activeSport, 
     return true; 
   });
 
-  // Categorize by Placement
   const headerAds = activeAds.filter(ad => ad.placements?.includes('header'));
   const sidebarAds = activeAds.filter(ad => ad.placements?.includes('inline'));
 
   return (
     <div className="flex flex-col w-full pt-6 pb-16 animate-in fade-in duration-300">
       
-      {/* HEADER SECTION */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-4 border-b border-gray-800">
         
         <div className="shrink-0 mr-4">
@@ -223,13 +218,11 @@ export default function PodcastsArchive({ podcasts, episodes = [], activeSport, 
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* PODCAST GRID */}
         <div className="lg:col-span-9">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             {podcasts.map(pod => <LineupCard key={pod.id} item={pod} setSelectedItem={setSelectedItem} />)}
           </div>
           
-          {/* RECENT EPISODES SECTION */}
           {episodes.length > 0 && (
             <div className="mt-12 w-full">
               <div className="flex items-center gap-4 mb-8">
@@ -258,7 +251,6 @@ export default function PodcastsArchive({ podcasts, episodes = [], activeSport, 
           )}
         </div>
 
-        {/* AD SIDEBAR COLUMN */}
         <div className="lg:col-span-3 flex flex-col gap-6 sticky top-24">
           {sidebarAds.length > 0 ? (
             sidebarAds.map((ad) => (

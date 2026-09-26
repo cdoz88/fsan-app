@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { Loader2, ChevronRight, ChevronUp, PlayCircle, ChevronLeft, Zap, Play } from 'lucide-react';
 import { themes } from '../utils/theme';
 import { fetchPosts } from '../utils/api';
-import DOMPurify from 'isomorphic-dompurify';
+import sanitizeHtml from 'sanitize-html';
+
+const sanitize = (dirty) => sanitizeHtml(dirty, { allowedTags: [], allowedAttributes: {} });
 
 const hideScrollbar = "scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
 
@@ -142,18 +144,16 @@ const DynamicAd = ({ ad, variant = "inline" }) => {
   );
 };
 
-// --- CONTENT CARD COMPONENTS ---
-
 const WideVideoCard = ({ item, setSelectedItem, activeSport }) => {
   const cardTheme = themes[item.sport] || themes.All;
   return (
     <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group relative w-full aspect-video cursor-pointer bg-[#111] border ${cardTheme.border} rounded-2xl overflow-hidden shadow-2xl ${cardTheme.hoverBorder} transition-all no-underline block`}>
-      {item.imageUrl ? <SafeImage src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" /> : <div className="absolute inset-0 bg-gray-900" />}
+      {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" /> : <div className="absolute inset-0 bg-gray-900" />}
       <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
       <PlayCircle size={64} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-20 drop-shadow-lg" />
       <div className="absolute bottom-0 left-0 right-0 p-6 z-20 flex flex-col justify-end opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
         <PostMeta item={item} activeSport={activeSport} />
-        <h3 className={`font-black text-xl lg:text-3xl text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-xl`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
+        <h3 className={`font-black text-xl lg:text-3xl text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-xl`} dangerouslySetInnerHTML={{ __html: sanitize(item.title) }} />
       </div>
     </Link>
   );
@@ -164,12 +164,12 @@ const VideoListCard = ({ item, setSelectedItem, activeSport }) => {
   return (
     <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group relative w-full flex flex-row cursor-pointer bg-[#1e1e1e] border ${cardTheme.border} border-opacity-40 rounded-2xl overflow-hidden shadow-lg ${cardTheme.hoverBorder} transition-all items-stretch h-full no-underline block`}>
       <div className="w-2/5 shrink-0 relative bg-gray-900 overflow-hidden aspect-video">
-         {item.imageUrl && <SafeImage src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80" />}
+         {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80" />}
          <PlayCircle size={24} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/70 group-hover:text-white group-hover:scale-110 transition-all z-20 drop-shadow-lg" />
       </div>
       <div className="flex-1 p-3 lg:p-4 relative z-20 flex flex-col justify-center">
         <PostMeta item={item} activeSport={activeSport} />
-        <h4 className={`font-black text-xs lg:text-sm text-gray-200 leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
+        <h4 className={`font-black text-xs lg:text-sm text-gray-200 leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: sanitize(item.title) }} />
       </div>
     </Link>
   );
@@ -179,12 +179,12 @@ const GridVideoCard = ({ item, setSelectedItem, activeSport }) => {
   const cardTheme = themes[item.sport] || themes.All;
   return (
     <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group relative w-full aspect-video cursor-pointer bg-[#111] border ${cardTheme.border} border-opacity-40 rounded-2xl overflow-hidden shadow-xl ${cardTheme.hoverBorder} transition-all no-underline block`}>
-      {item.imageUrl ? <SafeImage src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
+      {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
       <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
       <PlayCircle size={40} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/80 group-hover:text-white group-hover:scale-110 transition-all z-20 drop-shadow-lg" />
       <div className="absolute bottom-0 left-0 right-0 p-4 z-20 flex flex-col justify-end opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
         <PostMeta item={item} activeSport={activeSport} />
-        <h3 className={`font-bold text-sm lg:text-base text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
+        <h3 className={`font-bold text-sm lg:text-base text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: sanitize(item.title) }} />
       </div>
     </Link>
   );
@@ -192,13 +192,13 @@ const GridVideoCard = ({ item, setSelectedItem, activeSport }) => {
 
 const ShortCard = ({ item, setSelectedItem, activeSport }) => (
   <Link href={getItemUrl(item)} onClick={(e) => { e.preventDefault(); setSelectedItem(item); }} className={`group h-full w-full min-h-[300px] md:min-h-[400px] cursor-pointer bg-[#111] border ${themes[item.sport]?.border || 'border-gray-700'} border-opacity-40 hover:border-opacity-100 rounded-2xl overflow-hidden shadow-xl ${themes[item.sport]?.hoverBorder || 'hover:border-gray-500'} transition-all flex flex-col relative no-underline block`}>
-    {item.imageUrl ? <SafeImage src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
+    {item.imageUrl ? <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" /> : <div className="absolute inset-0 bg-gray-900" />}
     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
       <div className="bg-black/50 backdrop-blur-sm rounded-full p-3 md:p-4 border border-white/10"><Play size={24} className="text-white ml-1" fill="currentColor"/></div>
     </div>
     <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 z-20">
-      <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
+      <h3 className={`font-black text-sm md:text-lg text-white leading-tight group-hover:${themes[item.sport]?.text || 'text-white'} transition-colors line-clamp-3 drop-shadow-md`} dangerouslySetInnerHTML={{ __html: sanitize(item.title) }} />
     </div>
   </Link>
 );
@@ -210,6 +210,7 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [globalAds, setGlobalAds] = useState([]);
   
+  // Custom State for the dedicated Shorts loading
   const [loadedShorts, setLoadedShorts] = useState([]);
   const [shortsPage, setShortsPage] = useState(1);
   const [isLoadingShorts, setIsLoadingShorts] = useState(false);
@@ -271,13 +272,16 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
   const headerAds = pageAds.filter(ad => ad.placements?.includes('header'));
   const inlineAds = pageAds.filter(ad => ad.placements?.includes('inline'));
 
+  // DATA FILTERING
   let standardVideos = videos.filter(v => v.type === 'video');
   const baseShorts = videos.filter(v => v.type === 'short');
   
+  // Combine initial shorts with any newly loaded shorts, ensuring no duplicates!
   const allShortsMap = new Map();
   [...baseShorts, ...loadedShorts].forEach(s => allShortsMap.set(s.id, s));
   const finalShorts = Array.from(allShortsMap.values());
 
+  // FIX: Truncate the standard videos so that the final grid ALWAYS contains a multiple of 3.
   if (standardVideos.length > 14) {
       const remainder = (standardVideos.length - 14) % 3;
       if (remainder !== 0) {
@@ -285,6 +289,7 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
       }
   }
 
+  // GRID MAPPING
   const heroVideo = standardVideos.length > 0 ? standardVideos[0] : null;
   const sideVideos = standardVideos.length > 1 ? standardVideos.slice(1, 6) : [];
   const rowOfTwo = standardVideos.length > 6 ? standardVideos.slice(6, 8) : [];
@@ -299,6 +304,7 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
     if (isLoadingShorts) return;
     setIsLoadingShorts(true);
     try {
+      // Talk directly to the shorts endpoint to grab a pure batch of shorts
       const { posts, totalPages } = await fetchPosts(activeSport, 'shorts', shortsPage);
       
       const existingIds = new Set([...baseShorts, ...loadedShorts].map(s => s.id));
@@ -325,6 +331,7 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
           <p className="text-gray-400 mt-2 text-sm whitespace-nowrap">The latest film room breakdowns and highlights.</p>
         </div>
 
+        {/* DYNAMIC HEADER AD SLOT */}
         {headerAds.length > 0 && (
           <div className="hidden lg:block flex-1 max-w-[675px] min-w-[250px] shrink overflow-hidden">
             <DynamicAd ad={headerAds[0]} variant="header" />
@@ -404,6 +411,7 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
                   </div>
                 ))}
                 
+                {/* DEDICATED SHORTS LOAD MORE BUTTON */}
                 {hasMoreShorts && (
                   <div className="relative w-36 md:w-44 flex-shrink-0 snap-start aspect-[9/16] rounded-2xl overflow-hidden bg-[#111] border border-gray-700 hover:border-gray-500 transition-colors flex flex-col items-center justify-center group text-gray-400 hover:text-white">
                     <button onClick={loadMoreShorts} disabled={isLoadingShorts} className="w-full h-full flex flex-col items-center justify-center outline-none">
@@ -453,7 +461,7 @@ export default function VideosArchive({ videos, activeSport, setSelectedItem, lo
         <button 
           onClick={loadMorePosts}
           disabled={isLoadingMore}
-          className={`w-full py-4 mt-8 border border-gray-700 rounded-lg text-sm font-bold uppercase tracking-widest transition-colors bg-[#1a1a1a] flex items-center justify-center gap-3 ${isLoadingMore ? 'opacity-50 cursor-not-allowed' : `${theme.hoverText} ${theme.hoverBorder}`}`}
+          className={`w-full py-4 mt-8 border border-gray-700 rounded-lg text-sm font-bold uppercase tracking-widest transition-colors bg-[#1a1a1a] flex items-center justify-center gap-3 ${isLoadingMore ? 'opacity-50 cursor-not-allowed' : `${theme.hoverText}${theme.hoverBorder}`}`}
         >
           {isLoadingMore ? <><Loader2 size={18} className="animate-spin" /> Fetching More Videos...</> : 'Load More Videos'}
         </button>

@@ -3,7 +3,9 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Loader2, ChevronRight, ChevronUp } from 'lucide-react';
 import { themes } from '../utils/theme';
-import DOMPurify from 'isomorphic-dompurify';
+import sanitizeHtml from 'sanitize-html';
+
+const sanitize = (dirty) => sanitizeHtml(dirty, { allowedTags: [], allowedAttributes: {} });
 
 // SEO Helper: Generates the true path for Googlebot
 const getItemUrl = (item) => {
@@ -125,8 +127,8 @@ const HeroCard = ({ item, setSelectedItem, activeSport }) => {
       <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent z-10"></div>
       <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-8 z-20 flex flex-col justify-end">
         <PostMeta item={item} activeSport={activeSport} />
-        <h3 className={`font-black text-2xl lg:text-4xl text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-3 drop-shadow-xl mb-3`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
-        <div className="text-sm text-gray-300 line-clamp-2 max-w-3xl drop-shadow-md" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.excerpt) }} />
+        <h3 className={`font-black text-2xl lg:text-4xl text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-3 drop-shadow-xl mb-3`} dangerouslySetInnerHTML={{ __html: sanitize(item.title) }} />
+        <div className="text-sm text-gray-300 line-clamp-2 max-w-3xl drop-shadow-md" dangerouslySetInnerHTML={{ __html: sanitize(item.excerpt) }} />
       </div>
     </Link>
   );
@@ -142,8 +144,8 @@ const SideListCard = ({ item, setSelectedItem, activeSport }) => {
       </div>
       <div className="flex-1 p-4 lg:p-5 relative z-20 flex flex-col justify-center bg-[#1e1e1e]">
         <PostMeta item={item} activeSport={activeSport} />
-        <h4 className={`font-black text-sm lg:text-base text-gray-200 leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-md mb-1`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
-        <div className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed opacity-80" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.excerpt) }} />
+        <h4 className={`font-black text-sm lg:text-base text-gray-200 leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-md mb-1`} dangerouslySetInnerHTML={{ __html: sanitize(item.title) }} />
+        <div className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed opacity-80" dangerouslySetInnerHTML={{ __html: sanitize(item.excerpt) }} />
       </div>
     </Link>
   );
@@ -157,8 +159,8 @@ const MidCard = ({ item, setSelectedItem, activeSport }) => {
       <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent z-10"></div>
       <div className="absolute bottom-0 left-0 right-0 p-5 z-20 flex flex-col justify-end">
         <PostMeta item={item} activeSport={activeSport} />
-        <h3 className={`font-black text-lg lg:text-xl text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-lg mb-2`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
-        <div className="text-xs text-gray-300 line-clamp-1 drop-shadow-md" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.excerpt) }} />
+        <h3 className={`font-black text-lg lg:text-xl text-white leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 drop-shadow-lg mb-2`} dangerouslySetInnerHTML={{ __html: sanitize(item.title) }} />
+        <div className="text-xs text-gray-300 line-clamp-1 drop-shadow-md" dangerouslySetInnerHTML={{ __html: sanitize(item.excerpt) }} />
       </div>
     </Link>
   );
@@ -175,8 +177,8 @@ const StackedCard = ({ item, setSelectedItem, activeSport }) => {
        </div>
        <div className="flex-1 p-5 relative z-20 flex flex-col justify-center bg-[#1e1e1e]">
          <PostMeta item={item} activeSport={activeSport} />
-         <h3 className={`font-black text-lg lg:text-2xl text-gray-200 leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 mb-2`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.title) }} />
-         <div className="text-sm text-gray-400 line-clamp-2" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.excerpt) }} />
+         <h3 className={`font-black text-lg lg:text-2xl text-gray-200 leading-tight group-hover:${cardTheme.text} transition-colors line-clamp-2 mb-2`} dangerouslySetInnerHTML={{ __html: sanitize(item.title) }} />
+         <div className="text-sm text-gray-400 line-clamp-2" dangerouslySetInnerHTML={{ __html: sanitize(item.excerpt) }} />
        </div>
     </Link>
   );
@@ -343,8 +345,8 @@ export default function ArticlesArchive({ articles, activeSport, setSelectedItem
                       </div>
                       <div className="relative z-10 px-5 pb-5 md:p-6 flex flex-col justify-center flex-1 bg-[#1e1e1e]">
                         <PostMeta item={article} activeSport={activeSport} />
-                        <h3 className={`text-xl lg:text-2xl font-black leading-tight mb-2 text-gray-200 group-hover:${cardTheme.text} transition-colors drop-shadow-lg`} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.title) }} />
-                        <div className="text-sm text-gray-400 line-clamp-2 leading-relaxed drop-shadow" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.excerpt) }} />
+                        <h3 className={`text-xl lg:text-2xl font-black leading-tight mb-2 text-gray-200 group-hover:${cardTheme.text} transition-colors drop-shadow-lg`} dangerouslySetInnerHTML={{ __html: sanitize(article.title) }} />
+                        <div className="text-sm text-gray-400 line-clamp-2 leading-relaxed drop-shadow" dangerouslySetInnerHTML={{ __html: sanitize(article.excerpt) }} />
                       </div>
                     </Link>
                     {/* List Ad - Wide Component */}
@@ -365,7 +367,7 @@ export default function ArticlesArchive({ articles, activeSport, setSelectedItem
         <button 
           onClick={loadMorePosts}
           disabled={isLoadingMore}
-          className={`w-full py-4 mt-8 border border-gray-700 rounded-lg text-sm font-bold uppercase tracking-widest transition-colors bg-[#1a1a1a] flex items-center justify-center gap-3 ${isLoadingMore ? 'opacity-50 cursor-not-allowed' : `${theme.hoverText} ${theme.hoverBorder}`}`}
+          className={`w-full py-4 mt-8 border border-gray-700 rounded-lg text-sm font-bold uppercase tracking-widest transition-colors bg-[#1a1a1a] flex items-center justify-center gap-3 ${isLoadingMore ? 'opacity-50 cursor-not-allowed' : `${theme.hoverText}${theme.hoverBorder}`}`}
         >
           {isLoadingMore ? <><Loader2 size={18} className="animate-spin" /> Fetching Older Articles...</> : 'Load Older Articles'}
         </button>
