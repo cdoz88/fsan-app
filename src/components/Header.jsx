@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Search, Menu, X, ChevronsUpDown, User, Users, Flame, Loader2, FileText, ChevronRight, Activity, Gift, Trophy } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { themes } from '../utils/theme';
 import { SelloutCrowds } from './Icons';
 import AuthModal from './AuthModal';
@@ -144,6 +144,7 @@ export default function Header({ activeSport }) {
     return () => clearTimeout(timer);
   }, [searchQuery, searchSport]);
 
+  // 🚀 FIXED: Restored to GET request so WordPress doesn't block it with a 403 Forbidden
   useEffect(() => {
     const fetchMobileMenu = async () => {
       const query = `
@@ -159,11 +160,11 @@ export default function Header({ activeSport }) {
           }
         }
       `;
+      const queryParams = new URLSearchParams({ query: query.trim() });
       try {
-        const res = await fetch(`https://admin.fsan.com/graphql`, {
-          method: 'POST',
+        const res = await fetch(`https://admin.fsan.com/graphql?${queryParams.toString()}`, {
+          method: 'GET',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: query.trim() }),
           cache: 'no-store'
         });
         const json = await res.json();
@@ -212,7 +213,7 @@ export default function Header({ activeSport }) {
 
   return (
     <>
-      <div className="bg-[#1a1a1a] border-b border-gray-800 px-4 py-3 flex justify-between items-center z-[110] sticky top-0 shadow-md">
+      <div className="bg-[#1a1a1a] border-b border-gray-800 px-4 py-3 flex justify-between items-center z-[120] sticky top-0 shadow-md">
         
         {/* Left Side: Logo & Network Selector */}
         <div className="relative flex items-center">
@@ -227,7 +228,7 @@ export default function Header({ activeSport }) {
           {isSportDropdownOpen && (
             <>
               <div className="fixed inset-0 z-[90]" onClick={() => setIsSportDropdownOpen(false)}></div>
-              <div className="absolute top-full left-0 mt-3 w-64 bg-[#1a1a1a] border border-gray-800 rounded-xl shadow-2xl z-[120] overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
+              <div className="absolute top-full left-0 mt-3 w-64 bg-[#1a1a1a] border border-gray-800 rounded-xl shadow-2xl z-[150] overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
                 <div className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 border-b border-gray-800/50">Select Network</div>
                 {sportsList.map((sport) => {
                   const targetPath = sport.name === 'All' ? `/${currentView}` : `/${sport.name.toLowerCase()}/${currentView}`;
@@ -366,7 +367,6 @@ export default function Header({ activeSport }) {
                       </button>
                     ))}
 
-                    {/* FREEMIUM & MANAGEMENT BUTTON */}
                     <div className="px-4 py-4 border-t border-gray-800 mt-2 text-center">
                       {!session ? (
                          <>
@@ -522,7 +522,7 @@ export default function Header({ activeSport }) {
                   {isSearchSportDropdownOpen && (
                     <>
                       <div className="fixed inset-0 z-10" onClick={() => setIsSearchSportDropdownOpen(false)}></div>
-                      <div className="absolute top-full left-0 mt-3 w-48 bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl z-[150] overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
+                      <div className="absolute top-full left-0 mt-3 w-48 bg-[#1a1a1a] border border-gray-700 rounded-xl shadow-2xl z-20 overflow-hidden py-2 animate-in fade-in slide-in-from-top-2">
                         <div className="px-4 py-2 text-[9px] font-black uppercase tracking-widest text-gray-500 border-b border-gray-800/50 mb-1">Search Within</div>
                         {sportsList.map(s => (
                           <button key={s.name} onClick={() => { setSearchSport(s.name); setIsSearchSportDropdownOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${searchSport === s.name ? 'bg-[#252525] text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
