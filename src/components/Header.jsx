@@ -144,7 +144,6 @@ export default function Header({ activeSport }) {
     return () => clearTimeout(timer);
   }, [searchQuery, searchSport]);
 
-  // 🚀 FIXED: Restored to GET request so WordPress doesn't block it with a 403 Forbidden
   useEffect(() => {
     const fetchMobileMenu = async () => {
       const query = `
@@ -160,16 +159,19 @@ export default function Header({ activeSport }) {
           }
         }
       `;
-      const queryParams = new URLSearchParams({ query: query.trim() });
       try {
-        const res = await fetch(`https://admin.fsan.com/graphql?${queryParams.toString()}`, {
-          method: 'GET',
+        const res = await fetch(`https://admin.fsan.com/graphql`, {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: query.trim() }),
           cache: 'no-store'
         });
-        const json = await res.json();
-        if (json?.data?.menu?.menuItems?.nodes) {
-          setMobileMenu(json.data.menu.menuItems.nodes);
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            const json = await res.json();
+            if (json?.data?.menu?.menuItems?.nodes) {
+              setMobileMenu(json.data.menu.menuItems.nodes);
+            }
         }
       } catch (e) {
         console.error('Failed to fetch mobile menu', e);
@@ -213,7 +215,7 @@ export default function Header({ activeSport }) {
 
   return (
     <>
-      <div className="bg-[#1a1a1a] border-b border-gray-800 px-4 py-3 flex justify-between items-center z-[120] sticky top-0 shadow-md">
+      <div className="bg-[#1a1a1a] border-b border-gray-800 px-4 py-3 flex justify-between items-center z-[110] sticky top-0 shadow-md">
         
         {/* Left Side: Logo & Network Selector */}
         <div className="relative flex items-center">

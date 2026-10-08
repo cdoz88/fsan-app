@@ -171,14 +171,7 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
   try {
     let rawPosts = [];
     let totalPages = 1;
-    
-    // ADDED: Authorization headers using environment variables to pass security checks
-    const fetchOptions = { 
-        next: { revalidate: 60 },
-        headers: {
-            'Authorization': `Bearer ${process.env.WP_API_TOKEN || ''}`
-        }
-    }; 
+    const fetchOptions = { next: { revalidate: 60 } }; 
     const timeBuster = Math.floor(Date.now() / (1000 * 60 * 5));
 
     const apiSport = activeSport;
@@ -212,13 +205,19 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
       if (res && res.ok) {
         const tp = parseInt(res.headers.get('X-WP-TotalPages') || '1', 10);
         if (tp > totalPages) totalPages = tp;
-      } else if (res && !res.ok) {
-          // Helpful debug log to catch security rejections (401/403)
-          console.warn(`Fetch rejected for ${res.url} with status: ${res.status}`);
       }
     });
 
-    const dataArrays = await Promise.all(responses.map(async (res) => (res && res.ok) ? await res.json() : []));
+    const dataArrays = await Promise.all(responses.map(async (res) => {
+        if (res && res.ok) {
+           const contentType = res.headers.get('content-type');
+           if (contentType && contentType.includes('application/json')) {
+              return await res.json();
+           }
+        }
+        return [];
+    }));
+
     let combinedRaw = dataArrays.flat().filter(post => post && post.id);
 
     const uniqueRawMap = new Map();
@@ -252,32 +251,35 @@ export const fetchPosts = async (activeSport, targetType, currentPage = 1) => {
 export async function fetchGraphQL(query, variables = {}) {
   const WP_GRAPHQL_URL = 'https://admin.fsan.com/graphql';
 
-  const queryParams = new URLSearchParams({
-    query: query.trim(), 
-  });
+  const payload = {
+    query: query.trim(),
+  };
   
   if (Object.keys(variables).length > 0) {
-    queryParams.append('variables', JSON.stringify(variables));
+    payload.variables = variables;
   }
 
-  const timeBuster = Math.floor(Date.now() / (1000 * 60 * 5));
-  queryParams.append('t', timeBuster);
-
   try {
-    const res = await fetch(`${WP_GRAPHQL_URL}?${queryParams.toString()}`, {
-      method: 'GET',
+    const res = await fetch(WP_GRAPHQL_URL, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // ADDED: Authorization header for GraphQL
-        'Authorization': `Bearer ${process.env.WP_API_TOKEN || ''}`
       },
+      body: JSON.stringify(payload),
       next: { revalidate: 60 }, 
     });
+
+    // Fallback safeguard to prevent crashing if HTML is returned instead of JSON
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+       console.error("WPGraphQL returned non-JSON response:", res.status);
+       return null;
+    }
 
     const json = await res.json();
     if (json.errors) {
       console.error('GraphQL Errors:', json.errors);
-      throw new Error('Failed to fetch GraphQL API');
+      return null;
     }
 
     return json.data;

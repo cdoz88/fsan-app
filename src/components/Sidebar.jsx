@@ -54,7 +54,7 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
     }
   }, [isMobileOpen]);
 
-  // 🚀 FIXED: Restored to GET request so WordPress doesn't block it with a 403 Forbidden
+  // 🚀 FIXED: Safely wrapped the POST response in JSON verification to prevent identical crashes
   useEffect(() => {
     if (status === 'loading') return;
 
@@ -77,33 +77,39 @@ export default function Sidebar({ activeSport = 'All', proToolsMenu = [], connec
             }
           }
         `;
-        const queryParams = new URLSearchParams({ query: query.trim() });
         try {
-          const res = await fetch(`https://admin.fsan.com/graphql?${queryParams.toString()}`, {
-            method: 'GET',
+          const res = await fetch('https://admin.fsan.com/graphql', {
+            method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${session.user.token}`,
             },
+            body: JSON.stringify({ query: query.trim() }),
             cache: 'no-store' 
           });
-          const json = await res.json();
-          if (json?.data?.viewer) {
-            const roles = json.data.viewer.roles?.nodes?.map(r => {
-                let roleName = r.name.toLowerCase();
-                roleName = roleName.replace(/&#043;/g, '+');
-                return roleName;
-            }) || [];
-            
-            if (roles.some(r => r.includes('pro+') || r.includes('pro plus') || r.includes('pro_plus') || r.includes('pro-plus'))) {
-              setUserTier('pro-plus');
-            } else if (roles.some(r => r.includes('pro') || r.includes('pro member') || r.includes('fsan_pro'))) {
-              setUserTier('pro');
-            } else {
-              setUserTier('free');
-            }
+          
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+              const json = await res.json();
+              if (json?.data?.viewer) {
+                const roles = json.data.viewer.roles?.nodes?.map(r => {
+                    let roleName = r.name.toLowerCase();
+                    roleName = roleName.replace(/&#043;/g, '+');
+                    return roleName;
+                }) || [];
+                
+                if (roles.some(r => r.includes('pro+') || r.includes('pro plus') || r.includes('pro_plus') || r.includes('pro-plus'))) {
+                  setUserTier('pro-plus');
+                } else if (roles.some(r => r.includes('pro') || r.includes('pro member') || r.includes('fsan_pro'))) {
+                  setUserTier('pro');
+                } else {
+                  setUserTier('free');
+                }
+              } else {
+                setUserTier('free');
+              }
           } else {
-            setUserTier('free');
+              setUserTier('free');
           }
         } catch (error) {
           console.error("Failed to fetch user role on sidebar.");
