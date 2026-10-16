@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Settings, X, Image as ImageIcon, MessageCircle, RefreshCw, Info, Search, User, RotateCcw, Calendar, History, Loader2, Plus, Zap, Beaker, Check } from 'lucide-react';
+import { MessageSquare, Settings, X, Image as ImageIcon, MessageCircle, RefreshCw, Info, Search, User, RotateCcw, Calendar, History, Loader2, Plus, Zap, Beaker, Check, Trash2 } from 'lucide-react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -268,7 +268,7 @@ export default function QandATab({
   const [showGraphic, setShowGraphic] = useState(false);
   const [customPlayerLists, setCustomPlayerLists] = useState(null);
   const [disabledPlayers, setDisabledPlayers] = useState({});
-  const [dismissedChats, setDismissedChats] = useState([]); // Track completed chats
+  const [dismissedChats, setDismissedChats] = useState([]); 
   const [playerSearch, setPlayerSearch] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -296,7 +296,6 @@ export default function QandATab({
     return () => unsub();
   }, []);
 
-  // Fetch Available OMFG Years on Mount
   useEffect(() => {
     const fetchYears = async () => {
       try {
@@ -510,6 +509,22 @@ export default function QandATab({
     updateFirebaseState({ qa_customPlayerLists: newLists });
   };
 
+  const handlePlayerRemove = (playerIdToRemove, side) => {
+    const currentSideA = customPlayerLists ? customPlayerLists.sideA : (activeChat?.sideA || []);
+    const currentSideB = customPlayerLists ? customPlayerLists.sideB : (activeChat?.sideB || []);
+
+    let newLists = { sideA: [...currentSideA], sideB: [...currentSideB] };
+
+    if (side === 'sideA') {
+      newLists.sideA = newLists.sideA.filter(id => id !== playerIdToRemove);
+    } else {
+      newLists.sideB = newLists.sideB.filter(id => id !== playerIdToRemove);
+    }
+
+    setCustomPlayerLists(newLists);
+    updateFirebaseState({ qa_customPlayerLists: newLists });
+  };
+
   const getESPNHeadshot = (espnId) => `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${espnId}.png&w=350&h=254`;
 
   const getCardStyle = (position) => {
@@ -559,6 +574,13 @@ export default function QandATab({
               title="Swap Pick"
             >
               <RefreshCw size={18} />
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); handlePlayerRemove(playerId, side); }}
+              className="p-2.5 bg-zinc-800 hover:bg-red-900 text-zinc-400 hover:text-white border border-zinc-600 hover:border-red-700 rounded-xl shadow-lg transition-transform hover:scale-110 flex items-center justify-center"
+              title="Remove Pick Completely"
+            >
+              <Trash2 size={18} />
             </button>
           </div>
 
@@ -639,6 +661,13 @@ export default function QandATab({
           >
             <RefreshCw size={18} />
           </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); handlePlayerRemove(playerId, side); }}
+            className="p-2.5 bg-zinc-800 hover:bg-red-900 text-zinc-400 hover:text-white border border-zinc-600 hover:border-red-700 rounded-xl shadow-lg transition-transform hover:scale-110 flex items-center justify-center"
+            title="Remove Player Completely"
+          >
+            <Trash2 size={18} />
+          </button>
         </div>
 
         {teamLogo && position !== 'DST' && (
@@ -687,15 +716,6 @@ export default function QandATab({
             {lastName}
           </div>
         </div>
-
-        {/* Info Icon Button (Bottom Right) */}
-        <button 
-          onClick={(e) => { e.stopPropagation(); setInfoPlayerId(playerId); }}
-          className="absolute bottom-2 right-2 z-40 p-1.5 bg-zinc-900/80 hover:bg-[#1b75bb] text-zinc-400 hover:text-white rounded-full border border-zinc-700/50 backdrop-blur-md transition-colors shadow-lg cursor-pointer"
-          title="Player Info & Stats"
-        >
-          <Info size={14} />
-        </button>
       </div>
     );
   };
